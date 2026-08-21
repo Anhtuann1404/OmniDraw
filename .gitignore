@@ -1,0 +1,60 @@
+# =========================
+# macOS (Hệ điều hành)
+# =========================
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# =========================
+# Môi trường Editor / IDE
+# =========================
+.vscode/
+.idea/
+*.suo
+*.sw?
+
+# =========================
+# Python (Xử lý ảnh & Sinh đồ họa)
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.env
+pip-log.txt
+
+# =========================
+# C++ (Thuật toán tối ưu)
+# =========================
+*.o
+*.obj
+*.out
+*.exe
+*.dll
+*.dylib
+*.a
+*.lib
+
+# =========================
+# Java (Thuật toán / Cấu trúc dữ liệu)
+# =========================
+*.class
+*.log
+*.ctxt
+.mtj.tmp/
+*.jar
+*.war
+*.ear
+hs_err_pid*
+
+# =========================
+# IoT / ESP32 / Arduino (Phần cứng)
+# =========================
+.pio/
+*.elf
+*.bin
+*.hex
+*.eep
+build/
