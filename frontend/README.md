@@ -56,3 +56,20 @@ dễ tree-shake hơn khi build production.
 Hiện đang mô phỏng theo `progressPercent` (frontend-only, dùng `stroke-dashoffset`). Nếu sau này
 phần cứng gửi thêm `current_path_index` thật, thay logic tính `pathDrawnOffset` trong
 `PrintStatusScreen.jsx` bằng dữ liệu chính xác đó.
+
+## Đã nối sẵn API client (mock mode)
+
+- `src/api/config.js` — cấu hình `API_BASE_URL` + cờ `MOCK_MODE` (đọc từ `.env`, xem `.env.example`).
+- `src/api/client.js` — hàm `apiRequest` dùng chung, tự parse lỗi theo đúng bảng mã ở API Spec mục 8 (`ApiError.code`, `.message`); hàm `generateRequestId()` sinh UUID theo quy định mục 7.
+- `src/api/omnidraw.js` — các hàm gọi API thật theo tên hàm rõ nghĩa:
+  - `generateArt(...)` → mục 2-3 API Spec (đã có chuẩn chính thức)
+  - `getPrintStatus(requestId)` → mục 5 API Spec (đã có chuẩn chính thức)
+  - `startPrint(...)`, `pausePrint(...)`, `cancelPrint(...)`, `getHistory()` → **đề xuất, CHƯA có trong API Spec chính thức** — cần cả nhóm thống nhất rồi bổ sung vào `OmniDraw_API_Spec.md` trước khi backend code theo đúng các endpoint này.
+- `src/hooks/usePrintStatusPolling.js` — hook tự động gọi `getPrintStatus` mỗi 1.5s, tự dừng khi `status` là `done`/`error`/`cancelled`.
+
+**Cách bật/tắt mock:**
+```bash
+cp .env.example .env
+# sửa .env: VITE_MOCK_MODE=false, VITE_API_BASE_URL=<url backend thật>
+```
+Không cần sửa gì trong `App.jsx` hay các file `screens/` khi chuyển qua lại giữa mock và backend thật.
