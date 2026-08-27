@@ -1,5 +1,5 @@
-import React, { useState, useRef } from "react";
-import { Image, Pencil, UploadCloud, ArrowRight, Minus, LineChart, Grid2x2, X } from "lucide-react";
+import React, { useRef, useState } from "react";
+import { Image, Pencil, UploadCloud, ArrowRight, Minus, LineChart, Grid2x2, Loader2 } from "lucide-react";
 import { ScreenShell, ComicButton, StarBadge, Logo } from "../components/ComicPrimitives";
 
 const STYLES = [
@@ -9,44 +9,67 @@ const STYLES = [
   { id: "hatching", label: "Hatching", icon: Grid2x2 },
 ];
 
-export default function CreateScreen({ onSubmit }) {
+const MAX_FILE_MB = 10;
+
+/**
+ * Màn 1 — Trang tạo tranh
+ * Props:
+ *  - onSubmit({ inputType, style, imageBase64?, prompt? }) : gọi khi bấm "Tạo tranh"
+ *  - loading?: boolean — disable nút + hiện spinner khi đang gọi API
+ */
+export default function CreateScreen({ onSubmit, loading = false }) {
   const [inputType, setInputType] = useState("image"); // "image" | "text"
   const [style, setStyle] = useState("sketch");
-  
-  // Thêm state để lưu ảnh xem trước
-  const [previewUrl, setPreviewUrl] = useState(null);
-  
-  // Dùng ref để liên kết với thẻ input file bị ẩn
+  const [imageBase64, setImageBase64] = useState(null);
+  const [imagePreviewName, setImagePreviewName] = useState(null);
+  const [prompt, setPrompt] = useState("");
+  const [fileError, setFileError] = useState(null);
   const fileInputRef = useRef(null);
 
-  // Xử lý khi người dùng chọn file qua nút click
-  const handleFileChange = (e) => {
+  // Chuẩn hoá đầu vào ngay tại tầng giao diện theo đúng mục 1 của API Spec:
+  // chỉ nhận jpg/jpeg/png, tối đa 10MB. Việc resize về 1024px cạnh dài nhất
+  // nên làm ở backend hoặc bổ sung canvas-resize riêng khi cần — ở đây chặn sớm
+  // các input rõ ràng sai định dạng/kích thước để không gửi rác lên API.
+  function handleFileChange(e) {
     const file = e.target.files?.[0];
-    if (file) {
-      setPreviewUrl(URL.createObjectURL(file)); // Tạo URL ảo để hiển thị ảnh ngay lập tức
+    if (!file) return;
+    setFileError(null);
+
+    const validTypes = ["image/jpeg", "image/jpg", "image/png"];
+    if (!validTypes.includes(file.type)) {
+      setFileError("Chỉ nhận file JPG hoặc PNG.");
+      return;
     }
-  };
-
-  // Xử lý khi người dùng kéo thả file vào khung
-  const handleDrop = (e) => {
-    e.preventDefault();
-    const file = e.dataTransfer.files?.[0];
-    if (file) {
-      setPreviewUrl(URL.createObjectURL(file));
+    if (file.size > MAX_FILE_MB * 1024 * 1024) {
+      setFileError(`File vượt quá ${MAX_FILE_MB}MB.`);
+      return;
     }
-  };
 
-  // Ngăn chặn hành vi mở ảnh ở tab mới mặc định của trình duyệt
-  const handleDragOver = (e) => {
-    e.preventDefault();
-  };
+    const reader = new FileReader();
+    reader.onload = () => {
+      setImageBase64(reader.result); // đã ở dạng "data:image/...;base64,...." đúng chuẩn mục 1
+      setImagePreviewName(file.name);
+    };
+    reader.onerror = () => setFileError("Không đọc được file, thử lại nhé.");
+    reader.readAsDataURL(file);
+  }
 
-  // Xóa ảnh đã chọn
-  const clearImage = (e) => {
-    e.stopPropagation(); // Ngăn sự kiện click lan ra khung ngoài
-    setPreviewUrl(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
+  function handleSubmit() {
+    if (inputType === "image" && !imageBase64) {
+      setFileError("Chọn một ảnh trước đã nhé.");
+      return;
+    }
+    if (inputType === "text" && !prompt.trim()) {
+      setFileError("Nhập mô tả trước đã nhé.");
+      return;
+    }
+    onSubmit?.({
+      inputType,
+      style,
+      imageBase64: inputType === "image" ? imageBase64 : undefined,
+      prompt: inputType === "text" ? prompt.trim() : undefined,
+    });
+  }
 
   return (
     <ScreenShell patternId="pattern-create">
@@ -75,46 +98,34 @@ export default function CreateScreen({ onSubmit }) {
       </div>
 
       {inputType === "image" ? (
-        // Khung Dropzone có thêm sự kiện onDrop và onDragOver
-        <div 
-          className="relative border-[3px] border-dashed border-[#1A1A1A] rounded-xl py-9 px-4 text-center mb-5 bg-[#FEFDF9] cursor-pointer hover:bg-[#F5F3EA] transition-colors"
+        <div
           onClick={() => fileInputRef.current?.click()}
-          onDrop={handleDrop}
-          onDragOver={handleDragOver}
+          className="border-[3px] border-dashed border-[#1A1A1A] rounded-xl py-9 px-4 text-center mb-2 bg-[#FEFDF9] cursor-pointer"
         >
-          {/* Thẻ input thực sự xử lý file, nhưng bị ẩn đi */}
-          <input 
-            type="file" 
-            ref={fileInputRef} 
-            className="hidden" 
-            accept="image/png, image/jpeg" 
-            onChange={handleFileChange}
-          />
-          
-          {previewUrl ? (
-            <div className="relative inline-block">
-              <img src={previewUrl} alt="Xem trước" className="mx-auto max-h-32 object-contain border-2 border-[#1A1A1A] rounded-lg shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]" />
-              <button 
-                onClick={clearImage}
-                className="absolute -top-3 -right-3 bg-[#C0392B] text-white p-1 rounded-full border-2 border-[#1A1A1A] hover:scale-110 transition-transform"
-              >
-                <X size={16} />
-              </button>
-            </div>
+          <input ref={fileInputRef} type="file" accept="image/jpeg,image/png" className="hidden" onChange={handleFileChange} />
+          {imageBase64 ? (
+            <img src={imageBase64} alt="preview" className="max-h-32 mx-auto rounded-lg object-contain" />
           ) : (
             <>
               <UploadCloud size={30} className="mx-auto text-[#1A1A1A]" />
               <p className="text-sm font-bold text-[#1A1A1A] mt-2">KÉO THẢ ẢNH VÀO ĐÂY NÀO!</p>
-              <p className="text-xs text-[#6B6B66] mt-1">JPG, PNG — tối đa 10MB</p>
             </>
           )}
+          <p className="text-xs text-[#6B6B66] mt-1">
+            {imagePreviewName || `JPG, PNG — tối đa ${MAX_FILE_MB}MB`}
+          </p>
         </div>
       ) : (
         <textarea
-          className="w-full border-[3px] border-[#1A1A1A] rounded-xl p-4 mb-5 bg-[#FEFDF9] text-sm h-32 resize-none focus:outline-none"
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          className="w-full border-[3px] border-[#1A1A1A] rounded-xl p-4 mb-2 bg-[#FEFDF9] text-sm h-32 resize-none focus:outline-none"
           placeholder="Mô tả bức tranh bạn muốn vẽ, ví dụ: một chú mèo đang ngủ trên bậu cửa sổ..."
         />
       )}
+
+      {fileError && <p className="text-xs font-bold text-[#C0392B] mb-3">{fileError}</p>}
+      {!fileError && <div className="mb-3" />}
 
       <p className="text-xs font-bold text-[#1A1A1A] uppercase mb-2.5">Chọn phong cách vẽ</p>
       <div className="grid grid-cols-4 gap-2.5 mb-6">
@@ -124,12 +135,16 @@ export default function CreateScreen({ onSubmit }) {
             <button
               key={id}
               onClick={() => setStyle(id)}
-              className={`relative min-w-0 h-[64px] flex flex-col items-center justify-center border-[2.5px] rounded-lg px-1.5 text-center overflow-hidden transition-all ${
-                active ? "border-[#C0392B] bg-[#FBEAF0] -rotate-2 scale-105" : "border-[#1A1A1A] bg-white hover:-translate-y-1"
+              className={`relative min-w-0 h-[64px] flex flex-col items-center justify-center border-[2.5px] rounded-lg px-1.5 text-center overflow-hidden ${
+                active ? "border-[#C0392B] bg-[#FBEAF0] -rotate-2" : "border-[#1A1A1A] bg-white"
               }`}
             >
               <Icon size={18} className={active ? "text-[#C0392B] shrink-0" : "text-[#1A1A1A] shrink-0"} />
-              <p className={`w-full text-xs mt-1 truncate ${active ? "font-bold text-[#1A1A1A]" : "font-medium text-[#1A1A1A]"}`}>
+              <p
+                className={`w-full text-xs mt-1 truncate ${
+                  active ? "font-bold text-[#1A1A1A]" : "font-medium text-[#1A1A1A]"
+                }`}
+              >
                 {label}
               </p>
             </button>
@@ -139,9 +154,17 @@ export default function CreateScreen({ onSubmit }) {
 
       <div className="flex items-center justify-between border-t-[3px] border-[#1A1A1A] pt-5">
         <span className="text-xs font-bold text-[#1A1A1A]">KHỔ GIẤY: A4</span>
-        <ComicButton variant="primary" onClick={() => onSubmit?.({ inputType, style, image: previewUrl })}>
+        <ComicButton variant="primary" onClick={handleSubmit} className={loading ? "opacity-70 pointer-events-none" : ""}>
           <span className="flex items-center gap-1.5">
-            TẠO TRANH! <ArrowRight size={18} />
+            {loading ? (
+              <>
+                <Loader2 size={18} className="animate-spin" /> ĐANG TẠO...
+              </>
+            ) : (
+              <>
+                TẠO TRANH! <ArrowRight size={18} />
+              </>
+            )}
           </span>
         </ComicButton>
       </div>
