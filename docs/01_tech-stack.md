@@ -35,9 +35,9 @@
 | Hạng mục                    | Lựa chọn                 | Lý do    |
 | --------------------------- | ------------------------ | -------- |
 | Vi điều khiển               | *(vd: Arduino/ESP32...)* | *(điền)* |
-| Ngôn ngữ firmware           | *(điền)*                 | *(điền)* |
+| Ngôn ngữ firmware           | Python (qua pyaxidraw) / C++ (EBB Firmware)                 | Đồng bộ ngôn ngữ với backend Python và tương thích trực tiếp với tập lệnh máy vẽ |
 | Camera/cảm biến sử dụng     | *(điền)*                 | *(điền)* |
-| Thư viện điều khiển AxiDraw | pyaxidraw                | *(điền)* |
+| Thư viện điều khiển AxiDraw | pyaxidraw                | Thư viện Python chính thức để đọc file SVG và gửi lệnh trực tiếp xuống phần cứng |
 
 
 
