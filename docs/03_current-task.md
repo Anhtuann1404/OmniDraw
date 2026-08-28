@@ -11,7 +11,7 @@
 | -------------------------- |----------------------------------------| --------------------------------------- | ----------- |
 | TV1 — AI Core              | Đã chốt và up 15 prompt test lên Drive | *(điền, hoặc để trống nếu không nghẽn)* | Đã xong     |
 | TV2 — AI Ứng dụng/CV       | *(điền)*                               | *(điền)*                                | *(điền)*    |
-| TV3 — Phần cứng            |  tích hợp logic mock phần cứng (tính actual_draw_time_sec và các lệnh start/pause/cancel) vào backend/main.py                              | hok bik                                 | today     |
+| TV3 — Phần cứng            | xong phần code main.py                 | đợi lead xem rồi thêm bớt để nâng cấp                                  | today     |
 | TV4 — Giao diện & Tích hợp | (điền)                                 | *(điền)*                                | *(điền)*    |
 
 
