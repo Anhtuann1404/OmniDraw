@@ -1,21 +1,21 @@
 import asyncio
 import csv
+import math
 import os
+import re
 import time
 from typing import Any, Dict, Optional
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse, HTMLResponse
 from pydantic import BaseModel
 
-# 1. Khởi tạo ứng dụng
-app = FastAPI(title="OmniDraw API Gateway")
+# ==========================================
+# 1. KHỞI TẠO ỨNG DỤNG & CẤU HÌNH
+# ==========================================
+app = FastAPI(title="OmniDraw API Gateway (Integrated)")
 
-# 2. Cấu hình CORS (Cho phép React ở cổng 5173 gọi sang Python ở cổng 8000)
-# SỬA: allow_origins=["*"] kết hợp allow_credentials=True là tổ hợp không hợp lệ
-# theo chuẩn CORS — trình duyệt có thể từ chối request. Vì hiện tại frontend
-# không dùng cookie/session (chỉ gửi JSON thuần), đổi allow_credentials=False
-# và liệt kê rõ origin của Vite dev server thay vì "*".
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
@@ -24,26 +24,27 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 3. Định nghĩa cấu trúc khung xương dữ liệu (Pydantic Models)
-# Cấu trúc này phải khớp 100% với hàm log ở Frontend
+# Cấu hình giả lập phần cứng
+ASSUMED_PEN_SPEED_MM_PER_SEC = 40.0
+SVG_OUTPUT_DIR = os.environ.get("OMNIDRAW_SVG_DIR", "./svg_output")
+DEVICE_CONNECTED = True
+jobs: dict[str, dict] = {}
+VALID_HARDWARE_ERRORS = {
+    "HARDWARE_NOT_CONNECTED": "Máy không kết nối được",
+    "HARDWARE_PAPER_JAM": "Phát hiện kẹt giấy",
+    "HARDWARE_OUT_OF_INK": "Hết mực/bút không xuống mực",
+}
 
-
+# ==========================================
+# 2. ĐỊNH NGHĨA DỮ LIỆU (PYDANTIC MODELS)
+# ==========================================
 class SvgMetrics(BaseModel):
-    """Khớp svg_metrics.* ở mục 6 API Spec — để trống (None) khi module
-    Thuật toán thật chưa xong, không bắt buộc điền ngay."""
-
     total_path_length_mm: Optional[float] = None
     pen_lift_distance_mm: Optional[float] = None
     pen_lift_count: Optional[int] = None
     optimize_time_ms: Optional[float] = None
 
-
 class LogPayload(BaseModel):
-    # SỬA: bổ sung đủ cột theo bảng ở mục 6 API Spec — bản cũ chỉ có 7/13 cột,
-    # thiếu hẳn các chỉ số chính dùng cho RQ1/RQ2 (svg_metrics, ai_processing_time_ms)
-    # và các trường gắn thí nghiệm (dataset_item_id, method_tag, input_type).
-    # Tất cả các trường mới đều Optional để frontend hiện tại (chưa có module AI/thuật
-    # toán thật) vẫn gọi được bình thường mà không cần sửa gì — điền dần khi có dữ liệu thật.
     request_id: str
     timestamp: str
     dataset_item_id: Optional[str] = None
@@ -57,7 +58,6 @@ class LogPayload(BaseModel):
     final_status: str
     error_code: Optional[str] = None
 
-
 class GenerateRequest(BaseModel):
     request_id: str
     input_type: str
@@ -67,209 +67,210 @@ class GenerateRequest(BaseModel):
     options: Optional[Dict[str, Any]] = None
     experiment: Optional[Dict[str, Any]] = None
 
+class StartRequest(BaseModel):
+    request_id: str
+    paper_size: str = "a4"
 
-# 4. Các Endpoints (Đường ống)
+class PauseCancelRequest(BaseModel):
+    request_id: str
 
+# ==========================================
+# 3. HÀM HỖ TRỢ (HELPERS)
+# ==========================================
+def _log(request_id: str, message: str):
+    ts = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    print(f"[{request_id}] [hardware] [{ts}] {message}")
 
+def error_response(code: str, message: str, status_code: int = 400):
+    return JSONResponse(
+        status_code=status_code,
+        content={"request_id": None, "status": "error", "error": {"code": code, "message": message}},
+    )
+
+def _parse_path_length_mm(d_attr: str) -> float:
+    # Thuật toán đơn giản để phân tách và tính khoảng cách các điểm toạ độ SVG
+    tokens = re.findall(r"[MLmlZz]|-?\d*\.?\d+", d_attr)
+    total = cur_x = cur_y = start_x = start_y = 0.0
+    i = 0
+    cmd = None
+    while i < len(tokens):
+        tok = tokens[i]
+        if tok in ("M", "m", "L", "l"):
+            cmd = tok
+            i += 1
+            continue
+        if tok in ("Z", "z"):
+            total += math.hypot(start_x - cur_x, start_y - cur_y)
+            cur_x, cur_y = start_x, start_y
+            i += 1
+            continue
+        try:
+            x, y = float(tok), float(tokens[i + 1])
+        except (ValueError, IndexError):
+            break
+        i += 2
+
+        nx, ny = (x, y) if cmd in ("M", "L") else (cur_x + x, cur_y + y)
+        if cmd in ("M", "m") and cur_x == 0 and cur_y == 0 and total == 0:
+            start_x, start_y = nx, ny
+        else:
+            total += math.hypot(nx - cur_x, ny - cur_y)
+        cur_x, cur_y = nx, ny
+        if cmd in ("M", "m"):
+            start_x, start_y = nx, ny
+            cmd = "L" if cmd == "M" else "l"
+    return total
+
+def svg_estimate_draw_time(request_id: str) -> int:
+    svg_path = os.path.join(SVG_OUTPUT_DIR, f"output_{request_id}.svg")
+    if os.path.isfile(svg_path):
+        try:
+            with open(svg_path, "r", encoding="utf-8") as f:
+                paths = re.findall(r'<path[^>]*\bd="([^"]+)"', f.read())
+                length_mm = sum(_parse_path_length_mm(d) for d in paths)
+            if length_mm > 0:
+                return max(2, int(round(length_mm / ASSUMED_PEN_SPEED_MM_PER_SEC)))
+        except Exception as exc:
+            print(f"[warn] khong doc duoc {svg_path}: {exc}")
+    
+    seed = sum(ord(c) for c in request_id) % 20
+    return 15 + seed 
+
+async def _run_job(request_id: str):
+    job = jobs[request_id]
+    job["status"] = "printing"
+    job["started_at"] = time.monotonic()
+    total = job["total_draw_time_sec"]
+
+    while True:
+        await asyncio.sleep(0.5)
+        job_now = jobs.get(request_id)
+        if job_now is None or job_now["status"] in ("paused", "cancelled", "error"):
+            return
+        
+        elapsed = job_now["elapsed_before_pause"] + (time.monotonic() - job_now["started_at"])
+        job_now["progress_percent"] = min(99, int((elapsed / total) * 100))
+        job_now["estimated_time_remaining_sec"] = max(0, int(total - elapsed))
+
+        if elapsed >= total:
+            job_now.update({"status": "done", "progress_percent": 100, "estimated_time_remaining_sec": 0, "actual_draw_time_sec": int(elapsed)})
+            _log(request_id, f"ve xong, actual_draw_time_sec={int(elapsed)}")
+            return
+
+# ==========================================
+# 4. API PHẦN MỀM & LOGGING
+# ==========================================
 @app.get("/")
 def health_check():
     return {"status": "ok", "message": "Trạm trung chuyển OmniDraw đã sẵn sàng!"}
 
-
-# Thứ tự cột CSV cố định — dùng chung cho cả header và mỗi dòng ghi,
-# để không bao giờ bị lệch cột nếu sau này thêm field mới (thêm ở CSV_COLUMNS
-# là đủ, không phải sửa 2 chỗ).
 CSV_COLUMNS = [
-    "request_id",
-    "timestamp",
-    "dataset_item_id",
-    "method_tag",
-    "input_type",
-    "style",
-    "model_used",
-    "ai_processing_time_ms",
-    "svg_metrics.total_path_length_mm",
-    "svg_metrics.pen_lift_distance_mm",
-    "svg_metrics.pen_lift_count",
-    "svg_metrics.optimize_time_ms",
-    "actual_draw_time_sec",
-    "final_status",
-    "error_code",
+    "request_id", "timestamp", "dataset_item_id", "method_tag", "input_type", 
+    "style", "model_used", "ai_processing_time_ms", "svg_metrics.total_path_length_mm", 
+    "svg_metrics.pen_lift_distance_mm", "svg_metrics.pen_lift_count", 
+    "svg_metrics.optimize_time_ms", "actual_draw_time_sec", "final_status", "error_code"
 ]
 
-
-# Endpoint: Nhận và ghi log file CSV
 @app.post("/api/log/experiment")
 def log_experiment(payload: LogPayload):
-    # Tạo thư mục 'logs' nếu chưa có
     os.makedirs("logs", exist_ok=True)
     file_path = "logs/experiment_log.csv"
-
-    # Kiểm tra xem file đã tồn tại chưa để viết tiêu đề cột
     file_exists = os.path.isfile(file_path)
-
     metrics = payload.svg_metrics or SvgMetrics()
 
-    # Mở file CSV và ghi thêm (append) vào dòng cuối cùng
     with open(file_path, mode="a", newline="", encoding="utf-8") as file:
         writer = csv.writer(file)
-
-        # Nếu file mới tinh, ghi hàng tiêu đề (Headers)
         if not file_exists:
             writer.writerow(CSV_COLUMNS)
-
-        # Ghi dữ liệu thực tế từ React gửi lên — đúng thứ tự CSV_COLUMNS ở trên
         writer.writerow([
-            payload.request_id,
-            payload.timestamp,
-            payload.dataset_item_id,
-            payload.method_tag,
-            payload.input_type,
-            payload.style,
-            payload.model_used,
-            payload.ai_processing_time_ms,
-            metrics.total_path_length_mm,
-            metrics.pen_lift_distance_mm,
-            metrics.pen_lift_count,
-            metrics.optimize_time_ms,
-            payload.actual_draw_time_sec,
-            payload.final_status,
-            payload.error_code,
+            payload.request_id, payload.timestamp, payload.dataset_item_id, payload.method_tag, 
+            payload.input_type, payload.style, payload.model_used, payload.ai_processing_time_ms,
+            metrics.total_path_length_mm, metrics.pen_lift_distance_mm, metrics.pen_lift_count, 
+            metrics.optimize_time_ms, payload.actual_draw_time_sec, payload.final_status, payload.error_code
         ])
-
-    print(f"✅ Đã ghi log thành công vào CSV cho request: {payload.request_id}")
     return {"success": True, "message": "Đã lưu log thành công."}
-
 
 @app.post("/api/ai/generate")
 async def generate_ai_image(request: GenerateRequest):
-    print(
-        f"🎨 Nhận yêu cầu vẽ tranh ({request.request_id}) - "
-        f"Kiểu: {request.input_type} - Phong cách: {request.style}"
-    )
-
-    # SỬA: time.sleep(3) là hàm chặn (blocking) — gọi trong hàm async sẽ đứng
-    # luôn toàn bộ server suốt 3 giây đó, không request nào khác (kể cả health
-    # check) xử lý được. Dùng asyncio.sleep để chỉ "nhường" thời gian này cho
-    # các request khác, không chặn cả server. Quan trọng hơn khi sau này chạy
-    # hàng loạt 30 ảnh + 15 prompt cho thí nghiệm khoa học.
     await asyncio.sleep(3)
-
-    # Ảnh kết quả (sau này thay bằng ảnh do AI của bạn vẽ)
-    # TODO: đây vẫn là ảnh mẫu gọi ra Internet thật (Unsplash) — mất mạng lúc
-    # demo sẽ không hiện được ảnh. Thay bằng ảnh tĩnh local (vd: đặt 1 file
-    # trong thư mục static/ và trả đường dẫn nội bộ) khi có thời gian.
-    dummy_result_image = (
-        "https://images.unsplash.com/photo-1547826039-bfc35e0f1ea8"
-        "?auto=format&fit=crop&w=800&q=80"
-    )
-
-    print("✅ Đã xử lý xong ảnh AI!")
-
-    # Trả về đúng cấu trúc mà hàm generateArt bên Frontend đang chờ
     return {
         "request_id": request.request_id,
-        "result_image_base64": dummy_result_image,
+        "result_image_base64": "https://images.unsplash.com/photo-1547826039-bfc35e0f1ea8?auto=format&fit=crop&w=800&q=80",
         "meta": {"model_used": "ai-core-v1-python", "processing_time_ms": 3000},
     }
 
-
-# --- CÁC CỔNG API ĐIỀU KHIỂN MÁY VẼ ---
-
-
-class PrintRequest(BaseModel):
-    request_id: str
-    paper_size: Optional[str] = "a4"
-
-
-class PrintAction(BaseModel):
-    request_id: str
-
-
-@app.post("/api/print/start")
-async def start_print(request: PrintRequest):
-    print(f"🚀 Bắt đầu ra lệnh cho máy vẽ... (ID: {request.request_id})")
-    # TODO: Sau này gắn code kết nối với phần cứng máy vẽ thật vào đây
-    return {"request_id": request.request_id, "status": "printing"}
-
-
-@app.post("/api/print/pause")
-async def pause_print(request: PrintAction):
-    print(f"⏸️ Tạm dừng máy vẽ (ID: {request.request_id})")
-    return {"request_id": request.request_id, "status": "paused"}
-
-
-@app.post("/api/print/cancel")
-async def cancel_print(request: PrintAction):
-    print(f"🛑 Đã huỷ lệnh máy vẽ (ID: {request.request_id})")
-    return {"request_id": request.request_id, "status": "cancelled"}
-
-
-# Dùng một biến tạm để giả lập thời gian máy đang vẽ (thay thế cho thanh tiến trình Mock ở React)
-mock_print_jobs: Dict[str, float] = {}
-
-
-@app.get("/api/print/status/{request_id}")
-async def get_print_status(request_id: str):
-    # Nếu là lần đầu hỏi trạng thái, ghi nhận thời gian bắt đầu
-    if request_id not in mock_print_jobs:
-        mock_print_jobs[request_id] = time.time()
-
-    elapsed = time.time() - mock_print_jobs[request_id]
-    total_time = 15  # Giả lập máy cần 15 giây để vẽ xong
-
-    # SỬA: bổ sung "request_id" vào response — mục 5 API Spec yêu cầu trường
-    # này để frontend/log có thể đối chiếu, bản cũ thiếu (dù frontend hiện
-    # chưa dùng đến nên chưa gây lỗi, nhưng lệch chuẩn thì nên sửa sớm).
-
-    # Nếu đã qua 15 giây -> Báo xong!
-    if elapsed >= total_time:
-        return {
-            "request_id": request_id,
-            "status": "done",
-            "progress_percent": 100,
-            "estimated_time_remaining_sec": 0,
-            "actual_draw_time_sec": total_time,
-            "error": None,
-        }
-
-    # Nếu chưa xong -> Tính phần trăm tiến độ
-    percent = int((elapsed / total_time) * 100)
-    return {
-        "request_id": request_id,
-        "status": "printing",
-        "progress_percent": percent,
-        "estimated_time_remaining_sec": int(total_time - elapsed),
-        "actual_draw_time_sec": None,
-        "error": None,
-    }
-
-
-# --- LỊCH SỬ TRANH ĐÃ VẼ (mục 5c API Spec) ---
-# MỚI: endpoint này chưa tồn tại ở bản cũ, khiến màn Thư viện bên frontend
-# luôn nhận lỗi 404. Tạm trả dữ liệu mẫu cố định — thay bằng đọc từ
-# database/log CSV thật khi nhóm chốt xong 3 câu hỏi còn mở ở mục 5c
-# (nguồn "title", quan hệ với log CSV, định dạng "time_ago").
-
-
 @app.get("/api/history")
 async def get_history():
-    items = [
-        {
-            "id": "1",
-            "title": "Mèo ngủ",
-            "style": "sketch",
-            "time_ago": "2 ngày trước",
-            "minutes": 12,
-            "thumbnail_url": None,
-        },
-        {
-            "id": "2",
-            "title": "Phong cảnh núi",
-            "style": "line_art",
-            "time_ago": "5 ngày trước",
-            "minutes": 10,
-            "thumbnail_url": None,
-        },
-    ]
-    return {"items": items}
+    return {"items": [{"id": "1", "title": "Mèo ngủ", "style": "sketch", "time_ago": "2 ngày trước", "minutes": 12, "thumbnail_url": None}]}
+
+# ==========================================
+# 5. API ĐIỀU KHIỂN PHẦN CỨNG (AXIDRAW)
+# ==========================================
+@app.post("/api/print/start")
+async def start_print(body: StartRequest):
+    if not DEVICE_CONNECTED:
+        return error_response("HARDWARE_NOT_CONNECTED", "Máy không kết nối được", 503)
+    
+    total = svg_estimate_draw_time(body.request_id)
+    jobs[body.request_id] = {
+        "status": "queued", "progress_percent": 0, "estimated_time_remaining_sec": total,
+        "actual_draw_time_sec": None, "error": None, "total_draw_time_sec": total,
+        "started_at": None, "elapsed_before_pause": 0.0, "task": None,
+    }
+    jobs[body.request_id]["task"] = asyncio.create_task(_run_job(body.request_id))
+    return {"request_id": body.request_id, "status": "printing"}
+
+@app.post("/api/print/pause")
+async def pause_print(body: PauseCancelRequest):
+    job = jobs.get(body.request_id)
+    if not job or job["status"] != "printing":
+        raise HTTPException(status_code=409, detail="Không thể pause lúc này")
+    
+    job["elapsed_before_pause"] += (time.monotonic() - job["started_at"])
+    job["status"] = "paused"
+    return {"request_id": body.request_id, "status": "paused"}
+
+@app.post("/api/print/resume")
+async def resume_print(body: PauseCancelRequest):
+    job = jobs.get(body.request_id)
+    if not job or job["status"] != "paused":
+        raise HTTPException(status_code=409, detail="Chưa pause nên không thể resume")
+    
+    job.update({"started_at": time.monotonic(), "status": "printing", "task": asyncio.create_task(_run_job(body.request_id))})
+    return {"request_id": body.request_id, "status": "printing"}
+
+@app.post("/api/print/cancel")
+async def cancel_print(body: PauseCancelRequest):
+    job = jobs.get(body.request_id)
+    if not job: raise HTTPException(status_code=404, detail="ID không tồn tại")
+    
+    if job.get("task") and not job["task"].done(): job["task"].cancel()
+    job["status"] = "cancelled"
+    return {"request_id": body.request_id, "status": "cancelled"}
+
+@app.get("/api/print/status/{request_id}")
+async def get_status(request_id: str, simulate_error: Optional[str] = None):
+    job = jobs.get(request_id)
+    if not job: raise HTTPException(status_code=404, detail="ID không tồn tại")
+
+    if simulate_error in VALID_HARDWARE_ERRORS:
+        job.update({"status": "error", "error": {"code": simulate_error, "message": VALID_HARDWARE_ERRORS[simulate_error]}})
+
+    response = {k: v for k, v in job.items() if k in ["status", "progress_percent", "estimated_time_remaining_sec", "error"]}
+    response["request_id"] = request_id
+    if job["status"] == "done": response["actual_draw_time_sec"] = job["actual_draw_time_sec"]
+    return response
+
+# ==========================================
+# 6. GIAO DIỆN TEST HTML
+# ==========================================
+@app.get("/tester", response_class=HTMLResponse)
+async def html_tester():
+    # Trang giao diện HTML tĩnh nằm gọn trong 1 chuỗi để test 
+    return """
+    <!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><title>OmniDraw Mock Printer</title>
+    <style>body{font-family:sans-serif;max-width:600px;margin:40px auto;}</style></head>
+    <body><h2>🖨️ OmniDraw Mock Tester</h2>
+    <p>Truy cập <a href="/docs">/docs</a> để dùng Swagger UI đầy đủ.</p>
+    </body></html>
+    """
