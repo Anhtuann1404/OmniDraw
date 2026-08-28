@@ -27,7 +27,7 @@ import uuid
 from typing import Optional
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
 from pydantic import BaseModel
 
 # Tốc độ vẽ giả định của bút (mm/giây) khi bút đang chạm giấy — dùng để ước
@@ -39,6 +39,166 @@ ASSUMED_PEN_SPEED_MM_PER_SEC = 40.0
 # Thư mục chứa file SVG do module Thuật toán (TV2) xuất ra, đặt tên
 # output_{request_id}.svg theo đúng quy ước mục 4 API Spec.
 SVG_OUTPUT_DIR = os.environ.get("OMNIDRAW_SVG_DIR", "./svg_output")
+
+
+# ---------------------------------------------------------------------------
+# Trang tester HTML — bảng điều khiển trực quan cho người không quen gõ JSON
+# tay trên Swagger. Chỉ phục vụ demo/test, không thuộc API Spec chính thức.
+# ---------------------------------------------------------------------------
+
+TESTER_HTML = """
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>OmniDraw Mock Printer — Bảng test</title>
+<style>
+  body { font-family: -apple-system, "Segoe UI", Arial, sans-serif; max-width: 720px;
+         margin: 40px auto; padding: 0 20px; color: #1a1a1a; background: #fafafa; }
+  h1 { font-size: 22px; }
+  p.sub { color: #666; margin-top: -8px; }
+  .card { background: #fff; border: 1px solid #e0e0e0; border-radius: 10px;
+          padding: 20px; margin-bottom: 18px; }
+  label { font-weight: 600; font-size: 14px; display: block; margin-bottom: 6px; }
+  input[type=text] { width: 100%; padding: 9px 10px; font-size: 14px;
+          border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+  .btn-row { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+  button { padding: 9px 16px; font-size: 14px; border: none; border-radius: 6px;
+           cursor: pointer; color: #fff; font-weight: 600; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-start   { background: #16a34a; }
+  .btn-pause   { background: #ca8a04; }
+  .btn-resume  { background: #2563eb; }
+  .btn-cancel  { background: #dc2626; }
+  .btn-refresh { background: #4b5563; }
+  .status-box { margin-top: 16px; padding: 14px; border-radius: 8px; background: #f3f4f6;
+                font-family: "Cascadia Code", Consolas, monospace; font-size: 13px;
+                white-space: pre-wrap; }
+  .bar-bg { width: 100%; height: 18px; background: #e5e7eb; border-radius: 9px;
+            overflow: hidden; margin-top: 10px; }
+  .bar-fill { height: 100%; background: #16a34a; width: 0%; transition: width 0.3s; }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 12px;
+           font-size: 12px; font-weight: 700; color: #fff; }
+  .b-queued    { background: #9ca3af; }
+  .b-printing  { background: #2563eb; }
+  .b-paused    { background: #ca8a04; }
+  .b-done      { background: #16a34a; }
+  .b-error     { background: #dc2626; }
+  .b-cancelled { background: #6b7280; }
+  a.doclink { font-size: 13px; color: #2563eb; }
+  .step { font-size: 13px; color: #444; margin: 4px 0 0 0; }
+</style>
+</head>
+<body>
+  <h1>🖨️ OmniDraw Mock Printer — Bảng test</h1>
+  <p class="sub">Máy vẽ giả lập cho module Phần cứng (TV3). Bấm nút theo thứ tự để thử luồng vẽ.
+    Xem chi tiết kỹ thuật từng API tại <a class="doclink" href="/docs">/docs</a>.</p>
+
+  <div class="card">
+    <label for="rid">1. request_id (tự đặt tên bất kỳ, ví dụ demo1)</label>
+    <input type="text" id="rid" value="demo1">
+    <p class="step">👉 Gõ 1 mã tuỳ ý, dùng lại đúng mã này cho mọi nút bên dưới.</p>
+
+    <div class="btn-row">
+      <button class="btn-start" onclick="callApi('start')">2. Bắt đầu vẽ</button>
+      <button class="btn-pause" onclick="callApi('pause')">3. Tạm dừng</button>
+      <button class="btn-resume" onclick="callApi('resume')">4. Tiếp tục</button>
+      <button class="btn-cancel" onclick="callApi('cancel')">5. Huỷ vẽ</button>
+      <button class="btn-refresh" onclick="refreshStatus()">🔄 Xem trạng thái</button>
+    </div>
+
+    <div class="bar-bg"><div class="bar-fill" id="bar"></div></div>
+    <div id="badge"></div>
+    <div class="status-box" id="statusBox">Chưa có dữ liệu — bấm "Bắt đầu vẽ" trước.</div>
+  </div>
+
+  <div class="card">
+    <b>Mẹo đọc kết quả:</b>
+    <ul style="font-size:13px; line-height:1.6;">
+      <li><b>progress_percent</b> — % đã vẽ xong</li>
+      <li><b>status</b> — queued / printing / paused / done / error / cancelled</li>
+      <li>Sau khi "Tạm dừng", bấm "Xem trạng thái" — % phải <b>giữ nguyên</b>, không mất tiến độ</li>
+      <li>Trang này tự làm mới trạng thái mỗi 1 giây khi đang "printing"</li>
+    </ul>
+  </div>
+
+<script>
+let pollTimer = null;
+
+function badgeClass(status) {
+  return {
+    queued: "b-queued", printing: "b-printing", paused: "b-paused",
+    done: "b-done", error: "b-error", cancelled: "b-cancelled"
+  }[status] || "b-queued";
+}
+
+function render(data) {
+  document.getElementById("statusBox").textContent = JSON.stringify(data, null, 2);
+  const pct = data.progress_percent ?? 0;
+  document.getElementById("bar").style.width = pct + "%";
+  const status = data.status || "?";
+  document.getElementById("badge").innerHTML =
+    '<span class="badge ' + badgeClass(status) + '">' + status + '</span>';
+
+  clearInterval(pollTimer);
+  if (status === "printing") {
+    pollTimer = setInterval(refreshStatus, 1000);
+  }
+}
+
+async function callApi(action) {
+  const rid = document.getElementById("rid").value.trim();
+  if (!rid) { alert("Nhập request_id trước đã"); return; }
+
+  const urlMap = {
+    start: "/api/print/start",
+    pause: "/api/print/pause",
+    resume: "/api/print/resume",
+    cancel: "/api/print/cancel",
+  };
+  const body = action === "start"
+    ? { request_id: rid, paper_size: "a4" }
+    : { request_id: rid };
+
+  try {
+    const res = await fetch(urlMap[action], {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      document.getElementById("statusBox").textContent =
+        "Lỗi (" + res.status + "):\\n" + JSON.stringify(data, null, 2);
+      return;
+    }
+    await refreshStatus();
+  } catch (e) {
+    document.getElementById("statusBox").textContent = "Không gọi được server: " + e;
+  }
+}
+
+async function refreshStatus() {
+  const rid = document.getElementById("rid").value.trim();
+  if (!rid) return;
+  try {
+    const res = await fetch("/api/print/status/" + encodeURIComponent(rid));
+    const data = await res.json();
+    if (!res.ok) {
+      document.getElementById("statusBox").textContent =
+        "Lỗi (" + res.status + "):\\n" + JSON.stringify(data, null, 2);
+      clearInterval(pollTimer);
+      return;
+    }
+    render(data);
+  } catch (e) {
+    document.getElementById("statusBox").textContent = "Không gọi được server: " + e;
+  }
+}
+</script>
+</body>
+</html>
+"""
 
 app = FastAPI(title="OmniDraw Mock Printer (Hardware - TV3)")
 
@@ -392,19 +552,10 @@ async def get_status(request_id: str, simulate_error: Optional[str] = None):
 # Endpoint phụ trợ để test nhanh (không thuộc API Spec)
 # ---------------------------------------------------------------------------
 
-@app.get("/")
+@app.get("/", response_class=HTMLResponse)
 async def root():
-    return {
-        "message": "OmniDraw Mock Printer (Hardware - TV3) dang chay",
-        "endpoints": [
-            "POST /api/print/start",
-            "POST /api/print/pause",
-            "POST /api/print/resume  (tam thoi, can TV4 xac nhan co dua vao API Spec khong)",
-            "POST /api/print/cancel",
-            "GET  /api/print/status/{request_id}",
-        ],
-        "docs": "/docs",
-    }
+    """Trang chủ: bảng điều khiển demo trực quan, bấm nút thay vì gõ JSON tay."""
+    return TESTER_HTML
 
 
 @app.get("/api/_debug/jobs")
