@@ -11,7 +11,7 @@
 | -------------------------- | ----------- | --------------------------------------- | ------------ |
 | TV1 — AI Core              | *(điền)*    | *(điền, hoặc để trống nếu không nghẽn)* | *(điền)*     |
 | TV2 — AI Ứng dụng/CV       | *(điền)*    | *(điền)*                                | *(điền)*     |
-| TV3 — Phần cứng            | làm thinh   | hok bik                                 | today        |
+| TV3 — Phần cứng            |Đã build và test xong mock printer server (start/pause/resume/cancel/status)                                    | hok bik                                 | today        |
 | TV4 — Giao diện & Tích hợp | (điền)      | *(điền)*                                | *(điền)*     |
 
 
