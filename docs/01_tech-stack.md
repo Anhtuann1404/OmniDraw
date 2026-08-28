@@ -37,7 +37,7 @@
 | Vi điều khiển               | *(vd: Arduino/ESP32...)* | *(điền)* |
 | Ngôn ngữ firmware           | *(điền)*                 | *(điền)* |
 | Camera/cảm biến sử dụng     | *(điền)*                 | *(điền)* |
-| Thư viện điều khiển AxiDraw | *(điền)*                 | *(điền)* |
+| Thư viện điều khiển AxiDraw | pyaxidraw                | *(điền)* |
 
 
 
