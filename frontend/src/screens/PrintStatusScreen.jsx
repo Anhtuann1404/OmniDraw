@@ -1,30 +1,18 @@
 import React from "react";
-import { Clock, Route, Plug, PauseCircle, XCircle } from "lucide-react";
+import { Clock, Route, Plug, PauseCircle, XCircle, PlayCircle } from "lucide-react";
 import { ScreenShell, ComicButton, StepBadge, Logo, HardShadowBox } from "../components/ComicPrimitives";
 
-/**
- * Màn 4 — Theo dõi tiến độ vẽ
- * Props:
- *  - progressPercent (0-100)
- *  - strokesDone, strokesTotal
- *  - etaMinutes
- *  - machineStatus: "ok" | "error"
- *  - errorMessage?: string
- *  - onPause() / onCancel()
- *
- * Ghi chú: hiệu ứng "vẽ dần" ở đây là mô phỏng theo % (frontend-only, xem OmniDraw_API_Spec.md
- * mục 6 nếu sau này muốn nâng cấp lên phản ánh đúng thật theo current_path_index từ phần cứng).
- */
 export default function PrintStatusScreen({
   progressPercent = 58,
   strokesDone = 144,
   strokesTotal = 248,
   etaMinutes = 5,
   machineStatus = "ok",
+  isPaused = false,
   onPause,
+  onResume,
   onCancel,
 }) {
-  // stroke-dashoffset mô phỏng theo % — giá trị minh hoạ, thay bằng logic thật khi có SVG thật
   const pathDrawnOffset = Math.max(0, 240 - (240 * progressPercent) / 100);
 
   return (
@@ -39,11 +27,9 @@ export default function PrintStatusScreen({
           <div className="flex items-center justify-center bg-[#FEFDF9] rounded-xl p-3">
             <svg width="200" height="200" viewBox="0 0 220 220">
               <rect x="4" y="4" width="212" height="212" fill="none" stroke="#D8D5C8" strokeWidth="1" strokeDasharray="3,2" />
-              {/* Nét chưa vẽ (nền xám nhạt) */}
               <path d="M50,170 Q60,60 110,90 T170,40" fill="none" stroke="#E5E2D6" strokeWidth="2.2" />
               <path d="M55,185 Q95,150 145,175" fill="none" stroke="#E5E2D6" strokeWidth="2.2" />
               <circle cx="150" cy="70" r="18" fill="none" stroke="#E5E2D6" strokeWidth="2.2" />
-              {/* Nét đã vẽ (đen/đỏ), tô theo % tiến độ */}
               <path
                 d="M50,170 Q60,60 110,90 T170,40"
                 fill="none"
@@ -92,11 +78,19 @@ export default function PrintStatusScreen({
       </div>
 
       <div className="flex items-center justify-between border-t-[3px] border-[#1A1A1A] pt-5">
-        <ComicButton variant="secondary" onClick={onPause}>
-          <span className="flex items-center gap-1.5">
-            <PauseCircle size={15} /> TẠM DỪNG
-          </span>
-        </ComicButton>
+        {isPaused ? (
+          <ComicButton variant="primary" onClick={onResume}>
+            <span className="flex items-center gap-1.5">
+              <PlayCircle size={15} /> TIẾP TỤC
+            </span>
+          </ComicButton>
+        ) : (
+          <ComicButton variant="secondary" onClick={onPause}>
+            <span className="flex items-center gap-1.5">
+              <PauseCircle size={15} /> TẠM DỪNG
+            </span>
+          </ComicButton>
+        )}
         <ComicButton variant="secondary" onClick={onCancel} className="!text-[#C0392B]">
           <span className="flex items-center gap-1.5">
             <XCircle size={15} /> HUỶ VẼ

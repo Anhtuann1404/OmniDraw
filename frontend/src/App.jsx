@@ -5,30 +5,24 @@ import ConfirmScreen from "./screens/ConfirmScreen";
 import PrintStatusScreen from "./screens/PrintStatusScreen";
 import DoneScreen from "./screens/DoneScreen";
 import HistoryScreen from "./screens/HistoryScreen";
-import { generateArt, startPrint, pausePrint, cancelPrint, getHistory, logExperimentData } from "./api/omnidraw";
+import { generateArt, startPrint, pausePrint, resumePrint, cancelPrint, getHistory, logExperimentData } from "./api/omnidraw";
 import { usePrintStatusPolling } from "./hooks/usePrintStatusPolling";
 import { MOCK_MODE } from "./api/config";
 
-
-/**
- * App — nối 5 màn theo đúng luồng, gọi API thật qua src/api/omnidraw.js.
- */
 export default function App() {
-  const [step, setStep] = useState("create"); // "create" | "preview" | "confirm" | "printing" | "done" | "history"
-  const [aiResult, setAiResult] = useState(null); // { requestId, resultImageBase64, meta, style }
-  const [doneInfo, setDoneInfo] = useState(null); // { actualDrawTimeSec }
+  const [step, setStep] = useState("create"); 
+  const [aiResult, setAiResult] = useState(null); 
+  const [doneInfo, setDoneInfo] = useState(null); 
   const [historyItems, setHistoryItems] = useState(null);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
+  const [optimisticStatus, setOptimisticStatus] = useState(null); // Thêm state tối ưu giao diện
 
   const { statusData } = usePrintStatusPolling(step === "printing" ? aiResult?.requestId : null);
 
-  // KẾT HỢP: Khi máy vẽ xong (hoặc lỗi) -> Tự động ghi log -> Chuyển sang màn DoneScreen
   useEffect(() => {
     if (step === "printing" && statusData) {
       if (statusData.status === "done" || statusData.status === "error") {
-        
-        // 1. Bắn API ghi log tự động
         const payload = {
           request_id: aiResult?.requestId,
           timestamp: new Date().toISOString(),
@@ -43,7 +37,6 @@ export default function App() {
           console.warn("Lỗi ghi log CSV:", err)
         );
 
-        // 2. Chuyển UI sang màn hoàn thành nếu vẽ thành công
         if (statusData.status === "done") {
           setDoneInfo({ actualDrawTimeSec: statusData.actualDrawTimeSec });
           setStep("done");
@@ -81,9 +74,22 @@ export default function App() {
 
   async function handlePause() {
     if (!aiResult?.requestId) return;
+    setOptimisticStatus("paused"); // Cập nhật giao diện ngay lập tức
     try {
       await pausePrint(aiResult.requestId);
     } catch (err) {
+      setOptimisticStatus(null); // Hoàn tác nếu lỗi
+      setErrorMsg(err.message);
+    }
+  }
+
+  async function handleResume() {
+    if (!aiResult?.requestId) return;
+    setOptimisticStatus("printing"); // Cập nhật giao diện ngay lập tức
+    try {
+      await resumePrint(aiResult.requestId);
+    } catch (err) {
+      setOptimisticStatus(null); // Hoàn tác nếu lỗi
       setErrorMsg(err.message);
     }
   }
@@ -91,10 +97,7 @@ export default function App() {
   async function handleCancel() {
     if (aiResult?.requestId) {
       try {
-        // 1. Dừng máy vẽ
         await cancelPrint(aiResult.requestId);
-
-        // 2. ÉP GHI LOG HUỶ (Phần cực kỳ quan trọng để CSV nhận dữ liệu)
         await logExperimentData({
           request_id: aiResult.requestId,
           timestamp: new Date().toISOString(),
@@ -104,23 +107,21 @@ export default function App() {
           actual_draw_time_sec: 0, 
           error_code: null
         });
-        console.log("✅ Đã ghi log trạng thái cancelled thành công!");
-
       } catch (err) {
         setErrorMsg(err.message);
       }
     }
-    
-    // 3. Sau khi ghi xong mới chuyển màn hình
     setStep("create");
     setAiResult(null);
     setDoneInfo(null);
+    setOptimisticStatus(null); // Xóa trạng thái ảo khi hủy
   }
 
   function handleCreateNewFromDone() {
     setAiResult(null);
     setDoneInfo(null);
     setStep("create");
+    setOptimisticStatus(null);
   }
 
   async function openHistory() {
@@ -169,7 +170,9 @@ export default function App() {
           progressPercent={statusData.progressPercent}
           etaMinutes={Math.ceil((statusData.etaSec || 0) / 60)}
           machineStatus={statusData.status === "error" ? "error" : "ok"}
+          isPaused={(optimisticStatus || statusData.status) === "paused"} // Ưu tiên trạng thái ảo trước
           onPause={handlePause}
+          onResume={handleResume}
           onCancel={handleCancel}
         />
       )}
@@ -187,7 +190,6 @@ export default function App() {
         <HistoryScreen items={historyItems || []} onCreateNew={() => setStep("create")} onOpenItem={(item) => console.log("open", item)} />
       )}
 
-      {/* Thanh điều hướng nhanh phục vụ demo/test — xoá khi tích hợp thật xong hoàn toàn */}
       <div className="fixed bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bg-white border-2 border-[#1A1A1A] rounded-full px-3 py-2 shadow-lg">
         {[
           ["create", "create"],
