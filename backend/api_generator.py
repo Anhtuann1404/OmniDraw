@@ -25,6 +25,7 @@ from dataclasses import dataclass, asdict
 import requests
 from docx import Document
 from openai import OpenAI, APITimeoutError
+from logs.csv_logger import log_experiment_csv  # Thay đổi 1: Import hàm ghi CSV
 
 # ============================================================================
 # CONFIG
@@ -33,7 +34,9 @@ from openai import OpenAI, APITimeoutError
 BASE_DIR = Path(__file__).parent
 DATA_DIR = BASE_DIR / "backend" / "data"
 LOGS_DIR = BASE_DIR / "backend" / "logs"
-DOCX_PATH = Path(r"D:\nguyen thang\NCKH\OmniDraw\TV1_15_prompts.docx")
+
+# Thay đổi 2: Dùng biến môi trường, giữ nguyên đường dẫn cũ làm mặc định
+DOCX_PATH = Path(os.getenv("OMNIDRAW_PROMPT_DOCX", r"D:\nguyen thang\NCKH\OmniDraw\TV1_15_prompts.docx"))
 
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 LOGS_DIR.mkdir(parents=True, exist_ok=True)
@@ -154,7 +157,8 @@ def load_prompts_from_docx(docx_path: Path) -> List[PromptData]:
             logger.warning(f"⚠️  Lỗi parse: {str(e)}")
             continue
 
-        logger.info(f"✅ Trích xuất {len(prompts)} prompt thành công")
+    # Thay đổi 3: Đã lùi lề ra ngoài vòng for
+    logger.info(f"✅ Trích xuất {len(prompts)} prompt thành công")
     return prompts
 
 
@@ -174,12 +178,15 @@ def call_openai_image_api(
     start_time = datetime.now()
     response = APIResponse(request_id=request_id, status="error")
 
+    # Thay đổi 4: Gắn style vào prompt trước khi gửi đi
+    final_prompt = f"{prompt}, {style} style" if style else prompt
+
     try:
         client = OpenAI(api_key=OPENAI_API_KEY, timeout=timeout)
 
         image_response = client.images.generate(
             model=OPENAI_MODEL,
-            prompt=prompt,
+            prompt=final_prompt,  # Sử dụng biến đã gắn style
             size=IMAGE_SIZE,
             quality=IMAGE_QUALITY,
             n=1,
@@ -293,15 +300,18 @@ def log_to_csv(
             error_code=response.error_code
         )
 
-        is_new_file = not csv_path.exists()
+        # Thay đổi 5: Comment lại code cũ, gọi hàm chung (giữ nguyên độ dài code)
+        # is_new_file = not csv_path.exists()
+        #
+        # with open(csv_path, "a", newline="", encoding="utf-8") as f:
+        #     writer = csv.DictWriter(f, fieldnames=asdict(log_entry).keys())
+        #
+        #     if is_new_file:
+        #         writer.writeheader()
+        #
+        #     writer.writerow(asdict(log_entry))
 
-        with open(csv_path, "a", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(f, fieldnames=asdict(log_entry).keys())
-
-            if is_new_file:
-                writer.writeheader()
-
-            writer.writerow(asdict(log_entry))
+        log_experiment_csv(asdict(log_entry), str(csv_path))
 
         logger.info(f"[{response.request_id}] 📊 Ghi log CSV")
         return True

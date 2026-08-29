@@ -1,5 +1,4 @@
 import asyncio
-import csv
 import math
 import os
 import re
@@ -11,11 +10,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, HTMLResponse
 from pydantic import BaseModel
 
+from logs.csv_logger import log_experiment_csv
+
 app = FastAPI(title="OmniDraw API Gateway (Master Integrated)")
 
-# ==========================================
-# 1. CẤU HÌNH CORS & BẢO MẬT
-# ==========================================
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5175", "http://127.0.0.1:5175"],
@@ -24,9 +22,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 class LoginRequest(BaseModel):
     email: str
     password: str
+
 
 @app.post("/api/auth/login")
 async def login_admin(request: LoginRequest):
@@ -34,14 +34,13 @@ async def login_admin(request: LoginRequest):
         return {"token": "admin-token", "user": {"id": "1", "name": "Admin", "email": request.email}}
     return custom_error("AUTH_FAILED", "Sai thông tin.", 401)
 
-# ==========================================
-# 2. CẤU TRÚC LOG & NCKH
-# ==========================================
+
 class SvgMetrics(BaseModel):
     total_path_length_mm: Optional[float] = None
     pen_lift_distance_mm: Optional[float] = None
     pen_lift_count: Optional[int] = None
     optimize_time_ms: Optional[float] = None
+
 
 class LogPayload(BaseModel):
     request_id: str
@@ -57,34 +56,31 @@ class LogPayload(BaseModel):
     final_status: str
     error_code: Optional[str] = None
 
-CSV_COLUMNS = [
-    "request_id", "timestamp", "dataset_item_id", "method_tag", "input_type", 
-    "style", "model_used", "ai_processing_time_ms", "svg_metrics.total_path_length_mm", 
-    "svg_metrics.pen_lift_distance_mm", "svg_metrics.pen_lift_count", 
-    "svg_metrics.optimize_time_ms", "actual_draw_time_sec", "final_status", "error_code"
-]
 
 @app.post("/api/log/experiment")
 def log_experiment(payload: LogPayload):
-    os.makedirs("logs", exist_ok=True)
-    file_path = "logs/experiment_log.csv"
-    file_exists = os.path.isfile(file_path)
     metrics = payload.svg_metrics or SvgMetrics()
-
-    with open(file_path, mode="a", newline="", encoding="utf-8") as file:
-        writer = csv.writer(file)
-        if not file_exists: writer.writerow(CSV_COLUMNS)
-        writer.writerow([
-            payload.request_id, payload.timestamp, payload.dataset_item_id, payload.method_tag, 
-            payload.input_type, payload.style, payload.model_used, payload.ai_processing_time_ms, 
-            metrics.total_path_length_mm, metrics.pen_lift_distance_mm, metrics.pen_lift_count, 
-            metrics.optimize_time_ms, payload.actual_draw_time_sec, payload.final_status, payload.error_code
-        ])
+    payload_dict = {
+        "request_id": payload.request_id,
+        "timestamp": payload.timestamp,
+        "dataset_item_id": payload.dataset_item_id,
+        "method_tag": payload.method_tag,
+        "input_type": payload.input_type,
+        "style": payload.style,
+        "model_used": payload.model_used,
+        "ai_processing_time_ms": payload.ai_processing_time_ms,
+        "svg_metrics.total_path_length_mm": metrics.total_path_length_mm,
+        "svg_metrics.pen_lift_distance_mm": metrics.pen_lift_distance_mm,
+        "svg_metrics.pen_lift_count": metrics.pen_lift_count,
+        "svg_metrics.optimize_time_ms": metrics.optimize_time_ms,
+        "actual_draw_time_sec": payload.actual_draw_time_sec,
+        "final_status": payload.final_status,
+        "error_code": payload.error_code
+    }
+    log_experiment_csv(payload_dict, "logs/experiment_log.csv")
     return {"success": True}
 
-# ==========================================
-# 3. AI CORE
-# ==========================================
+
 class GenerateRequest(BaseModel):
     request_id: str
     input_type: str
@@ -93,6 +89,7 @@ class GenerateRequest(BaseModel):
     style: str
     options: Optional[Dict[str, Any]] = None
     experiment: Optional[Dict[str, Any]] = None
+
 
 @app.post("/api/ai/generate")
 async def generate_ai_image(request: GenerateRequest):
@@ -103,31 +100,36 @@ async def generate_ai_image(request: GenerateRequest):
         "meta": {"model_used": "ai-core-v1-python", "processing_time_ms": 3000},
     }
 
+
 @app.get("/api/history")
 async def get_history():
-    return {"items": [{"id": "1", "title": "Mèo ngủ", "style": "sketch", "time_ago": "2 ngày trước", "minutes": 12, "thumbnail_url": None}]}
+    return {"items": [{"id": "1", "title": "Mèo ngủ", "style": "sketch", "time_ago": "2 ngày trước", "minutes": 12,
+                       "thumbnail_url": None}]}
 
-# ==========================================
-# 4. MOCK PRINTER & THUẬT TOÁN VẬT LÝ
-# ==========================================
+
 ASSUMED_PEN_SPEED_MM_PER_SEC = 40.0
 SVG_OUTPUT_DIR = os.environ.get("OMNIDRAW_SVG_DIR", "./svg_output")
 jobs: dict[str, dict] = {}
 DEVICE_CONNECTED = True
-VALID_HARDWARE_ERRORS = {"HARDWARE_NOT_CONNECTED": "Lỗi kết nối", "HARDWARE_PAPER_JAM": "Kẹt giấy", "HARDWARE_OUT_OF_INK": "Hết mực"}
+VALID_HARDWARE_ERRORS = {"HARDWARE_NOT_CONNECTED": "Lỗi kết nối", "HARDWARE_PAPER_JAM": "Kẹt giấy",
+                         "HARDWARE_OUT_OF_INK": "Hết mực"}
+
 
 class StartRequest(BaseModel):
     request_id: str
     paper_size: str = "a4"
 
+
 class PauseCancelRequest(BaseModel):
     request_id: str
+
 
 def custom_error(code: str, message: str, status_code: int = 400):
     return JSONResponse(
         status_code=status_code,
         content={"status": "error", "error": {"code": code, "message": message}}
     )
+
 
 def _parse_path_length_mm(d_attr: str) -> float:
     tokens = re.findall(r"[MLmlZz]|-?\d*\.?\d+", d_attr)
@@ -162,6 +164,7 @@ def _parse_path_length_mm(d_attr: str) -> float:
             cmd = "L" if cmd == "M" else "l"
     return total
 
+
 def svg_estimate_draw_time(request_id: str) -> int:
     svg_path = os.path.join(SVG_OUTPUT_DIR, f"output_{request_id}.svg")
     if os.path.isfile(svg_path):
@@ -173,9 +176,10 @@ def svg_estimate_draw_time(request_id: str) -> int:
                 return max(2, int(round(length_mm / ASSUMED_PEN_SPEED_MM_PER_SEC)))
         except Exception as exc:
             print(f"[warn] khong doc duoc {svg_path}: {exc}")
-    
+
     seed = sum(ord(c) for c in request_id) % 20
-    return 15 + seed 
+    return 15 + seed
+
 
 async def _run_job(request_id: str):
     job = jobs[request_id]
@@ -192,40 +196,43 @@ async def _run_job(request_id: str):
         job_now["estimated_time_remaining_sec"] = max(0, int(total - elapsed))
 
         if elapsed >= total:
-            job_now.update({"status": "done", "progress_percent": 100, "estimated_time_remaining_sec": 0, "actual_draw_time_sec": int(elapsed)})
+            job_now.update({"status": "done", "progress_percent": 100, "estimated_time_remaining_sec": 0,
+                            "actual_draw_time_sec": int(elapsed)})
             return
 
-# ==========================================
-# 5. API ĐIỀU KHIỂN PHẦN CỨNG (AXIDRAW)
-# ==========================================
+
 @app.post("/api/print/start")
 async def start_print(body: StartRequest):
-    if not DEVICE_CONNECTED: 
+    if not DEVICE_CONNECTED:
         return custom_error("HARDWARE_NOT_CONNECTED", "Mất kết nối máy vẽ", 503)
     if body.request_id in jobs and jobs[body.request_id]["status"] in ("printing", "paused"):
         return custom_error("JOB_ALREADY_EXISTS", "Bản vẽ này đang chạy", 409)
-        
+
     total = svg_estimate_draw_time(body.request_id)
-    jobs[body.request_id] = {"status": "queued", "progress_percent": 0, "estimated_time_remaining_sec": total, "actual_draw_time_sec": None, "error": None, "total_draw_time_sec": total, "started_at": None, "elapsed_before_pause": 0.0, "task": None}
+    jobs[body.request_id] = {"status": "queued", "progress_percent": 0, "estimated_time_remaining_sec": total,
+                             "actual_draw_time_sec": None, "error": None, "total_draw_time_sec": total,
+                             "started_at": None, "elapsed_before_pause": 0.0, "task": None}
     jobs[body.request_id]["task"] = asyncio.create_task(_run_job(body.request_id))
     return {"request_id": body.request_id, "status": "printing"}
+
 
 @app.post("/api/print/pause")
 async def pause_print(body: PauseCancelRequest):
     job = jobs.get(body.request_id)
     if not job: return custom_error("JOB_NOT_FOUND", "Không tìm thấy ID", 404)
-    
+
     if job["status"] == "printing":
         job["elapsed_before_pause"] += (time.monotonic() - job["started_at"])
         job["status"] = "paused"
         return {"request_id": body.request_id, "status": "paused"}
     return custom_error("INVALID_STATE", "Chỉ có thể tạm dừng khi đang in", 409)
 
+
 @app.post("/api/print/resume")
 async def resume_print(body: PauseCancelRequest):
     job = jobs.get(body.request_id)
     if not job: return custom_error("JOB_NOT_FOUND", "Không tìm thấy ID", 404)
-    
+
     if job["status"] == "paused":
         job["started_at"] = time.monotonic()
         job["status"] = "printing"
@@ -233,26 +240,31 @@ async def resume_print(body: PauseCancelRequest):
         return {"request_id": body.request_id, "status": "printing"}
     return custom_error("INVALID_STATE", "Chỉ có thể tiếp tục khi đang tạm dừng", 409)
 
+
 @app.post("/api/print/cancel")
 async def cancel_print(body: PauseCancelRequest):
     job = jobs.get(body.request_id)
     if not job: return custom_error("JOB_NOT_FOUND", "Không tìm thấy ID", 404)
-    
+
     if job.get("task") and not job["task"].done(): job["task"].cancel()
     job["status"] = "cancelled"
     return {"request_id": body.request_id, "status": "cancelled"}
+
 
 @app.get("/api/print/status/{request_id}")
 async def get_status(request_id: str, simulate_error: Optional[str] = None):
     job = jobs.get(request_id)
     if not job: return custom_error("JOB_NOT_FOUND", "Không tìm thấy ID", 404)
-    
+
     if simulate_error:
-        job.update({"status": "error", "error": {"code": simulate_error, "message": VALID_HARDWARE_ERRORS.get(simulate_error, "Lỗi giả lập")}})
-        
-    res = {"request_id": request_id, "status": job["status"], "progress_percent": job["progress_percent"], "estimated_time_remaining_sec": job["estimated_time_remaining_sec"], "error": job["error"]}
+        job.update({"status": "error", "error": {"code": simulate_error,
+                                                 "message": VALID_HARDWARE_ERRORS.get(simulate_error, "Lỗi giả lập")}})
+
+    res = {"request_id": request_id, "status": job["status"], "progress_percent": job["progress_percent"],
+           "estimated_time_remaining_sec": job["estimated_time_remaining_sec"], "error": job["error"]}
     if job["status"] == "done": res["actual_draw_time_sec"] = job["actual_draw_time_sec"]
     return res
+
 
 @app.get("/")
 async def root():
