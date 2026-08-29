@@ -7,13 +7,6 @@ import { MOCK_MODE } from "./config";
 
 /**
  * Mục 2 của API Spec — Giao diện → AI (sinh ảnh / style transfer)
- * @param {Object} params
- * @param {"image"|"text"} params.inputType
- * @param {string} [params.imageBase64] - bắt buộc nếu inputType = "image"
- * @param {string} [params.prompt] - bắt buộc nếu inputType = "text"
- * @param {"sketch"|"line_art"|"stipple"|"hatching"} params.style
- * @param {{datasetItemId?: string, methodTag?: string}} [params.experiment] - chỉ điền khi chạy thí nghiệm RQ (mục 6 API Spec)
- * @returns {Promise<{requestId: string, resultImageBase64: string, meta: object}>}
  */
 export async function generateArt({ inputType, imageBase64, prompt, style, experiment }) {
   const requestId = generateRequestId();
@@ -22,7 +15,6 @@ export async function generateArt({ inputType, imageBase64, prompt, style, exper
     await delay(1200);
     return {
       requestId,
-      // Mượn ảnh gốc (imageBase64) truyền vào để hiển thị luôn
       resultImageBase64: inputType === "image" ? imageBase64 : "https://via.placeholder.com/400x300.png?text=Mock+Text+Result", 
       meta: { modelUsed: "style-transfer-v1 (mock)", processingTimeMs: 1200 },
     };
@@ -51,9 +43,6 @@ export async function generateArt({ inputType, imageBase64, prompt, style, exper
 
 /**
  * Mục 5 của API Spec — Máy vẽ → Giao diện (trạng thái/tiến độ)
- * Gọi 1 lần; nếu cần polling liên tục, dùng hook usePrintStatusPolling ở src/hooks/.
- * @param {string} requestId
- * @returns {Promise<{status: string, progressPercent: number, etaSec: number, actualDrawTimeSec: number|null, error: {code:string,message:string}|null}>}
  */
 export async function getPrintStatus(requestId) {
   if (MOCK_MODE) {
@@ -73,16 +62,9 @@ export async function getPrintStatus(requestId) {
 }
 
 // ============================================================================
-// ĐỀ XUẤT ENDPOINT MỚI — CHƯA CÓ TRONG API SPEC, CẦN NHÓM THỐNG NHẤT RỒI
-// BỔ SUNG VÀO OmniDraw_API_Spec.md TRƯỚC KHI BACKEND CODE THEO ĐÂY.
-// Quy ước request/response bên dưới là đề xuất hợp lý dựa trên các mục đã có
-// (cùng dùng request_id, cùng cấu trúc lỗi {code, message} như mục 8), không phải chuẩn chính thức.
+// ĐỀ XUẤT ENDPOINT MỚI
 // ============================================================================
 
-/**
- * [ĐỀ XUẤT] Bắt đầu vẽ sau khi người dùng xác nhận ở màn Confirm.
- * Endpoint gợi ý: POST /api/print/start
- */
 export async function startPrint({ requestId, paperSize = "a4" }) {
   if (MOCK_MODE) {
     await delay(400);
@@ -95,7 +77,6 @@ export async function startPrint({ requestId, paperSize = "a4" }) {
   return { requestId: data.request_id, status: data.status };
 }
 
-/** [ĐỀ XUẤT] Tạm dừng máy đang vẽ. Endpoint gợi ý: POST /api/print/pause */
 export async function pausePrint(requestId) {
   if (MOCK_MODE) {
     await delay(200);
@@ -105,7 +86,16 @@ export async function pausePrint(requestId) {
   return { requestId: data.request_id, status: data.status };
 }
 
-/** [ĐỀ XUẤT] Huỷ lệnh vẽ đang chạy. Endpoint gợi ý: POST /api/print/cancel */
+// BỔ SUNG: Hàm tiếp tục vẽ
+export async function resumePrint(requestId) {
+  if (MOCK_MODE) {
+    await delay(200);
+    return { requestId, status: "printing" };
+  }
+  const data = await apiRequest("/api/print/resume", { method: "POST", body: { request_id: requestId } });
+  return { requestId: data.request_id, status: data.status };
+}
+
 export async function cancelPrint(requestId) {
   if (MOCK_MODE) {
     await delay(200);
@@ -115,7 +105,6 @@ export async function cancelPrint(requestId) {
   return { requestId: data.request_id, status: data.status };
 }
 
-/** [ĐỀ XUẤT] Lấy danh sách tranh đã vẽ cho màn Thư viện. Endpoint gợi ý: GET /api/history */
 export async function getHistory() {
   if (MOCK_MODE) {
     await delay(300);
@@ -136,6 +125,14 @@ export async function getHistory() {
   }));
 }
 
+export async function logExperimentData(logPayload) {
+  const data = await apiRequest("/api/log/experiment", { 
+    method: "POST", 
+    body: logPayload 
+  });
+  return data;
+}
+
 // ============================================================================
 // Helpers nội bộ cho mock mode
 // ============================================================================
@@ -144,14 +141,12 @@ function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// Mô phỏng tiến độ tăng dần theo thời gian kể từ lúc requestId được tạo,
-// để test màn PrintStatusScreen mà không cần backend thật.
 const mockStartTimes = new Map();
 
 function mockProgressStatus(requestId) {
   if (!mockStartTimes.has(requestId)) mockStartTimes.set(requestId, Date.now());
   const elapsedSec = (Date.now() - mockStartTimes.get(requestId)) / 1000;
-  const totalMockSec = 20; // giả lập vẽ xong sau 20s cho dễ test
+  const totalMockSec = 20; 
   const percent = Math.min(100, Math.round((elapsedSec / totalMockSec) * 100));
 
   if (percent >= 100) {
@@ -164,22 +159,4 @@ function mockProgressStatus(requestId) {
     actualDrawTimeSec: null,
     error: null,
   };
-}
-/** 
- * [ĐỀ XUẤT] Ghi log thông số khi hoàn thành/lỗi để phục vụ NCKH.
- * Endpoint gợi ý: POST /api/log/experiment 
- */
-export async function logExperimentData(logPayload) {
-  /*if (MOCK_MODE) {
-    console.log("🧪 [MOCK LOG] Dữ liệu thí nghiệm sẽ được ghi vào CSV:", logPayload);
-    await delay(200);
-    return { success: true };
-  }
-    */
-  
-  const data = await apiRequest("/api/log/experiment", { 
-    method: "POST", 
-    body: logPayload 
-  });
-  return data;
 }
