@@ -87,11 +87,11 @@
 
 ### 2.4 AI Ứng dụng — Tối ưu đường vẽ
 
-**Trạng thái:** ⬜ | **Phụ trách:** TV2 | **Hạn:** *(điền)*
+**Trạng thái:** ✅ | **Phụ trách:** TV2 | **Hạn:** *(điền)*
 
-- [ ] Thuật toán chuyển ảnh → vector line-art
-- [ ] Thuật toán tối ưu thứ tự nét vẽ (giảm thời gian/quãng đường nhấc bút)
-- [ ] Xuất ra đúng chuẩn SVG ở mục 4 trong API Spec
+- [x] Thuật toán chuyển ảnh → vector line-art
+- [x] Thuật toán tối ưu thứ tự nét vẽ (giảm thời gian/quãng đường nhấc bút)
+- [x] Xuất ra đúng chuẩn SVG ở mục 4 trong API Spec
 
 
 
@@ -149,10 +149,10 @@
 
 ### 3.2 Tích hợp CV & tối ưu vẽ
 
-**Trạng thái:** ⬜ | **Phụ trách:** TV2 + TV4 | **Hạn:** *(điền)*
+**Trạng thái:** ✅ | **Phụ trách:** TV2 + TV4 | **Hạn:** *(điền)*
 
-- [ ] Nối module CV/tối ưu vào luồng thật sau bước AI sinh ảnh
-- [ ] Kiểm tra SVG xuất ra đúng khổ giấy, đúng chuẩn
+- [x] Nối module CV/tối ưu vào luồng thật sau bước AI sinh ảnh
+- [x] Kiểm tra SVG xuất ra đúng khổ giấy, đúng chuẩn
 
 
 

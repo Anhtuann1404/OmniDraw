@@ -19,6 +19,7 @@ from api_generator import (
     DATA_DIR,
     LOGS_DIR
 )
+from path_optimizer import process as svg_process
 
 app = FastAPI(title="OmniDraw API Gateway (Master Integrated)")
 
@@ -59,6 +60,11 @@ async def login_admin(request: LoginRequest):
     return custom_error("AUTH_FAILED", "Sai thông tin.", 401)
 
 
+# Cache svg_metrics phía server — TV2 ghi vào sau khi convert xong,
+# endpoint /api/log/experiment tự lấy nếu frontend không gửi kèm.
+_svg_metrics_cache: dict[str, dict] = {}
+
+
 class SvgMetrics(BaseModel):
     total_path_length_mm: Optional[float] = None
     pen_lift_distance_mm: Optional[float] = None
@@ -83,7 +89,22 @@ class LogPayload(BaseModel):
 
 @app.post("/api/log/experiment")
 def log_experiment(payload: LogPayload):
-    metrics = payload.svg_metrics or SvgMetrics()
+    # Nếu frontend không gửi svg_metrics → tự lấy từ cache server-side (TV2 đã ghi)
+    metrics = payload.svg_metrics
+    if metrics is None or (metrics.total_path_length_mm is None
+                           and metrics.pen_lift_distance_mm is None):
+        cached = _svg_metrics_cache.get(payload.request_id)
+        if cached:
+            metrics = SvgMetrics(
+                total_path_length_mm=cached.get("total_path_length_mm"),
+                pen_lift_distance_mm=cached.get("pen_lift_distance_mm"),
+                pen_lift_count=cached.get("pen_lift_count"),
+                optimize_time_ms=cached.get("optimize_time_ms"),
+            )
+            print(f"[log] Auto-filled svg_metrics from cache for {payload.request_id}")
+    if metrics is None:
+        metrics = SvgMetrics()
+
     payload_dict = {
         "request_id": payload.request_id,
         "timestamp": payload.timestamp,
@@ -150,6 +171,35 @@ async def generate_ai_image(request: GenerateRequest):
             except Exception as e:
                 print(f"[warn] Không thể lưu metadata: {e}")
 
+            # --- Pipeline: gọi TV2 chuyển ảnh → SVG ngay sau khi AI trả kết quả ---
+            svg_metrics_data = None
+            try:
+                raw_b64 = resp.result_image_base64
+                # Loại bỏ prefix data:image/...;base64, nếu có
+                if raw_b64 and "," in raw_b64 and raw_b64.startswith("data:"):
+                    raw_b64 = raw_b64.split(",", 1)[1]
+
+                paper_w, paper_h = 210.0, 297.0
+                if request.options and request.options.get("target_paper_size_mm"):
+                    paper_w, paper_h = request.options["target_paper_size_mm"]
+
+                svg_result = await asyncio.to_thread(
+                    svg_process,
+                    request_id=resp.request_id,
+                    image_base64=raw_b64,
+                    target_paper_size_mm=(paper_w, paper_h),
+                    output_dir=SVG_OUTPUT_DIR,
+                )
+                print(f"[pipeline] SVG conversion: {svg_result.get('status')} "
+                      f"(metrics={svg_result.get('svg_metrics')})")
+
+                if svg_result.get("status") == "success":
+                    svg_metrics_data = svg_result.get("svg_metrics")
+                    # Lưu vào cache server-side để /api/log/experiment có thể tự lấy
+                    _svg_metrics_cache[resp.request_id] = svg_metrics_data
+            except Exception as e:
+                print(f"[warn] SVG conversion failed: {e}")
+
             return {
                 "request_id": resp.request_id,
                 "status": "success",
@@ -158,6 +208,8 @@ async def generate_ai_image(request: GenerateRequest):
                     "model_used": resp.model_used or "dall-e-3",
                     "processing_time_ms": resp.processing_time_ms
                 },
+                "svg_ready": svg_metrics_data is not None,
+                "svg_metrics": svg_metrics_data,
                 "error": None
             }
         else:
@@ -202,8 +254,50 @@ async def get_history():
                        "thumbnail_url": None}]}
 
 
+# ---------- Mục 5d API Spec: GET /api/print/svg/{request_id} ----------
+@app.get("/api/print/svg/{request_id}")
+async def get_svg_content(request_id: str):
+    """Trả nội dung SVG thật để giao diện render hiệu ứng 'vẽ dần theo %'."""
+    svg_path = os.path.join(SVG_OUTPUT_DIR, f"output_{request_id}.svg")
+    if not os.path.isfile(svg_path):
+        return JSONResponse(
+            status_code=404,
+            content={
+                "status": "error",
+                "error": {
+                    "code": "SVG_NOT_FOUND",
+                    "message": f"Chưa có file SVG cho request_id '{request_id}'. "
+                               "Thuật toán chưa xử lý xong hoặc request_id không tồn tại."
+                }
+            }
+        )
+    try:
+        with open(svg_path, "r", encoding="utf-8") as f:
+            svg_content = f.read()
+        return {
+            "request_id": request_id,
+            "status": "success",
+            "svg_content": svg_content,
+            "error": None,
+        }
+    except Exception as exc:
+        return JSONResponse(
+            status_code=500,
+            content={
+                "status": "error",
+                "error": {
+                    "code": "SVG_READ_ERROR",
+                    "message": f"Không thể đọc file SVG: {exc}"
+                }
+            }
+        )
+
+
 ASSUMED_PEN_SPEED_MM_PER_SEC = 40.0
-SVG_OUTPUT_DIR = os.environ.get("OMNIDRAW_SVG_DIR", "./svg_output")
+SVG_OUTPUT_DIR = os.environ.get(
+    "OMNIDRAW_SVG_DIR",
+    os.path.join(os.path.dirname(__file__), "svg_output")
+)
 jobs: dict[str, dict] = {}
 DEVICE_CONNECTED = True
 VALID_HARDWARE_ERRORS = {"HARDWARE_NOT_CONNECTED": "Lỗi kết nối", "HARDWARE_PAPER_JAM": "Kẹt giấy",

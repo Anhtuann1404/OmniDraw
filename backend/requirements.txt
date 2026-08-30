@@ -3,6 +3,9 @@ uvicorn[standard]
 python-docx==0.8.11          # Đọc file DOCX
 openai==1.3.0                # OpenAI Image API (DALL-E 3)
 requests==2.31.0             # Download ảnh từ URL
+opencv-python-headless       # TV2: xử lý ảnh (Canny, contour)
+numpy                        # TV2: tính toán ma trận
+scipy                        # TV2: KD-tree tối ưu đường vẽ
 
 # Utilities
 python-dotenv==1.0.0         # Load .env file

@@ -21,10 +21,10 @@
 
 | Hạng mục                   | Lựa chọn | Lý do    |
 | -------------------------- | -------- | -------- |
-| Ngôn ngữ                   | Python   | *(điền)* |
-| Thư viện CV                | OpenCV   | *(điền)* |
-| Thuật toán tối ưu đường vẽ | *(điền)* | *(điền)* |
-| Thư viện vector hoá ảnh    | *(điền)* | *(điền)* |
+| Ngôn ngữ                   | Python   | Đồng bộ với Backend FastAPI của hệ thống |
+| Thư viện CV                | OpenCV, NumPy   | Xử lý ảnh (matrix), trích xuất viền (Canny), nhận diện đường bao (Contour) |
+| Thuật toán tối ưu đường vẽ | SciPy (cKDTree) | Dùng cây không gian KD-Tree để tăng tốc thuật toán Nearest Neighbor & Or-opt (tối ưu đường vẽ trong mili-giây) |
+| Thư viện vector hoá ảnh    | Tự xây dựng | Tự chuyển đổi Pixel sang Path để tuân thủ 100% chuẩn SVG NCKH (đơn vị mm, tính path length/lift distance) |
 
 
 
