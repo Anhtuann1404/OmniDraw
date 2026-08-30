@@ -11,6 +11,7 @@
 
 | Ngày     | Loại           | Nội dung                                                                                                                                      |
 | -------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| (30/8)   | Hoàn thành mốc | Tích hợp thành công thuật toán tối ưu nét vẽ (TV2) vào Backend. Nối toàn bộ pipeline: AI Sinh ảnh → Tạo SVG → Caching Metrics → Ghi Log CSV. |
 | (30/8)   | Hoàn thành mốc | Nối thành công API sinh ảnh (TV1) vào API Gateway (TV4). Sửa triệt để lỗi path ghi CSV, CORS, và đồng bộ mã lỗi JSON trả về đúng API Spec.  |
 | (30/8)   | Quyết định     | Chốt sử dụng Google Gemini API (Imagen 3) thay thế OpenAI để tối ưu chi phí (tận dụng free tier), cả nhóm dùng chung 1 key.                   |
 | *(24/8)* | Quyết định     | Chốt định hướng đề tài: AI là trọng tâm, phối hợp toàn diện 4 mảng (xem file định hướng gốc)                                                  |
