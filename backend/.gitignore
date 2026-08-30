@@ -12,3 +12,6 @@ __pycache__/
 # Bỏ qua thư mục log (để các máy không bị ghi đè file CSV của nhau)
 logs/
 data/
+backend/svg_output/
+backend/logs/
+backend/data/
