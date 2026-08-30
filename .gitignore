@@ -58,3 +58,10 @@ hs_err_pid*
 *.hex
 *.eep
 build/
+# =========================
+# OmniDraw - Dữ liệu sinh ra lúc chạy (Không push lên Git)
+# =========================
+backend/svg_output/
+backend/logs/
+backend/data/
+frontend/.vite/
