@@ -1,2 +1,12 @@
 fastapi
 uvicorn[standard]
+python-docx==0.8.11          # Đọc file DOCX
+openai==1.3.0                # OpenAI Image API (DALL-E 3)
+requests==2.31.0             # Download ảnh từ URL
+
+# Utilities
+python-dotenv==1.0.0         # Load .env file
+
+# Dev/Optional
+pytest==7.4.0                # Unit test (tuỳ chọn)
+black==23.7.0                # Code formatter (tuỳ chọn)
