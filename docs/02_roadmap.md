@@ -14,11 +14,11 @@
 
 ### 1.1 Khảo sát & chốt hướng AI
 
-**Trạng thái:** ⬜ | **Phụ trách:** TV1, TV2 | **Hạn:** *(điền)*
+**Trạng thái:** ✅ | **Phụ trách:** TV1, TV2 | **Hạn:** *(điền)*
 
-- [ ] So sánh 2-3 phương án model/API sinh ảnh (chi phí, tốc độ, chất lượng)
-- [ ] So sánh phương án CV cho căn giấy/nhận diện
-- [ ] Chốt lựa chọn cuối, ghi vào `01_tech-stack.md`
+- [x] So sánh 2-3 phương án model/API sinh ảnh (chi phí, tốc độ, chất lượng)
+- [x] So sánh phương án CV cho căn giấy/nhận diện
+- [x] Chốt lựa chọn cuối, ghi vào `01_tech-stack.md` (Chốt dùng Gemini API free)
 
 
 
@@ -60,10 +60,10 @@
 
 ### 2.1 AI Core — Sinh ảnh cơ bản
 
-**Trạng thái:** ⬜ | **Phụ trách:** TV1 | **Hạn:** *(điền)*
+**Trạng thái:** ✅ | **Phụ trách:** TV1 | **Hạn:** *(điền)*
 
-- [ ] Gọi được model/API sinh ảnh từ text, nhận kết quả đúng chuẩn ở mục 3 trong API Spec
-- [ ] Test với 5-10 prompt mẫu, đánh giá chất lượng đầu ra
+- [x] Gọi được model/API sinh ảnh từ text, nhận kết quả đúng chuẩn ở mục 3 trong API Spec
+- [x] Test với 5-10 prompt mẫu, đánh giá chất lượng đầu ra
 
 
 
@@ -140,10 +140,10 @@
 
 ### 3.1 Tích hợp AI vào giao diện
 
-**Trạng thái:** ⬜ | **Phụ trách:** TV1 + TV4 | **Hạn:** *(điền)*
+**Trạng thái:** ✅ | **Phụ trách:** TV1 + TV4 | **Hạn:** *(điền)*
 
-- [ ] Thay mock data bằng gọi AI thật (sinh ảnh + style transfer)
-- [ ] Xử lý lỗi/timeout hiển thị đúng trên giao diện
+- [x] Thay mock data bằng gọi AI thật (sinh ảnh + style transfer)
+- [x] Xử lý lỗi/timeout hiển thị đúng trên giao diện
 
 
 
