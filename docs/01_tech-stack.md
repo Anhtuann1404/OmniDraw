@@ -16,16 +16,18 @@
 | Thư viện chính       | `google-genai` / `openai`, `requests`              | Giao tiếp API chuẩn, phổ biến |
 
 
+**Cập nhật lần cuối:** 30/08/2026
+
+...
+
 ## 2. AI Ứng dụng — Thị giác máy tính & Tối ưu vẽ (Thành viên 2)
 
-
-| Hạng mục                   | Lựa chọn | Lý do    |
-| -------------------------- | -------- | -------- |
-| Ngôn ngữ                   | Python   | *(điền)* |
-| Thư viện CV                | OpenCV   | *(điền)* |
-| Thuật toán tối ưu đường vẽ | *(điền)* | *(điền)* |
-| Thư viện vector hoá ảnh    | *(điền)* | *(điền)* |
-
+| Hạng mục                   | Lựa chọn                                              | Lý do    |
+| -------------------------- | ------------------------------------------------------ | -------- |
+| Ngôn ngữ                   | Python                                                 | Đồng bộ với backend FastAPI và các mảng khác, dễ tích hợp qua function call hoặc CLI trực tiếp |
+| Thư viện CV                | OpenCV (`opencv-python-headless`)                      | Có sẵn Canny edge detection + `findContours` để trích đường nét từ ảnh, phổ biến, tài liệu nhiều, tốc độ tốt |
+| Thuật toán tối ưu đường vẽ | Nearest Neighbor + Or-opt (candidate list qua KD-tree) | NN cho lời giải khởi tạo nhanh (O(n log n) nhờ `scipy.spatial.cKDTree`); Or-opt chỉ xét các nét *gần nhau về không gian thực tế* để cải tiến, scale tốt với hàng nghìn nét — khác 2-opt truyền thống (duyệt toàn bộ cặp O(n²), quá chậm với ảnh nhiều chi tiết như nhóm ảnh 021-030) |
+| Thư viện vector hoá ảnh    | `cv2.findContours` (có sẵn trong OpenCV) + `scipy` (KD-tree) | Không cần thêm dependency ngoài; đủ đáp ứng nhu cầu trích contour làm stroke và tìm hàng xóm không gian nhanh |
 
 
 
