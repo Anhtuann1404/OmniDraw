@@ -1,0 +1,14 @@
+# Bỏ qua môi trường ảo
+venv/
+env/
+
+# Bỏ qua các file rác của Python
+__pycache__/
+*.pyc
+
+# Bỏ qua file môi trường chứa thông tin nhạy cảm
+.env
+
+# Bỏ qua thư mục log (để các máy không bị ghi đè file CSV của nhau)
+logs/
+data/
