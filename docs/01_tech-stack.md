@@ -10,10 +10,10 @@
 
 | Hạng mục             | Lựa chọn                                           | Lý do    |
 | -------------------- | -------------------------------------------------- | -------- |
-| Ngôn ngữ             | Python                                             | *(điền)* |
-| Model/API sinh ảnh   | *(vd: Stable Diffusion API / OpenAI Image API...)* | *(điền)* |
+| Ngôn ngữ             | Python                                             | Đồng bộ backend FastAPI của hệ thống |
+| Model/API sinh ảnh   | Google Gemini API (Imagen 3) / OpenAI DALL-E 3     | Gemini có free tier tốt (15 req/phút, 1.500 req/ngày), đủ sức test miễn phí cho cả nhóm |
 | Model style transfer | *(điền)*                                           | *(điền)* |
-| Thư viện chính       | *(điền)*                                           | *(điền)* |
+| Thư viện chính       | `google-genai` / `openai`, `requests`              | Giao tiếp API chuẩn, phổ biến |
 
 
 ## 2. AI Ứng dụng — Thị giác máy tính & Tối ưu vẽ (Thành viên 2)
@@ -35,7 +35,7 @@
 | Hạng mục                    | Lựa chọn                 | Lý do    |
 | --------------------------- | ------------------------ | -------- |
 | Vi điều khiển               | *(vd: Arduino/ESP32...)* | *(điền)* |
-| Ngôn ngữ firmware           | Python (qua pyaxidraw) / C++ (EBB Firmware)                | Đồng bộ ngôn ngữ với backend Python và tương thích trực tiếp với tập lệnh máy vẽ |
+| Ngôn ngữ firmware           | Python (qua pyaxidraw)   | Đồng bộ ngôn ngữ với backend Python và tương thích trực tiếp với tập lệnh máy vẽ |
 | Camera/cảm biến sử dụng     | *(điền)*                 | *(điền)* |
 | Thư viện điều khiển AxiDraw | pyaxidraw                | Thư viện Python chính thức để đọc file SVG và gửi lệnh trực tiếp xuống phần cứng |
 
