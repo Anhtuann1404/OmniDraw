@@ -104,41 +104,64 @@ def decode_image(image_base64=None, image_path=None):
 
 # ----------------------------- Trich stroke tu anh -----------------------------
 
-def extract_strokes(img, canny_low=50, canny_high=150, min_stroke_len=15,
+def extract_strokes(img, canny_low=20, canny_high=70, min_stroke_len=8,
                      resize_max_dim=1024):
     """
-    Trich duong net thanh danh sach stroke (pixel toa do), tra ve
-    (strokes, kich_thuoc_anh_da_xu_ly (w,h)).
-
-    Ghi chu: theo muc 1 API Spec, anh da duoc giao dien chuan hoa ve canh dai
-    nhat = 1024px truoc khi vao pipeline - o day van giu 1 lop resize an toan
-    (khong lam gi neu anh da dung chuan) de module nay khong phu thuoc tuyet
-    doi vao viec module truoc co lam dung khong.
+    [NANG CAP TOAN DIEN] Style sketch (Ky hoa chi):
+    Khac biet hoan toan voi Line Art (von chi lay duong vien bao tong the).
+    Phong cach Ky hoa chi ket hop 3 lop net ve chuyen nghiep:
+    1. Net vien chinh (Primary contours): Nhan dien do net cao voi Canny nhay hon.
+    2. Net phac hoa danh khoi sang/toi (Tonal cross-contour curves): Trich xuat cac duong
+       phan lop do sang de tao cam giac danh bong chi va do noi khoi 3D (go ma, hoc mat, nep ao).
+    3. Net texture chi (Difference of Gaussians - DoG): Bat cac chi tiet soi toc, van vai,
+       net ve tay tu nhien cua hoa si.
+    4. Giu nguyen do rung tay tu nhien, khong nan phang net qua muc nhu Line Art.
     """
-    h, w = img.shape[:2]
-    if max(h, w) > resize_max_dim:
-        scale_resize = resize_max_dim / max(h, w)
-        img = cv2.resize(img, (int(w * scale_resize), int(h * scale_resize)))
-        h, w = img.shape[:2]
-
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    blurred = cv2.GaussianBlur(gray, (3, 3), 0)
-    edges = cv2.Canny(blurred, canny_low, canny_high)
-
+    img, gray, (w, h) = _resize_and_gray(img, resize_max_dim)
+    
+    # 1. CLAHE tang cuong do sau va chi tiet phan khoi
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+    gray_eq = clahe.apply(gray)
+    
+    # 2. Net vien chinh (Primary pencil edges)
+    blurred = cv2.GaussianBlur(gray_eq, (3, 3), 0)
+    edges_primary = cv2.Canny(blurred, canny_low, canny_high)
+    
+    # 3. Net phac hoa danh khoi sang/toi (Tonal cross-contour sketching)
+    # Trich xuat cac duong phan lop do sang de tao cam giac danh bong chi
+    blurred_smooth = cv2.GaussianBlur(gray, (5, 5), 0)
+    tonal_edges = np.zeros_like(gray)
+    for thresh in [60, 95, 135, 175, 215]:
+        mask = (blurred_smooth < thresh).astype(np.uint8) * 255
+        t_edge = cv2.Canny(mask, 50, 150)
+        tonal_edges = cv2.bitwise_or(tonal_edges, t_edge)
+        
+    # 4. Net chi tiet toc / nếp nhăn (Difference of Gaussians & Adaptive pencil strokes)
+    g1 = cv2.GaussianBlur(gray_eq, (3, 3), 0)
+    g2 = cv2.GaussianBlur(gray_eq, (7, 7), 0)
+    dog = cv2.absdiff(g1, g2)
+    _, dog_thresh = cv2.threshold(dog, 14, 255, cv2.THRESH_BINARY)
+    
+    # Gop tat ca cac lop net ky hoa
+    combined = cv2.bitwise_or(edges_primary, cv2.bitwise_or(tonal_edges, dog_thresh))
     kernel = np.ones((2, 2), np.uint8)
-    edges = cv2.dilate(edges, kernel, iterations=1)
-
-    contours, _ = cv2.findContours(edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-
+    combined = cv2.dilate(combined, kernel, iterations=1)
+    
+    contours, _ = cv2.findContours(combined, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+    
     strokes = []
     for c in contours:
-        pts = c.reshape(-1, 2).astype(np.float64)
-        if len(pts) < 2:
+        raw_pts = c.reshape(-1, 2).astype(np.float64)
+        if len(raw_pts) < 2:
             continue
-        if polyline_length(pts) < min_stroke_len:
+        if polyline_length(raw_pts) < min_stroke_len:
             continue
-        strokes.append(pts)
-
+        # Giu do tu nhien cua net ve tay (epsilon nho)
+        simplified = cv2.approxPolyDP(c, epsilon=0.5, closed=False)
+        pts = simplified.reshape(-1, 2).astype(np.float64)
+        if len(pts) >= 2:
+            strokes.append(pts)
+            
     return strokes, (w, h)
 
 
