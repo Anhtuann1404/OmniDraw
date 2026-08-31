@@ -160,7 +160,9 @@ export default function App() {
 
         {step === "preview" && aiResult && (
           <PreviewScreen
+            requestId={aiResult.requestId}
             resultImageUrl={aiResult.resultImageBase64}
+            svgReady={aiResult.svgReady || false}
             style={labelForStyle(aiResult.style)}
             modelUsed={aiResult.meta?.modelUsed}
             processingTimeSec={aiResult.meta?.processingTimeMs ? aiResult.meta.processingTimeMs / 1000 : undefined}
@@ -169,10 +171,11 @@ export default function App() {
           />
         )}
 
-        {step === "confirm" && <ConfirmScreen onBack={() => setStep("preview")} onStart={handleStartPrint} />}
+        {step === "confirm" && <ConfirmScreen requestId={aiResult?.requestId} onBack={() => setStep("preview")} onStart={handleStartPrint} />}
 
         {step === "printing" && statusData && statusData.status !== "done" && (
           <PrintStatusScreen
+            requestId={aiResult?.requestId}
             progressPercent={statusData.progressPercent}
             etaMinutes={Math.ceil((statusData.etaSec || 0) / 60)}
             machineStatus={statusData.status === "error" ? "error" : "ok"}

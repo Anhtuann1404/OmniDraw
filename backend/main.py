@@ -4,6 +4,10 @@ import os
 import re
 import time
 from typing import Any, Dict, Optional
+from dotenv import load_dotenv
+
+# Load biến môi trường từ file .env TRƯỚC KHI import các module khác
+load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -189,6 +193,7 @@ async def generate_ai_image(request: GenerateRequest):
                     image_base64=raw_b64,
                     target_paper_size_mm=(paper_w, paper_h),
                     output_dir=SVG_OUTPUT_DIR,
+                    style=request.style,  # TV4→TV2: truyền style để TV2 chọn thuật toán tương ứng
                 )
                 print(f"[pipeline] SVG conversion: {svg_result.get('status')} "
                       f"(metrics={svg_result.get('svg_metrics')})")
@@ -223,17 +228,55 @@ async def generate_ai_image(request: GenerateRequest):
                 }
             }
 
-    elif request.input_type == "image":
-        # Style transfer preview (chờ model style transfer từ TV1/TV2)
-        img_data = request.image_base64 or "https://images.unsplash.com/photo-1547826039-bfc35e0f1ea8?auto=format&fit=crop&w=800&q=80"
+    elif request.input_type == "image" and request.image_base64:
+        # Nhận ảnh trực tiếp từ người dùng tải lên và chuyển sang SVG
+        img_data = request.image_base64
+        
+        # Đảm bảo format đúng chuẩn base64 để render trên web
+        if not img_data.startswith("data:") and not img_data.startswith("http"):
+            img_data = f"data:image/png;base64,{img_data}"
+            
+        # Lấy base64 thuần để đưa vào OpenCV
+        raw_b64 = request.image_base64
+        if "base64," in raw_b64:
+            raw_b64 = raw_b64.split("base64,")[1]
+            
+        # TV2: Chạy thuật toán tạo SVG 
+        svg_metrics_data = None
+        try:
+            paper_w, paper_h = 210, 297  # Mặc định A4
+            if request.options and "target_paper_size_mm" in request.options:
+                paper_w, paper_h = request.options["target_paper_size_mm"]
+
+            # Chạy hàm biến đổi ảnh thành nét vẽ SVG
+            svg_result = await asyncio.to_thread(
+                svg_process,
+                request_id=request.request_id,
+                image_base64=raw_b64,
+                target_paper_size_mm=(paper_w, paper_h),
+                output_dir=SVG_OUTPUT_DIR,
+                style=request.style,  # TV4→TV2: truyền style để TV2 chọn thuật toán tương ứng
+            )
+            
+            print(f"[pipeline] Image upload SVG conversion: {svg_result.get('status')} "
+                  f"(metrics={svg_result.get('svg_metrics')})")
+
+            if svg_result.get("status") == "success":
+                svg_metrics_data = svg_result.get("svg_metrics")
+                _svg_metrics_cache[request.request_id] = svg_metrics_data
+        except Exception as e:
+            print(f"[warn] SVG conversion failed for uploaded image: {e}")
+
         return {
             "request_id": request.request_id,
             "status": "success",
             "result_image_base64": img_data,
             "meta": {
-                "model_used": "style-transfer-v1 (preview)",
-                "processing_time_ms": 1500
+                "model_used": "uploaded-image",
+                "processing_time_ms": 0
             },
+            "svg_ready": svg_metrics_data is not None,
+            "svg_metrics": svg_metrics_data,
             "error": None
         }
 

@@ -38,6 +38,31 @@ export async function generateArt({ inputType, imageBase64, prompt, style, exper
     requestId: data.request_id,
     resultImageBase64: data.result_image_base64,
     meta: { modelUsed: data.meta?.model_used, processingTimeMs: data.meta?.processing_time_ms },
+    svgReady: data.svg_ready || false,
+    svgMetrics: data.svg_metrics || null,
+  };
+}
+
+/**
+ * Lấy nội dung SVG sau khi backend đã xử lý xong
+ * Gọi API: GET /api/print/svg/{request_id}
+ */
+export async function getSvgContent(requestId) {
+  if (MOCK_MODE) {
+    await delay(300);
+    // Trả về SVG mẫu đơn giản cho mock mode
+    return {
+      svgText: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 210 297">
+        <rect width="210" height="297" fill="white"/>
+        <circle cx="105" cy="148" r="60" fill="none" stroke="black" stroke-width="1.5"/>
+        <text x="105" y="220" text-anchor="middle" font-size="12" fill="#666">[Mock SVG]</text>
+      </svg>`,
+    };
+  }
+
+  const data = await apiRequest(`/api/print/svg/${requestId}`, { method: "GET" });
+  return {
+    svgText: data.svg_content,
   };
 }
 

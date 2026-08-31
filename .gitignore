@@ -65,3 +65,12 @@ backend/svg_output/
 backend/logs/
 backend/data/
 frontend/.vite/
+
+# =========================
+# Node / Frontend Build
+# =========================
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+*.local

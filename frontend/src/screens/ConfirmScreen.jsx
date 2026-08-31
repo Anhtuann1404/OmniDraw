@@ -1,27 +1,41 @@
-import React, { useState } from "react";
-import { ArrowLeft, PlayCircle } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { ArrowLeft, PlayCircle, Loader2 } from "lucide-react";
 import { ScreenShell, ComicButton, StepBadge, Logo, HardShadowBox } from "../components/ComicPrimitives";
+import { getSvgContent } from "../api/omnidraw";
 
 const PAPER_SIZES = [
   { id: "a4", label: "A4 (210×297mm)" },
+  { id: "a3", label: "A3 (297×420mm)" },
   { id: "a5", label: "A5 (148×210mm)" },
 ];
 
 /**
  * Màn 3 — Xác nhận trước khi vẽ
  * Props:
- *  - svgPreviewUrl?: string (nếu có SVG thật để render)
+ *  - requestId?: string       (để fetch SVG thật)
  *  - strokeCount, estimatedMinutes
  *  - onBack() / onStart({ paperSize })
  */
 export default function ConfirmScreen({
-  svgPreviewUrl,
+  requestId,
   strokeCount = 248,
   estimatedMinutes = 12,
   onBack,
   onStart,
 }) {
   const [paperSize, setPaperSize] = useState("a4");
+  const [svgText, setSvgText] = useState(null);
+  const [svgLoading, setSvgLoading] = useState(false);
+
+  // Fetch SVG khi màn Confirm mount
+  useEffect(() => {
+    if (!requestId) return;
+    setSvgLoading(true);
+    getSvgContent(requestId)
+      .then((res) => setSvgText(res.svgText))
+      .catch(() => setSvgText(null))
+      .finally(() => setSvgLoading(false));
+  }, [requestId]);
 
   return (
     <ScreenShell patternId="pattern-confirm">
@@ -32,17 +46,29 @@ export default function ConfirmScreen({
 
       <div className="mb-5">
         <HardShadowBox shadowOffset={5}>
-          <div className="h-52 flex items-center justify-center bg-[#FEFDF9] rounded-xl relative">
-            {svgPreviewUrl ? (
-              <img src={svgPreviewUrl} alt="Xem trước SVG" className="max-h-48 max-w-full object-contain" />
+          <div className="h-52 flex items-center justify-center bg-[#FEFDF9] rounded-xl relative overflow-hidden">
+            {svgLoading ? (
+              <Loader2 size={32} className="animate-spin text-[#C0392B]" />
+            ) : svgText ? (
+              <>
+                <style>{`#svg-confirm svg { width: 100% !important; height: 100% !important; max-height: 208px; }`}</style>
+                <div
+                  id="svg-confirm"
+                  className="w-full h-full flex items-center justify-center p-2"
+                  dangerouslySetInnerHTML={{ __html: svgText }}
+                />
+              </>
             ) : (
+              /* Placeholder khi chưa có SVG */
               <svg width="90" height="130" viewBox="0 0 100 140">
                 <rect x="2" y="2" width="96" height="136" fill="none" stroke="#C0392B" strokeWidth="1.5" strokeDasharray="3,2" />
                 <path d="M20,100 Q30,40 50,60 T80,30" fill="none" stroke="#1A1A1A" strokeWidth="1.8" />
                 <path d="M25,110 Q45,90 65,105" fill="none" stroke="#1A1A1A" strokeWidth="1.8" />
               </svg>
             )}
-            <p className="absolute bottom-3.5 text-xs text-[#6B6B66] font-medium">Xem trước đường vẽ (SVG)</p>
+            <p className="absolute bottom-3.5 text-xs text-[#6B6B66] font-medium">
+              {svgText ? "Bản nét vẽ SVG thật" : "Xem trước đường vẽ (SVG)"}
+            </p>
           </div>
         </HardShadowBox>
       </div>
