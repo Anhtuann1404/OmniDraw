@@ -104,65 +104,91 @@ def decode_image(image_base64=None, image_path=None):
 
 # ----------------------------- Trich stroke tu anh -----------------------------
 
-def extract_strokes(img, canny_low=20, canny_high=70, min_stroke_len=8,
+def extract_strokes(img, canny_low=30, canny_high=90, min_stroke_len=8,
                      resize_max_dim=1024):
     """
-    [NANG CAP TOAN DIEN] Style sketch (Ky hoa chi):
-    Khac biet hoan toan voi Line Art (von chi lay duong vien bao tong the).
-    Phong cach Ky hoa chi ket hop 3 lop net ve chuyen nghiep:
-    1. Net vien chinh (Primary contours): Nhan dien do net cao voi Canny nhay hon.
-    2. Net phac hoa danh khoi sang/toi (Tonal cross-contour curves): Trich xuat cac duong
-       phan lop do sang de tao cam giac danh bong chi va do noi khoi 3D (go ma, hoc mat, nep ao).
-    3. Net texture chi (Difference of Gaussians - DoG): Bat cac chi tiet soi toc, van vai,
-       net ve tay tu nhien cua hoa si.
-    4. Giu nguyen do rung tay tu nhien, khong nan phang net qua muc nhu Line Art.
+    [NANG CAP TOAN DIEN v2] Style sketch (Ky hoa chi danh bong):
+    Tao cam giac chan thuc cua mot buc tranh ky hoa but chi:
+    1. Net vien chi (Pencil Outlines): Trich xuat cac duong bao net ro (mat, mui, mieng, dang nguoi, toc).
+    2. Net danh bong chi (Pencil Shading Strokes):
+       - Vung bong toi (< 150): Danh cac net chi nghieng min (spacing=4.5px, goc 30 do)
+         de tao mang bong do va chieu sau 3D.
+       - Vung bong sau (< 85): Danh them lop net chi cheo nguoc lai (spacing=3.5px, goc -45 do)
+         de nhan dam cac vung hoc mat, duoi cam, mai toc den.
+    3. Vung sang duoc giu sach se, tao su tuong phan sang/toi cuc ky bat mat.
     """
     img, gray, (w, h) = _resize_and_gray(img, resize_max_dim)
     
-    # 1. CLAHE tang cuong do sau va chi tiet phan khoi
-    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+    # 1. CLAHE tang cuong tuong phan cuc bo
+    clahe = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(8, 8))
     gray_eq = clahe.apply(gray)
     
-    # 2. Net vien chinh (Primary pencil edges)
+    # 2. Net vien chi (Pencil Outlines)
     blurred = cv2.GaussianBlur(gray_eq, (3, 3), 0)
-    edges_primary = cv2.Canny(blurred, canny_low, canny_high)
-    
-    # 3. Net phac hoa danh khoi sang/toi (Tonal cross-contour sketching)
-    # Trich xuat cac duong phan lop do sang de tao cam giac danh bong chi
-    blurred_smooth = cv2.GaussianBlur(gray, (5, 5), 0)
-    tonal_edges = np.zeros_like(gray)
-    for thresh in [60, 95, 135, 175, 215]:
-        mask = (blurred_smooth < thresh).astype(np.uint8) * 255
-        t_edge = cv2.Canny(mask, 50, 150)
-        tonal_edges = cv2.bitwise_or(tonal_edges, t_edge)
-        
-    # 4. Net chi tiet toc / nếp nhăn (Difference of Gaussians & Adaptive pencil strokes)
-    g1 = cv2.GaussianBlur(gray_eq, (3, 3), 0)
-    g2 = cv2.GaussianBlur(gray_eq, (7, 7), 0)
-    dog = cv2.absdiff(g1, g2)
-    _, dog_thresh = cv2.threshold(dog, 14, 255, cv2.THRESH_BINARY)
-    
-    # Gop tat ca cac lop net ky hoa
-    combined = cv2.bitwise_or(edges_primary, cv2.bitwise_or(tonal_edges, dog_thresh))
+    edges = cv2.Canny(blurred, canny_low, canny_high)
     kernel = np.ones((2, 2), np.uint8)
-    combined = cv2.dilate(combined, kernel, iterations=1)
+    edges = cv2.dilate(edges, kernel, iterations=1)
     
-    contours, _ = cv2.findContours(combined, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-    
-    strokes = []
+    contours, _ = cv2.findContours(edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+    outline_strokes = []
     for c in contours:
         raw_pts = c.reshape(-1, 2).astype(np.float64)
-        if len(raw_pts) < 2:
+        if len(raw_pts) < 2 or polyline_length(raw_pts) < min_stroke_len:
             continue
-        if polyline_length(raw_pts) < min_stroke_len:
-            continue
-        # Giu do tu nhien cua net ve tay (epsilon nho)
-        simplified = cv2.approxPolyDP(c, epsilon=0.5, closed=False)
+        simplified = cv2.approxPolyDP(c, epsilon=0.6, closed=False)
         pts = simplified.reshape(-1, 2).astype(np.float64)
         if len(pts) >= 2:
-            strokes.append(pts)
+            outline_strokes.append(pts)
             
-    return strokes, (w, h)
+    # 3. Net danh bong chi vung toi (Pencil Shading Strokes in Shadow Regions)
+    diag = math.hypot(w, h)
+    
+    def scan_pencil_shading(angle_deg, spacing, max_thresh, min_len=4):
+        rad = math.radians(angle_deg)
+        dx, dy = math.cos(rad), math.sin(rad)
+        perp_dx, perp_dy = -dy, dx
+        n_lines = int(diag / spacing) * 2
+        n_samples = max(2, int(diag / 2.0))
+        
+        strokes_res = []
+        for i in range(-n_lines // 2, n_lines // 2):
+            offset = i * spacing
+            cx0 = w / 2 + perp_dx * offset - dx * diag
+            cy0 = h / 2 + perp_dy * offset - dy * diag
+            cx1 = w / 2 + perp_dx * offset + dx * diag
+            cy1 = h / 2 + perp_dy * offset + dy * diag
+            
+            xs = np.linspace(cx0, cx1, n_samples)
+            ys = np.linspace(cy0, cy1, n_samples)
+            
+            in_seg = False
+            seg_start = None
+            for x, y in zip(xs, ys):
+                xi, yi = int(round(x)), int(round(y))
+                valid = (0 <= xi < w and 0 <= yi < h)
+                is_shadow = (valid and gray[yi, xi] < max_thresh)
+                
+                if is_shadow and not in_seg:
+                    in_seg = True
+                    seg_start = (x, y)
+                elif not is_shadow and in_seg:
+                    in_seg = False
+                    seg_end = (x, y)
+                    if math.hypot(seg_end[0] - seg_start[0], seg_end[1] - seg_start[1]) >= min_len:
+                        strokes_res.append(np.array([seg_start, seg_end], dtype=np.float64))
+            if in_seg:
+                seg_end = (xs[-1], ys[-1])
+                if math.hypot(seg_end[0] - seg_start[0], seg_end[1] - seg_start[1]) >= min_len:
+                    strokes_res.append(np.array([seg_start, seg_end], dtype=np.float64))
+        return strokes_res
+
+    # Lop danh bong 1: Net chi nghieng 30 do cho vung bong toi (< 150)
+    shading_1 = scan_pencil_shading(30, spacing=4.5, max_thresh=150)
+    # Lop danh bong 2: Net chi nghieng -45 do cho vung bong sau / dam (< 85)
+    shading_2 = scan_pencil_shading(-45, spacing=3.5, max_thresh=85)
+    
+    all_strokes = outline_strokes + shading_1 + shading_2
+    return all_strokes, (w, h)
 
 
 def polyline_length(pts):
