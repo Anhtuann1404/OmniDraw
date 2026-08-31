@@ -50,7 +50,7 @@ export default function App() {
     setErrorMsg(null);
     try {
       const result = await generateArt({ inputType, style, imageBase64, prompt });
-      setAiResult({ ...result, style });
+      setAiResult({ ...result, style, inputType }); // lưu inputType để các màn sau phân biệt luồng
       setStep("preview");
     } catch (err) {
       setErrorMsg(err.message || "Có lỗi khi tạo tranh, thử lại nhé.");
@@ -161,6 +161,7 @@ export default function App() {
         {step === "preview" && aiResult && (
           <PreviewScreen
             requestId={aiResult.requestId}
+            inputType={aiResult.inputType}
             resultImageUrl={aiResult.resultImageBase64}
             svgReady={aiResult.svgReady || false}
             style={labelForStyle(aiResult.style)}
@@ -188,6 +189,8 @@ export default function App() {
 
         {step === "done" && (
           <DoneScreen
+            inputType={aiResult?.inputType}
+            requestId={aiResult?.requestId}
             resultImageUrl={aiResult?.resultImageBase64}
             actualDrawTimeSec={doneInfo?.actualDrawTimeSec}
             onCreateNew={handleCreateNewFromDone}

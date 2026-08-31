@@ -1,18 +1,21 @@
-import React from "react";
-import { Download, PlusCircle, LibraryBig, PartyPopper } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Download, PlusCircle, LibraryBig, PartyPopper, Loader2 } from "lucide-react";
 import { ScreenShell, ComicButton, Logo, HardShadowBox, StarBadge } from "../components/ComicPrimitives";
+import { getSvgContent } from "../api/omnidraw";
 
 /**
- * Màn 4b — Hoàn thành (hiện ra khi PrintStatusScreen báo status = "done")
+ * Màn 4b — Hoàn thành
  * Props:
- *  - resultImageUrl?: string
+ *  - inputType?: "image" | "text"  ← phân nhánh hiển thị
+ *  - requestId?: string            ← dùng để fetch SVG khi inputType==="image"
+ *  - resultImageUrl?: string       ← hiển thị khi inputType==="text"
  *  - actualDrawTimeSec?: number
  *  - strokesTotal?: number
- *  - onCreateNew() : quay lại màn Tạo tranh
- *  - onViewHistory() : sang màn Thư viện
- *  - onDownload()?: tuỳ chọn, tải ảnh/SVG về máy
+ *  - onCreateNew() / onViewHistory() / onDownload()?
  */
 export default function DoneScreen({
+  inputType = "text",
+  requestId,
   resultImageUrl,
   actualDrawTimeSec,
   strokesTotal = 248,
@@ -21,6 +24,19 @@ export default function DoneScreen({
   onDownload,
 }) {
   const minutes = actualDrawTimeSec ? Math.round(actualDrawTimeSec / 60) : null;
+
+  const [svgText, setSvgText] = useState(null);
+  const [svgLoading, setSvgLoading] = useState(false);
+
+  // Khi là luồng tải ảnh lên: fetch SVG để hiển thị tác phẩm hoàn chỉnh
+  useEffect(() => {
+    if (inputType !== "image" || !requestId) return;
+    setSvgLoading(true);
+    getSvgContent(requestId)
+      .then((res) => setSvgText(res.svgText))
+      .catch(() => setSvgText(null))
+      .finally(() => setSvgLoading(false));
+  }, [inputType, requestId]);
 
   return (
     <ScreenShell patternId="pattern-done">
@@ -36,26 +52,59 @@ export default function DoneScreen({
         </p>
       </div>
 
+      {/* ── Khung tranh hoàn chỉnh ── */}
       <div className="mb-5">
         <HardShadowBox shadowOffset={5}>
-          <div className="h-56 flex items-center justify-center bg-[#FEFDF9] rounded-xl">
-            {resultImageUrl ? (
-              <img src={resultImageUrl} alt="Kết quả" className="max-h-56 max-w-full object-contain rounded-lg" />
-            ) : (
-              <div className="text-center">
-                <PartyPopper size={40} className="mx-auto text-[#C0392B]" />
-                <p className="text-sm text-[#6B6B66] font-medium mt-2">Tranh hoàn chỉnh</p>
-              </div>
+          <div className="h-56 flex items-center justify-center bg-[#FEFDF9] rounded-xl overflow-hidden">
+
+            {/* Luồng Tải ảnh lên: hiển thị bản SVG nét vẽ */}
+            {inputType === "image" && (
+              svgLoading ? (
+                <Loader2 size={36} className="animate-spin text-[#C0392B]" />
+              ) : svgText ? (
+                <>
+                  <style>{`#svg-done svg { width: 100% !important; height: 100% !important; max-height: 224px; }`}</style>
+                  <div
+                    id="svg-done"
+                    className="w-full h-full flex items-center justify-center p-2"
+                    dangerouslySetInnerHTML={{ __html: svgText }}
+                  />
+                </>
+              ) : (
+                <div className="text-center">
+                  <PartyPopper size={40} className="mx-auto text-[#C0392B]" />
+                  <p className="text-sm text-[#6B6B66] font-medium mt-2">Tranh hoàn chỉnh</p>
+                </div>
+              )
             )}
+
+            {/* Luồng AI sinh ảnh: hiển thị ảnh màu gốc AI tạo */}
+            {inputType === "text" && (
+              resultImageUrl ? (
+                <img
+                  src={resultImageUrl}
+                  alt="Kết quả"
+                  className="max-h-56 max-w-full object-contain rounded-lg"
+                />
+              ) : (
+                <div className="text-center">
+                  <PartyPopper size={40} className="mx-auto text-[#C0392B]" />
+                  <p className="text-sm text-[#6B6B66] font-medium mt-2">Tranh hoàn chỉnh</p>
+                </div>
+              )
+            )}
+
           </div>
         </HardShadowBox>
       </div>
 
+      {/* ── Thống kê ── */}
       <div className="flex gap-2.5 mb-6">
         <StatBox label="SỐ NÉT VẼ" value={strokesTotal} />
         <StatBox label="THỜI GIAN VẼ" value={minutes ? `${minutes} phút` : "—"} />
       </div>
 
+      {/* ── Nút hành động ── */}
       <div className="flex items-center justify-between border-t-[3px] border-[#1A1A1A] pt-5 gap-2.5">
         <ComicButton variant="secondary" onClick={onViewHistory} className="!px-4">
           <span className="flex items-center gap-1.5">

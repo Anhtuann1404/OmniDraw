@@ -478,7 +478,7 @@ def compute_svg_metrics(strokes, order, reversed_flags, scale, optimize_time_ms)
 
 def process(request_id, image_base64=None, image_path=None,
             target_paper_size_mm=(210, 297), output_dir="output",
-            snap_dist=15.0):
+            snap_dist=15.0, style="sketch"):
     """
     Ham xu ly chinh cua module Thuat toan, khop input/output muc 3-4-6 cua
     API Spec.

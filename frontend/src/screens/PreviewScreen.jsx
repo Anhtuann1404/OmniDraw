@@ -4,17 +4,18 @@ import { ScreenShell, ComicButton, StepBadge, Logo, HardShadowBox, StarBadge } f
 import { getSvgContent } from "../api/omnidraw";
 
 /**
- * Màn 2 — Xem trước kết quả AI + bản SVG nét vẽ
+ * Màn 2 — Xem trước kết quả
  * Props:
- *  - requestId?: string       (dùng để fetch SVG)
- *  - resultImageUrl?: string  (ảnh gốc AI)
- *  - svgReady?: boolean       (backend đã xử lý SVG xong chưa)
+ *  - requestId?: string
+ *  - inputType?: "image" | "text"   ← phân nhánh hiển thị chính
+ *  - resultImageUrl?: string         (chỉ dùng khi inputType === "text")
+ *  - svgReady?: boolean
  *  - style, modelUsed, processingTimeSec
- *  - onRetry() : bấm "Thử lại"
- *  - onConfirm() : bấm "Xác nhận"
+ *  - onRetry() / onConfirm()
  */
 export default function PreviewScreen({
   requestId,
+  inputType = "text",
   resultImageUrl,
   svgReady = false,
   style = "Ký hoạ",
@@ -23,16 +24,16 @@ export default function PreviewScreen({
   onRetry,
   onConfirm,
 }) {
-  // Tab: "image" | "svg"
-  const [activeTab, setActiveTab] = useState("image");
+  // Khi tải ảnh lên: mặc định sang tab SVG luôn
+  const [activeTab, setActiveTab] = useState(inputType === "image" ? "svg" : "image");
   const [svgText, setSvgText] = useState(null);
   const [svgLoading, setSvgLoading] = useState(false);
   const [svgError, setSvgError] = useState(null);
 
-  // Khi người dùng chuyển sang tab SVG, fetch nội dung
+  // Khi sang tab SVG hoặc inputType==="image" thì tự động fetch SVG
   useEffect(() => {
     if (activeTab !== "svg" || !requestId) return;
-    if (svgText) return; // Đã fetch rồi, không cần fetch lại
+    if (svgText) return;
 
     setSvgLoading(true);
     setSvgError(null);
@@ -43,48 +44,60 @@ export default function PreviewScreen({
       .finally(() => setSvgLoading(false));
   }, [activeTab, requestId, svgText]);
 
+  // Tiêu đề phụ thay đổi theo luồng
+  const subtitle = inputType === "image" ? "Xem trước nét vẽ SVG" : "Xem trước kết quả AI";
+  const displayModel = inputType === "image" ? "OpenCV Vectorizer" : (modelUsed || "dall-e-3");
+
   return (
     <ScreenShell patternId="pattern-preview">
       <div className="flex items-start justify-between mb-4">
-        <Logo subtitle="Xem trước kết quả AI" size="text-[28px]" />
+        <Logo subtitle={subtitle} size="text-[28px]" />
         <StepBadge step={2} />
       </div>
 
-      {/* ── Tab switcher ── */}
-      <div className="flex gap-2 mb-3">
-        <TabButton
-          active={activeTab === "image"}
-          onClick={() => setActiveTab("image")}
-          icon={<Image size={13} />}
-          label="Ảnh AI"
-        />
-        <TabButton
-          active={activeTab === "svg"}
-          onClick={() => setActiveTab("svg")}
-          icon={<PenTool size={13} />}
-          label="Nét vẽ SVG"
-          badge={svgReady ? "✓" : null}
-        />
-      </div>
+      {/* ── Tab switcher: chỉ hiện khi AI sinh ảnh ── */}
+      {inputType === "text" && (
+        <div className="flex gap-2 mb-3">
+          <TabButton
+            active={activeTab === "image"}
+            onClick={() => setActiveTab("image")}
+            icon={<Image size={13} />}
+            label="Ảnh AI"
+          />
+          <TabButton
+            active={activeTab === "svg"}
+            onClick={() => setActiveTab("svg")}
+            icon={<PenTool size={13} />}
+            label="Nét vẽ SVG"
+            badge={svgReady ? "✓" : null}
+          />
+        </div>
+      )}
 
-      {/* ── Canvas hiển thị ── */}
+      {/* ── Canvas ── */}
       <div className="relative mb-4">
         <HardShadowBox shadowOffset={5}>
           <div className="h-64 flex items-center justify-center bg-[#FEFDF9] rounded-xl overflow-hidden">
 
-            {/* Tab: Ảnh AI */}
-            {activeTab === "image" && (
+            {/* Tab Ảnh AI — chỉ render khi inputType==="text" và tab đang ở "image" */}
+            {activeTab === "image" && inputType === "text" && (
               resultImageUrl ? (
-                <img src={resultImageUrl} alt="Kết quả AI" className="max-h-64 max-w-full object-contain rounded-lg" />
+                <img
+                  src={resultImageUrl}
+                  alt="Kết quả AI"
+                  className="max-h-64 max-w-full object-contain rounded-lg"
+                />
               ) : (
                 <div className="text-center">
                   <Image size={42} className="mx-auto text-[#C0392B]" />
-                  <p className="text-sm text-[#6B6B66] font-medium mt-2">Ảnh kết quả AI (phong cách: {style})</p>
+                  <p className="text-sm text-[#6B6B66] font-medium mt-2">
+                    Ảnh kết quả AI (phong cách: {style})
+                  </p>
                 </div>
               )
             )}
 
-            {/* Tab: SVG */}
+            {/* Tab SVG — hiển thị với cả 2 luồng khi tab = "svg" */}
             {activeTab === "svg" && (
               svgLoading ? (
                 <div className="text-center">
@@ -97,24 +110,25 @@ export default function PreviewScreen({
                   <p className="text-xs text-[#C0392B] font-medium mt-2">{svgError}</p>
                 </div>
               ) : svgText ? (
-                <div
-                  className="w-full h-full"
-                  style={{ display: "contents" }}
-                >
-                  <style>{`#svg-preview-tab svg { width: 100% !important; height: 100% !important; max-height: 256px; object-fit: contain; }`}</style>
+                <>
+                  <style>{`#svg-preview-tab svg { width: 100% !important; height: 100% !important; max-height: 256px; }`}</style>
                   <div
                     id="svg-preview-tab"
                     className="w-full h-full flex items-center justify-center p-2"
                     dangerouslySetInnerHTML={{ __html: svgText }}
                   />
-                </div>
-              ) : !svgReady ? (
+                </>
+              ) : (
                 <div className="text-center px-4">
                   <PenTool size={36} className="mx-auto text-[#6B6B66]" />
-                  <p className="text-sm text-[#6B6B66] font-medium mt-2">Backend đang xử lý nét vẽ...</p>
-                  <p className="text-xs text-[#6B6B66] mt-1">Chuyển lại tab này sau vài giây</p>
+                  <p className="text-sm text-[#6B6B66] font-medium mt-2">
+                    {svgReady ? "Bấm để tải bản nét vẽ..." : "Backend đang xử lý nét vẽ..."}
+                  </p>
+                  {!svgReady && (
+                    <p className="text-xs text-[#6B6B66] mt-1">Thử lại sau vài giây</p>
+                  )}
                 </div>
-              ) : null
+              )
             )}
 
           </div>
@@ -127,15 +141,17 @@ export default function PreviewScreen({
       {/* ── Thống kê ── */}
       <div className="flex gap-2.5 mb-4">
         <StatBox label="STYLE" value={style} />
-        <StatBox label="MODEL" value={modelUsed} />
-        <StatBox label="THỜI GIAN" value={`${processingTimeSec}s`} />
+        <StatBox label="MODEL" value={displayModel} />
+        {inputType === "text" && (
+          <StatBox label="THỜI GIAN" value={`${processingTimeSec}s`} />
+        )}
       </div>
 
       {/* ── Nút hành động ── */}
       <div className="flex items-center justify-between border-t-[3px] border-[#1A1A1A] pt-4">
         <ComicButton variant="secondary" onClick={onRetry}>
           <span className="flex items-center gap-1.5">
-            <RefreshCw size={15} /> THỬ LẠI
+            <RefreshCw size={15} /> {inputType === "image" ? "TẢI ẢNH KHÁC" : "THỬ LẠI"}
           </span>
         </ComicButton>
         <ComicButton variant="primary" onClick={onConfirm}>
@@ -153,9 +169,7 @@ function TabButton({ active, onClick, icon, label, badge }) {
     <button
       onClick={onClick}
       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border-2 border-[#1A1A1A] transition-all ${
-        active
-          ? "bg-[#1A1A1A] text-white"
-          : "bg-white text-[#1A1A1A] hover:bg-[#F0EEE5]"
+        active ? "bg-[#1A1A1A] text-white" : "bg-white text-[#1A1A1A] hover:bg-[#F0EEE5]"
       }`}
     >
       {icon}
