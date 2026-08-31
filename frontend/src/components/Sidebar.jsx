@@ -1,5 +1,5 @@
 import React from "react";
-import { Plus, Image as ImageIcon, User } from "lucide-react";
+import { Plus, Image as ImageIcon, User, X } from "lucide-react";
 import { Logo, ComicButton } from "./ComicPrimitives";
 
 /**
@@ -11,8 +11,9 @@ import { Logo, ComicButton } from "./ComicPrimitives";
  *  - activeItemId?: string
  *  - onCreateNew()
  *  - onOpenItem(item)
+ *  - onDeleteItem(item)
  */
-export default function Sidebar({ items = [], activeItemId, onCreateNew, onOpenItem }) {
+export default function Sidebar({ items = [], activeItemId, onCreateNew, onOpenItem, onDeleteItem }) {
   return (
     <aside className="w-[220px] shrink-0 h-screen flex flex-col bg-[#EDEBDF] border-r-[3px] border-[#1A1A1A]">
       {/* ── Header: Logo ── */}
@@ -24,7 +25,7 @@ export default function Sidebar({ items = [], activeItemId, onCreateNew, onOpenI
       <div className="px-3 pb-3">
         <button
           onClick={onCreateNew}
-          className="w-full flex items-center gap-2 border-[2.5px] border-[#1A1A1A] rounded-lg px-3 py-2.5 bg-white text-[#1A1A1A] text-sm font-bold hover:bg-[#FBEAF0] hover:border-[#C0392B] hover:text-[#C0392B] transition-colors"
+          className="w-full flex items-center gap-2 border-[2.5px] border-[#1A1A1A] rounded-lg px-3 py-2.5 bg-white text-[#1A1A1A] text-sm font-bold hover:bg-[#F5F1E0] transition-colors"
         >
           <Plus size={16} />
           Tạo tranh mới
@@ -40,7 +41,7 @@ export default function Sidebar({ items = [], activeItemId, onCreateNew, onOpenI
       </p>
 
       {/* ── Danh sách items ── */}
-      <div className="flex-1 overflow-y-auto px-2 flex flex-col gap-1.5">
+      <div className="flex-1 overflow-y-auto px-3 pt-3 pb-3 flex flex-col gap-2.5">
         {items.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-32 text-center px-2">
             <ImageIcon size={24} className="text-[#C0392B] mb-2 opacity-50" />
@@ -55,13 +56,13 @@ export default function Sidebar({ items = [], activeItemId, onCreateNew, onOpenI
               <button
                 key={item.id}
                 onClick={() => onOpenItem?.(item)}
-                className={`w-full text-left rounded-lg border-[2px] px-2.5 py-2 transition-colors ${
+                className={`w-full text-left rounded-lg px-2.5 py-2 transition-all relative ${
                   isActive
-                    ? "border-[#C0392B] bg-[#FBEAF0] border-l-[4px]"
-                    : "border-[#1A1A1A] bg-white hover:bg-[#F5F1E0]"
+                    ? "border-[2.5px] border-[#1A1A1A] bg-white shadow-[3px_3px_0px_0px_#1A1A1A] -translate-y-[2px] -translate-x-[2px]"
+                    : "border-[2.5px] border-[#1A1A1A] bg-white hover:bg-[#F5F1E0]"
                 }`}
               >
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 min-w-0">
                   {item.thumbnailUrl ? (
                     <img
                       src={item.thumbnailUrl}
@@ -82,6 +83,19 @@ export default function Sidebar({ items = [], activeItemId, onCreateNew, onOpenI
                     </p>
                   </div>
                 </div>
+
+                {isActive && (
+                  <div 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteItem?.(item);
+                    }}
+                    className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-[#C0392B] border-[1.5px] border-[#1A1A1A] flex items-center justify-center shrink-0 hover:scale-110 transition-transform cursor-pointer shadow-[1px_1px_0px_0px_#1A1A1A]"
+                    title="Xoá lịch sử"
+                  >
+                    <X size={10} className="text-white" strokeWidth={4} />
+                  </div>
+                )}
               </button>
             );
           })

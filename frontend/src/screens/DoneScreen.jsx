@@ -42,7 +42,6 @@ export default function DoneScreen({
     <ScreenShell patternId="pattern-done">
       <div className="flex items-start justify-between mb-5">
         <Logo subtitle="Hoàn thành!" size="text-[28px]" />
-        <StarBadge topLabel="XONG" bottomLabel="" size={64} />
       </div>
 
       <div className="text-center mb-4">

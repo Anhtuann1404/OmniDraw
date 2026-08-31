@@ -53,7 +53,6 @@ export default function PrintStatusScreen({
     <ScreenShell patternId="pattern-print">
       <div className="flex items-start justify-between mb-5">
         <Logo subtitle={isPaused ? "Tạm dừng..." : "Đang vẽ..."} size="text-[28px]" />
-        <StepBadge step={4} />
       </div>
 
       {/* Canvas vẽ */}

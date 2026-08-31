@@ -30,7 +30,14 @@ export default function PreviewScreen({
   const [svgLoading, setSvgLoading] = useState(false);
   const [svgError, setSvgError] = useState(null);
 
-  // Khi sang tab SVG hoặc inputType==="image" thì tự động fetch SVG
+  // Reset tab và xóa SVG cũ khi bấm sang tranh khác trong lịch sử
+  useEffect(() => {
+    setActiveTab(inputType === "image" ? "svg" : "image");
+    setSvgText(null);
+    setSvgError(null);
+  }, [requestId, inputType]);
+
+  // Khi sang tab SVG thì tự động fetch SVG
   useEffect(() => {
     if (activeTab !== "svg" || !requestId) return;
     if (svgText) return;
@@ -52,7 +59,6 @@ export default function PreviewScreen({
     <ScreenShell patternId="pattern-preview">
       <div className="flex items-start justify-between mb-4">
         <Logo subtitle={subtitle} size="text-[28px]" />
-        <StepBadge step={2} />
       </div>
 
       {/* ── Tab switcher: chỉ hiện khi AI sinh ảnh ── */}
@@ -133,9 +139,6 @@ export default function PreviewScreen({
 
           </div>
         </HardShadowBox>
-        <div className="absolute -top-2.5 -right-2.5">
-          <StarBadge topLabel="XONG" bottomLabel="" size={56} />
-        </div>
       </div>
 
       {/* ── Thống kê ── */}

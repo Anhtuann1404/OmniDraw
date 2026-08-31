@@ -20,10 +20,10 @@ export default function ConfirmScreen({
   requestId,
   strokeCount = 248,
   estimatedMinutes = 12,
+  paperSize = "a4",
   onBack,
   onStart,
 }) {
-  const [paperSize, setPaperSize] = useState("a4");
   const [svgText, setSvgText] = useState(null);
   const [svgLoading, setSvgLoading] = useState(false);
 
@@ -41,7 +41,6 @@ export default function ConfirmScreen({
     <ScreenShell patternId="pattern-confirm">
       <div className="flex items-start justify-between mb-5">
         <Logo subtitle="Xác nhận trước khi vẽ" size="text-[28px]" />
-        <StepBadge step={3} />
       </div>
 
       <div className="mb-5">
@@ -74,19 +73,11 @@ export default function ConfirmScreen({
       </div>
 
       <div className="flex gap-2.5 mb-5">
-        <div className="flex-1 border-[2.5px] border-[#1A1A1A] rounded-lg p-2.5 bg-white">
-          <p className="text-[11px] text-[#6B6B66] font-bold mb-1">KHỔ GIẤY</p>
-          <select
-            value={paperSize}
-            onChange={(e) => setPaperSize(e.target.value)}
-            className="w-full border border-[#1A1A1A] font-bold text-[13px] p-1 bg-white focus:outline-none"
-          >
-            {PAPER_SIZES.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.label}
-              </option>
-            ))}
-          </select>
+        <div className="flex-1 text-center border-[2.5px] border-[#1A1A1A] rounded-lg p-2.5 bg-white">
+          <p className="text-[11px] text-[#6B6B66] font-bold">KHỔ GIẤY</p>
+          <p className="text-base text-[#1A1A1A] font-bold mt-0.5">
+            {PAPER_SIZES.find(p => p.id === paperSize)?.label.split(" ")[0] || paperSize.toUpperCase()}
+          </p>
         </div>
         <div className="flex-1 text-center border-[2.5px] border-[#1A1A1A] rounded-lg p-2.5 bg-white">
           <p className="text-[11px] text-[#6B6B66] font-bold">SỐ NÉT VẼ</p>
@@ -104,7 +95,7 @@ export default function ConfirmScreen({
             <ArrowLeft size={15} /> QUAY LẠI
           </span>
         </ComicButton>
-        <ComicButton variant="primary" onClick={() => onStart?.({ paperSize })}>
+        <ComicButton variant="primary" onClick={() => onStart?.()}>
           <span className="flex items-center gap-1.5">
             <PlayCircle size={16} /> BẮT ĐẦU VẼ
           </span>

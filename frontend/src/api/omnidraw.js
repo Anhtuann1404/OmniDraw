@@ -8,8 +8,15 @@ import { MOCK_MODE } from "./config";
 /**
  * Mục 2 của API Spec — Giao diện → AI (sinh ảnh / style transfer)
  */
-export async function generateArt({ inputType, imageBase64, prompt, style, experiment }) {
+export async function generateArt({ inputType, imageBase64, prompt, style, paperSize = "a4", experiment }) {
   const requestId = generateRequestId();
+
+  const PAPER_SIZES_MM = {
+    "a3": [297, 420],
+    "a4": [210, 297],
+    "a5": [148, 210]
+  };
+  const target_paper_size_mm = PAPER_SIZES_MM[paperSize] || [210, 297];
 
   if (MOCK_MODE) {
     await delay(1200);
@@ -26,7 +33,7 @@ export async function generateArt({ inputType, imageBase64, prompt, style, exper
     image_base64: inputType === "image" ? imageBase64 : null,
     prompt: inputType === "text" ? prompt : null,
     style,
-    options: { target_paper_size_mm: [210, 297] },
+    options: { target_paper_size_mm },
     experiment: experiment
       ? { dataset_item_id: experiment.datasetItemId ?? null, method_tag: experiment.methodTag ?? null }
       : { dataset_item_id: null, method_tag: null },
@@ -144,10 +151,19 @@ export async function getHistory() {
     id: it.id,
     title: it.title,
     style: it.style,
+    inputType: it.input_type,
     timeAgo: it.time_ago,
     minutes: it.minutes,
     thumbnailUrl: it.thumbnail_url,
   }));
+}
+
+export async function deleteHistoryItem(requestId) {
+  if (MOCK_MODE) {
+    await delay(300);
+    return { status: "success" };
+  }
+  return await apiRequest(`/api/history/${requestId}`, { method: "DELETE" });
 }
 
 export async function logExperimentData(logPayload) {

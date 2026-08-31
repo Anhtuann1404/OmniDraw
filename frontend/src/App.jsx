@@ -5,7 +5,7 @@ import ConfirmScreen from "./screens/ConfirmScreen";
 import PrintStatusScreen from "./screens/PrintStatusScreen";
 import DoneScreen from "./screens/DoneScreen";
 import Sidebar from "./components/Sidebar";
-import { generateArt, startPrint, pausePrint, resumePrint, cancelPrint, getHistory, logExperimentData } from "./api/omnidraw";
+import { generateArt, startPrint, pausePrint, resumePrint, cancelPrint, getHistory, logExperimentData, deleteHistoryItem } from "./api/omnidraw";
 import { usePrintStatusPolling } from "./hooks/usePrintStatusPolling";
 import { MOCK_MODE } from "./api/config";
 
@@ -26,15 +26,20 @@ export default function App() {
         const payload = {
           request_id: aiResult?.requestId,
           timestamp: new Date().toISOString(),
+          dataset_item_id: aiResult?.title,
           style: aiResult?.style,
+          input_type: aiResult?.inputType,
           model_used: aiResult?.meta?.modelUsed,
           final_status: statusData.status,
           actual_draw_time_sec: statusData.actualDrawTimeSec || 0,
           error_code: statusData.error?.code || null
         };
 
-        logExperimentData(payload).catch(err => 
-          console.warn("Lỗi ghi log CSV:", err)
+        logExperimentData(payload).then(() => {
+          // Refresh lịch sử sau khi backend đã lưu thành công
+          getHistory().then((items) => setHistoryItems(items));
+        }).catch(err => 
+          console.warn("Lỗi ghi log CSV/DB:", err)
         );
 
         if (statusData.status === "done") {
@@ -45,12 +50,13 @@ export default function App() {
     }
   }, [step, statusData]);
 
-  async function handleCreateSubmit({ inputType, style, imageBase64, prompt }) {
+  async function handleCreateSubmit({ inputType, style, imageBase64, prompt, fileName, paperSize }) {
     setLoading(true);
     setErrorMsg(null);
     try {
-      const result = await generateArt({ inputType, style, imageBase64, prompt });
-      setAiResult({ ...result, style, inputType }); // lưu inputType để các màn sau phân biệt luồng
+      const result = await generateArt({ inputType, style, imageBase64, prompt, paperSize });
+      const title = inputType === "text" ? prompt : (fileName || "Bản vẽ upload");
+      setAiResult({ ...result, style, inputType, title, paperSize }); // lưu thêm paperSize để ConfirmScreen dùng
       setStep("preview");
     } catch (err) {
       setErrorMsg(err.message || "Có lỗi khi tạo tranh, thử lại nhé.");
@@ -59,13 +65,28 @@ export default function App() {
     }
   }
 
-  async function handleStartPrint({ paperSize }) {
+  async function handleStartPrint() {
+    if (!aiResult?.requestId) return;
     setLoading(true);
-    setErrorMsg(null);
+    setOptimisticStatus("printing"); // Cập nhật giao diện ngay lập tức
     try {
-      await startPrint({ requestId: aiResult.requestId, paperSize });
+      await startPrint({ requestId: aiResult.requestId, paperSize: aiResult.paperSize || "a4" });
       setStep("printing");
+      
+      // Log trạng thái queued
+      await logExperimentData({
+        request_id: aiResult.requestId,
+        timestamp: new Date().toISOString(),
+        dataset_item_id: aiResult.title,
+        style: aiResult.style || "unknown",
+        input_type: aiResult.inputType || "unknown",
+        model_used: aiResult.meta?.modelUsed || "ai-core-v1-python",
+        final_status: "queued", 
+        actual_draw_time_sec: 0, 
+        error_code: null
+      });
     } catch (err) {
+      setOptimisticStatus(null); // Hoàn tác nếu lỗi
       setErrorMsg(err.message || "Không thể bắt đầu vẽ, thử lại nhé.");
     } finally {
       setLoading(false);
@@ -131,14 +152,54 @@ export default function App() {
       .catch((err) => console.warn("Không tải được lịch sử:", err));
   }, []);
 
+  // ── XỬ LÝ CLICK LỊCH SỬ ──
+  function handleOpenHistoryItem(item) {
+    // Phục hồi lại dữ liệu tranh từ DB vào state aiResult
+    setAiResult({
+      requestId: item.id,
+      title: item.title,
+      style: item.style,
+      inputType: item.inputType || "unknown", // fallback nếu cũ
+      resultImageBase64: item.thumbnailUrl,    // API thumbnail trả về ảnh PNG gốc
+      svgReady: true,                          // Ảnh cũ chắc chắn đã có SVG
+      meta: { modelUsed: "History" }
+    });
+    // Phục hồi số phút vẽ (nếu có)
+    if (item.minutes) {
+      setDoneInfo({ actualDrawTimeSec: item.minutes * 60 });
+    }
+    // Nhảy về màn Preview để có thể bấm vẽ lại
+    setStep("preview");
+  }
+
+  async function handleDeleteHistory(item) {
+    if (!window.confirm("Bạn có chắc muốn xoá bức tranh này khỏi lịch sử không?")) return;
+    try {
+      await deleteHistoryItem(item.id);
+      // Tải lại lịch sử
+      const items = await getHistory();
+      setHistoryItems(items);
+      // Nếu tranh đang mở là tranh bị xoá, quay về trang tạo tranh
+      if (aiResult?.requestId === item.id) {
+        setStep("create");
+        setAiResult(null);
+      }
+    } catch (err) {
+      console.warn("Lỗi xoá lịch sử:", err);
+      alert("Không thể xoá lịch sử lúc này!");
+    }
+  }
+
   return (
     <div className="flex h-screen overflow-hidden bg-[#F5F3EA]">
 
       {/* ── Sidebar trái ── */}
       <Sidebar
         items={historyItems || []}
+        activeItemId={aiResult?.requestId}
         onCreateNew={handleCreateNewFromDone}
-        onOpenItem={(item) => console.log("open", item)}
+        onOpenItem={handleOpenHistoryItem}
+        onDeleteItem={handleDeleteHistory}
       />
 
       {/* ── Vùng chính — card căn giữa ── */}
@@ -181,6 +242,7 @@ export default function App() {
                 ? Math.ceil((aiResult.svgMetrics.total_path_length_mm + aiResult.svgMetrics.pen_lift_distance_mm) / 40 / 60)
                 : "..."
             }
+            paperSize={aiResult?.paperSize || "a4"}
             onBack={() => setStep("preview")}
             onStart={handleStartPrint}
           />
