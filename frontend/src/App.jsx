@@ -172,12 +172,30 @@ export default function App() {
           />
         )}
 
-        {step === "confirm" && <ConfirmScreen requestId={aiResult?.requestId} onBack={() => setStep("preview")} onStart={handleStartPrint} />}
+        {step === "confirm" && (
+          <ConfirmScreen
+            requestId={aiResult?.requestId}
+            strokeCount={aiResult?.svgMetrics ? aiResult.svgMetrics.pen_lift_count + 1 : "..."}
+            estimatedMinutes={
+              aiResult?.svgMetrics
+                ? Math.ceil((aiResult.svgMetrics.total_path_length_mm + aiResult.svgMetrics.pen_lift_distance_mm) / 40 / 60)
+                : "..."
+            }
+            onBack={() => setStep("preview")}
+            onStart={handleStartPrint}
+          />
+        )}
 
         {step === "printing" && statusData && statusData.status !== "done" && (
           <PrintStatusScreen
             requestId={aiResult?.requestId}
             progressPercent={statusData.progressPercent}
+            strokesDone={
+              aiResult?.svgMetrics
+                ? Math.floor(((aiResult.svgMetrics.pen_lift_count + 1) * statusData.progressPercent) / 100)
+                : "..."
+            }
+            strokesTotal={aiResult?.svgMetrics ? aiResult.svgMetrics.pen_lift_count + 1 : "..."}
             etaMinutes={Math.ceil((statusData.etaSec || 0) / 60)}
             machineStatus={statusData.status === "error" ? "error" : "ok"}
             isPaused={(optimisticStatus || statusData.status) === "paused"}
@@ -193,6 +211,7 @@ export default function App() {
             requestId={aiResult?.requestId}
             resultImageUrl={aiResult?.resultImageBase64}
             actualDrawTimeSec={doneInfo?.actualDrawTimeSec}
+            strokesTotal={aiResult?.svgMetrics ? aiResult.svgMetrics.pen_lift_count + 1 : "..."}
             onCreateNew={handleCreateNewFromDone}
             onViewHistory={() => {}} // history giờ luôn ở sidebar
           />
