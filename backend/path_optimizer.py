@@ -160,24 +160,33 @@ def _resize_and_gray(img, resize_max_dim=1024):
     return img, gray, (w, h)
 
 
-def extract_strokes_line_art(img, canny_low=100, canny_high=220,
-                              min_stroke_len=25, resize_max_dim=1024,
+def extract_strokes_line_art(img, canny_low=40, canny_high=120,
+                              min_stroke_len=12, resize_max_dim=1024,
                               simplify_epsilon=1.2):
     """
-    [MOI] Style line_art: tang nguong Canny (chi giu canh manh, ro net),
-    loc net vun bang NGUONG DO DAI sau khi da tach contour (khong dung
-    erode/MORPH_OPEN truc tiep tren anh canh - canh Canny chi day 1px nen
-    erode se xoa sach gan het canh, khong con gi de dilate lai), roi lam
-    tron/don gian hoa duong net bang approxPolyDP -> vien sac net, dut
-    khoat, thay vi net tu nhien nhieu chi tiet nho nhu sketch.
+    [NANG CAP] Style line_art: 
+    1. Dung Bilateral Filter thay vi Gaussian: Giup lam min be mat (xoa nhieu) 
+       nhung VAN GIU LAI ranh gioi sac net.
+    2. Dung CLAHE: Tang tuong phan cuc bo giup cac chi tiet mo (nep gap ao,
+       mat, mui) noi bat len de thuat toan bat duoc.
+    3. Ha nguong Canny (120 thay vi 220) & giam min_stroke_len (12 thay vi 25):
+       Giu lai cac chi tiet nho (mat, mui, bieu cam) thay vi xoa sach, giup 
+       tranh bi "bo trang" nhieu cho tren hinh.
     """
     img, _, (w, h) = _resize_and_gray(img, resize_max_dim)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    # Blur manh hon sketch de triet nhieu texture nho truoc khi lay canh
-    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-    edges = cv2.Canny(blurred, canny_low, canny_high)
+    
+    # 1. Bilateral Filter: xoa nhieu/texture nhung khong lam mo vien net
+    filtered = cv2.bilateralFilter(gray, 9, 75, 75)
+    
+    # 2. CLAHE: keo sang/toi cuc bo de giup bat cac duong net an
+    clahe = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(8, 8))
+    filtered = clahe.apply(filtered)
 
-    # Chi dilate nhe de noi cac doan canh dut quang, KHONG erode
+    # 3. Bat canh
+    edges = cv2.Canny(filtered, canny_low, canny_high)
+
+    # Chi dilate nhe de noi cac doan canh dut quang
     kernel_dilate = np.ones((2, 2), np.uint8)
     edges = cv2.dilate(edges, kernel_dilate, iterations=1)
 
