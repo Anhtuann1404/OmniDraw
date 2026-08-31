@@ -1,12 +1,12 @@
 import React, { useRef, useState } from "react";
-import { Image, Pencil, UploadCloud, ArrowRight, Minus, LineChart, Grid2x2, Loader2 } from "lucide-react";
-import { ScreenShell, ComicButton, StarBadge, Logo } from "../components/ComicPrimitives";
+import { Image, Pencil, UploadCloud, ArrowRight, Minus, LineChart, Grip, Hash, Loader2 } from "lucide-react";
+import { ScreenShell, ComicButton, Logo } from "../components/ComicPrimitives";
 
 const STYLES = [
-  { id: "sketch", label: "Ký hoạ", icon: Minus },
-  { id: "line_art", label: "Line art", icon: LineChart },
-  { id: "stipple", label: "Chấm bi", icon: Grid2x2 },
-  { id: "hatching", label: "Hatching", icon: Grid2x2 },
+  { id: "sketch", label: "Ký hoạ", icon: Pencil },
+  { id: "line_art", label: "Line art", icon: Minus },
+  { id: "stipple", label: "Chấm bi", icon: Grip },
+  { id: "hatching", label: "Hatching", icon: Hash },
 ];
 
 const MAX_FILE_MB = 10;
@@ -20,6 +20,7 @@ const MAX_FILE_MB = 10;
 export default function CreateScreen({ onSubmit, loading = false }) {
   const [inputType, setInputType] = useState("image"); // "image" | "text"
   const [style, setStyle] = useState("sketch");
+  const [paperSize, setPaperSize] = useState("a4"); // "a3" | "a4" | "a5"
   const [imageBase64, setImageBase64] = useState(null);
   const [imagePreviewName, setImagePreviewName] = useState(null);
   const [prompt, setPrompt] = useState("");
@@ -66,8 +67,10 @@ export default function CreateScreen({ onSubmit, loading = false }) {
     onSubmit?.({
       inputType,
       style,
+      paperSize,
       imageBase64: inputType === "image" ? imageBase64 : undefined,
       prompt: inputType === "text" ? prompt.trim() : undefined,
+      fileName: inputType === "image" ? imagePreviewName : undefined,
     });
   }
 
@@ -75,7 +78,6 @@ export default function CreateScreen({ onSubmit, loading = false }) {
     <ScreenShell patternId="pattern-create">
       <div className="flex items-start justify-between mb-6">
         <Logo subtitle="Trang tạo tranh" size="text-3xl" />
-        <StarBadge topLabel="MỚI" bottomLabel="AI" />
       </div>
 
       <div className="flex gap-2.5 mb-5">
@@ -152,8 +154,21 @@ export default function CreateScreen({ onSubmit, loading = false }) {
         })}
       </div>
 
-      <div className="flex items-center justify-between border-t-[3px] border-[#1A1A1A] pt-5">
-        <span className="text-xs font-bold text-[#1A1A1A]">KHỔ GIẤY: A4</span>
+      <div className="flex items-end justify-between border-t-[3px] border-[#1A1A1A] pt-5">
+        
+        <div className="min-w-[140px] pb-1">
+          <p className="text-[10px] text-[#6B6B66] font-bold mb-1.5 uppercase">Khổ giấy</p>
+          <select 
+            value={paperSize} 
+            onChange={e => setPaperSize(e.target.value)}
+            className="w-full border-[2.5px] border-[#1A1A1A] rounded-md font-bold text-[13px] px-2 py-1.5 bg-white outline-none cursor-pointer hover:bg-[#F5F1E0] transition-colors"
+          >
+            <option value="a3">A3 (297x420mm)</option>
+            <option value="a4">A4 (210x297mm)</option>
+            <option value="a5">A5 (148x210mm)</option>
+          </select>
+        </div>
+
         <ComicButton variant="primary" onClick={handleSubmit} className={loading ? "opacity-70 pointer-events-none" : ""}>
           <span className="flex items-center gap-1.5">
             {loading ? (

@@ -12,7 +12,10 @@ load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, HTMLResponse
+from contextlib import asynccontextmanager
 from pydantic import BaseModel
+
+from database import init_db, save_history_record, get_all_history
 
 from logs.csv_logger import log_experiment_csv
 from api_generator import (
@@ -25,7 +28,22 @@ from api_generator import (
 )
 from path_optimizer import process as svg_process
 
-app = FastAPI(title="OmniDraw API Gateway (Master Integrated)")
+# ==============================================================================
+# 2. Khởi tạo FastAPI App
+# ==============================================================================
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Khởi tạo DB SQLite khi app khởi động
+    init_db()
+    yield
+
+app = FastAPI(
+    title="OmniDraw API",
+    description="API Gateway cho dự án vẽ tranh AI AxiDraw",
+    version="1.3",
+    lifespan=lifespan
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -128,6 +146,22 @@ def log_experiment(payload: LogPayload):
     }
     log_file = os.path.join(os.path.dirname(__file__), "logs", "experiment_log.csv")
     log_experiment_csv(payload_dict, log_file)
+    
+    # ── Lưu vào SQLite Database cho màn Thư viện ──
+    if payload.final_status == "done":
+        title = "Bức tranh OmniDraw" if not payload.dataset_item_id else payload.dataset_item_id
+        stroke_count = (metrics.pen_lift_count + 1) if metrics.pen_lift_count is not None else 0
+        thumbnail_url = f"http://localhost:8000/api/thumbnail/{payload.request_id}"
+        save_history_record(
+            request_id=payload.request_id,
+            title=title,
+            style=payload.style or "sketch",
+            input_type=payload.input_type or "unknown",
+            actual_draw_time_sec=payload.actual_draw_time_sec,
+            stroke_count=stroke_count,
+            thumbnail_url=thumbnail_url
+        )
+        
     return {"success": True}
 
 
@@ -291,10 +325,35 @@ async def generate_ai_image(request: GenerateRequest):
     }
 
 
+from fastapi.responses import FileResponse
+
+@app.get("/api/thumbnail/{request_id}")
+async def get_thumbnail(request_id: str):
+    # Ưu tiên trả ảnh gốc PNG (nếu là ảnh AI sinh ra)
+    png_path = os.path.join(DATA_DIR, "images", f"img_{request_id}.png")
+    if os.path.exists(png_path):
+        return FileResponse(png_path, media_type="image/png")
+    
+    # Nếu tải ảnh từ ngoài vào (không có PNG gốc ở backend), trả về bản nét vẽ SVG làm thumbnail
+    svg_path = os.path.join(SVG_OUTPUT_DIR, f"output_{request_id}.svg")
+    if os.path.exists(svg_path):
+        return FileResponse(svg_path, media_type="image/svg+xml")
+        
+    return JSONResponse(status_code=404, content={"error": "Not found"})
+
 @app.get("/api/history")
 async def get_history():
-    return {"items": [{"id": "1", "title": "Mèo ngủ", "style": "sketch", "time_ago": "2 ngày trước", "minutes": 12,
-                       "thumbnail_url": None}]}
+    items = get_all_history()
+    return {"items": items}
+
+@app.delete("/api/history/{request_id}")
+async def delete_history(request_id: str):
+    from database import delete_history_item
+    try:
+        delete_history_item(request_id)
+        return {"status": "success"}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
 
 
 # ---------- Mục 5d API Spec: GET /api/print/svg/{request_id} ----------

@@ -3,9 +3,19 @@ OmniDraw - Module Thuat toan: Anh -> SVG toi uu duong ve
 ============================================================
 Khop chuan giao tiep OmniDraw_API_Spec.md (v1.3) va 01_tech-stack.md.
 
+[MOI] Ho tro 4 style theo enum o muc 1 API Spec:
+    - sketch    : Canny co ban, giu net tu nhien (mac dinh, hanh vi cu)
+    - line_art  : Canny nguong cao + loc net vun + lam tron duong net
+                  (approxPolyDP) -> vien sac net, dut khoat
+    - stipple   : chuyen vung toi thanh cac cham diem (vong tron nho),
+                  mat do/kich thuoc cham ti le do toi cua vung
+    - hatching  : danh bong vung toi bang duong gach cheo song song,
+                  vung rat toi them lop gach cheo vuong goc (cross-hatch)
+
 INPUT  (theo muc 3 API Spec - ket qua tu module AI):
     result_image_base64: string base64 (PNG), hoac image_path khi test local.
     request_id: string - PHAI giu xuyen suot de debug (muc 7).
+    style: "sketch" | "line_art" | "stipple" | "hatching" (muc 1) - mac dinh "sketch".
     target_paper_size_mm: [width, height], mac dinh [210, 297] (A4) - tu
         options.target_paper_size_mm o muc 2.
 
@@ -13,7 +23,8 @@ OUTPUT (theo muc 4 API Spec):
     File SVG: output_{request_id}.svg
         - Don vi mm, khop target_paper_size_mm
         - Moi net ve = 1 <path> rieng (khong gop)
-        - fill="none" bat buoc
+        - fill="none" bat buoc (ap dung cho ca stipple - cham duoc ve
+          nhu duong vien vong tron nho, khong to dac, dung chuan may AxiDraw)
         - Chi dung <path>, <line>, <polyline>
     + svg_metrics (phuc vu log CSV khoa hoc - muc 6):
         - total_path_length_mm, pen_lift_distance_mm,
@@ -32,10 +43,13 @@ LUU Y (can nhom xac nhan lai):
       Neu nhom muon Thuat toan tu expose 1 REST endpoint rieng, can bo sung
       vao OmniDraw_API_Spec.md truoc, hien tai file nay chi la ham Python
       goi truc tiep hoac qua CLI (vd. tich hop noi bo trong backend/main).
+    - Style khong hop le (khong nam trong 4 enum) se tu dong fallback ve
+      "sketch" kem canh bao log, thay vi lam hong ca pipeline - can nhom
+      xac nhan hanh vi nay co on khong hay muon tra loi VECTORIZE_FAILED.
 
 Cach dung (CLI, test local voi file anh thay vi base64):
     python path_optimizer.py --image duong_dan_anh.jpg --request_id test123 \
-        --paper_width_mm 210 --paper_height_mm 297 --output_dir output/
+        --style line_art --paper_width_mm 210 --paper_height_mm 297 --output_dir output/
 """
 
 import argparse
@@ -133,6 +147,178 @@ def polyline_length(pts):
         return 0.0
     diffs = np.diff(pts, axis=0)
     return float(np.sum(np.sqrt(np.sum(diffs ** 2, axis=1))))
+
+
+def _resize_and_gray(img, resize_max_dim=1024):
+    """Ham dung chung: resize an toan + chuyen grayscale, tra ve (gray, (w,h))."""
+    h, w = img.shape[:2]
+    if max(h, w) > resize_max_dim:
+        s = resize_max_dim / max(h, w)
+        img = cv2.resize(img, (int(w * s), int(h * s)))
+        h, w = img.shape[:2]
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    return img, gray, (w, h)
+
+
+def extract_strokes_line_art(img, canny_low=100, canny_high=220,
+                              min_stroke_len=25, resize_max_dim=1024,
+                              simplify_epsilon=1.2):
+    """
+    [MOI] Style line_art: tang nguong Canny (chi giu canh manh, ro net),
+    loc net vun bang NGUONG DO DAI sau khi da tach contour (khong dung
+    erode/MORPH_OPEN truc tiep tren anh canh - canh Canny chi day 1px nen
+    erode se xoa sach gan het canh, khong con gi de dilate lai), roi lam
+    tron/don gian hoa duong net bang approxPolyDP -> vien sac net, dut
+    khoat, thay vi net tu nhien nhieu chi tiet nho nhu sketch.
+    """
+    img, _, (w, h) = _resize_and_gray(img, resize_max_dim)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    # Blur manh hon sketch de triet nhieu texture nho truoc khi lay canh
+    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+    edges = cv2.Canny(blurred, canny_low, canny_high)
+
+    # Chi dilate nhe de noi cac doan canh dut quang, KHONG erode
+    kernel_dilate = np.ones((2, 2), np.uint8)
+    edges = cv2.dilate(edges, kernel_dilate, iterations=1)
+
+    contours, _ = cv2.findContours(edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+
+    strokes = []
+    for c in contours:
+        raw_pts = c.reshape(-1, 2).astype(np.float64)
+        # Loc net vun bang do dai (nguong cao hon sketch) - day la buoc
+        # thay the cho erode, an toan hon vi khong lam hong canh that
+        if polyline_length(raw_pts) < min_stroke_len:
+            continue
+        # Lam tron/don gian hoa duong net -> net sac, dut khoat hon
+        simplified = cv2.approxPolyDP(c, epsilon=simplify_epsilon, closed=False)
+        pts = simplified.reshape(-1, 2).astype(np.float64)
+        if len(pts) < 2:
+            continue
+        strokes.append(pts)
+
+    return strokes, (w, h)
+
+
+def extract_strokes_stipple(img, cell_size=14, min_radius=0.6, max_radius=4.0,
+                             min_darkness_to_draw=0.06, gamma=1.8,
+                             resize_max_dim=1024, seed=42):
+    """
+    [MOI] Style stipple: chia anh thanh luoi o nho (cell_size), moi o tinh
+    do toi trung binh -> xac suat dat 1 cham ti le do toi (co gamma
+    correction de tang tuong phan: vung sang vua phai se it cham han ro
+    ret, tranh cam giac "day dac" o vung khong toi lam), ban kinh cham
+    cung ti le do toi (vung cang toi, cham cang to/day). Vi tri cham co
+    nhieu ngau nhien trong o de tranh hien pattern luoi deu.
+
+    cell_size=14 (thay vi gia tri nho hon nhu 6) la lua chon can bang: nho
+    hon se tao qua nhieu cham (hang chuc nghin) lam buoc toi uu thu tu
+    (nearest_neighbor_order + or_opt_improve) cham toi muc khong the chay
+    xong trong thoi gian hop ly do moi stroke gio la 1 diem rieng biet
+    (khong noi chuoi duoc nhu sketch/line_art).
+
+    Moi cham duoc bieu dien thanh 1 stroke dang duong vien vong tron nho
+    (khong to dac - dung fill="none" theo dung quy dinh SVG chung), khi ve
+    that nho thi mat may in/but van cho cam giac "cham".
+
+    seed co dinh de ket qua stipple reproducible (cung anh -> cung ket qua),
+    phuc vu doi chieu/so sanh khi lam thi nghiem khoa hoc (muc 6 API Spec).
+    """
+    _, gray, (w, h) = _resize_and_gray(img, resize_max_dim)
+    rng = np.random.default_rng(seed)
+
+    strokes = []
+    for cy in range(0, h, cell_size):
+        for cx in range(0, w, cell_size):
+            cell = gray[cy:cy + cell_size, cx:cx + cell_size]
+            if cell.size == 0:
+                continue
+            darkness = 1.0 - (float(cell.mean()) / 255.0)  # 0=trang, 1=den
+            if darkness < min_darkness_to_draw:
+                continue
+
+            draw_prob = darkness ** gamma  # gamma>1 -> vung sang vua phai bi day xuong xa suat thap hon
+            if rng.random() > draw_prob:
+                continue
+
+            px = cx + rng.uniform(0, cell_size)
+            py = cy + rng.uniform(0, cell_size)
+            radius = min_radius + darkness * (max_radius - min_radius)
+
+            n_seg = 10
+            circle_pts = [
+                [px + radius * math.cos(2 * math.pi * k / n_seg),
+                 py + radius * math.sin(2 * math.pi * k / n_seg)]
+                for k in range(n_seg + 1)
+            ]
+            strokes.append(np.array(circle_pts, dtype=np.float64))
+
+    return strokes, (w, h)
+
+
+def extract_strokes_hatching(img, base_spacing=6, cross_spacing=4,
+                              dark_threshold=140, very_dark_threshold=70,
+                              resize_max_dim=1024, min_segment_len=3):
+    """
+    [MOI] Style hatching: quet cac duong thang song song theo 2 huong (45 do
+    va 135 do), chi giu lai doan nam trong vung du toi (< threshold). Vung
+    binh thuong toi chi co 1 lop gach (45 do, spacing thua hon), vung rat
+    toi co them lop gach vuong goc (135 do, spacing day hon) chong len ->
+    hieu ung cross-hatch dam hon.
+
+    Nguong mac dinh (dark_threshold=140, very_dark_threshold=70) duoc chon
+    thap hon muc "trung binh" cua anh xam (128) mot chut, de tranh tinh
+    trang vung midtone (nen anh, da...) bi gach qua day dac - chi vung
+    thuc su toi (bong, chi tiet den) moi bi hatch, giu duoc do tuong phan
+    ro giua vung sang/toi giong tranh khac go/but muc that.
+    """
+    _, gray, (w, h) = _resize_and_gray(img, resize_max_dim)
+    strokes = []
+
+    def scan_diagonal(angle_deg, spacing, threshold):
+        rad = math.radians(angle_deg)
+        dx, dy = math.cos(rad), math.sin(rad)
+        diag = math.hypot(w, h)
+        perp_dx, perp_dy = -dy, dx
+
+        n_lines = int(diag / spacing) * 2
+        n_samples = max(2, int(diag))
+
+        for i in range(-n_lines // 2, n_lines // 2):
+            offset = i * spacing
+            cx0 = w / 2 + perp_dx * offset - dx * diag
+            cy0 = h / 2 + perp_dy * offset - dy * diag
+            cx1 = w / 2 + perp_dx * offset + dx * diag
+            cy1 = h / 2 + perp_dy * offset + dy * diag
+
+            xs = np.linspace(cx0, cx1, n_samples)
+            ys = np.linspace(cy0, cy1, n_samples)
+
+            in_seg = False
+            seg_start = None
+            for x, y in zip(xs, ys):
+                xi, yi = int(round(x)), int(round(y))
+                valid = 0 <= xi < w and 0 <= yi < h
+                dark_enough = valid and gray[yi, xi] < threshold
+
+                if dark_enough and not in_seg:
+                    in_seg = True
+                    seg_start = (x, y)
+                elif not dark_enough and in_seg:
+                    in_seg = False
+                    seg_end = (x, y)
+                    if math.hypot(seg_end[0] - seg_start[0], seg_end[1] - seg_start[1]) >= min_segment_len:
+                        strokes.append(np.array([seg_start, seg_end], dtype=np.float64))
+
+            if in_seg:
+                seg_end = (xs[-1], ys[-1])
+                if math.hypot(seg_end[0] - seg_start[0], seg_end[1] - seg_start[1]) >= min_segment_len:
+                    strokes.append(np.array([seg_start, seg_end], dtype=np.float64))
+
+    scan_diagonal(45, base_spacing, dark_threshold)
+    scan_diagonal(135, cross_spacing, very_dark_threshold)
+
+    return strokes, (w, h)
 
 
 def chain_strokes(strokes, snap_dist=15.0, max_chain_iters=3):
@@ -400,8 +586,21 @@ def compute_pixel_to_mm_transform(img_size_px, paper_size_mm):
     return scale, (offset_x, offset_y)
 
 
-def px_to_mm(pts_px, scale, offset):
-    return pts_px * scale + np.array(offset)
+def px_to_mm(pts_px, scale, offset, paper_size_mm=None, clamp_eps=0.001):
+    """
+    Quy doi pixel -> mm. Neu co truyen paper_size_mm, CLAMP ket qua ve dung
+    trong khung [0, w_mm] x [0, h_mm] - day la lop phong ve cuoi cung de dam
+    bao khong bao gio xuat SVG vuot khung giay (loi SVG_OUT_OF_BOUNDS), du
+    sai so lam tron/tinh toan o buoc truoc co the lech ra ngoai vai phan
+    nghin mm (tung gap voi style hatching do sai so int(round()) khi kiem
+    tra pixel hop le).
+    """
+    mm_pts = pts_px * scale + np.array(offset)
+    if paper_size_mm is not None:
+        w_mm, h_mm = paper_size_mm
+        mm_pts[:, 0] = np.clip(mm_pts[:, 0], clamp_eps, w_mm - clamp_eps)
+        mm_pts[:, 1] = np.clip(mm_pts[:, 1], clamp_eps, h_mm - clamp_eps)
+    return mm_pts
 
 
 def validate_within_bounds(all_mm_points, paper_size_mm, tolerance=0.01):
@@ -438,7 +637,7 @@ def build_svg(strokes, order, reversed_flags, scale, offset, paper_size_mm,
         pts = strokes[idx]
         if rev:
             pts = pts[::-1]
-        mm_pts = px_to_mm(pts, scale, offset)
+        mm_pts = px_to_mm(pts, scale, offset, paper_size_mm=paper_size_mm)
         all_mm_points_for_validation.append(mm_pts)
         d = polyline_to_path_d(mm_pts)
         path_lines.append(f'  <path d="{d}" stroke="black" fill="none" stroke-width="{stroke_width_mm}"/>')
@@ -476,48 +675,77 @@ def compute_svg_metrics(strokes, order, reversed_flags, scale, optimize_time_ms)
 
 # ----------------------------- Ham xu ly chinh -----------------------------
 
+VALID_STYLES = {"sketch", "line_art", "stipple", "hatching"}
+
+
 def process(request_id, image_base64=None, image_path=None,
+            style="sketch",
             target_paper_size_mm=(210, 297), output_dir="output",
             snap_dist=15.0):
     """
-    Ham xu ly chinh cua module Thuat toan, khop input/output muc 3-4-6 cua
-    API Spec.
+    Ham xu ly chinh cua module Thuat toan, khop input/output muc 1-3-4-6 cua
+    API Spec. Ho tro 4 style: sketch | line_art | stipple | hatching.
 
     Tra ve dict:
         {
           "request_id": ...,
           "status": "success" | "error",
+          "style": ...,
           "svg_path": "output/output_{request_id}.svg"  (neu success),
           "svg_metrics": {...}  (neu success),
           "error": {"code":..., "message":...}  (neu error, None neu success)
         }
     """
     os.makedirs(output_dir, exist_ok=True)
-    log_msg(request_id, "Bat dau xu ly anh -> SVG")
+    log_msg(request_id, f"Bat dau xu ly anh -> SVG (style={style})")
+
+    if style not in VALID_STYLES:
+        log_msg(request_id, f"CANH BAO: style '{style}' khong hop le "
+                             f"(chi nhan {sorted(VALID_STYLES)}), fallback ve 'sketch'")
+        style = "sketch"
 
     try:
         img = decode_image(image_base64=image_base64, image_path=image_path)
     except Exception as e:
         log_msg(request_id, f"Loi doc anh: {e}")
         return {
-            "request_id": request_id, "status": "error",
+            "request_id": request_id, "status": "error", "style": style,
             "svg_path": None, "svg_metrics": None,
             "error": make_error("VECTORIZE_FAILED", f"Khong doc duoc anh dau vao: {e}")
         }
 
-    strokes, img_size_px = extract_strokes(img)
-    log_msg(request_id, f"Trich duoc {len(strokes)} stroke tho")
+    # Phan nhanh trich stroke theo style. Sketch/line_art dua tren duong vien
+    # (contour) nen phu hop noi chuoi (chain_strokes); stipple/hatching la tap
+    # cac cham/doan gach roi rac theo thiet ke, KHONG noi chuoi (se pha vo
+    # hieu ung cham/gach rieng biet).
+    if style == "sketch":
+        strokes, img_size_px = extract_strokes(img)
+        do_chain = True
+    elif style == "line_art":
+        strokes, img_size_px = extract_strokes_line_art(img)
+        do_chain = True
+    elif style == "stipple":
+        strokes, img_size_px = extract_strokes_stipple(img)
+        do_chain = False
+    else:  # "hatching"
+        strokes, img_size_px = extract_strokes_hatching(img)
+        do_chain = False
+
+    log_msg(request_id, f"Trich duoc {len(strokes)} stroke tho (style={style})")
 
     if len(strokes) < 1:
         log_msg(request_id, "Khong trich duoc net nao tu anh")
         return {
-            "request_id": request_id, "status": "error",
+            "request_id": request_id, "status": "error", "style": style,
             "svg_path": None, "svg_metrics": None,
             "error": make_error("VECTORIZE_FAILED", "Khong trich duoc duong net nao tu anh dau vao")
         }
 
-    strokes = chain_strokes(strokes, snap_dist=snap_dist)
-    log_msg(request_id, f"Con lai {len(strokes)} stroke sau khi noi chuoi")
+    if do_chain:
+        strokes = chain_strokes(strokes, snap_dist=snap_dist)
+        log_msg(request_id, f"Con lai {len(strokes)} stroke sau khi noi chuoi")
+    else:
+        log_msg(request_id, "Bo qua buoc noi chuoi (khong phu hop voi style nay)")
 
     t0 = time.time()
     if len(strokes) >= 2:
@@ -535,7 +763,7 @@ def process(request_id, image_base64=None, image_path=None,
     if not is_within_bounds:
         log_msg(request_id, "CANH BAO: toa do vuot khung giay sau khi quy doi")
         return {
-            "request_id": request_id, "status": "error",
+            "request_id": request_id, "status": "error", "style": style,
             "svg_path": None, "svg_metrics": None,
             "error": make_error("SVG_OUT_OF_BOUNDS", "Toa do SVG vuot khung giay sau khi quy doi mm")
         }
@@ -552,6 +780,7 @@ def process(request_id, image_base64=None, image_path=None,
     return {
         "request_id": request_id,
         "status": "success",
+        "style": style,
         "svg_path": svg_path,
         "svg_metrics": metrics,
         "error": None,
@@ -565,6 +794,8 @@ if __name__ == "__main__":
         description="OmniDraw - module Thuat toan (anh -> SVG toi uu duong ve)")
     parser.add_argument("--image", required=True, help="Duong dan anh dau vao (test local)")
     parser.add_argument("--request_id", default="test-local", help="request_id (mac dinh: test-local)")
+    parser.add_argument("--style", default="sketch", choices=sorted(VALID_STYLES),
+                         help="sketch | line_art | stipple | hatching")
     parser.add_argument("--paper_width_mm", type=float, default=210.0)
     parser.add_argument("--paper_height_mm", type=float, default=297.0)
     parser.add_argument("--output_dir", default="output")
@@ -573,6 +804,7 @@ if __name__ == "__main__":
     result = process(
         request_id=args.request_id,
         image_path=args.image,
+        style=args.style,
         target_paper_size_mm=(args.paper_width_mm, args.paper_height_mm),
         output_dir=args.output_dir,
     )

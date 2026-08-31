@@ -38,7 +38,6 @@ export default function LoginScreen({ onLoginSuccess }) {
     <ScreenShell patternId="pattern-login">
       <div className="flex items-start justify-between mb-6">
         <Logo subtitle={mode === "login" ? "Đăng nhập" : "Tạo tài khoản"} size="text-3xl" />
-        <StarBadge topLabel="XIN" bottomLabel="CHÀO" />
       </div>
 
       <form onSubmit={handleSubmit}>
