@@ -291,21 +291,28 @@ def extract_strokes_stipple(img, target_grid_dim=160, contrast_boost=1.7,
 
 def extract_strokes_hatching(img, base_spacing=6, cross_spacing=4,
                               dark_threshold=140, very_dark_threshold=70,
+                              light_spacing=12, light_threshold=235,
                               resize_max_dim=1024, min_segment_len=3):
     """
-    [MOI] Style hatching: quet cac duong thang song song theo 2 huong (45 do
-    va 135 do), chi giu lai doan nam trong vung du toi (< threshold). Vung
-    binh thuong toi chi co 1 lop gach (45 do, spacing thua hon), vung rat
-    toi co them lop gach vuong goc (135 do, spacing day hon) chong len ->
-    hieu ung cross-hatch dam hon.
-
-    Nguong mac dinh (dark_threshold=140, very_dark_threshold=70) duoc chon
-    thap hon muc "trung binh" cua anh xam (128) mot chut, de tranh tinh
-    trang vung midtone (nen anh, da...) bi gach qua day dac - chi vung
-    thuc su toi (bong, chi tiet den) moi bi hatch, giu duoc do tuong phan
-    ro giua vung sang/toi giong tranh khac go/but muc that.
+    [NANG CAP] Style hatching: quet cac duong thang song song theo 3 huong de
+    tao khoi 3D tu vung sang den vung toi:
+    - Vung sang (light_threshold=235): Gach thua (spacing=12), goc 15 do -> Giup
+      giu lai chieu sau cho bau troi, may, mau da, tranh viec cac vung nay bi
+      trang boc / bien mat hoan toan.
+    - Vung toi (dark_threshold=140): Gach day hon (spacing=6), goc 45 do.
+    - Vung rat toi (very_dark_threshold=70): Gach cheo vuong goc (spacing=4), goc 135 do.
+    
+    Dong thoi ap dung tang cuong vien net (Edge Enhancement) giong Stipple, de
+    chac chan vien dam may, duong chan troi, nep ao luon duoc ve ro.
     """
     _, gray, (w, h) = _resize_and_gray(img, resize_max_dim)
+    
+    # Tang cuong vien net: giong phong cach khac go, giu lai duong bao cua may, nui
+    edges = cv2.Canny(cv2.GaussianBlur(gray, (3, 3), 0), 40, 120)
+    gray_enhanced = gray.copy().astype(np.float32)
+    gray_enhanced[edges > 0] = np.minimum(gray_enhanced[edges > 0], 50.0) # Ep vien thanh vung toi
+    gray = gray_enhanced.astype(np.uint8)
+
     strokes = []
 
     def scan_diagonal(angle_deg, spacing, threshold):
@@ -348,7 +355,13 @@ def extract_strokes_hatching(img, base_spacing=6, cross_spacing=4,
                 if math.hypot(seg_end[0] - seg_start[0], seg_end[1] - seg_start[1]) >= min_segment_len:
                     strokes.append(np.array([seg_start, seg_end], dtype=np.float64))
 
+    # 1. Lop gach thua cho VUNG SANG (Bau troi, may, nen da, tuong) - Goc 15 do
+    scan_diagonal(15, light_spacing, light_threshold)
+    
+    # 2. Lop gach net vua cho VUNG TOI - Goc 45 do
     scan_diagonal(45, base_spacing, dark_threshold)
+    
+    # 3. Lop gach xiet chong len cho VUNG RAT TOI - Goc 135 do
     scan_diagonal(135, cross_spacing, very_dark_threshold)
 
     return strokes, (w, h)
