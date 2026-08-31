@@ -200,20 +200,34 @@ def extract_strokes_line_art(img, canny_low=100, canny_high=220,
     return strokes, (w, h)
 
 
-def extract_strokes_stipple(img, target_grid_dim=90, contrast_boost=1.3,
+def extract_strokes_stipple(img, target_grid_dim=130, contrast_boost=1.6,
                              dot_radius=0.7, resize_max_dim=1024, seed=42):
     """
-    [NANG CAP] Style stipple: su dung thuat toan Floyd-Steinberg Error Diffusion Dithering.
+    [NANG CAP v2] Style stipple: Floyd-Steinberg Error Diffusion Dithering
+    ket hop tang cuong canh (edge enhancement) de giu net hinh ro rang.
     
-    Uu diem vuot troi:
-    - Tu dong nhan dien va xep cac hat cham theo hang doc theo cac duong vien tuong phan cao
-      (vien mat, song mui, vien khoi, net ao), giup giu 100% hinh dang goc.
-    - Vung toi (shadow) co mat do cham day dac ro ret; vung sang (highlight) thua dan
-      tu nhien giong tranh ve tay bang but cham stippling chuyen nghiep.
-    - Kich thuoc luoi target_grid_dim=90 tao ra ~1.500 - 3.500 cham, vua sac net
-      vua toi uu toc do cho may ve AxiDraw (chay thuat toan trong ~150ms).
+    Cai tien so voi v1:
+    - target_grid_dim tang tu 90 len 130 -> mat do cham day gap doi, hinh anh
+      sac net hon rat nhieu ma thoi gian toi uu van duoi 2 giay.
+    - contrast_boost tang tu 1.3 len 1.6 -> phan tach vung sang/toi manh me hon.
+    - Gamma tang tu 1.2 len 1.4 -> vung sang that su thoang, vung toi dam dac.
+    - THEM buoc tang cuong vien net (edge enhancement): trich canh Canny roi
+      to dam len anh xam truoc khi dither -> cac duong vien (mat, mui, mieng,
+      vien khuon mat, vien do vat) duoc giu lai cuc ro trong ket qua cham bi.
     """
     _, gray, (w, h) = _resize_and_gray(img, resize_max_dim)
+    
+    # 0. Tang cuong vien net: trich Canny edge roi to dam len anh xam
+    #    de cac duong vien luon duoc giu lai ro rang sau khi dither
+    blurred_for_edge = cv2.GaussianBlur(gray, (3, 3), 0)
+    edges = cv2.Canny(blurred_for_edge, 60, 150)
+    edges_dilated = cv2.dilate(edges, np.ones((2, 2), np.uint8), iterations=1)
+    # Vung co canh -> lam toi them (de dither chac chan dat cham o do)
+    gray_enhanced = gray.copy().astype(np.float32)
+    gray_enhanced[edges_dilated > 0] = np.minimum(
+        gray_enhanced[edges_dilated > 0], 60.0
+    )
+    gray = gray_enhanced.astype(np.uint8)
     
     # 1. Tinh kich thuoc luoi phu hop theo ty le khung anh
     if w >= h:
@@ -228,7 +242,7 @@ def extract_strokes_stipple(img, target_grid_dim=90, contrast_boost=1.3,
     
     # 2. Tang tuong phan va gamma de tach bach vung sang / toi
     small_gray = np.clip(128.0 + (small_gray - 128.0) * contrast_boost, 0.0, 255.0)
-    small_gray = 255.0 * ((small_gray / 255.0) ** 1.2)
+    small_gray = 255.0 * ((small_gray / 255.0) ** 1.4)
 
     # 3. Floyd-Steinberg Error Diffusion Dithering
     dithered = small_gray.copy()
@@ -255,8 +269,8 @@ def extract_strokes_stipple(img, target_grid_dim=90, contrast_boost=1.3,
                     dithered[y + 1, x + 1] += err * (1.0 / 16.0)
                     
             if new_val == 0.0:
-                jitter_x = (rng.uniform(-0.25, 0.25)) * scale_x
-                jitter_y = (rng.uniform(-0.25, 0.25)) * scale_y
+                jitter_x = (rng.uniform(-0.2, 0.2)) * scale_x
+                jitter_y = (rng.uniform(-0.2, 0.2)) * scale_y
                 px = max(1.0, min(w - 1.0, (x + 0.5) * scale_x + jitter_x))
                 py = max(1.0, min(h - 1.0, (y + 0.5) * scale_y + jitter_y))
                 dot_coords.append((px, py))
