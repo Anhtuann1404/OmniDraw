@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Clock, Plug, PauseCircle, XCircle, PlayCircle, Loader2 } from "lucide-react";
-import { ScreenShell, ComicButton, StepBadge, Logo, HardShadowBox } from "../components/ComicPrimitives";
+import { ScreenShell, ComicButton, StepBadge, HardShadowBox } from "../components/ComicPrimitives";
 import { getSvgContent } from "../api/omnidraw";
 
 /**
@@ -51,19 +51,15 @@ export default function PrintStatusScreen({
 
   return (
     <ScreenShell patternId="pattern-print">
-      <div className="flex items-start justify-between mb-5">
-        <Logo subtitle={isPaused ? "Tạm dừng..." : "Đang vẽ..."} size="text-[28px]" />
-      </div>
-
       {/* Canvas vẽ */}
       <div className="mb-4">
         <HardShadowBox shadowOffset={5}>
-          <div className="flex items-center justify-center bg-[#FEFDF9] rounded-xl overflow-hidden" style={{ height: "200px" }}>
+          <div className="h-80 flex items-center justify-center bg-[#FEFDF9] rounded-xl overflow-hidden">
             {svgLoading ? (
               <Loader2 size={32} className="animate-spin text-[#C0392B]" />
             ) : svgText ? (
               <>
-                <style>{`#svg-printing svg { width: 100% !important; height: 100% !important; max-height: 196px; }`}</style>
+                <style>{`#svg-printing svg { width: 100% !important; height: 100% !important; max-height: 300px; }`}</style>
                 <div
                   ref={svgContainerRef}
                   id="svg-printing"

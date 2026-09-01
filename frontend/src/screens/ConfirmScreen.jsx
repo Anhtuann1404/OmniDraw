@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { ArrowLeft, PlayCircle, Loader2 } from "lucide-react";
-import { ScreenShell, ComicButton, StepBadge, Logo, HardShadowBox } from "../components/ComicPrimitives";
+import { ScreenShell, ComicButton, ScreenTitle, HardShadowBox } from "../components/ComicPrimitives";
 import { getSvgContent } from "../api/omnidraw";
 
 const PAPER_SIZES = [
@@ -39,18 +39,14 @@ export default function ConfirmScreen({
 
   return (
     <ScreenShell patternId="pattern-confirm">
-      <div className="flex items-start justify-between mb-5">
-        <Logo subtitle="Xác nhận trước khi vẽ" size="text-[28px]" />
-      </div>
-
       <div className="mb-5">
         <HardShadowBox shadowOffset={5}>
-          <div className="h-52 flex items-center justify-center bg-[#FEFDF9] rounded-xl relative overflow-hidden">
+          <div className="h-80 flex items-center justify-center bg-[#FEFDF9] rounded-xl relative overflow-hidden">
             {svgLoading ? (
               <Loader2 size={32} className="animate-spin text-[#C0392B]" />
             ) : svgText ? (
               <>
-                <style>{`#svg-confirm svg { width: 100% !important; height: 100% !important; max-height: 208px; }`}</style>
+                <style>{`#svg-confirm svg { width: 100% !important; height: 100% !important; max-height: 300px; }`}</style>
                 <div
                   id="svg-confirm"
                   className="w-full h-full flex items-center justify-center p-2"

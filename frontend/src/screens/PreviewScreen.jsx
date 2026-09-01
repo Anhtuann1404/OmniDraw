@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Image, RefreshCw, ArrowRight, PenTool, Loader2, TriangleAlert } from "lucide-react";
-import { ScreenShell, ComicButton, StepBadge, Logo, HardShadowBox, StarBadge } from "../components/ComicPrimitives";
+import { ScreenShell, ComicButton, StepBadge, ScreenTitle, HardShadowBox, StarBadge } from "../components/ComicPrimitives";
 import { getSvgContent } from "../api/omnidraw";
 
 /**
@@ -57,10 +57,6 @@ export default function PreviewScreen({
 
   return (
     <ScreenShell patternId="pattern-preview">
-      <div className="flex items-start justify-between mb-4">
-        <Logo subtitle={subtitle} size="text-[28px]" />
-      </div>
-
       {/* ── Tab switcher: chỉ hiện khi AI sinh ảnh ── */}
       {inputType === "text" && (
         <div className="flex gap-2 mb-3">
@@ -81,9 +77,9 @@ export default function PreviewScreen({
       )}
 
       {/* ── Canvas ── */}
-      <div className="relative mb-4">
+      <div className="relative mb-5">
         <HardShadowBox shadowOffset={5}>
-          <div className="h-64 flex items-center justify-center bg-[#FEFDF9] rounded-xl overflow-hidden">
+          <div className="h-80 flex items-center justify-center bg-[#FEFDF9] rounded-xl overflow-hidden">
 
             {/* Tab Ảnh AI — chỉ render khi inputType==="text" và tab đang ở "image" */}
             {activeTab === "image" && inputType === "text" && (
@@ -91,7 +87,7 @@ export default function PreviewScreen({
                 <img
                   src={resultImageUrl}
                   alt="Kết quả AI"
-                  className="max-h-64 max-w-full object-contain rounded-lg"
+                  className="max-h-80 max-w-full object-contain rounded-lg"
                 />
               ) : (
                 <div className="text-center">
@@ -117,7 +113,7 @@ export default function PreviewScreen({
                 </div>
               ) : svgText ? (
                 <>
-                  <style>{`#svg-preview-tab svg { width: 100% !important; height: 100% !important; max-height: 256px; }`}</style>
+                  <style>{`#svg-preview-tab svg { width: 100% !important; height: 100% !important; max-height: 300px; }`}</style>
                   <div
                     id="svg-preview-tab"
                     className="w-full h-full flex items-center justify-center p-2"
