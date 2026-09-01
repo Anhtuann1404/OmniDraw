@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Download, PlusCircle, LibraryBig, PartyPopper, Loader2 } from "lucide-react";
-import { ScreenShell, ComicButton, Logo, HardShadowBox, StarBadge } from "../components/ComicPrimitives";
+import { ScreenShell, ComicButton, ScreenTitle, HardShadowBox, StarBadge } from "../components/ComicPrimitives";
 import { getSvgContent } from "../api/omnidraw";
 
 /**
@@ -40,10 +40,6 @@ export default function DoneScreen({
 
   return (
     <ScreenShell patternId="pattern-done">
-      <div className="flex items-start justify-between mb-5">
-        <Logo subtitle="Hoàn thành!" size="text-[28px]" />
-      </div>
-
       <div className="text-center mb-4">
         <PartyPopper size={26} className="inline-block text-[#C0392B]" />
         <p className="font-['Kalam'] text-xl font-bold text-[#1A1A1A] -rotate-1 inline-block ml-1.5">
@@ -54,7 +50,7 @@ export default function DoneScreen({
       {/* ── Khung tranh hoàn chỉnh ── */}
       <div className="mb-5">
         <HardShadowBox shadowOffset={5}>
-          <div className="h-56 flex items-center justify-center bg-[#FEFDF9] rounded-xl overflow-hidden">
+          <div className="h-72 flex items-center justify-center bg-[#FEFDF9] rounded-xl overflow-hidden">
 
             {/* Luồng Tải ảnh lên: hiển thị bản SVG nét vẽ */}
             {inputType === "image" && (
@@ -62,7 +58,7 @@ export default function DoneScreen({
                 <Loader2 size={36} className="animate-spin text-[#C0392B]" />
               ) : svgText ? (
                 <>
-                  <style>{`#svg-done svg { width: 100% !important; height: 100% !important; max-height: 224px; }`}</style>
+                  <style>{`#svg-done svg { width: 100% !important; height: 100% !important; max-height: 288px; }`}</style>
                   <div
                     id="svg-done"
                     className="w-full h-full flex items-center justify-center p-2"
@@ -83,7 +79,7 @@ export default function DoneScreen({
                 <img
                   src={resultImageUrl}
                   alt="Kết quả"
-                  className="max-h-56 max-w-full object-contain rounded-lg"
+                  className="max-h-72 max-w-full object-contain rounded-lg"
                 />
               ) : (
                 <div className="text-center">
