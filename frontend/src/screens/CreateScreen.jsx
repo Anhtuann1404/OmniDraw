@@ -1,6 +1,6 @@
 import React, { useRef, useState } from "react";
-import { Image, Pencil, UploadCloud, ArrowRight, Minus, LineChart, Grip, Hash, Loader2 } from "lucide-react";
-import { ScreenShell, ComicButton, Logo } from "../components/ComicPrimitives";
+import { Image, Pencil, UploadCloud, ArrowRight, Minus, LineChart, Grip, Hash, Loader2, Grid2x2 } from "lucide-react";
+import { ScreenShell, ComicButton, ScreenTitle, Logo } from "../components/ComicPrimitives";
 
 const STYLES = [
   { id: "sketch", label: "Ký hoạ", icon: Pencil },
@@ -106,7 +106,7 @@ export default function CreateScreen({ onSubmit, loading = false }) {
         >
           <input ref={fileInputRef} type="file" accept="image/jpeg,image/png" className="hidden" onChange={handleFileChange} />
           {imageBase64 ? (
-            <img src={imageBase64} alt="preview" className="max-h-32 mx-auto rounded-lg object-contain" />
+            <img src={imageBase64} alt="preview" className="max-h-48 mx-auto rounded-lg object-contain" />
           ) : (
             <>
               <UploadCloud size={30} className="mx-auto text-[#1A1A1A]" />
