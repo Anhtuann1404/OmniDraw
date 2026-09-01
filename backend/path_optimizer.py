@@ -104,42 +104,91 @@ def decode_image(image_base64=None, image_path=None):
 
 # ----------------------------- Trich stroke tu anh -----------------------------
 
-def extract_strokes(img, canny_low=50, canny_high=150, min_stroke_len=15,
+def extract_strokes(img, canny_low=30, canny_high=90, min_stroke_len=8,
                      resize_max_dim=1024):
     """
-    Trich duong net thanh danh sach stroke (pixel toa do), tra ve
-    (strokes, kich_thuoc_anh_da_xu_ly (w,h)).
-
-    Ghi chu: theo muc 1 API Spec, anh da duoc giao dien chuan hoa ve canh dai
-    nhat = 1024px truoc khi vao pipeline - o day van giu 1 lop resize an toan
-    (khong lam gi neu anh da dung chuan) de module nay khong phu thuoc tuyet
-    doi vao viec module truoc co lam dung khong.
+    [NANG CAP TOAN DIEN v2] Style sketch (Ky hoa chi danh bong):
+    Tao cam giac chan thuc cua mot buc tranh ky hoa but chi:
+    1. Net vien chi (Pencil Outlines): Trich xuat cac duong bao net ro (mat, mui, mieng, dang nguoi, toc).
+    2. Net danh bong chi (Pencil Shading Strokes):
+       - Vung bong toi (< 150): Danh cac net chi nghieng min (spacing=4.5px, goc 30 do)
+         de tao mang bong do va chieu sau 3D.
+       - Vung bong sau (< 85): Danh them lop net chi cheo nguoc lai (spacing=3.5px, goc -45 do)
+         de nhan dam cac vung hoc mat, duoi cam, mai toc den.
+    3. Vung sang duoc giu sach se, tao su tuong phan sang/toi cuc ky bat mat.
     """
-    h, w = img.shape[:2]
-    if max(h, w) > resize_max_dim:
-        scale_resize = resize_max_dim / max(h, w)
-        img = cv2.resize(img, (int(w * scale_resize), int(h * scale_resize)))
-        h, w = img.shape[:2]
-
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    blurred = cv2.GaussianBlur(gray, (3, 3), 0)
+    img, gray, (w, h) = _resize_and_gray(img, resize_max_dim)
+    
+    # 1. CLAHE tang cuong tuong phan cuc bo
+    clahe = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(8, 8))
+    gray_eq = clahe.apply(gray)
+    
+    # 2. Net vien chi (Pencil Outlines)
+    blurred = cv2.GaussianBlur(gray_eq, (3, 3), 0)
     edges = cv2.Canny(blurred, canny_low, canny_high)
-
     kernel = np.ones((2, 2), np.uint8)
     edges = cv2.dilate(edges, kernel, iterations=1)
-
+    
     contours, _ = cv2.findContours(edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-
-    strokes = []
+    outline_strokes = []
     for c in contours:
-        pts = c.reshape(-1, 2).astype(np.float64)
-        if len(pts) < 2:
+        raw_pts = c.reshape(-1, 2).astype(np.float64)
+        if len(raw_pts) < 2 or polyline_length(raw_pts) < min_stroke_len:
             continue
-        if polyline_length(pts) < min_stroke_len:
-            continue
-        strokes.append(pts)
+        simplified = cv2.approxPolyDP(c, epsilon=0.6, closed=False)
+        pts = simplified.reshape(-1, 2).astype(np.float64)
+        if len(pts) >= 2:
+            outline_strokes.append(pts)
+            
+    # 3. Net danh bong chi vung toi (Pencil Shading Strokes in Shadow Regions)
+    diag = math.hypot(w, h)
+    
+    def scan_pencil_shading(angle_deg, spacing, max_thresh, min_len=4):
+        rad = math.radians(angle_deg)
+        dx, dy = math.cos(rad), math.sin(rad)
+        perp_dx, perp_dy = -dy, dx
+        n_lines = int(diag / spacing) * 2
+        n_samples = max(2, int(diag / 2.0))
+        
+        strokes_res = []
+        for i in range(-n_lines // 2, n_lines // 2):
+            offset = i * spacing
+            cx0 = w / 2 + perp_dx * offset - dx * diag
+            cy0 = h / 2 + perp_dy * offset - dy * diag
+            cx1 = w / 2 + perp_dx * offset + dx * diag
+            cy1 = h / 2 + perp_dy * offset + dy * diag
+            
+            xs = np.linspace(cx0, cx1, n_samples)
+            ys = np.linspace(cy0, cy1, n_samples)
+            
+            in_seg = False
+            seg_start = None
+            for x, y in zip(xs, ys):
+                xi, yi = int(round(x)), int(round(y))
+                valid = (0 <= xi < w and 0 <= yi < h)
+                is_shadow = (valid and gray[yi, xi] < max_thresh)
+                
+                if is_shadow and not in_seg:
+                    in_seg = True
+                    seg_start = (x, y)
+                elif not is_shadow and in_seg:
+                    in_seg = False
+                    seg_end = (x, y)
+                    if math.hypot(seg_end[0] - seg_start[0], seg_end[1] - seg_start[1]) >= min_len:
+                        strokes_res.append(np.array([seg_start, seg_end], dtype=np.float64))
+            if in_seg:
+                seg_end = (xs[-1], ys[-1])
+                if math.hypot(seg_end[0] - seg_start[0], seg_end[1] - seg_start[1]) >= min_len:
+                    strokes_res.append(np.array([seg_start, seg_end], dtype=np.float64))
+        return strokes_res
 
-    return strokes, (w, h)
+    # Lop danh bong 1: Net chi nghieng 30 do cho vung bong toi (< 150)
+    shading_1 = scan_pencil_shading(30, spacing=4.5, max_thresh=150)
+    # Lop danh bong 2: Net chi nghieng -45 do cho vung bong sau / dam (< 85)
+    shading_2 = scan_pencil_shading(-45, spacing=3.5, max_thresh=85)
+    
+    all_strokes = outline_strokes + shading_1 + shading_2
+    return all_strokes, (w, h)
 
 
 def polyline_length(pts):
@@ -160,24 +209,33 @@ def _resize_and_gray(img, resize_max_dim=1024):
     return img, gray, (w, h)
 
 
-def extract_strokes_line_art(img, canny_low=100, canny_high=220,
-                              min_stroke_len=25, resize_max_dim=1024,
+def extract_strokes_line_art(img, canny_low=40, canny_high=120,
+                              min_stroke_len=12, resize_max_dim=1024,
                               simplify_epsilon=1.2):
     """
-    [MOI] Style line_art: tang nguong Canny (chi giu canh manh, ro net),
-    loc net vun bang NGUONG DO DAI sau khi da tach contour (khong dung
-    erode/MORPH_OPEN truc tiep tren anh canh - canh Canny chi day 1px nen
-    erode se xoa sach gan het canh, khong con gi de dilate lai), roi lam
-    tron/don gian hoa duong net bang approxPolyDP -> vien sac net, dut
-    khoat, thay vi net tu nhien nhieu chi tiet nho nhu sketch.
+    [NANG CAP] Style line_art: 
+    1. Dung Bilateral Filter thay vi Gaussian: Giup lam min be mat (xoa nhieu) 
+       nhung VAN GIU LAI ranh gioi sac net.
+    2. Dung CLAHE: Tang tuong phan cuc bo giup cac chi tiet mo (nep gap ao,
+       mat, mui) noi bat len de thuat toan bat duoc.
+    3. Ha nguong Canny (120 thay vi 220) & giam min_stroke_len (12 thay vi 25):
+       Giu lai cac chi tiet nho (mat, mui, bieu cam) thay vi xoa sach, giup 
+       tranh bi "bo trang" nhieu cho tren hinh.
     """
     img, _, (w, h) = _resize_and_gray(img, resize_max_dim)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    # Blur manh hon sketch de triet nhieu texture nho truoc khi lay canh
-    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-    edges = cv2.Canny(blurred, canny_low, canny_high)
+    
+    # 1. Bilateral Filter: xoa nhieu/texture nhung khong lam mo vien net
+    filtered = cv2.bilateralFilter(gray, 9, 75, 75)
+    
+    # 2. CLAHE: keo sang/toi cuc bo de giup bat cac duong net an
+    clahe = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(8, 8))
+    filtered = clahe.apply(filtered)
 
-    # Chi dilate nhe de noi cac doan canh dut quang, KHONG erode
+    # 3. Bat canh
+    edges = cv2.Canny(filtered, canny_low, canny_high)
+
+    # Chi dilate nhe de noi cac doan canh dut quang
     kernel_dilate = np.ones((2, 2), np.uint8)
     edges = cv2.dilate(edges, kernel_dilate, iterations=1)
 
@@ -200,79 +258,119 @@ def extract_strokes_line_art(img, canny_low=100, canny_high=220,
     return strokes, (w, h)
 
 
-def extract_strokes_stipple(img, cell_size=14, min_radius=0.6, max_radius=4.0,
-                             min_darkness_to_draw=0.06, gamma=1.8,
-                             resize_max_dim=1024, seed=42):
+def extract_strokes_stipple(img, target_grid_dim=160, contrast_boost=1.7,
+                             dot_radius=0.75, resize_max_dim=1024, seed=42):
     """
-    [MOI] Style stipple: chia anh thanh luoi o nho (cell_size), moi o tinh
-    do toi trung binh -> xac suat dat 1 cham ti le do toi (co gamma
-    correction de tang tuong phan: vung sang vua phai se it cham han ro
-    ret, tranh cam giac "day dac" o vung khong toi lam), ban kinh cham
-    cung ti le do toi (vung cang toi, cham cang to/day). Vi tri cham co
-    nhieu ngau nhien trong o de tranh hien pattern luoi deu.
-
-    cell_size=14 (thay vi gia tri nho hon nhu 6) la lua chon can bang: nho
-    hon se tao qua nhieu cham (hang chuc nghin) lam buoc toi uu thu tu
-    (nearest_neighbor_order + or_opt_improve) cham toi muc khong the chay
-    xong trong thoi gian hop ly do moi stroke gio la 1 diem rieng biet
-    (khong noi chuoi duoc nhu sketch/line_art).
-
-    Moi cham duoc bieu dien thanh 1 stroke dang duong vien vong tron nho
-    (khong to dac - dung fill="none" theo dung quy dinh SVG chung), khi ve
-    that nho thi mat may in/but van cho cam giac "cham".
-
-    seed co dinh de ket qua stipple reproducible (cung anh -> cung ket qua),
-    phuc vu doi chieu/so sanh khi lam thi nghiem khoa hoc (muc 6 API Spec).
+    [NANG CAP v3] Style stipple: CLAHE + Direct Edge Enhancement + Floyd-Steinberg Dithering.
+    
+    Cai tien vuot bac:
+    - CLAHE (Adaptive Histogram): Tu dong lam bat do sau va chi tiet o ca vung toi lan vung sang.
+    - target_grid_dim tang len 160 -> do phan giai cao gap 3 lan ban dau, chi tiet cuc ky ro net.
+    - Canny Edge Detection truc tiep tren luoi grid: Bat 100% cac duong vien chinh (mat, mui,
+      mieng, nep nhan, vien do vat) va dat cham chinh xac khong lech 1 pixel.
+    - Khu nhieu jitter o vung vien net: Giup duong bao sac gon, dứt khoát.
     """
     _, gray, (w, h) = _resize_and_gray(img, resize_max_dim)
+    
+    # 1. CLAHE tang cuong tuong phan cuc bo giup lam ro mat, mui, chi tiet nho
+    clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
+    gray_clahe = clahe.apply(gray)
+    
+    # 2. Tinh kich thuoc luoi tinh toan phu hop theo ty le anh
+    if w >= h:
+        grid_w = target_grid_dim
+        grid_h = max(10, int(round(target_grid_dim * (h / float(w)))))
+    else:
+        grid_h = target_grid_dim
+        grid_w = max(10, int(round(target_grid_dim * (w / float(h)))))
+
+    # Resize anh xam ve kich thuoc grid
+    small_gray = cv2.resize(gray_clahe, (grid_w, grid_h), interpolation=cv2.INTER_AREA).astype(np.float32)
+    
+    # 3. Tang cuong tuong phan va gamma
+    small_gray = np.clip(128.0 + (small_gray - 128.0) * contrast_boost, 0.0, 255.0)
+    small_gray = 255.0 * ((small_gray / 255.0) ** 1.35)
+    
+    # 4. Trich xuat vien net truc tiep tren grid de chac chan giu 100% duong net quan trong
+    edges = cv2.Canny(cv2.GaussianBlur(small_gray.astype(np.uint8), (3, 3), 0), 30, 95)
+    is_edge_pixel = (edges > 0)
+    small_gray[is_edge_pixel] = np.minimum(small_gray[is_edge_pixel], 10.0)
+
+    # 5. Floyd-Steinberg Error Diffusion Dithering
+    dithered = small_gray.copy()
+    dot_coords = []
+    scale_x = w / float(grid_w)
+    scale_y = h / float(grid_h)
     rng = np.random.default_rng(seed)
 
+    for y in range(grid_h):
+        for x in range(grid_w):
+            old_val = dithered[y, x]
+            new_val = 0.0 if old_val < 128.0 else 255.0
+            dithered[y, x] = new_val
+            err = old_val - new_val
+            
+            # Khuech tan sai so sang cac pixel lan can
+            if x + 1 < grid_w:
+                dithered[y, x + 1] += err * (7.0 / 16.0)
+            if y + 1 < grid_h:
+                if x - 1 >= 0:
+                    dithered[y + 1, x - 1] += err * (3.0 / 16.0)
+                dithered[y + 1, x] += err * (5.0 / 16.0)
+                if x + 1 < grid_w:
+                    dithered[y + 1, x + 1] += err * (1.0 / 16.0)
+                    
+            if new_val == 0.0:
+                # Neu la diem vien net: khong them jitter de net thang tap, sac gon
+                if is_edge_pixel[y, x]:
+                    jitter_x, jitter_y = 0.0, 0.0
+                else:
+                    jitter_x = (rng.uniform(-0.15, 0.15)) * scale_x
+                    jitter_y = (rng.uniform(-0.15, 0.15)) * scale_y
+                    
+                px = max(1.0, min(w - 1.0, (x + 0.5) * scale_x + jitter_x))
+                py = max(1.0, min(h - 1.0, (y + 0.5) * scale_y + jitter_y))
+                dot_coords.append((px, py))
+
+    # 6. Chuyen toa do dot thanh cac stroke vong tron nho (fill='none')
     strokes = []
-    for cy in range(0, h, cell_size):
-        for cx in range(0, w, cell_size):
-            cell = gray[cy:cy + cell_size, cx:cx + cell_size]
-            if cell.size == 0:
-                continue
-            darkness = 1.0 - (float(cell.mean()) / 255.0)  # 0=trang, 1=den
-            if darkness < min_darkness_to_draw:
-                continue
-
-            draw_prob = darkness ** gamma  # gamma>1 -> vung sang vua phai bi day xuong xa suat thap hon
-            if rng.random() > draw_prob:
-                continue
-
-            px = cx + rng.uniform(0, cell_size)
-            py = cy + rng.uniform(0, cell_size)
-            radius = min_radius + darkness * (max_radius - min_radius)
-
-            n_seg = 10
-            circle_pts = [
-                [px + radius * math.cos(2 * math.pi * k / n_seg),
-                 py + radius * math.sin(2 * math.pi * k / n_seg)]
-                for k in range(n_seg + 1)
-            ]
-            strokes.append(np.array(circle_pts, dtype=np.float64))
+    n_seg = 6
+    r = max(0.5, dot_radius * (scale_x / 8.0))
+    for px, py in dot_coords:
+        circle_pts = [
+            [px + r * math.cos(2 * math.pi * k / n_seg),
+             py + r * math.sin(2 * math.pi * k / n_seg)]
+            for k in range(n_seg + 1)
+        ]
+        strokes.append(np.array(circle_pts, dtype=np.float64))
 
     return strokes, (w, h)
 
 
 def extract_strokes_hatching(img, base_spacing=6, cross_spacing=4,
                               dark_threshold=140, very_dark_threshold=70,
+                              light_spacing=12, light_threshold=235,
                               resize_max_dim=1024, min_segment_len=3):
     """
-    [MOI] Style hatching: quet cac duong thang song song theo 2 huong (45 do
-    va 135 do), chi giu lai doan nam trong vung du toi (< threshold). Vung
-    binh thuong toi chi co 1 lop gach (45 do, spacing thua hon), vung rat
-    toi co them lop gach vuong goc (135 do, spacing day hon) chong len ->
-    hieu ung cross-hatch dam hon.
-
-    Nguong mac dinh (dark_threshold=140, very_dark_threshold=70) duoc chon
-    thap hon muc "trung binh" cua anh xam (128) mot chut, de tranh tinh
-    trang vung midtone (nen anh, da...) bi gach qua day dac - chi vung
-    thuc su toi (bong, chi tiet den) moi bi hatch, giu duoc do tuong phan
-    ro giua vung sang/toi giong tranh khac go/but muc that.
+    [NANG CAP] Style hatching: quet cac duong thang song song theo 3 huong de
+    tao khoi 3D tu vung sang den vung toi:
+    - Vung sang (light_threshold=235): Gach thua (spacing=12), goc 15 do -> Giup
+      giu lai chieu sau cho bau troi, may, mau da, tranh viec cac vung nay bi
+      trang boc / bien mat hoan toan.
+    - Vung toi (dark_threshold=140): Gach day hon (spacing=6), goc 45 do.
+    - Vung rat toi (very_dark_threshold=70): Gach cheo vuong goc (spacing=4), goc 135 do.
+    
+    Dong thoi ap dung tang cuong vien net (Edge Enhancement) giong Stipple, de
+    chac chan vien dam may, duong chan troi, nep ao luon duoc ve ro.
     """
     _, gray, (w, h) = _resize_and_gray(img, resize_max_dim)
+    
+    # Tang cuong vien net: giong phong cach khac go, giu lai duong bao cua may, nui
+    edges = cv2.Canny(cv2.GaussianBlur(gray, (3, 3), 0), 40, 120)
+    gray_enhanced = gray.copy().astype(np.float32)
+    gray_enhanced[edges > 0] = np.minimum(gray_enhanced[edges > 0], 50.0) # Ep vien thanh vung toi
+    gray = gray_enhanced.astype(np.uint8)
+
     strokes = []
 
     def scan_diagonal(angle_deg, spacing, threshold):
@@ -315,7 +413,13 @@ def extract_strokes_hatching(img, base_spacing=6, cross_spacing=4,
                 if math.hypot(seg_end[0] - seg_start[0], seg_end[1] - seg_start[1]) >= min_segment_len:
                     strokes.append(np.array([seg_start, seg_end], dtype=np.float64))
 
+    # 1. Lop gach thua cho VUNG SANG (Bau troi, may, nen da, tuong) - Goc 15 do
+    scan_diagonal(15, light_spacing, light_threshold)
+    
+    # 2. Lop gach net vua cho VUNG TOI - Goc 45 do
     scan_diagonal(45, base_spacing, dark_threshold)
+    
+    # 3. Lop gach xiet chong len cho VUNG RAT TOI - Goc 135 do
     scan_diagonal(135, cross_spacing, very_dark_threshold)
 
     return strokes, (w, h)
