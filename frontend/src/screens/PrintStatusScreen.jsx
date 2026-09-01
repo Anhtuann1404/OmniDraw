@@ -133,7 +133,7 @@ export default function PrintStatusScreen({
     return () => clearTimeout(timer);
   }, [svgText]);
 
-  // Vòng lặp animation mượt mà
+  // Vòng lặp animation: Bút tự chạy liên tục độc lập với máy (soft-sync)
   useEffect(() => {
     if (!svgText || !pathDataRef.current) return;
     
@@ -145,24 +145,34 @@ export default function PrintStatusScreen({
       const target = progressPercent;
       let current = visualPercentRef.current;
       
-      if (current !== target) {
-        const diff = Math.abs(target - current);
-        let speed = 40; // Tốc độ mặc định (rất nhanh) dùng khi mới load trang để bắt kịp %
+      if (current < 100 && !isPaused) {
+        // Tốc độ vẽ trung bình (ước tính từ tổng thời gian etaMinutes)
+        let speed = 100 / (etaMinutes * 60 || 300); // % mỗi giây
         
-        if (diff <= 5) {
-          // Sử dụng làm mượt hàm mũ (exponential decay smoothing)
-          // Tốc độ luôn tỷ lệ thuận với khoảng cách còn lại. Bút sẽ trượt chậm dần đều
-          // khi tiến gần target, do đó không bao giờ có hiện tượng chạy vọt tới rồi đứng im.
-          speed = Math.max(0.02, diff * 0.4); 
+        const diff = target - current;
+        
+        if (diff > 5) {
+          speed *= 15; // Máy đi trước quá xa -> chạy nhanh theo
+        } else if (diff > 1.5) {
+          speed *= 2.5; // Máy đi hơi nhanh -> tăng tốc nhẹ
+        } else if (diff < -3) {
+          speed *= 0; // Bút đi quá nhanh lố mất 3% -> Dừng lại đợi máy
+        } else if (diff < -1) {
+          speed *= 0.3; // Bút đi nhanh hơn máy 1% -> Vẽ siêu chậm lại
+        } else if (diff < 0) {
+          speed *= 0.7; // Bút hơi vượt một chút -> Đi thong thả
         }
         
-        if (target > current) {
-          current = Math.min(target, current + (speed * dt / 1000));
-        } else {
-          current = Math.max(target, current - (speed * dt / 1000));
+        // Nếu máy báo đã hoàn thành 100% thì ép chạy thật nhanh cho xong
+        if (target >= 100) {
+          speed = 50; 
         }
-        visualPercentRef.current = current;
-        updateDrawingState(current);
+
+        if (speed > 0) {
+          current = Math.min(100, current + (speed * dt / 1000));
+          visualPercentRef.current = current;
+          updateDrawingState(current);
+        }
       }
       
       animationRef.current = requestAnimationFrame(animate);
@@ -170,7 +180,7 @@ export default function PrintStatusScreen({
     
     animationRef.current = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(animationRef.current);
-  }, [progressPercent, svgText]);
+  }, [progressPercent, svgText, etaMinutes, isPaused]);
 
   return (
     <ScreenShell patternId="pattern-print">
