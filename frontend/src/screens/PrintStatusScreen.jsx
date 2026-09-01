@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Clock, Plug, PauseCircle, XCircle, PlayCircle, Loader2 } from "lucide-react";
-import { ScreenShell, ComicButton, StepBadge, Logo, HardShadowBox } from "../components/ComicPrimitives";
+import { Clock, Plug, PauseCircle, XCircle, PlayCircle, Loader2, Pencil } from "lucide-react";
+import { ScreenShell, ComicButton, ScreenTitle, HardShadowBox } from "../components/ComicPrimitives";
 import { getSvgContent } from "../api/omnidraw";
 
 /**
@@ -20,6 +20,11 @@ export default function PrintStatusScreen({
   const [svgText, setSvgText] = useState(null);
   const [svgLoading, setSvgLoading] = useState(false);
   const svgContainerRef = useRef(null);
+  const wrapperRef = useRef(null);
+  const pencilRef = useRef(null);
+  const pathDataRef = useRef(null);
+  const visualPercentRef = useRef(0);
+  const animationRef = useRef(null);
 
   // Fetch SVG thật khi màn này được mount
   useEffect(() => {
@@ -31,45 +36,157 @@ export default function PrintStatusScreen({
       .finally(() => setSvgLoading(false));
   }, [requestId]);
 
-  // Tô màu dần các path SVG theo progressPercent
-  useEffect(() => {
-    if (!svgContainerRef.current || !svgText) return;
-    const paths = svgContainerRef.current.querySelectorAll("path, polyline, line, circle, ellipse, rect");
-    const total = paths.length;
-    if (total === 0) return;
-    const drawnCount = Math.floor((progressPercent / 100) * total);
-    paths.forEach((el, i) => {
-      if (i < drawnCount) {
-        el.style.stroke = "#1A1A1A";
-        el.style.opacity = "1";
+  const updateDrawingState = (percent) => {
+    if (!pathDataRef.current) return;
+    const { paths, totalLength } = pathDataRef.current;
+    if (totalLength === 0) return;
+
+    const targetLen = (percent / 100) * totalLength;
+    let activeIndex = -1;
+    let lengthInActive = 0;
+
+    for (let i = 0; i < paths.length; i++) {
+      const p = paths[i];
+      if (p.accumulated + p.len >= targetLen) {
+        activeIndex = i;
+        lengthInActive = targetLen - p.accumulated;
+        break;
+      }
+    }
+
+    if (activeIndex === -1 && paths.length > 0) {
+      activeIndex = paths.length - 1;
+      lengthInActive = paths[paths.length - 1].len;
+    }
+
+    paths.forEach((p, i) => {
+      if (i < activeIndex) {
+        p.el.style.stroke = "#1A1A1A";
+        p.el.style.opacity = "1";
+        p.el.style.strokeDasharray = "none";
+        p.el.style.strokeDashoffset = "0";
+      } else if (i === activeIndex) {
+        p.el.style.stroke = "#1A1A1A";
+        p.el.style.opacity = "1";
+        p.el.style.strokeDasharray = `${p.len}`;
+        p.el.style.strokeDashoffset = `${Math.max(0, p.len - lengthInActive)}`;
       } else {
-        el.style.stroke = "#E5E2D6";
-        el.style.opacity = "0.4";
+        p.el.style.stroke = "#E5E2D6";
+        p.el.style.opacity = "0.4";
+        p.el.style.strokeDasharray = "none";
+        p.el.style.strokeDashoffset = "0";
       }
     });
-  }, [svgText, progressPercent]);
+
+    if (activeIndex !== -1 && pencilRef.current && wrapperRef.current) {
+      const activePath = paths[activeIndex].el;
+      if (activePath.getPointAtLength) {
+        try {
+          const pt = activePath.getPointAtLength(lengthInActive);
+          const CTM = activePath.getScreenCTM();
+          if (CTM) {
+            const screenPt = pt.matrixTransform(CTM);
+            const containerRect = wrapperRef.current.getBoundingClientRect();
+            // Điều chỉnh tọa độ để mũi ngòi bút chì chỉ đúng vào đường vẽ
+            const x = screenPt.x - containerRect.left - 2; 
+            const y = screenPt.y - containerRect.top - 21; 
+            pencilRef.current.style.transform = `translate(${x}px, ${y}px)`;
+            pencilRef.current.style.opacity = "1";
+          }
+        } catch (e) {}
+      }
+    } else if (pencilRef.current) {
+      pencilRef.current.style.opacity = "0";
+    }
+  };
+
+  // Khởi tạo dữ liệu path khi có svgText
+  useEffect(() => {
+    if (!svgContainerRef.current || !svgText) return;
+    const svgEl = svgContainerRef.current.querySelector("svg");
+    if (!svgEl) return;
+    
+    // Đợi SVG render xong
+    const timer = setTimeout(() => {
+      const paths = svgEl.querySelectorAll("path, polyline, line, circle, ellipse, rect");
+      let totalLength = 0;
+      const data = [];
+      paths.forEach(el => {
+        let len = 0;
+        if (el.getTotalLength) {
+          try {
+            len = el.getTotalLength();
+          } catch(e) {}
+        }
+        data.push({ el, len, accumulated: totalLength });
+        totalLength += len;
+
+        el.style.stroke = "#E5E2D6";
+        el.style.opacity = "0.4";
+        el.style.strokeDasharray = "none";
+        el.style.strokeDashoffset = "0";
+      });
+      pathDataRef.current = { paths: data, totalLength, svgEl };
+      visualPercentRef.current = 0;
+      updateDrawingState(0);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [svgText]);
+
+  // Vòng lặp animation mượt mà
+  useEffect(() => {
+    if (!svgText || !pathDataRef.current) return;
+    
+    let lastTime = performance.now();
+    const animate = (time) => {
+      const dt = time - lastTime;
+      lastTime = time;
+      
+      const target = progressPercent;
+      let current = visualPercentRef.current;
+      
+      if (current !== target) {
+        const speed = 25; // 25% mỗi giây
+        if (target > current) {
+          current = Math.min(target, current + (speed * dt / 1000));
+        } else {
+          current = Math.max(target, current - (speed * dt / 1000));
+        }
+        visualPercentRef.current = current;
+        updateDrawingState(current);
+      }
+      
+      animationRef.current = requestAnimationFrame(animate);
+    };
+    
+    animationRef.current = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animationRef.current);
+  }, [progressPercent, svgText]);
 
   return (
     <ScreenShell patternId="pattern-print">
-      <div className="flex items-start justify-between mb-5">
-        <Logo subtitle={isPaused ? "Tạm dừng..." : "Đang vẽ..."} size="text-[28px]" />
-      </div>
-
       {/* Canvas vẽ */}
       <div className="mb-4">
         <HardShadowBox shadowOffset={5}>
-          <div className="flex items-center justify-center bg-[#FEFDF9] rounded-xl overflow-hidden" style={{ height: "200px" }}>
+          <div ref={wrapperRef} className="h-72 flex items-center justify-center bg-[#FEFDF9] rounded-xl overflow-hidden relative">
             {svgLoading ? (
               <Loader2 size={32} className="animate-spin text-[#C0392B]" />
             ) : svgText ? (
               <>
-                <style>{`#svg-printing svg { width: 100% !important; height: 100% !important; max-height: 196px; }`}</style>
+                <style>{`#svg-printing svg { width: 100% !important; height: 100% !important; max-height: 280px; }`}</style>
                 <div
                   ref={svgContainerRef}
                   id="svg-printing"
                   className="w-full h-full flex items-center justify-center p-2"
                   dangerouslySetInnerHTML={{ __html: svgText }}
                 />
+                <div 
+                  ref={pencilRef} 
+                  className="absolute top-0 left-0 text-[#1A1A1A] pointer-events-none z-10"
+                  style={{ opacity: 0, transform: 'translate(0px, 0px)', transition: 'opacity 0.2s' }}
+                >
+                  <Pencil size={24} className="drop-shadow-md text-[#C0392B] fill-white" />
+                </div>
               </>
             ) : (
               /* Fallback animation SVG tĩnh */
