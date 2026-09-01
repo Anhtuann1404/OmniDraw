@@ -146,7 +146,16 @@ export default function PrintStatusScreen({
       let current = visualPercentRef.current;
       
       if (current !== target) {
-        const speed = 25; // 25% mỗi giây
+        const diff = Math.abs(target - current);
+        let speed = 40; // Tốc độ mặc định (rất nhanh) dùng khi mới load trang để bắt kịp %
+        
+        if (diff <= 5) {
+          // Sử dụng làm mượt hàm mũ (exponential decay smoothing)
+          // Tốc độ luôn tỷ lệ thuận với khoảng cách còn lại. Bút sẽ trượt chậm dần đều
+          // khi tiến gần target, do đó không bao giờ có hiện tượng chạy vọt tới rồi đứng im.
+          speed = Math.max(0.02, diff * 0.4); 
+        }
+        
         if (target > current) {
           current = Math.min(target, current + (speed * dt / 1000));
         } else {
