@@ -154,6 +154,9 @@ export default function App() {
 
   // ── XỬ LÝ CLICK LỊCH SỬ ──
   function handleOpenHistoryItem(item) {
+    const strokeCount = item.strokeCount || (item.svgMetrics?.pen_lift_count != null ? item.svgMetrics.pen_lift_count + 1 : undefined);
+    const estimatedMinutes = item.estimatedMinutes || item.minutes || (item.svgMetrics?.total_path_length_mm != null ? Math.ceil(((item.svgMetrics.total_path_length_mm || 0) + (item.svgMetrics.pen_lift_distance_mm || 0)) / 40 / 60) : undefined);
+
     // Phục hồi lại dữ liệu tranh từ DB vào state aiResult
     setAiResult({
       requestId: item.id,
@@ -162,11 +165,19 @@ export default function App() {
       inputType: item.inputType || "unknown", // fallback nếu cũ
       resultImageBase64: item.thumbnailUrl,    // API thumbnail trả về ảnh PNG gốc
       svgReady: true,                          // Ảnh cũ chắc chắn đã có SVG
-      meta: { modelUsed: "History" }
+      paperSize: item.paperSize || "a4",
+      strokeCount: strokeCount,
+      estimatedMinutes: estimatedMinutes,
+      svgMetrics: item.svgMetrics || (strokeCount ? {
+        pen_lift_count: strokeCount - 1,
+        total_path_length_mm: (estimatedMinutes || 5) * 60 * 40 * 0.9,
+        pen_lift_distance_mm: (estimatedMinutes || 5) * 60 * 40 * 0.1,
+      } : undefined),
+      meta: { modelUsed: item.modelUsed || (item.inputType === "image" ? "OpenCV Vectorizer" : "dall-e-3") }
     });
     // Phục hồi số phút vẽ (nếu có)
-    if (item.minutes) {
-      setDoneInfo({ actualDrawTimeSec: item.minutes * 60 });
+    if (item.actualDrawTimeSec || item.minutes || estimatedMinutes) {
+      setDoneInfo({ actualDrawTimeSec: item.actualDrawTimeSec || ((item.minutes || estimatedMinutes) * 60) });
     }
     // Nhảy về màn Preview để có thể bấm vẽ lại
     setStep("preview");
@@ -202,8 +213,8 @@ export default function App() {
         onDeleteItem={handleDeleteHistory}
       />
 
-      {/* ── Vùng chính — card căn giữa ── */}
-      <main className="flex-1 flex flex-col items-center justify-center p-6 gap-3 overflow-y-auto">
+      {/* ── Vùng chính — card căn giữa nâng cao về phía trên ── */}
+      <main className="flex-1 flex flex-col items-center justify-center pt-2 pb-8 px-6 gap-2.5 overflow-y-auto">
 
         {MOCK_MODE && (
           <div className="text-xs font-bold text-[#6B6B66] bg-white border-2 border-[#1A1A1A] rounded-full px-3 py-1">
@@ -236,11 +247,19 @@ export default function App() {
         {step === "confirm" && (
           <ConfirmScreen
             requestId={aiResult?.requestId}
-            strokeCount={aiResult?.svgMetrics ? aiResult.svgMetrics.pen_lift_count + 1 : "..."}
+            strokeCount={
+              aiResult?.strokeCount != null
+                ? aiResult.strokeCount
+                : (aiResult?.svgMetrics?.pen_lift_count != null
+                    ? aiResult.svgMetrics.pen_lift_count + 1
+                    : "...")
+            }
             estimatedMinutes={
-              aiResult?.svgMetrics
-                ? Math.ceil((aiResult.svgMetrics.total_path_length_mm + aiResult.svgMetrics.pen_lift_distance_mm) / 40 / 60)
-                : "..."
+              aiResult?.estimatedMinutes != null
+                ? aiResult.estimatedMinutes
+                : (aiResult?.svgMetrics?.total_path_length_mm != null
+                    ? Math.ceil(((aiResult.svgMetrics.total_path_length_mm || 0) + (aiResult.svgMetrics.pen_lift_distance_mm || 0)) / 40 / 60)
+                    : (aiResult?.minutes != null ? aiResult.minutes : "..."))
             }
             paperSize={aiResult?.paperSize || "a4"}
             onBack={() => setStep("preview")}
@@ -253,11 +272,17 @@ export default function App() {
             requestId={aiResult?.requestId}
             progressPercent={statusData.progressPercent}
             strokesDone={
-              aiResult?.svgMetrics
-                ? Math.floor(((aiResult.svgMetrics.pen_lift_count + 1) * statusData.progressPercent) / 100)
-                : "..."
+              aiResult?.strokeCount != null
+                ? Math.floor((aiResult.strokeCount * statusData.progressPercent) / 100)
+                : (aiResult?.svgMetrics
+                    ? Math.floor(((aiResult.svgMetrics.pen_lift_count + 1) * statusData.progressPercent) / 100)
+                    : "...")
             }
-            strokesTotal={aiResult?.svgMetrics ? aiResult.svgMetrics.pen_lift_count + 1 : "..."}
+            strokesTotal={
+              aiResult?.strokeCount != null
+                ? aiResult.strokeCount
+                : (aiResult?.svgMetrics ? aiResult.svgMetrics.pen_lift_count + 1 : "...")
+            }
             etaMinutes={Math.ceil((statusData.etaSec || 0) / 60)}
             machineStatus={statusData.status === "error" ? "error" : "ok"}
             isPaused={(optimisticStatus || statusData.status) === "paused"}
@@ -273,7 +298,11 @@ export default function App() {
             requestId={aiResult?.requestId}
             resultImageUrl={aiResult?.resultImageBase64}
             actualDrawTimeSec={doneInfo?.actualDrawTimeSec}
-            strokesTotal={aiResult?.svgMetrics ? aiResult.svgMetrics.pen_lift_count + 1 : "..."}
+            strokesTotal={
+              aiResult?.strokeCount != null
+                ? aiResult.strokeCount
+                : (aiResult?.svgMetrics ? aiResult.svgMetrics.pen_lift_count + 1 : "...")
+            }
             onCreateNew={handleCreateNewFromDone}
             onViewHistory={() => {}} // history giờ luôn ở sidebar
           />

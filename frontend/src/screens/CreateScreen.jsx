@@ -106,7 +106,7 @@ export default function CreateScreen({ onSubmit, loading = false }) {
         >
           <input ref={fileInputRef} type="file" accept="image/jpeg,image/png" className="hidden" onChange={handleFileChange} />
           {imageBase64 ? (
-            <img src={imageBase64} alt="preview" className="max-h-48 mx-auto rounded-lg object-contain" />
+            <img src={imageBase64} alt="preview" className="max-h-64 mx-auto rounded-lg object-contain" />
           ) : (
             <>
               <UploadCloud size={30} className="mx-auto text-[#1A1A1A]" />

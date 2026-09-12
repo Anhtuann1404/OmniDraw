@@ -48,9 +48,9 @@ export default function DoneScreen({
       </div>
 
       {/* ── Khung tranh hoàn chỉnh ── */}
-      <div className="mb-5">
+      <div className="mb-4">
         <HardShadowBox shadowOffset={5}>
-          <div className="h-72 flex items-center justify-center bg-[#FEFDF9] rounded-xl overflow-hidden">
+          <div className="h-[420px] flex items-center justify-center bg-[#FEFDF9] rounded-xl overflow-hidden p-2">
 
             {/* Luồng Tải ảnh lên: hiển thị bản SVG nét vẽ */}
             {inputType === "image" && (
@@ -58,7 +58,7 @@ export default function DoneScreen({
                 <Loader2 size={36} className="animate-spin text-[#C0392B]" />
               ) : svgText ? (
                 <>
-                  <style>{`#svg-done svg { width: 100% !important; height: 100% !important; max-height: 288px; }`}</style>
+                  <style>{`#svg-done svg { width: 100% !important; height: 100% !important; max-height: 400px; }`}</style>
                   <div
                     id="svg-done"
                     className="w-full h-full flex items-center justify-center p-2"
@@ -79,7 +79,7 @@ export default function DoneScreen({
                 <img
                   src={resultImageUrl}
                   alt="Kết quả"
-                  className="max-h-72 max-w-full object-contain rounded-lg"
+                  className="max-h-[400px] max-w-full object-contain rounded-lg"
                 />
               ) : (
                 <div className="text-center">

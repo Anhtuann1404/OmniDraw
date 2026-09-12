@@ -1,13 +1,57 @@
+import sys
+import os
+
+# Tự động nhận diện và chuyển sang môi trường ảo backend/venv nếu đang chạy bằng Python ngoài
+_backend_dir = os.path.dirname(os.path.abspath(__file__))
+if _backend_dir not in sys.path:
+    sys.path.insert(0, _backend_dir)
+
+_venv_python = os.path.join(_backend_dir, "venv", "bin", "python")
+_in_venv = sys.prefix != getattr(sys, "base_prefix", sys.prefix)
+if not _in_venv and os.path.isfile(_venv_python) and sys.executable != _venv_python:
+    print(f"[OmniDraw] 🔄 Đang tự động chuyển sang môi trường ảo: {_venv_python}")
+    os.execv(_venv_python, [_venv_python] + sys.argv)
+
 import asyncio
 import math
-import os
 import re
 import time
 from typing import Any, Dict, Optional
-from dotenv import load_dotenv
 
-# Load biến môi trường từ file .env TRƯỚC KHI import các module khác
-load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
+# Load biến môi trường từ file .env (hỗ trợ cả python-dotenv lẫn đọc thủ công dự phòng)
+def _load_env():
+    env_paths = [
+        os.path.join(_backend_dir, ".env"),
+        os.path.join(_backend_dir, "..", ".env"),
+    ]
+    loaded = False
+    try:
+        from dotenv import load_dotenv
+        for p in env_paths:
+            if os.path.isfile(p):
+                load_dotenv(p, encoding="utf-8")
+                loaded = True
+                break
+    except ImportError:
+        pass
+
+    # Dự phòng nếu chưa cài thư viện python-dotenv: tự đọc file .env thủ công
+    if not loaded:
+        for p in env_paths:
+            if os.path.isfile(p):
+                try:
+                    with open(p, "r", encoding="utf-8") as f:
+                        for line in f:
+                            line = line.strip()
+                            if line and not line.startswith("#") and "=" in line:
+                                k, v = line.split("=", 1)
+                                os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
+                    loaded = True
+                    break
+                except Exception as e:
+                    print(f"[warn] Không thể đọc {p}: {e}")
+
+_load_env()
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -152,6 +196,11 @@ def log_experiment(payload: LogPayload):
         title = "Bức tranh OmniDraw" if not payload.dataset_item_id else payload.dataset_item_id
         stroke_count = (metrics.pen_lift_count + 1) if metrics.pen_lift_count is not None else 0
         thumbnail_url = f"http://localhost:8000/api/thumbnail/{payload.request_id}"
+        est_min = None
+        if metrics.total_path_length_mm is not None:
+            est_sec = (metrics.total_path_length_mm + (metrics.pen_lift_distance_mm or 0)) / 40.0
+            est_min = max(1, math.ceil(est_sec / 60.0))
+
         save_history_record(
             request_id=payload.request_id,
             title=title,
@@ -159,7 +208,12 @@ def log_experiment(payload: LogPayload):
             input_type=payload.input_type or "unknown",
             actual_draw_time_sec=payload.actual_draw_time_sec,
             stroke_count=stroke_count,
-            thumbnail_url=thumbnail_url
+            thumbnail_url=thumbnail_url,
+            paper_size="a4",
+            model_used=payload.model_used,
+            estimated_minutes=est_min,
+            total_path_length_mm=metrics.total_path_length_mm,
+            pen_lift_distance_mm=metrics.pen_lift_distance_mm
         )
         
     return {"success": True}
@@ -218,8 +272,16 @@ async def generate_ai_image(request: GenerateRequest):
                     raw_b64 = raw_b64.split(",", 1)[1]
 
                 paper_w, paper_h = 210.0, 297.0
-                if request.options and request.options.get("target_paper_size_mm"):
-                    paper_w, paper_h = request.options["target_paper_size_mm"]
+                skew_angle = 0.0
+                if request.options:
+                    if request.options.get("target_paper_size_mm"):
+                        paper_w, paper_h = request.options["target_paper_size_mm"]
+                    if "skew_angle_deg" in request.options:
+                        skew_angle = float(request.options["skew_angle_deg"])
+                    elif request.options.get("auto_deskew"):
+                        from camera_inspector import inspect_paper
+                        cam_res = inspect_paper()
+                        skew_angle = float(cam_res.get("skew_angle_deg", 0.0))
 
                 svg_result = await asyncio.to_thread(
                     svg_process,
@@ -228,6 +290,7 @@ async def generate_ai_image(request: GenerateRequest):
                     target_paper_size_mm=(paper_w, paper_h),
                     output_dir=SVG_OUTPUT_DIR,
                     style=request.style,  # TV4→TV2: truyền style để TV2 chọn thuật toán tương ứng
+                    skew_angle_deg=skew_angle,
                 )
                 print(f"[pipeline] SVG conversion: {svg_result.get('status')} "
                       f"(metrics={svg_result.get('svg_metrics')})")
@@ -279,8 +342,16 @@ async def generate_ai_image(request: GenerateRequest):
         svg_metrics_data = None
         try:
             paper_w, paper_h = 210, 297  # Mặc định A4
-            if request.options and "target_paper_size_mm" in request.options:
-                paper_w, paper_h = request.options["target_paper_size_mm"]
+            skew_angle = 0.0
+            if request.options:
+                if "target_paper_size_mm" in request.options:
+                    paper_w, paper_h = request.options["target_paper_size_mm"]
+                if "skew_angle_deg" in request.options:
+                    skew_angle = float(request.options["skew_angle_deg"])
+                elif request.options.get("auto_deskew"):
+                    from camera_inspector import inspect_paper
+                    cam_res = inspect_paper()
+                    skew_angle = float(cam_res.get("skew_angle_deg", 0.0))
 
             # Chạy hàm biến đổi ảnh thành nét vẽ SVG
             svg_result = await asyncio.to_thread(
@@ -290,6 +361,7 @@ async def generate_ai_image(request: GenerateRequest):
                 target_paper_size_mm=(paper_w, paper_h),
                 output_dir=SVG_OUTPUT_DIR,
                 style=request.style,  # TV4→TV2: truyền style để TV2 chọn thuật toán tương ứng
+                skew_angle_deg=skew_angle,
             )
             
             print(f"[pipeline] Image upload SVG conversion: {svg_result.get('status')} "
@@ -376,10 +448,19 @@ async def get_svg_content(request_id: str):
     try:
         with open(svg_path, "r", encoding="utf-8") as f:
             svg_content = f.read()
+
+        metrics = _svg_metrics_cache.get(request_id)
+        if not metrics:
+            from database import parse_svg_info
+            metrics = parse_svg_info(svg_path)
+            if metrics:
+                _svg_metrics_cache[request_id] = metrics
+
         return {
             "request_id": request_id,
             "status": "success",
             "svg_content": svg_content,
+            "svg_metrics": metrics,
             "error": None,
         }
     except Exception as exc:
@@ -552,6 +633,25 @@ async def get_status(request_id: str, simulate_error: Optional[str] = None):
     return res
 
 
+@app.get("/api/camera/inspect-paper")
+async def api_inspect_paper(device: int = 0):
+    """Kiem tra tinh trang giay va goc lech qua camera thi giac (Closed-Loop Vision)."""
+    from camera_inspector import inspect_paper
+    result = inspect_paper(camera_index=device)
+    return result
+
+
 @app.get("/")
 async def root():
     return HTMLResponse("<h1>Trạm OmniDraw đang chạy ở cổng 8000!</h1>")
+
+
+if __name__ == "__main__":
+    try:
+        import uvicorn
+        print("\n🚀 [OmniDraw] Khởi động máy chủ Backend tại http://localhost:8000 ...")
+        uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True, app_dir=_backend_dir)
+    except ImportError:
+        print("\n❌ Lỗi: Chưa tìm thấy thư viện uvicorn. Hãy chạy trong môi trường ảo:")
+        print(f"   source {os.path.join(_backend_dir, 'venv', 'bin', 'activate')}")
+        print("   uvicorn main:app --reload --port 8000")

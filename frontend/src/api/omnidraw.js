@@ -70,6 +70,7 @@ export async function getSvgContent(requestId) {
   const data = await apiRequest(`/api/print/svg/${requestId}`, { method: "GET" });
   return {
     svgText: data.svg_content,
+    svgMetrics: data.svg_metrics,
   };
 }
 
@@ -141,19 +142,25 @@ export async function getHistory() {
   if (MOCK_MODE) {
     await delay(300);
     return [
-      { id: "1", title: "Mèo ngủ", style: "Ký hoạ", timeAgo: "2 ngày trước", minutes: 12, thumbnailUrl: null },
-      { id: "2", title: "Phong cảnh núi", style: "Line art", timeAgo: "5 ngày trước", minutes: 10, thumbnailUrl: null },
-      { id: "3", title: "Chân dung", style: "Chấm bi", timeAgo: "1 tuần trước", minutes: 12, thumbnailUrl: null },
+      { id: "1", title: "Mèo ngủ", style: "Ký hoạ", timeAgo: "2 ngày trước", minutes: 12, strokeCount: 154, estimatedMinutes: 12, paperSize: "a4", thumbnailUrl: null },
+      { id: "2", title: "Phong cảnh núi", style: "Line art", timeAgo: "5 ngày trước", minutes: 10, strokeCount: 230, estimatedMinutes: 10, paperSize: "a4", thumbnailUrl: null },
+      { id: "3", title: "Chân dung", style: "Chấm bi", timeAgo: "1 tuần trước", minutes: 12, strokeCount: 420, estimatedMinutes: 12, paperSize: "a4", thumbnailUrl: null },
     ];
   }
   const data = await apiRequest("/api/history", { method: "GET" });
-  return data.items.map((it) => ({
+  return (data.items || []).map((it) => ({
     id: it.id,
     title: it.title,
     style: it.style,
     inputType: it.input_type,
     timeAgo: it.time_ago,
-    minutes: it.minutes,
+    minutes: it.minutes || it.estimated_minutes,
+    estimatedMinutes: it.estimated_minutes || it.minutes,
+    actualDrawTimeSec: it.actual_draw_time_sec,
+    strokeCount: it.stroke_count,
+    paperSize: it.paper_size || "a4",
+    modelUsed: it.model_used,
+    svgMetrics: it.svg_metrics,
     thumbnailUrl: it.thumbnail_url,
   }));
 }

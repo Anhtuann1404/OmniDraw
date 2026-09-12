@@ -26,27 +26,51 @@ export default function ConfirmScreen({
 }) {
   const [svgText, setSvgText] = useState(null);
   const [svgLoading, setSvgLoading] = useState(false);
+  const [calculatedStrokes, setCalculatedStrokes] = useState(null);
+  const [calculatedMinutes, setCalculatedMinutes] = useState(null);
 
   // Fetch SVG khi màn Confirm mount
   useEffect(() => {
     if (!requestId) return;
     setSvgLoading(true);
     getSvgContent(requestId)
-      .then((res) => setSvgText(res.svgText))
+      .then((res) => {
+        setSvgText(res.svgText);
+        if (res.svgMetrics) {
+          if (res.svgMetrics.pen_lift_count != null) {
+            setCalculatedStrokes(res.svgMetrics.pen_lift_count + 1);
+          }
+          if (res.svgMetrics.total_path_length_mm != null) {
+            const estSec = (res.svgMetrics.total_path_length_mm + (res.svgMetrics.pen_lift_distance_mm || 0)) / 40.0;
+            setCalculatedMinutes(Math.max(1, Math.ceil(estSec / 60.0)));
+          }
+        } else if (res.svgText) {
+          const pathCount = (res.svgText.match(/<path\b/g) || []).length;
+          if (pathCount > 0) setCalculatedStrokes(pathCount);
+        }
+      })
       .catch(() => setSvgText(null))
       .finally(() => setSvgLoading(false));
   }, [requestId]);
 
+  const displayStrokes = (strokeCount !== "..." && strokeCount != null)
+    ? strokeCount
+    : (calculatedStrokes != null ? calculatedStrokes : "...");
+
+  const displayMinutes = (estimatedMinutes !== "..." && estimatedMinutes != null)
+    ? estimatedMinutes
+    : (calculatedMinutes != null ? calculatedMinutes : "...");
+
   return (
     <ScreenShell patternId="pattern-confirm">
-      <div className="mb-5">
+      <div className="mb-4">
         <HardShadowBox shadowOffset={5}>
-          <div className="h-80 flex items-center justify-center bg-[#FEFDF9] rounded-xl relative overflow-hidden">
+          <div className="h-[420px] flex items-center justify-center bg-[#FEFDF9] rounded-xl relative overflow-hidden p-2">
             {svgLoading ? (
               <Loader2 size={32} className="animate-spin text-[#C0392B]" />
             ) : svgText ? (
               <>
-                <style>{`#svg-confirm svg { width: 100% !important; height: 100% !important; max-height: 300px; }`}</style>
+                <style>{`#svg-confirm svg { width: 100% !important; height: 100% !important; max-height: 400px; }`}</style>
                 <div
                   id="svg-confirm"
                   className="w-full h-full flex items-center justify-center p-2"
@@ -55,13 +79,13 @@ export default function ConfirmScreen({
               </>
             ) : (
               /* Placeholder khi chưa có SVG */
-              <svg width="90" height="130" viewBox="0 0 100 140">
+              <svg width="100" height="150" viewBox="0 0 100 140">
                 <rect x="2" y="2" width="96" height="136" fill="none" stroke="#C0392B" strokeWidth="1.5" strokeDasharray="3,2" />
                 <path d="M20,100 Q30,40 50,60 T80,30" fill="none" stroke="#1A1A1A" strokeWidth="1.8" />
                 <path d="M25,110 Q45,90 65,105" fill="none" stroke="#1A1A1A" strokeWidth="1.8" />
               </svg>
             )}
-            <p className="absolute bottom-3.5 text-xs text-[#6B6B66] font-medium">
+            <p className="absolute bottom-3.5 text-xs text-[#6B6B66] font-medium bg-white/80 px-2 py-0.5 rounded border border-[#1A1A1A]/20">
               {svgText ? "Bản nét vẽ SVG thật" : "Xem trước đường vẽ (SVG)"}
             </p>
           </div>
@@ -77,11 +101,11 @@ export default function ConfirmScreen({
         </div>
         <div className="flex-1 text-center border-[2.5px] border-[#1A1A1A] rounded-lg p-2.5 bg-white">
           <p className="text-[11px] text-[#6B6B66] font-bold">SỐ NÉT VẼ</p>
-          <p className="text-base text-[#1A1A1A] font-bold mt-0.5">{strokeCount}</p>
+          <p className="text-base text-[#1A1A1A] font-bold mt-0.5">{displayStrokes}</p>
         </div>
         <div className="flex-1 text-center border-[2.5px] border-[#1A1A1A] rounded-lg p-2.5 bg-[#FBEAF0]">
           <p className="text-[11px] text-[#721C24] font-bold">ƯỚC TÍNH</p>
-          <p className="text-base text-[#C0392B] font-bold mt-0.5">~ {estimatedMinutes} phút</p>
+          <p className="text-base text-[#C0392B] font-bold mt-0.5">~ {displayMinutes} phút</p>
         </div>
       </div>
 
