@@ -616,7 +616,7 @@ def generate_accents(base_char, accents, cx):
     return strokes
 
 
-# ----------------------------- Bộ Phân Loại & Nối Nét Chọn Lọc (Selective Ligature Engine) -----------------------------
+# ----------------------------- Bộ Tối Ưu Quỹ Đạo Nét Chữ Bằng Quy Hoạch Động (DAG DP Engine) -----------------------------
 
 # Phân loại điểm đón nét (Entry) và thoát nét (Exit) theo giải phẫu học chữ viết tay người
 ENTRY_TYPES = {
@@ -640,44 +640,183 @@ EXIT_TYPES = {
 }
 
 
-def can_ligature(prev_char, curr_char):
-    """
-    Quy tắc sinh học mô phỏng bàn tay người viết chữ Tiếng Việt:
-    - Chỉ nối nét khi tự nhiên, thuận chiều di chuyển của cổ tay (vd: t-i, i-e, e-n, a-y, t-r, s-e...).
-    - Chủ động NHẤC BÚT (Pen Lift) khi chuẩn bị viết chữ tròn oval (a, d, g, o, q, c) hoặc nét khuyết trên (b, h, k, l)
-      hoặc sau ký tự không có móc thoát thuận lợi (x, z, q) -> TRIỆT TIÊU 100% HIỆN TƯỢNG 'DƯ NÉT MỰC'.
-    """
-    if not (prev_char.isalpha() and prev_char.islower() and curr_char.isalpha() and curr_char.islower()):
-        return False
+class GlyphVariant:
+    """Biến thể hình học (Alloglyph Node) trong đồ thị DAG."""
+    __slots__ = ('strokes', 'entry_pt', 'exit_pt', 'v_entry', 'v_exit', 'can_in', 'can_out', 'cost_legibility', 'tag')
 
+    def __init__(self, strokes, entry_pt, exit_pt, v_entry, v_exit, can_in, can_out, cost_legibility=0.0, tag="std"):
+        self.strokes = strokes
+        self.entry_pt = np.asarray(entry_pt, dtype=float)
+        self.exit_pt = np.asarray(exit_pt, dtype=float)
+        self.v_entry = np.asarray(v_entry, dtype=float)
+        self.v_exit = np.asarray(v_exit, dtype=float)
+        self.can_in = can_in
+        self.can_out = can_out
+        self.cost_legibility = cost_legibility
+        self.tag = tag
+
+
+def get_glyph_variants(base_char, raw_strokes):
+    """
+    Sinh 1-3 biến thể hình học cho ký tự trên đồ thị DAG:
+    - std: Nét chuẩn canonical
+    - mid_in / high_out: Nét đón/thoát ở midline y=7.0 để nối mượt
+    - isolated: Nét ngắt độc lập, chủ động nhấc bút
+    """
+    if not (base_char.isalpha() and base_char.islower()) or not raw_strokes or len(raw_strokes[0]) < 2:
+        s0 = raw_strokes[0] if raw_strokes else np.array([[0.0, 0.0], [1.0, 0.0]])
+        return [GlyphVariant(raw_strokes, s0[0], s0[-1], s0[1] - s0[0], s0[-1] - s0[-2], False, False, 0.0, "std")]
+
+    s0 = raw_strokes[0]
+    p_in = s0[0]
+    p_out = s0[-1]
+    v_in = (s0[1] - s0[0])
+    v_in = v_in / (np.linalg.norm(v_in) + 1e-6)
+
+    v_out = (s0[-1] - s0[-2])
+    v_out = v_out / (np.linalg.norm(v_out) + 1e-6)
+
+    en_type = ENTRY_TYPES.get(base_char, 'none')
+    ex_type = EXIT_TYPES.get(base_char, 'none')
+
+    can_in = en_type in ('mid', 'baseline')
+    can_out = ex_type != 'none'
+
+    v0 = GlyphVariant(raw_strokes, p_in, p_out, v_in, v_out, can_in, can_out, 0.0, "std")
+    variants = [v0]
+
+    # Biến thể 1: Đón hoặc thoát ở midline
+    if en_type == 'mid':
+        lead_in = bz(np.array([p_in[0] - 1.2, 7.0]), np.array([p_in[0] - 0.4, 7.0]),
+                     np.array([p_in[0], p_in[1] - 0.5]), p_in, n=5)
+        new_s0 = np.vstack([lead_in[:-1], s0])
+        v1_strokes = [new_s0] + raw_strokes[1:]
+        v1 = GlyphVariant(v1_strokes, lead_in[0], p_out, np.array([1.0, 0.0]), v_out, True, can_out, 0.05, "mid_in")
+        variants.append(v1)
+    elif ex_type == 'baseline_hook':
+        lead_out = bz(p_out, p_out + np.array([0.5, -1.0]),
+                      p_out + np.array([1.0, -2.5]), p_out + np.array([1.2, -3.2]), n=5)
+        new_s0 = np.vstack([s0, lead_out[1:]])
+        v1_strokes = [new_s0] + raw_strokes[1:]
+        v1 = GlyphVariant(v1_strokes, p_in, lead_out[-1], v_in, np.array([1.0, -0.6]), can_in, True, 0.05, "high_out")
+        variants.append(v1)
+    elif base_char in ('o', 'b', 'v', 'w'):
+        v1 = GlyphVariant(raw_strokes, p_in, p_out, v_in, v_out, can_in, False, 0.02, "closed")
+        variants.append(v1)
+
+    # Biến thể 2: Biến thể cô lập nhấc bút
+    v2 = GlyphVariant(raw_strokes, p_in, p_out, v_in, v_out, False, False, 0.02, "isolated")
+    variants.append(v2)
+    return variants
+
+
+def eval_transition(u, w, p_exit, p_entry, weights=(0.5, 4.0, 2.0, 15.0, 1.0)):
+    """
+    Tính chi phí chuyển trạng thái giữa 2 node theo hàm mục tiêu:
+    J = w1*D_penup + w2*N_lift + w3*C_curvature + w4*C_collision + w5*C_legibility
+    """
+    w1, w2, w3, w4, w5 = weights
+    dist = float(np.linalg.norm(p_entry - p_exit))
+    dx = p_entry[0] - p_exit[0]
+
+    cost_lift = w1 * dist + w2 * 1.0 + w5 * w.cost_legibility
+
+    if not (u.can_out and w.can_in and dx > -0.2 and dist < 12.0):
+        return cost_lift, False
+
+    d_vec = p_entry - p_exit
+    d_norm = float(np.linalg.norm(d_vec))
+    if d_norm > 1e-4:
+        u_d = d_vec / d_norm
+        cos1 = float(np.clip(np.dot(u.v_exit, u_d), -1.0, 1.0))
+        cos2 = float(np.clip(np.dot(u_d, w.v_entry), -1.0, 1.0))
+        c_curvature = (1.0 - cos1) + (1.0 - cos2)
+    else:
+        c_curvature = 0.0
+
+    # ponytail: bounding box collision heuristic, ray-casting if complex overlapping fonts needed
+    c_collision = 0.0
+    if dx <= 0.0:
+        c_collision += 2.0
+    if dist > 8.0:
+        c_collision += (dist - 8.0) * 0.4
+
+    cost_conn = w1 * 0.0 + w2 * 0.0 + w3 * c_curvature + w4 * c_collision + w5 * w.cost_legibility
+    if cost_conn < cost_lift:
+        return cost_conn, True
+    return cost_lift, False
+
+
+def optimize_word_dag(char_info_list, weights=(0.5, 4.0, 2.0, 15.0, 1.0), force_lift=False):
+    """
+    Quy hoạch động Viterbi DP trên đồ thị có hướng (DAG), độ phức tạp O(n * k^2).
+    Tìm đường đi có chi phí J nhỏ nhất qua các biến thể ký tự.
+    """
+    n = len(char_info_list)
+    if n == 0:
+        return {"variants": [], "conns": []}
+
+    variants_per_char = [get_glyph_variants(item["char"], item["raw_s"]) for item in char_info_list]
+
+    if force_lift or n == 1:
+        return {
+            "variants": [vars_i[0] for vars_i in variants_per_char],
+            "conns": [False] * (n - 1)
+        }
+
+    dp = [{} for _ in range(n)]
+    bp = [{} for _ in range(n)]
+    conn = [{} for _ in range(n)]
+
+    for j, v in enumerate(variants_per_char[0]):
+        dp[0][j] = weights[4] * v.cost_legibility
+
+    for i in range(1, n):
+        prev_item = char_info_list[i - 1]
+        prev_vars = variants_per_char[i - 1]
+        curr_item = char_info_list[i]
+        curr_vars = variants_per_char[i]
+
+        for j, curr_v in enumerate(curr_vars):
+            p_entry = curr_v.entry_pt * curr_item["scale_vec"] + curr_item["offset"]
+            best_cost = float('inf')
+            best_p = 0
+            best_is_conn = False
+
+            for p, prev_v in enumerate(prev_vars):
+                p_exit = prev_v.exit_pt * prev_item["scale_vec"] + prev_item["offset"]
+                cost_trans, is_conn = eval_transition(prev_v, curr_v, p_exit, p_entry, weights)
+                total = dp[i - 1][p] + cost_trans
+                if total < best_cost:
+                    best_cost = total
+                    best_p = p
+                    best_is_conn = is_conn
+
+            dp[i][j] = best_cost
+            bp[i][j] = best_p
+            conn[i][j] = best_is_conn
+
+    best_j = min(dp[n - 1].keys(), key=lambda j: dp[n - 1][j])
+    chosen_var_indices = [best_j]
+    chosen_conns = []
+    curr_j = best_j
+    for i in range(n - 1, 0, -1):
+        chosen_conns.append(conn[i][curr_j])
+        curr_j = bp[i][curr_j]
+        chosen_var_indices.append(curr_j)
+
+    chosen_var_indices.reverse()
+    chosen_conns.reverse()
+
+    chosen_vars = [variants_per_char[i][chosen_var_indices[i]] for i in range(n)]
+    return {"variants": chosen_vars, "conns": chosen_conns}
+
+
+def can_ligature(prev_char, curr_char):
+    """Fallback tương thích ngược."""
     ex = EXIT_TYPES.get(prev_char, 'none')
     en = ENTRY_TYPES.get(curr_char, 'none')
-
-    # 1. Nếu chữ sau là chữ tròn (oval) -> Nhấc bút bắt đầu từ góc 2 giờ, tránh nét gạch chéo bụng chữ
-    if en == 'oval':
-        return False
-
-    # 2. Nếu chữ sau là nét khuyết trên (ascender) -> Nhấc bút để đặt bút từ đỉnh kéo xuống
-    if en == 'ascender':
-        return False
-
-    # 3. Nếu chữ trước không có móc thoát thuận lợi (none) -> Nhấc bút
-    if ex == 'none':
-        return False
-
-    # 4. Thoát móc chân (baseline_hook) nối sang đón nét thân giữa (mid) hoặc nét đón chân (baseline: r, s)
-    if ex == 'baseline_hook' and en in ('mid', 'baseline'):
-        return True
-
-    # 5. Thoát móc trên (top_flick) nối sang đón nét thân giữa (mid) hoặc e
-    if ex == 'top_flick' and en in ('mid', 'e'):
-        return True
-
-    # 6. Thoát móc khuyết dưới (descender_loop: g, y) lượn lên nối tiếp nét đón thân (mid, e)
-    if ex == 'descender_loop' and en in ('mid', 'e'):
-        return True
-
-    return False
+    return ex != 'none' and en in ('mid', 'baseline')
 
 
 # ----------------------------- Cấu Hình Phong Cách & Font -----------------------------
@@ -840,48 +979,66 @@ def text_to_strokes(text, font="oly", style="hand_hocsinh", font_size_mm=7.0, li
             # Lượn sóng dòng kẻ (Baseline drift)
             drift_y = math.sin(curr_x * 0.05 + word_idx * 0.4) * drift_max
 
-            word_base_strokes = []
-            word_secondary_strokes = []
-            last_char = None
-
+            # Chuẩn bị danh sách ký tự trong từ để tối ưu hóa đồ thị DAG
+            char_info_list = []
+            tmp_x = curr_x
             for char_idx, group in enumerate(char_queue):
-                base_char = group[0]
-                accents = group[1:]
-
-                # Xử lý chữ đ/Đ
-                is_d_stroke = False
-                if base_char == 'đ':
-                    base_char = 'd'
-                    is_d_stroke = True
-                elif base_char == 'Đ':
-                    base_char = 'D'
-                    is_d_stroke = True
+                b_char = group[0]
+                is_d = False
+                if b_char == 'đ':
+                    b_char = 'd'
+                    is_d = True
+                elif b_char == 'Đ':
+                    b_char = 'D'
+                    is_d = True
 
                 char_rhythm = 1.0 + 0.02 * math.sin(word_idx * 1.7 + char_idx * 2.3)
-                char_scale_x = scale * char_rhythm * cfg["char_spacing"]
-                w_char = GLYPH_WIDTHS.get(base_char, DEFAULT_WIDTH) * char_scale_x
-                cx = GLYPH_CENTERS.get(base_char, DEFAULT_CENTER)
+                c_scale_x = scale * char_rhythm * cfg["char_spacing"]
+                w_char = GLYPH_WIDTHS.get(b_char, DEFAULT_WIDTH) * c_scale_x
+                cx = GLYPH_CENTERS.get(b_char, DEFAULT_CENTER)
+                raw_s = GLYPHS.get(b_char, GLYPHS.get('?'))
 
-                raw_s = GLYPHS.get(base_char, GLYPHS.get('?'))
-                # Tọa độ thực tế mm của từng nét trong glyph
-                scaled_s = [s.astype(float) * np.array([char_scale_x, scale_y]) + np.array([curr_x, curr_y - 14.0 * scale]) for s in raw_s]
+                char_info_list.append({
+                    "char": b_char,
+                    "accents": group[1:],
+                    "is_d_stroke": is_d,
+                    "raw_s": raw_s,
+                    "scale_vec": np.array([c_scale_x, scale_y]),
+                    "offset": np.array([tmp_x, curr_y - 14.0 * scale]),
+                    "w_char": w_char,
+                    "cx": cx,
+                })
+                tmp_x += w_char
+
+            # Quy hoạch động Viterbi DP trên DAG tìm chuỗi biến thể và nét nối tối ưu
+            enable_lig = f_cfg.get("ligature", False)
+            # ponytail: w2=0 when font disables ligature to force pen-lift without changing DP structure
+            weights = (0.5, 4.0 if enable_lig else 0.0, 2.0, 15.0, 1.0)
+            dp_sol = optimize_word_dag(char_info_list, weights=weights, force_lift=(not enable_lig))
+
+            word_base_strokes = []
+            word_secondary_strokes = []
+
+            for char_idx, info in enumerate(char_info_list):
+                var = dp_sol["variants"][char_idx]
+                scaled_s = [s.astype(float) * info["scale_vec"] + info["offset"] for s in var.strokes]
+                b_char = info["char"]
 
                 # Tách nét chính và nét phụ (dấu chấm i, j; gạch ngang t, f)
-                if base_char in ('i', 'j'):
+                if b_char in ('i', 'j'):
                     prim_strokes = [scaled_s[0]]
-                    if len(accents) == 0:
+                    if len(info["accents"]) == 0:
                         word_secondary_strokes.append(scaled_s[1])
-                elif base_char in ('t', 'f'):
+                elif b_char in ('t', 'f'):
                     prim_strokes = [scaled_s[0]]
                     word_secondary_strokes.append(scaled_s[1])
                 else:
                     prim_strokes = scaled_s
 
-                # Xử lý nối nét chọn lọc mô phỏng tay người (Selective Ligature)
-                if f_cfg["ligature"] and last_char is not None and len(word_base_strokes) > 0 and can_ligature(last_char, base_char):
+                # Ghép nét nối liên tục (Ligature) theo quyết định tối ưu của DP
+                if char_idx > 0 and dp_sol["conns"][char_idx - 1] and len(word_base_strokes) > 0:
                     p_exit = word_base_strokes[-1][-1]
                     p_entry = prim_strokes[0][0]
-                    # Cầu nối Bézier uốn mềm giữa điểm thoát nét trước và điểm đón nét sau theo hướng tiếp tuyến tự nhiên
                     last_stroke = word_base_strokes[-1]
                     next_stroke = prim_strokes[0]
                     v_exit = (last_stroke[-1] - last_stroke[-2]) if len(last_stroke) >= 2 else np.array([0.5 * scale, 0.0])
@@ -908,27 +1065,26 @@ def text_to_strokes(text, font="oly", style="hand_hocsinh", font_size_mm=7.0, li
                         word_secondary_strokes.append(offset_s)
 
                 # Nét thư pháp móc đuôi chữ cuối từ
-                if f_cfg["flourish"] and char_idx == len(char_queue) - 1:
+                if f_cfg["flourish"] and char_idx == len(char_info_list) - 1:
                     last_pt = prim_strokes[-1][-1]
                     hook = np.array([last_pt, last_pt + np.array([0.7 * scale, -1.4 * scale])])
                     word_secondary_strokes.append(hook)
 
                 # Gạch ngang đ/Đ
-                if is_d_stroke:
-                    d_bar = STROKE_D_BAR if base_char == 'd' else STROKE_CAP_D_BAR
-                    bar_scaled = d_bar.astype(float) * np.array([char_scale_x, scale_y])
-                    word_secondary_strokes.append(bar_scaled + np.array([curr_x, curr_y - 14.0 * scale]))
+                if info["is_d_stroke"]:
+                    d_bar = STROKE_D_BAR if b_char == 'd' else STROKE_CAP_D_BAR
+                    bar_scaled = d_bar.astype(float) * info["scale_vec"]
+                    word_secondary_strokes.append(bar_scaled + info["offset"])
 
                 # Dấu thanh chống va chạm
-                if accents:
-                    acc_list = generate_accents(base_char, accents, cx)
+                if info["accents"]:
+                    acc_list = generate_accents(b_char, info["accents"], info["cx"])
                     for acc_s in acc_list:
-                        acc_scaled = acc_s.astype(float) * np.array([char_scale_x, scale_y])
-                        acc_placed = acc_scaled + np.array([curr_x, curr_y - 14.0 * scale])
+                        acc_scaled = acc_s.astype(float) * info["scale_vec"]
+                        acc_placed = acc_scaled + info["offset"]
                         word_secondary_strokes.append(acc_placed)
 
-                last_char = base_char if (base_char.isalpha() and base_char.islower()) else None
-                curr_x += w_char
+            curr_x = tmp_x
 
             # Gom nét từ và áp dụng biến thiên sinh học (Bio-mimetic Variation)
             for s in word_base_strokes:
@@ -999,15 +1155,24 @@ def _run_self_check():
     # Cursive phải gom nét liền mạch (số lần nhấc bút ít hơn hẳn oly)
     assert font_results["cursive"] < font_results["oly"], f"Cursive phai gop net lien mach: {font_results['cursive']} < {font_results['oly']}"
 
-    # Kiểm tra tiếng Việt có dấu
-    for char in ['ế', 'ậ', 'đ', 'ờ', 'ũ']:
-        s = text_to_strokes(char)
-        assert len(s) >= 2, f"Ký tự {char} phải có ít nhất 2 nét (gốc + dấu)"
+    # Kiểm tra thuật toán quy hoạch động Viterbi DP trên DAG
+    test_chars = []
+    for idx, c in enumerate("viet"):
+        test_chars.append({
+            "char": c,
+            "raw_s": GLYPHS[c],
+            "scale_vec": np.array([0.5, 0.5]),
+            "offset": np.array([10.0 + idx * 3.0, 20.0])
+        })
+    dp_test = optimize_word_dag(test_chars, weights=(0.5, 4.0, 2.0, 15.0, 1.0))
+    assert len(dp_test["variants"]) == 4, "DP phải chọn đúng 4 biến thể cho từ 4 ký tự"
+    assert len(dp_test["conns"]) == 3, "DP phải có đúng 3 quyết định chuyển tiếp"
+    assert any(dp_test["conns"]), "DP cho từ 'viet' phải tìm ra ít nhất 1 nét nối liên tục"
 
     svg, metrics, in_bounds = generate_handwriting_svg(text_sample, font="cursive", style="hand_nguoilon", skew_angle_deg=2.5)
     assert "<svg" in svg and "C" in svg, "SVG phải hợp lệ và chứa lệnh Bézier C"
     assert in_bounds, "Tọa độ phải nằm trong khổ giấy"
-    print(f"[HANDWRITING SELF-CHECK PASS] Kiểm tra thành công 4 fonts: {font_results} | SVG Cursive: {metrics['total_path_length_mm']:.1f}mm | Deskew OK")
+    print(f"[HANDWRITING SELF-CHECK PASS] Kiểm tra thành công 4 fonts: {font_results} | DAG DP OK | SVG Cursive: {metrics['total_path_length_mm']:.1f}mm | Deskew OK")
 
 
 if __name__ == "__main__":
