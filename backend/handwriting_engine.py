@@ -253,11 +253,11 @@ GLYPHS = {
         make_oval(cx=4.8, top_y=7.0, bot_y=14.0, rx=2.4),
         make_hook_stem(x_stem=7.0, top_y=1.2, bot_y=14.0, hook_w=2.0, hook_h=3.0)
     ],
-    # e: Nét cong bắt đầu từ giữa dòng lượn lên x-height tạo vòm tròn cân đối, lưng và móc nối tròn chuẩn như c
+    # e: Nét cong bắt đầu từ giữa dòng lượn lên x-height tạo vòm tròn xoe hoàn hảo, lưng và móc nối tròn mượt
     'e': [np.vstack([
-        bz(np.array([2.0, 11.0]), np.array([3.4, 10.2]), np.array([5.0, 9.0]), np.array([6.0, 7.8]), n=6),
-        bz(np.array([6.0, 7.8]), np.array([6.2, 7.0]), np.array([5.6, 7.0]), np.array([4.8, 7.0]), n=6)[1:],
-        bz(np.array([4.8, 7.0]), np.array([3.48, 7.0]), np.array([2.4, 8.57]), np.array([2.4, 10.5]), n=8)[1:],
+        bz(np.array([2.0, 11.0]), np.array([3.4, 10.6]), np.array([5.2, 10.0]), np.array([6.6, 8.8]), n=6),
+        bz(np.array([6.6, 8.8]), np.array([6.8, 7.8]), np.array([5.82, 7.0]), np.array([4.6, 7.0]), n=7)[1:],
+        bz(np.array([4.6, 7.0]), np.array([3.38, 7.0]), np.array([2.4, 8.57]), np.array([2.4, 10.5]), n=8)[1:],
         bz(np.array([2.4, 10.5]), np.array([2.4, 12.43]), np.array([3.48, 14.0]), np.array([4.8, 14.0]), n=8)[1:],
         bz(np.array([4.8, 14.0]), np.array([5.8, 14.0]), np.array([6.8, 13.0]), np.array([7.4, 11.5]), n=6)[1:]
     ])],
@@ -276,12 +276,9 @@ GLYPHS = {
         make_ascender_loop(x_stem=2.0, top_y=0.5, bot_y=14.0, loop_w=2.2),
         make_arch(x_left=2.0, x_right=6.8, top_y=7.0, bot_y=14.0, hook_w=2.0)
     ],
-    # i: Nét hất + nét móc ngược + dấu chấm
+    # i: Nét sổ thẳng từ x-height xuống baseline có móc ngược + dấu chấm (bỏ nét móc hất đầu để nối liền mạch)
     'i': [
-        np.vstack([
-            bz(np.array([1.2, 9.5]), np.array([2.0, 8.5]), np.array([2.8, 7.5]), np.array([3.2, 7.0]), n=6),
-            make_hook_stem(x_stem=3.2, top_y=7.0, bot_y=14.0, hook_w=2.0, hook_h=3.0)[1:]
-        ]),
+        make_hook_stem(x_stem=3.2, top_y=7.0, bot_y=14.0, hook_w=2.0, hook_h=2.8),
         np.array([[3.2, 3.2], [3.4, 3.2]])
     ],
     # j: Nét hất + nét khuyết dưới + dấu chấm
@@ -572,16 +569,41 @@ def generate_accents(base_char, accents, cx):
             strokes.append(s)
 
         elif acc == '\u0309':
-            # Dấu hỏi: uốn móc cong nhỏ gọn
+            # Dấu hỏi: uốn móc cong mềm mại chuẩn tiếng Việt từ trên xuống dưới
             if has_stacked_base:
-                s = np.array([[cx - 0.3, 1.2 + y_shift], [cx - 0.7, 0.2 + y_shift],
-                              [cx + 0.5, -0.2 + y_shift], [cx + 0.7, 0.6 + y_shift], [cx, 1.0 + y_shift]])
+                # Trên mũ nón/trăng: nhỏ gọn, đặt trên đỉnh mũ
+                h1 = bz(np.array([cx - 0.5, 0.6 + y_shift]),
+                        np.array([cx - 0.5, 0.0 + y_shift]),
+                        np.array([cx + 0.1, -0.1 + y_shift]),
+                        np.array([cx + 0.5, 0.4 + y_shift]), n=6)
+                h2 = bz(np.array([cx + 0.5, 0.4 + y_shift]),
+                        np.array([cx + 0.6, 1.0 + y_shift]),
+                        np.array([cx + 0.1, 1.4 + y_shift]),
+                        np.array([cx - 0.3, 1.8 + y_shift]), n=6)
+                s = np.vstack([h1, h2[1:]])
             elif has_moc:
-                s = np.array([[cx - 1.0, 4.6 + y_shift], [cx - 1.5, 3.0 + y_shift],
-                              [cx + 0.2, 2.5 + y_shift], [cx + 0.3, 3.4 + y_shift], [cx - 0.5, 4.1 + y_shift]])
+                # Trên ơ, ư: chếch sang bên trái tâm để nhường chỗ cho móc sườn phải
+                cx_h = cx - 0.8
+                h1 = bz(np.array([cx_h - 0.5, 2.8 + y_shift]),
+                        np.array([cx_h - 0.5, 2.0 + y_shift]),
+                        np.array([cx_h + 0.1, 1.9 + y_shift]),
+                        np.array([cx_h + 0.5, 2.5 + y_shift]), n=6)
+                h2 = bz(np.array([cx_h + 0.5, 2.5 + y_shift]),
+                        np.array([cx_h + 0.6, 3.3 + y_shift]),
+                        np.array([cx_h + 0.1, 3.9 + y_shift]),
+                        np.array([cx_h - 0.3, 4.6 + y_shift]), n=6)
+                s = np.vstack([h1, h2[1:]])
             else:
-                s = np.array([[cx - 0.4, 4.6 + y_shift], [cx - 0.9, 3.0 + y_shift],
-                              [cx + 0.7, 2.5 + y_shift], [cx + 0.8, 3.4 + y_shift], [cx, 4.1 + y_shift]])
+                # Đứng một mình trên nguyên âm (ả, ẻ, ỉ, ỏ, ủ, ỷ)
+                h1 = bz(np.array([cx - 0.6, 2.8 + y_shift]),
+                        np.array([cx - 0.6, 1.9 + y_shift]),
+                        np.array([cx + 0.1, 1.8 + y_shift]),
+                        np.array([cx + 0.6, 2.5 + y_shift]), n=6)
+                h2 = bz(np.array([cx + 0.6, 2.5 + y_shift]),
+                        np.array([cx + 0.7, 3.3 + y_shift]),
+                        np.array([cx + 0.1, 3.9 + y_shift]),
+                        np.array([cx - 0.3, 4.6 + y_shift]), n=6)
+                s = np.vstack([h1, h2[1:]])
             strokes.append(s)
 
         elif acc == '\u0303':
