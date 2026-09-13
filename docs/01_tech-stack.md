@@ -1,6 +1,6 @@
 # OmniDraw — Tech Stack
 
-**Cập nhật lần cuối:** *(điền ngày mỗi khi sửa)*
+**Cập nhật lần cuối:** 13/09/2026
 **Quy tắc:** Khi đổi công nghệ ở bất kỳ mảng nào, phải sửa file này TRƯỚC hoặc NGAY khi đổi — không để người khác code theo stack cũ đã lỗi thời.
 
 ---
@@ -28,6 +28,7 @@
 | Thư viện CV                | OpenCV (`opencv-python-headless`)                      | Có sẵn Canny edge detection + `findContours` để trích đường nét từ ảnh, phổ biến, tài liệu nhiều, tốc độ tốt |
 | Thuật toán tối ưu đường vẽ | Nearest Neighbor + Or-opt (candidate list qua KD-tree) | NN cho lời giải khởi tạo nhanh (O(n log n) nhờ `scipy.spatial.cKDTree`); Or-opt chỉ xét các nét *gần nhau về không gian thực tế* để cải tiến, scale tốt với hàng nghìn nét — khác 2-opt truyền thống (duyệt toàn bộ cặp O(n²), quá chậm với ảnh nhiều chi tiết như nhóm ảnh 021-030) |
 | Thư viện vector hoá ảnh    | `cv2.findContours` (có sẵn trong OpenCV) + `scipy` (KD-tree) | Không cần thêm dependency ngoài; đủ đáp ứng nhu cầu trích contour làm stroke và tìm hàng xóm không gian nhanh |
+| Bộ sinh chữ viết tay (Handwriting Engine) | Bio-mimetic Single-Stroke Centerline Engine (Python, NumPy, unicodedata NFD, Cubic Bézier C1/C2, Selective Ligature) | Tự phát triển thuật toán sinh nét đơn (single-stroke) thay vì font viền đôi TTF để máy vẽ đi đúng 1 nét như người thật. Chuẩn hóa glyph tiếng Việt (QĐ 31/2002/QĐ-BGD&ĐT), phân rã dấu NFD, tránh va chạm dấu, mô phỏng sinh học (dao động baseline, ngẫu nhiên độ nghiêng, nối nét mềm có chọn lọc). Hỗ trợ 4 phong cách: Học sinh, Thảo nghiêng, Thư pháp, Ký tên. |
 
 
 
@@ -53,6 +54,7 @@
 | Backend framework  | *python(FastApi)* | *Tốc độ cao, đồng bộ ngôn ngữ vói team AI*           |
 | Giao tiếp realtime | REST polling      | Theo quyết định đã chốt trong `OmniDraw_API_Spec.md` |
 | Database (nếu cần) | *sqlite*          | *gọn nhẹ lưu file cục bộ khời tạo nhanh chóng*       |
+| Trích xuất văn bản (.docx) | `python-docx` | Hỗ trợ người dùng tải file Word lên trong chế độ Viết Thư Tay để tự động trích xuất nội dung |
 
 
 ---

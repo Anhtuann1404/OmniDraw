@@ -1,6 +1,6 @@
 # OmniDraw — Roadmap
 
-**Cập nhật lần cuối:** *(điền ngày mỗi khi sửa)*
+**Cập nhật lần cuối:** 13/09/2026
 **Deadline cuối cùng (nộp/bảo vệ):** *(điền ngày)*
 
 > Đánh dấu trạng thái mỗi mục nhỏ: `⬜ Chưa bắt đầu` / `🟡 Đang làm` / `✅ Xong`
@@ -44,11 +44,11 @@
 
 ### 1.4 Khung UI/UX (mock data)
 
-**Trạng thái:** ⬜ | **Phụ trách:** TV4 | **Hạn:** *(điền)*
+**Trạng thái:** ✅ | **Phụ trách:** TV4 | **Hạn:** *(điền)*
 
 - [x] Thiết kế luồng màn hình chính (upload/nhập mô tả → preview → gửi vẽ → theo dõi tiến độ)
 - [x] Dựng giao diện chạy được với dữ liệu giả
-- [ ] Dựng khung tích hợp rỗng (chỗ trống để sau này cắm API thật vào)
+- [x] Dựng khung tích hợp rỗng (chỗ trống để sau này cắm API thật vào)
 
 ---
 
@@ -92,6 +92,7 @@
 - [x] Thuật toán chuyển ảnh → vector line-art
 - [x] Thuật toán tối ưu thứ tự nét vẽ (giảm thời gian/quãng đường nhấc bút)
 - [x] Xuất ra đúng chuẩn SVG ở mục 4 trong API Spec
+- [x] Module viết thư tay nét đơn (Single-stroke Handwriting Engine) mô phỏng bàn tay người, chuẩn tiếng Việt (Unicode NFD, 4 font phong cách: Học sinh, Thảo nghiêng, Thư pháp, Ký tên)
 
 
 
@@ -115,20 +116,20 @@
 
 ### 2.7 Giao diện — Hoàn chỉnh với API thật (song song)
 
-**Trạng thái:** ⬜ | **Phụ trách:** TV4 | **Hạn:** *(điền)*
+**Trạng thái:** ✅ | **Phụ trách:** TV4 | **Hạn:** *(điền)*
 
-- [ ] Hoàn thiện toàn bộ giao diện, vẫn dùng mock data
-- [ ] Viết sẵn các hàm gọi API theo đúng chuẩn, chỉ chờ module thật để nối vào
+- [x] Hoàn thiện toàn bộ giao diện (CreateScreen, PreviewScreen, MonitorScreen, HistoryScreen, SettingsScreen)
+- [x] Viết sẵn các hàm gọi API theo đúng chuẩn, tích hợp cả chế độ sinh tranh line-art và viết thư tay (Handwriting Mode)
 
 
 
 ### 2.8 Checklist module (mỗi người tự làm cho phần mình)
 
-**Trạng thái:** ⬜ | **Phụ trách:** Cả 4 người
+**Trạng thái:** 🟡 | **Phụ trách:** Cả 4 người
 
-- [ ] Đã tự test module với ít nhất 1 input giả đúng chuẩn
-- [ ] Đã test với 1 input lỗi, xác nhận trả đúng mã lỗi chuẩn
-- [ ] Đã log đầy đủ `request_id` theo quy định
+- [x] Đã tự test module với ít nhất 1 input giả đúng chuẩn
+- [x] Đã test với 1 input lỗi, xác nhận trả đúng mã lỗi chuẩn
+- [x] Đã log đầy đủ `request_id` theo quy định
 
 ---
 
@@ -153,6 +154,7 @@
 
 - [x] Nối module CV/tối ưu vào luồng thật sau bước AI sinh ảnh
 - [x] Kiểm tra SVG xuất ra đúng khổ giấy, đúng chuẩn
+- [x] Nối module sinh chữ viết tay tiếng Việt nét đơn vào API Gateway `/api/ai/generate` và tích hợp hiển thị preview SVG thời gian thực
 
 
 
