@@ -241,25 +241,25 @@ GLYPHS = {
         bz(np.array([6.2, 8.5]), np.array([6.0, 7.2]), np.array([5.5, 7.0]), np.array([4.8, 7.0]), n=6)[1:],
         bz(np.array([4.8, 7.0]), np.array([4.2, 6.2]), np.array([5.8, 6.2]), np.array([7.2, 7.0]), n=6)[1:]
     ])],
-    # c: Nét cong hở phải uốn tròn chuẩn hình học (3/4 vòng elip cân đối)
+    # c: Nét cong hở phải uốn tròn chuẩn hình học (3/4 vòng elip cân đối, móc nối mềm mại)
     'c': [np.vstack([
-        bz(np.array([6.6, 8.5]), np.array([6.6, 7.0]), np.array([5.8, 7.0]), np.array([4.8, 7.0]), n=6),
+        bz(np.array([6.8, 8.5]), np.array([6.8, 7.2]), np.array([5.8, 7.0]), np.array([4.8, 7.0]), n=6),
         bz(np.array([4.8, 7.0]), np.array([3.48, 7.0]), np.array([2.4, 8.57]), np.array([2.4, 10.5]), n=8)[1:],
         bz(np.array([2.4, 10.5]), np.array([2.4, 12.43]), np.array([3.48, 14.0]), np.array([4.8, 14.0]), n=8)[1:],
-        bz(np.array([4.8, 14.0]), np.array([6.0, 14.0]), np.array([7.2, 13.5]), np.array([7.2, 11.5]), n=6)[1:]
+        bz(np.array([4.8, 14.0]), np.array([5.8, 14.0]), np.array([6.8, 13.0]), np.array([7.4, 11.5]), n=6)[1:]
     ])],
     # d: Nét cong kín + nét móc ngược cao (từ cap-height y=1.2)
     'd': [
         make_oval(cx=4.8, top_y=7.0, bot_y=14.0, rx=2.4),
         make_hook_stem(x_stem=7.0, top_y=1.2, bot_y=14.0, hook_w=2.0, hook_h=3.0)
     ],
-    # e: Nét cong bắt đầu từ giữa dòng lượn lên x-height tạo vòm tròn cân đối, lưng và đáy tròn chuẩn như c
+    # e: Nét cong bắt đầu từ giữa dòng lượn lên x-height tạo vòm tròn cân đối, lưng và móc nối tròn chuẩn như c
     'e': [np.vstack([
         bz(np.array([2.0, 11.0]), np.array([3.4, 10.2]), np.array([5.0, 9.0]), np.array([6.0, 7.8]), n=6),
-        bz(np.array([6.0, 7.8]), np.array([6.2, 7.2]), np.array([5.3, 7.0]), np.array([4.5, 7.0]), n=6)[1:],
-        bz(np.array([4.5, 7.0]), np.array([3.34, 7.0]), np.array([2.4, 8.57]), np.array([2.4, 10.5]), n=8)[1:],
+        bz(np.array([6.0, 7.8]), np.array([6.2, 7.0]), np.array([5.6, 7.0]), np.array([4.8, 7.0]), n=6)[1:],
+        bz(np.array([4.8, 7.0]), np.array([3.48, 7.0]), np.array([2.4, 8.57]), np.array([2.4, 10.5]), n=8)[1:],
         bz(np.array([2.4, 10.5]), np.array([2.4, 12.43]), np.array([3.48, 14.0]), np.array([4.8, 14.0]), n=8)[1:],
-        bz(np.array([4.8, 14.0]), np.array([6.0, 14.0]), np.array([7.2, 13.5]), np.array([7.2, 11.5]), n=6)[1:]
+        bz(np.array([4.8, 14.0]), np.array([5.8, 14.0]), np.array([6.8, 13.0]), np.array([7.4, 11.5]), n=6)[1:]
     ])],
     # f: Chữ f phụ âm ngoại lai (nét khuyết trên + gạch ngang)
     'f': [
@@ -293,16 +293,16 @@ GLYPHS = {
         ]),
         np.array([[3.2, 3.2], [3.4, 3.2]])
     ],
-    # k: Nét khuyết trên + Nét móc hai đầu có thắt ở giữa chuẩn tiểu học Việt Nam
+    # k: Nét khuyết trên + Nét móc hai đầu có thắt ở giữa chuẩn tiểu học Việt Nam (bầu thon gọn)
     'k': [
         make_ascender_loop(x_stem=2.0, top_y=0.5, bot_y=14.0, loop_w=2.2),
         np.vstack([
-            bz(np.array([2.0, 9.5]), np.array([2.2, 7.0]), np.array([3.6, 7.0]), np.array([4.6, 7.0]), n=6),
-            bz(np.array([4.6, 7.0]), np.array([5.8, 7.0]), np.array([6.4, 8.2]), np.array([6.2, 9.5]), n=6)[1:],
-            bz(np.array([6.2, 9.5]), np.array([5.8, 10.5]), np.array([4.0, 10.0]), np.array([3.0, 10.2]), n=6)[1:],
-            bz(np.array([3.0, 10.2]), np.array([2.4, 10.5]), np.array([3.2, 11.2]), np.array([3.8, 10.8]), n=6)[1:],
-            bz(np.array([3.8, 10.8]), np.array([4.5, 12.5]), np.array([5.0, 14.0]), np.array([6.0, 14.0]), n=6)[1:],
-            bz(np.array([6.0, 14.0]), np.array([6.8, 14.0]), np.array([7.4, 12.5]), np.array([7.6, 11.2]), n=6)[1:]
+            bz(np.array([2.0, 9.5]), np.array([2.1, 7.0]), np.array([2.8, 7.0]), np.array([3.4, 7.0]), n=6),
+            bz(np.array([3.4, 7.0]), np.array([4.2, 7.0]), np.array([4.6, 8.0]), np.array([4.5, 9.0]), n=6)[1:],
+            bz(np.array([4.5, 9.0]), np.array([4.2, 10.0]), np.array([3.2, 9.8]), np.array([2.6, 10.2]), n=6)[1:],
+            bz(np.array([2.6, 10.2]), np.array([2.0, 10.5]), np.array([2.8, 11.0]), np.array([3.3, 10.8]), n=6)[1:],
+            bz(np.array([3.3, 10.8]), np.array([4.0, 12.5]), np.array([4.5, 14.0]), np.array([5.4, 14.0]), n=6)[1:],
+            bz(np.array([5.4, 14.0]), np.array([6.2, 14.0]), np.array([6.8, 12.8]), np.array([7.0, 11.5]), n=6)[1:]
         ])
     ],
     # l: Nét khuyết trên nối liền nét móc ngược chân rộng
@@ -353,12 +353,13 @@ GLYPHS = {
         bz(np.array([6.8, 11.5]), np.array([6.8, 14.0]), np.array([7.4, 14.0]), np.array([7.8, 14.0]), n=6)[1:],
         bz(np.array([7.8, 14.0]), np.array([8.4, 14.0]), np.array([8.8, 12.5]), np.array([8.8, 11.2]), n=6)[1:]
     ])],
-    # s: CHUẨN TIỂU HỌC VIỆT NAM (Nét xiên lên đỉnh cao 1.25 đv, thắt đỉnh, cong phồng lưng chữ s, cuộn đáy)
+    # s: CHUẨN TIỂU HỌC VIỆT NAM (Nét xiên lên đỉnh cao 1.25 đv, thắt nốt xoắn tròn rõ ràng, cong phồng lưng chữ s, cuộn đáy)
     's': [np.vstack([
-        bz(np.array([1.2, 14.0]), np.array([2.2, 11.0]), np.array([3.4, 7.5]), np.array([3.8, 6.0]), n=8),
-        bz(np.array([3.8, 6.0]), np.array([3.0, 5.2]), np.array([4.5, 5.2]), np.array([4.8, 6.5]), n=6)[1:],
-        bz(np.array([4.8, 6.5]), np.array([7.6, 8.5]), np.array([7.6, 12.5]), np.array([4.5, 14.0]), n=10)[1:],
-        bz(np.array([4.5, 14.0]), np.array([2.5, 14.0]), np.array([2.2, 13.0]), np.array([3.2, 12.2]), n=6)[1:],
+        bz(np.array([1.2, 14.0]), np.array([2.0, 11.0]), np.array([3.0, 8.0]), np.array([3.6, 6.0]), n=8),
+        bz(np.array([3.6, 6.0]), np.array([3.8, 4.6]), np.array([2.8, 4.4]), np.array([2.4, 5.2]), n=6)[1:],
+        bz(np.array([2.4, 5.2]), np.array([2.0, 6.0]), np.array([3.0, 6.5]), np.array([3.8, 6.0]), n=6)[1:],
+        bz(np.array([3.8, 6.0]), np.array([7.6, 8.0]), np.array([7.6, 12.5]), np.array([4.6, 14.0]), n=10)[1:],
+        bz(np.array([4.6, 14.0]), np.array([2.6, 14.0]), np.array([2.2, 13.0]), np.array([3.2, 12.2]), n=6)[1:],
         bz(np.array([3.2, 12.2]), np.array([4.8, 14.0]), np.array([6.5, 14.0]), np.array([7.8, 11.5]), n=6)[1:]
     ])],
     # t: Nét hất lượn lên đỉnh 1.5 đv + nét sổ móc ngược + gạch ngang ngắn
@@ -396,10 +397,20 @@ GLYPHS = {
         bz(np.array([7.7, 14.0]), np.array([8.8, 14.0]), np.array([9.4, 11.5]), np.array([9.4, 7.2]), n=6)[1:],
         bz(np.array([9.4, 7.2]), np.array([9.4, 6.4]), np.array([10.2, 6.4]), np.array([10.6, 7.2]), n=5)[1:]
     ])],
-    # x: Hai nét cong ngược nhau chạm lưng ở giữa (chuẩn tiểu học Việt Nam)
+    # x: CHUẨN TIỂU HỌC VIỆT NAM (Hai nét cong chữ C ngược nhau chạm lưng ở giữa x=4.8, y=10.5)
     'x': [
-        bz(np.array([4.2, 7.5]), np.array([2.0, 7.0]), np.array([2.0, 14.0]), np.array([4.2, 13.5]), n=10),
-        bz(np.array([5.4, 7.5]), np.array([7.6, 7.0]), np.array([7.6, 14.0]), np.array([5.4, 13.5]), n=10)
+        np.vstack([
+            bz(np.array([2.4, 8.5]), np.array([2.4, 7.0]), np.array([3.4, 7.0]), np.array([4.0, 7.0]), n=6),
+            bz(np.array([4.0, 7.0]), np.array([4.8, 7.0]), np.array([4.8, 8.8]), np.array([4.8, 10.5]), n=6)[1:],
+            bz(np.array([4.8, 10.5]), np.array([4.8, 12.2]), np.array([4.8, 14.0]), np.array([4.0, 14.0]), n=6)[1:],
+            bz(np.array([4.0, 14.0]), np.array([3.4, 14.0]), np.array([2.4, 14.0]), np.array([2.4, 12.5]), n=6)[1:]
+        ]),
+        np.vstack([
+            bz(np.array([7.2, 8.5]), np.array([7.2, 7.0]), np.array([6.2, 7.0]), np.array([5.6, 7.0]), n=6),
+            bz(np.array([5.6, 7.0]), np.array([4.8, 7.0]), np.array([4.8, 8.8]), np.array([4.8, 10.5]), n=6)[1:],
+            bz(np.array([4.8, 10.5]), np.array([4.8, 12.2]), np.array([4.8, 14.0]), np.array([5.6, 14.0]), n=6)[1:],
+            bz(np.array([5.6, 14.0]), np.array([6.4, 14.0]), np.array([7.4, 13.5]), np.array([7.4, 11.5]), n=6)[1:]
+        ])
     ],
     # y: Nét hất + thân u tròn đáy + nét khuyết dưới dạng oval thon dài chuẩn tiểu học (nối liền mạch 1 nét)
     'y': [np.vstack([
@@ -609,7 +620,7 @@ EXIT_TYPES = {
     'p': 'baseline_hook', 'r': 'baseline_hook', 's': 'baseline_hook',
     'b': 'top_flick', 'o': 'top_flick', 'v': 'top_flick', 'w': 'top_flick',
     'g': 'descender_loop', 'y': 'descender_loop',
-    'q': 'none', 'x': 'none', 'z': 'none', 'f': 'none'
+    'q': 'none', 'x': 'baseline_hook', 'z': 'none', 'f': 'none'
 }
 
 
@@ -854,9 +865,16 @@ def text_to_strokes(text, font="oly", style="hand_hocsinh", font_size_mm=7.0, li
                 if f_cfg["ligature"] and last_char is not None and len(word_base_strokes) > 0 and can_ligature(last_char, base_char):
                     p_exit = word_base_strokes[-1][-1]
                     p_entry = prim_strokes[0][0]
-                    # Cầu nối Bézier uốn mềm giữa điểm thoát nét trước và điểm đón nét sau
-                    c1 = np.array([p_exit[0] + 0.35 * scale, p_exit[1]])
-                    c2 = np.array([p_entry[0] - 0.35 * scale, p_entry[1]])
+                    # Cầu nối Bézier uốn mềm giữa điểm thoát nét trước và điểm đón nét sau theo hướng tiếp tuyến tự nhiên
+                    last_stroke = word_base_strokes[-1]
+                    next_stroke = prim_strokes[0]
+                    v_exit = (last_stroke[-1] - last_stroke[-2]) if len(last_stroke) >= 2 else np.array([0.5 * scale, 0.0])
+                    v_entry = (next_stroke[1] - next_stroke[0]) if len(next_stroke) >= 2 else np.array([0.5 * scale, 0.0])
+
+                    dist = float(np.linalg.norm(p_entry - p_exit))
+                    factor = min(0.6 * scale, dist * 0.35)
+                    c1 = p_exit + v_exit * (factor / (float(np.linalg.norm(v_exit)) + 1e-6))
+                    c2 = p_entry - v_entry * (factor / (float(np.linalg.norm(v_entry)) + 1e-6))
                     bridge = bz(p_exit, c1, c2, p_entry, n=6)
                     merged = np.vstack([word_base_strokes[-1], bridge[1:-1], prim_strokes[0]])
                     word_base_strokes[-1] = merged
@@ -916,7 +934,10 @@ def generate_handwriting_svg(text, font="oly", style="hand_hocsinh", target_pape
     (Catmull-Rom Bézier smoothing, Auto-deskew).
     Giữ thứ tự viết tự nhiên từ trái sang phải, từ trên xuống dưới.
     """
-    from path_optimizer import build_svg, compute_svg_metrics
+    try:
+        from path_optimizer import build_svg, compute_svg_metrics
+    except ImportError:
+        from backend.path_optimizer import build_svg, compute_svg_metrics
 
     strokes = text_to_strokes(
         text, font=font, style=style, font_size_mm=font_size_mm,
