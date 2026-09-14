@@ -1,6 +1,6 @@
 # OmniDraw — Current Task
 
-**Cập nhật lần cuối:** 13/09/2026
+**Cập nhật lần cuối:** 14/09/2026
 
 > Mỗi người tự cập nhật dòng của mình. Không cần dài, chỉ cần đủ để người khác (đặc biệt là lead) hiểu ngay tình hình.
 
@@ -9,11 +9,19 @@
 
 | Thành viên                 | Đang làm gì                            | Bị nghẽ ở đâu (nếu có)                  | Dự kiến xong |
 | -------------------------- |----------------------------------------| --------------------------------------- | ----------- |
-| TV1 — AI Core              | Tối ưu prompt template sinh ảnh line-art, duy trì fallback giữa Google Gemini API và OpenAI | Không | ✅ Xong     |
-| TV2 — AI Ứng dụng/CV       | Hoàn thiện Single-Stroke Bio-Mimetic Vietnamese Handwriting Engine (chuẩn glyph tiểu học QĐ 31, NFD accents, selective cursive ligature, bio-drift) | Không | ✅ Xong     |
-| TV3 — Phần cứng            | Đã tích hợp logic mock phần cứng & camera inspector, chuẩn bị test trên máy vẽ AxiDraw vật lý | Chờ setup máy vẽ thực tế | 🟡 Đang làm |
-| TV4 — Giao diện & Tích hợp | Tích hợp chế độ Viết Thư Tay (Handwriting Mode) vào UI CreateScreen/PreviewScreen, hỗ trợ nhập text & upload docx/txt, preview realtime, nối API Gateway `/api/ai/generate` | Không | ✅ Xong      |
+| TV1 — AI Core              | Tự động hóa kiểm thử 15 prompt chuẩn (`TV1_15_prompts.docx`), thống kê latency & tỷ lệ sinh vector sạch | Không | 🟡 Đang làm |
+| TV2 — AI Ứng dụng/CV       | Nghiên cứu thuật toán Context-Aware Vietnamese Handwriting Composition (CA-VHC) & Stroke Graph Optimizer; thiết kế bộ biến thể allographs nét đơn | Không | 🟡 Đang làm |
+| TV3 — Phần cứng            | Đã tích hợp logic mock phần cứng & camera inspector, chuẩn bị kết nối máy vẽ AxiDraw vật lý qua pyaxidraw | Chờ setup cáp & máy vẽ thực tế | 🟡 Đang làm |
+| TV4 — Giao diện & Tích hợp | Hoàn thành refactor gói `backend/handwriting/font_packs/`, cập nhật docs kỹ thuật, xây dựng khung Báo cáo NCKH 5 chương & form Turing Test | Không | 🟡 Đang làm |
 
+
+**Ngày 14/9**
+
+| Thành viên | Đang làm gì | Bị nghẽn ở đâu | Trạng thái |
+|---|---|---|---|
+| TV2 & TV4 | Tái cấu trúc cơ học toàn diện font pack ra khỏi `handwriting_engine.py` thành gói `backend/handwriting/font_packs/` (`__init__.py`, `geometry.py`, `legacy.py`, `omni_casual.py`, `letter_variants.py`). | Không | Đã xong |
+| TV2 | Định hình khung thuật toán Context-Aware Vietnamese Handwriting Composition (CA-VHC) & Stroke Graph Optimizer (Viterbi trên Trellis DAG). | Không | Đang làm |
+| TV4 | Cập nhật toàn bộ hệ thống tài liệu `docs/` (`01_tech-stack.md`, `02_roadmap.md`, `03_current-task.md`, `04_progress-log.md`) và tài liệu định hướng đề tài. | Không | Đã xong |
 
 **Ngày 13/9**
 

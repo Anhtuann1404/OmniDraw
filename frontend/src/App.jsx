@@ -17,6 +17,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
   const [optimisticStatus, setOptimisticStatus] = useState(null); // Thêm state tối ưu giao diện
+  const [createSessionKey, setCreateSessionKey] = useState(0);
 
   const { statusData } = usePrintStatusPolling(step === "printing" ? aiResult?.requestId : null);
 
@@ -50,16 +51,21 @@ export default function App() {
     }
   }, [step, statusData]);
 
-  async function handleCreateSubmit({ inputType, style, imageBase64, prompt, fileName, paperSize }) {
+  async function handleCreateSubmit({ mode = "art", inputType, style, font, imageBase64, prompt, fileName, paperSize }) {
     setLoading(true);
     setErrorMsg(null);
     try {
-      const result = await generateArt({ inputType, style, imageBase64, prompt, paperSize });
-      const title = inputType === "text" ? prompt : (fileName || "Bản vẽ upload");
-      setAiResult({ ...result, style, inputType, title, paperSize }); // lưu thêm paperSize để ConfirmScreen dùng
+      const result = await generateArt({ inputType, style, font, imageBase64, prompt, paperSize, mode });
+      let title = "Bản vẽ OmniDraw";
+      if (mode === "letter") {
+        title = fileName || (prompt ? (prompt.length > 32 ? prompt.slice(0, 32) + "..." : prompt) : "Thư tay");
+      } else {
+        title = inputType === "text" ? prompt : (fileName || "Bản vẽ upload");
+      }
+      setAiResult({ ...result, mode, style, font, inputType, title, paperSize }); // lưu thêm paperSize để ConfirmScreen dùng
       setStep("preview");
     } catch (err) {
-      setErrorMsg(err.message || "Có lỗi khi tạo tranh, thử lại nhé.");
+      setErrorMsg(err.message || "Có lỗi khi tạo tranh hoặc thư tay, thử lại nhé.");
     } finally {
       setLoading(false);
     }
@@ -138,11 +144,13 @@ export default function App() {
     setOptimisticStatus(null); // Xóa trạng thái ảo khi hủy
   }
 
-  function handleCreateNewFromDone() {
+  function handleCreateNew() {
+    setCreateSessionKey((key) => key + 1);
     setAiResult(null);
     setDoneInfo(null);
-    setStep("create");
+    setErrorMsg(null);
     setOptimisticStatus(null);
+    setStep("create");
   }
 
   useEffect(() => {
@@ -208,7 +216,7 @@ export default function App() {
       <Sidebar
         items={historyItems || []}
         activeItemId={aiResult?.requestId}
-        onCreateNew={handleCreateNewFromDone}
+        onCreateNew={handleCreateNew}
         onOpenItem={handleOpenHistoryItem}
         onDeleteItem={handleDeleteHistory}
       />
@@ -228,7 +236,16 @@ export default function App() {
           </div>
         )}
 
-        {step === "create" && <CreateScreen onSubmit={handleCreateSubmit} loading={loading} />}
+        <div
+          className={step === "create" ? "contents" : "hidden"}
+          aria-hidden={step !== "create"}
+        >
+          <CreateScreen
+            key={createSessionKey}
+            onSubmit={handleCreateSubmit}
+            loading={loading}
+          />
+        </div>
 
         {step === "preview" && aiResult && (
           <PreviewScreen
@@ -303,7 +320,7 @@ export default function App() {
                 ? aiResult.strokeCount
                 : (aiResult?.svgMetrics ? aiResult.svgMetrics.pen_lift_count + 1 : "...")
             }
-            onCreateNew={handleCreateNewFromDone}
+            onCreateNew={handleCreateNew}
             onViewHistory={() => {}} // history giờ luôn ở sidebar
           />
         )}

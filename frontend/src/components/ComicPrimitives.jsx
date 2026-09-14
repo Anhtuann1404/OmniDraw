@@ -128,7 +128,7 @@ export function HalftonePattern({ id, color = "#1A1A1A", position = "top-right",
 // (chữ dài/đậm ở các ô lựa chọn, v.v.) không bao giờ làm khung tự phình/co lại.
 export function ScreenShell({ children, patternId }) {
   return (
-    <div className="bg-[#EDEBDF] rounded-2xl border-[3.5px] border-[#1A1A1A] p-5 sm:p-6 relative overflow-hidden w-[560px] shrink-0">
+    <div className="bg-[#EDEBDF] rounded-2xl border-[3.5px] border-[#1A1A1A] p-5 sm:p-6 relative w-[560px] shrink-0">
       <HalftonePattern id={patternId} position="top-right" />
       <HardShadowBox className="relative z-10">
         <div className="p-5 sm:p-6">{children}</div>

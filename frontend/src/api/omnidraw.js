@@ -8,7 +8,7 @@ import { MOCK_MODE } from "./config";
 /**
  * Mục 2 của API Spec — Giao diện → AI (sinh ảnh / style transfer)
  */
-export async function generateArt({ inputType, imageBase64, prompt, style, paperSize = "a4", experiment }) {
+export async function generateArt({ inputType, imageBase64, prompt, style, paperSize = "a4", font = "oly", experiment }) {
   const requestId = generateRequestId();
 
   const PAPER_SIZES_MM = {
@@ -30,10 +30,10 @@ export async function generateArt({ inputType, imageBase64, prompt, style, paper
   const payload = {
     request_id: requestId,
     input_type: inputType,
-    image_base64: inputType === "image" ? imageBase64 : null,
-    prompt: inputType === "text" ? prompt : null,
+    image_base64: imageBase64 || null,
+    prompt: prompt || null,
     style,
-    options: { target_paper_size_mm },
+    options: { target_paper_size_mm, auto_deskew: true, font },
     experiment: experiment
       ? { dataset_item_id: experiment.datasetItemId ?? null, method_tag: experiment.methodTag ?? null }
       : { dataset_item_id: null, method_tag: null },
