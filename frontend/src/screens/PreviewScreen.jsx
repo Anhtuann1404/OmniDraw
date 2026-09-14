@@ -24,15 +24,16 @@ export default function PreviewScreen({
   onRetry,
   onConfirm,
 }) {
-  // Khi tải ảnh lên: mặc định sang tab SVG luôn
-  const [activeTab, setActiveTab] = useState(inputType === "image" ? "svg" : "image");
+  const isHandwriting = inputType === "handwriting";
+  const defaultTab = (inputType === "image" || isHandwriting) ? "svg" : "image";
+  const [activeTab, setActiveTab] = useState(defaultTab);
   const [svgText, setSvgText] = useState(null);
   const [svgLoading, setSvgLoading] = useState(false);
   const [svgError, setSvgError] = useState(null);
 
   // Reset tab và xóa SVG cũ khi bấm sang tranh khác trong lịch sử
   useEffect(() => {
-    setActiveTab(inputType === "image" ? "svg" : "image");
+    setActiveTab((inputType === "image" || inputType === "handwriting") ? "svg" : "image");
     setSvgText(null);
     setSvgError(null);
   }, [requestId, inputType]);
@@ -51,9 +52,27 @@ export default function PreviewScreen({
       .finally(() => setSvgLoading(false));
   }, [activeTab, requestId, svgText]);
 
+  // Map tên hiển thị phong cách
+  const STYLE_NAMES = {
+    sketch: "Ký hoạ",
+    line_art: "Line art",
+    stipple: "Chấm bi",
+    hatching: "Hatching",
+    hand_hocsinh: "Chữ Học Sinh",
+    hand_nguoilon: "Chữ Thảo Nghiêng",
+    hand_thuphap: "Chữ Thư Pháp",
+    hand_chukinhanh: "Chữ Ký Tên",
+  };
+  const displayStyle = STYLE_NAMES[style] || style;
+
   // Tiêu đề phụ thay đổi theo luồng
-  const subtitle = inputType === "image" ? "Xem trước nét vẽ SVG" : "Xem trước kết quả AI";
-  const displayModel = inputType === "image" ? "OpenCV Vectorizer" : (modelUsed || "dall-e-3");
+  const subtitle = isHandwriting
+    ? "Xem trước nét thư tay SVG"
+    : (inputType === "image" ? "Xem trước nét vẽ SVG" : "Xem trước kết quả AI");
+
+  const displayModel = isHandwriting
+    ? "Bio-mimetic Handwriting"
+    : (inputType === "image" ? "OpenCV Vectorizer" : (modelUsed || "dall-e-3"));
 
   return (
     <ScreenShell patternId="pattern-preview">
@@ -77,9 +96,15 @@ export default function PreviewScreen({
       )}
 
       {/* ── Canvas ── */}
-      <div className="relative mb-5">
+      <div className="relative mb-4">
         <HardShadowBox shadowOffset={5}>
-          <div className="h-80 flex items-center justify-center bg-[#FEFDF9] rounded-xl overflow-hidden">
+          <div
+            className={`h-[420px] flex items-center justify-center rounded-xl overflow-hidden p-2 relative ${
+              isHandwriting
+                ? "bg-[#FEFDF9] bg-[linear-gradient(to_bottom,transparent_27px,#E8E4D8_28px)] [background-size:100%_28px]"
+                : "bg-[#FEFDF9]"
+            }`}
+          >
 
             {/* Tab Ảnh AI — chỉ render khi inputType==="text" và tab đang ở "image" */}
             {activeTab === "image" && inputType === "text" && (
@@ -87,7 +112,7 @@ export default function PreviewScreen({
                 <img
                   src={resultImageUrl}
                   alt="Kết quả AI"
-                  className="max-h-80 max-w-full object-contain rounded-lg"
+                  className="max-h-[400px] max-w-full object-contain rounded-lg"
                 />
               ) : (
                 <div className="text-center">
@@ -113,7 +138,7 @@ export default function PreviewScreen({
                 </div>
               ) : svgText ? (
                 <>
-                  <style>{`#svg-preview-tab svg { width: 100% !important; height: 100% !important; max-height: 300px; }`}</style>
+                  <style>{`#svg-preview-tab svg { width: 100% !important; height: 100% !important; max-height: 400px; }`}</style>
                   <div
                     id="svg-preview-tab"
                     className="w-full h-full flex items-center justify-center p-2"
@@ -139,7 +164,7 @@ export default function PreviewScreen({
 
       {/* ── Thống kê ── */}
       <div className="flex gap-2.5 mb-4">
-        <StatBox label="STYLE" value={style} />
+        <StatBox label="STYLE" value={displayStyle} />
         <StatBox label="MODEL" value={displayModel} />
         {inputType === "text" && (
           <StatBox label="THỜI GIAN" value={`${processingTimeSec}s`} />
@@ -150,7 +175,12 @@ export default function PreviewScreen({
       <div className="flex items-center justify-between border-t-[3px] border-[#1A1A1A] pt-4">
         <ComicButton variant="secondary" onClick={onRetry}>
           <span className="flex items-center gap-1.5">
-            <RefreshCw size={15} /> {inputType === "image" ? "TẢI ẢNH KHÁC" : "THỬ LẠI"}
+            <RefreshCw size={15} />{" "}
+            {isHandwriting
+              ? "CHỈNH SỬA"
+              : inputType === "image"
+              ? "TẢI ẢNH KHÁC"
+              : "THỬ LẠI"}
           </span>
         </ComicButton>
         <ComicButton variant="primary" onClick={onConfirm}>

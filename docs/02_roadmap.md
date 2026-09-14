@@ -1,6 +1,6 @@
 # OmniDraw — Roadmap
 
-**Cập nhật lần cuối:** *(điền ngày mỗi khi sửa)*
+**Cập nhật lần cuối:** 13/09/2026
 **Deadline cuối cùng (nộp/bảo vệ):** *(điền ngày)*
 
 > Đánh dấu trạng thái mỗi mục nhỏ: `⬜ Chưa bắt đầu` / `🟡 Đang làm` / `✅ Xong`
@@ -44,11 +44,11 @@
 
 ### 1.4 Khung UI/UX (mock data)
 
-**Trạng thái:** ⬜ | **Phụ trách:** TV4 | **Hạn:** *(điền)*
+**Trạng thái:** ✅ | **Phụ trách:** TV4 | **Hạn:** *(điền)*
 
 - [x] Thiết kế luồng màn hình chính (upload/nhập mô tả → preview → gửi vẽ → theo dõi tiến độ)
 - [x] Dựng giao diện chạy được với dữ liệu giả
-- [ ] Dựng khung tích hợp rỗng (chỗ trống để sau này cắm API thật vào)
+- [x] Dựng khung tích hợp rỗng (chỗ trống để sau này cắm API thật vào)
 
 ---
 
@@ -85,13 +85,21 @@
 
 
 
-### 2.4 AI Ứng dụng — Tối ưu đường vẽ
+### 2.4 AI Ứng dụng — Tối ưu đường vẽ & Tạo chữ viết tay thích ứng ngữ cảnh (CA-VHC)
 
-**Trạng thái:** ✅ | **Phụ trách:** TV2 | **Hạn:** *(điền)*
+**Trạng thái:** 🟡 Đang hoàn thiện nâng cao | **Phụ trách:** TV2 | **Hạn:** *(điền)*
 
 - [x] Thuật toán chuyển ảnh → vector line-art
-- [x] Thuật toán tối ưu thứ tự nét vẽ (giảm thời gian/quãng đường nhấc bút)
+- [x] Thuật toán tối ưu thứ tự nét vẽ (giảm thời gian/quãng đường nhấc bút qua cKDTree + Or-opt + Kinematic Cost)
 - [x] Xuất ra đúng chuẩn SVG ở mục 4 trong API Spec
+- [x] Module viết thư tay nét đơn (Single-stroke Centerline Engine) mô phỏng bàn tay người, chuẩn tiếng Việt (Unicode NFD, 4 font phong cách: Học sinh, Thảo nghiêng, Thư pháp, Ký tên)
+- [x] Tái cấu trúc cơ học, tách riêng gói `backend/handwriting/font_packs/` (`__init__.py`, `geometry.py`, `legacy.py`, `omni_casual.py`, `letter_variants.py`)
+- [x] Hoàn thiện 81 ký tự nét đơn Omni Casual v1 (26 hoa, 26 thường, 10 số, 19 dấu câu)
+- [ ] Xây dựng giải thuật **Stroke Graph Optimizer** (Quy hoạch động Viterbi trên Trellis DAG mở rộng với chi phí ngữ cảnh)
+- [ ] Bổ sung kho biến thể Allographs nét đơn: Chữ hoa đầu đoạn trang trí (Illuminated Drop Cap), nét kéo dài dưới từ cuối câu (Terminal Swash), cụm từ nối liền khối (Logograms: "Thân gửi", "Cảm ơn", "Kính gửi")
+- [ ] Tích hợp thuật toán né tránh va chạm dấu phụ đa tầng tiếng Việt (diacritic obstacle-avoidance)
+- [ ] Hỗ trợ các thành phần trang trí nét đơn: Tiêu đề vòm cong Bézier, đường phân đoạn centerline (trái tim, dây leo)
+
 
 
 
@@ -115,20 +123,20 @@
 
 ### 2.7 Giao diện — Hoàn chỉnh với API thật (song song)
 
-**Trạng thái:** ⬜ | **Phụ trách:** TV4 | **Hạn:** *(điền)*
+**Trạng thái:** ✅ | **Phụ trách:** TV4 | **Hạn:** *(điền)*
 
-- [ ] Hoàn thiện toàn bộ giao diện, vẫn dùng mock data
-- [ ] Viết sẵn các hàm gọi API theo đúng chuẩn, chỉ chờ module thật để nối vào
+- [x] Hoàn thiện toàn bộ giao diện (CreateScreen, PreviewScreen, MonitorScreen, HistoryScreen, SettingsScreen)
+- [x] Viết sẵn các hàm gọi API theo đúng chuẩn, tích hợp cả chế độ sinh tranh line-art và viết thư tay (Handwriting Mode)
 
 
 
 ### 2.8 Checklist module (mỗi người tự làm cho phần mình)
 
-**Trạng thái:** ⬜ | **Phụ trách:** Cả 4 người
+**Trạng thái:** 🟡 | **Phụ trách:** Cả 4 người
 
-- [ ] Đã tự test module với ít nhất 1 input giả đúng chuẩn
-- [ ] Đã test với 1 input lỗi, xác nhận trả đúng mã lỗi chuẩn
-- [ ] Đã log đầy đủ `request_id` theo quy định
+- [x] Đã tự test module với ít nhất 1 input giả đúng chuẩn
+- [x] Đã test với 1 input lỗi, xác nhận trả đúng mã lỗi chuẩn
+- [x] Đã log đầy đủ `request_id` theo quy định
 
 ---
 
@@ -153,6 +161,7 @@
 
 - [x] Nối module CV/tối ưu vào luồng thật sau bước AI sinh ảnh
 - [x] Kiểm tra SVG xuất ra đúng khổ giấy, đúng chuẩn
+- [x] Nối module sinh chữ viết tay tiếng Việt nét đơn vào API Gateway `/api/ai/generate` và tích hợp hiển thị preview SVG thời gian thực
 
 
 
@@ -180,12 +189,14 @@
 
 **Hạn giai đoạn:** *(điền)*
 
-### 4.1 Tối ưu chất lượng
+### 4.1 Tối ưu chất lượng & Benchmark Thực nghiệm Định lượng
 
 **Trạng thái:** ⬜ | **Phụ trách:** Cả nhóm | **Hạn:** *(điền)*
 
-- [ ] Cải thiện chất lượng đầu ra AI dựa trên kết quả test thật
-- [ ] Tối ưu tốc độ vẽ/thời gian xử lý nếu còn chậm
+- [ ] Chạy bộ thực nghiệm định lượng (Quantitative Benchmarks) so sánh 3 phương pháp (Naive vs Greedy NN vs OmniDraw cKDTree+Or-opt+Kinematic Cost): đo chiều dài nhấc bút ($mm$), số lần nhấc bút, thời gian tính toán ($ms$), và độ mượt góc đổi hướng.
+- [ ] Tổ chức khảo sát mù kiểm định Turing (Double-blind Handwriting Turing Test) với 30-50 tình nguyện viên để đánh giá mức độ chân thực so với chữ người viết thật.
+- [ ] Đo lường độ chính xác nắn thẳng giấy tự động của module thị giác máy tính ($MAE$ góc nghiêng $\Delta\theta$).
+- [ ] Cải thiện chất lượng đầu ra AI dựa trên kết quả test thật trên máy vẽ AxiDraw vật lý.
 
 
 
@@ -193,17 +204,19 @@
 
 **Trạng thái:** ⬜ | **Phụ trách:** TV4 (điều phối) | **Hạn:** *(điền)*
 
-- [ ] Quay video minh hoạ toàn bộ quy trình
-- [ ] Chuẩn bị kịch bản demo trực tiếp (phòng khi cần demo live)
+- [ ] Quay video minh hoạ toàn bộ quy trình từ nhập prompt/văn bản đến lúc máy vẽ hoàn tất bức thư nghệ thuật.
+- [ ] Chuẩn bị kịch bản demo trực tiếp (chữ hoa đầu đoạn, nét lượn chân chữ cuối câu, hoa văn centerline).
 
 
 
-### 4.3 Báo cáo khoa học
+### 4.3 Báo cáo khoa học (Chuẩn mực Báo cáo NCKH / Bài báo)
 
 **Trạng thái:** ⬜ | **Phụ trách:** Mỗi người viết phần mình, TV4 tổng hợp | **Hạn:** *(điền)*
 
-- [ ] Mỗi thành viên viết phần báo cáo cho mảng mình phụ trách
-- [ ] TV4 tổng hợp, biên tập thống nhất văn phong
+- [ ] Xây dựng Báo cáo NCKH chuẩn cấu trúc 5 chương (Chương 1: Mở đầu; Chương 2: Tổng quan & Cơ sở lý thuyết; Chương 3: Phương pháp & Thiết kế Thuật toán CA-VHC; Chương 4: Thực nghiệm & Đánh giá kết quả; Chương 5: Kết luận & Hướng phát triển).
+- [ ] Bổ sung mô hình hóa toán học hình thức: Phương trình Bellman của Viterbi DP, biểu thức hàm phạt quán tính Kinematic Cost, phân tích độ phức tạp thuật toán Big-O.
+- [ ] Thiết kế đồ thị Ablation Study (nghiên cứu độ nhạy tham số $\lambda_{\text{turn}}$ và bộ trọng số DAG).
+- [ ] TV4 tổng hợp, biên tập thống nhất văn phong học thuật, kiểm tra đạo văn và trích dẫn chuẩn IEEE/APA.
 
 
 

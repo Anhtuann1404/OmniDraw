@@ -17,6 +17,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
   const [optimisticStatus, setOptimisticStatus] = useState(null); // Thêm state tối ưu giao diện
+  const [createSessionKey, setCreateSessionKey] = useState(0);
 
   const { statusData } = usePrintStatusPolling(step === "printing" ? aiResult?.requestId : null);
 
@@ -50,16 +51,21 @@ export default function App() {
     }
   }, [step, statusData]);
 
-  async function handleCreateSubmit({ inputType, style, imageBase64, prompt, fileName, paperSize }) {
+  async function handleCreateSubmit({ mode = "art", inputType, style, font, imageBase64, prompt, fileName, paperSize }) {
     setLoading(true);
     setErrorMsg(null);
     try {
-      const result = await generateArt({ inputType, style, imageBase64, prompt, paperSize });
-      const title = inputType === "text" ? prompt : (fileName || "Bản vẽ upload");
-      setAiResult({ ...result, style, inputType, title, paperSize }); // lưu thêm paperSize để ConfirmScreen dùng
+      const result = await generateArt({ inputType, style, font, imageBase64, prompt, paperSize, mode });
+      let title = "Bản vẽ OmniDraw";
+      if (mode === "letter") {
+        title = fileName || (prompt ? (prompt.length > 32 ? prompt.slice(0, 32) + "..." : prompt) : "Thư tay");
+      } else {
+        title = inputType === "text" ? prompt : (fileName || "Bản vẽ upload");
+      }
+      setAiResult({ ...result, mode, style, font, inputType, title, paperSize }); // lưu thêm paperSize để ConfirmScreen dùng
       setStep("preview");
     } catch (err) {
-      setErrorMsg(err.message || "Có lỗi khi tạo tranh, thử lại nhé.");
+      setErrorMsg(err.message || "Có lỗi khi tạo tranh hoặc thư tay, thử lại nhé.");
     } finally {
       setLoading(false);
     }
@@ -138,11 +144,13 @@ export default function App() {
     setOptimisticStatus(null); // Xóa trạng thái ảo khi hủy
   }
 
-  function handleCreateNewFromDone() {
+  function handleCreateNew() {
+    setCreateSessionKey((key) => key + 1);
     setAiResult(null);
     setDoneInfo(null);
-    setStep("create");
+    setErrorMsg(null);
     setOptimisticStatus(null);
+    setStep("create");
   }
 
   useEffect(() => {
@@ -154,6 +162,9 @@ export default function App() {
 
   // ── XỬ LÝ CLICK LỊCH SỬ ──
   function handleOpenHistoryItem(item) {
+    const strokeCount = item.strokeCount || (item.svgMetrics?.pen_lift_count != null ? item.svgMetrics.pen_lift_count + 1 : undefined);
+    const estimatedMinutes = item.estimatedMinutes || item.minutes || (item.svgMetrics?.total_path_length_mm != null ? Math.ceil(((item.svgMetrics.total_path_length_mm || 0) + (item.svgMetrics.pen_lift_distance_mm || 0)) / 40 / 60) : undefined);
+
     // Phục hồi lại dữ liệu tranh từ DB vào state aiResult
     setAiResult({
       requestId: item.id,
@@ -162,11 +173,19 @@ export default function App() {
       inputType: item.inputType || "unknown", // fallback nếu cũ
       resultImageBase64: item.thumbnailUrl,    // API thumbnail trả về ảnh PNG gốc
       svgReady: true,                          // Ảnh cũ chắc chắn đã có SVG
-      meta: { modelUsed: "History" }
+      paperSize: item.paperSize || "a4",
+      strokeCount: strokeCount,
+      estimatedMinutes: estimatedMinutes,
+      svgMetrics: item.svgMetrics || (strokeCount ? {
+        pen_lift_count: strokeCount - 1,
+        total_path_length_mm: (estimatedMinutes || 5) * 60 * 40 * 0.9,
+        pen_lift_distance_mm: (estimatedMinutes || 5) * 60 * 40 * 0.1,
+      } : undefined),
+      meta: { modelUsed: item.modelUsed || (item.inputType === "image" ? "OpenCV Vectorizer" : "dall-e-3") }
     });
     // Phục hồi số phút vẽ (nếu có)
-    if (item.minutes) {
-      setDoneInfo({ actualDrawTimeSec: item.minutes * 60 });
+    if (item.actualDrawTimeSec || item.minutes || estimatedMinutes) {
+      setDoneInfo({ actualDrawTimeSec: item.actualDrawTimeSec || ((item.minutes || estimatedMinutes) * 60) });
     }
     // Nhảy về màn Preview để có thể bấm vẽ lại
     setStep("preview");
@@ -197,13 +216,13 @@ export default function App() {
       <Sidebar
         items={historyItems || []}
         activeItemId={aiResult?.requestId}
-        onCreateNew={handleCreateNewFromDone}
+        onCreateNew={handleCreateNew}
         onOpenItem={handleOpenHistoryItem}
         onDeleteItem={handleDeleteHistory}
       />
 
-      {/* ── Vùng chính — card căn giữa ── */}
-      <main className="flex-1 flex flex-col items-center justify-center p-6 gap-3 overflow-y-auto">
+      {/* ── Vùng chính — card căn giữa nâng cao về phía trên ── */}
+      <main className="flex-1 flex flex-col items-center justify-center pt-2 pb-8 px-6 gap-2.5 overflow-y-auto">
 
         {MOCK_MODE && (
           <div className="text-xs font-bold text-[#6B6B66] bg-white border-2 border-[#1A1A1A] rounded-full px-3 py-1">
@@ -217,7 +236,16 @@ export default function App() {
           </div>
         )}
 
-        {step === "create" && <CreateScreen onSubmit={handleCreateSubmit} loading={loading} />}
+        <div
+          className={step === "create" ? "contents" : "hidden"}
+          aria-hidden={step !== "create"}
+        >
+          <CreateScreen
+            key={createSessionKey}
+            onSubmit={handleCreateSubmit}
+            loading={loading}
+          />
+        </div>
 
         {step === "preview" && aiResult && (
           <PreviewScreen
@@ -236,11 +264,19 @@ export default function App() {
         {step === "confirm" && (
           <ConfirmScreen
             requestId={aiResult?.requestId}
-            strokeCount={aiResult?.svgMetrics ? aiResult.svgMetrics.pen_lift_count + 1 : "..."}
+            strokeCount={
+              aiResult?.strokeCount != null
+                ? aiResult.strokeCount
+                : (aiResult?.svgMetrics?.pen_lift_count != null
+                    ? aiResult.svgMetrics.pen_lift_count + 1
+                    : "...")
+            }
             estimatedMinutes={
-              aiResult?.svgMetrics
-                ? Math.ceil((aiResult.svgMetrics.total_path_length_mm + aiResult.svgMetrics.pen_lift_distance_mm) / 40 / 60)
-                : "..."
+              aiResult?.estimatedMinutes != null
+                ? aiResult.estimatedMinutes
+                : (aiResult?.svgMetrics?.total_path_length_mm != null
+                    ? Math.ceil(((aiResult.svgMetrics.total_path_length_mm || 0) + (aiResult.svgMetrics.pen_lift_distance_mm || 0)) / 40 / 60)
+                    : (aiResult?.minutes != null ? aiResult.minutes : "..."))
             }
             paperSize={aiResult?.paperSize || "a4"}
             onBack={() => setStep("preview")}
@@ -253,11 +289,17 @@ export default function App() {
             requestId={aiResult?.requestId}
             progressPercent={statusData.progressPercent}
             strokesDone={
-              aiResult?.svgMetrics
-                ? Math.floor(((aiResult.svgMetrics.pen_lift_count + 1) * statusData.progressPercent) / 100)
-                : "..."
+              aiResult?.strokeCount != null
+                ? Math.floor((aiResult.strokeCount * statusData.progressPercent) / 100)
+                : (aiResult?.svgMetrics
+                    ? Math.floor(((aiResult.svgMetrics.pen_lift_count + 1) * statusData.progressPercent) / 100)
+                    : "...")
             }
-            strokesTotal={aiResult?.svgMetrics ? aiResult.svgMetrics.pen_lift_count + 1 : "..."}
+            strokesTotal={
+              aiResult?.strokeCount != null
+                ? aiResult.strokeCount
+                : (aiResult?.svgMetrics ? aiResult.svgMetrics.pen_lift_count + 1 : "...")
+            }
             etaMinutes={Math.ceil((statusData.etaSec || 0) / 60)}
             machineStatus={statusData.status === "error" ? "error" : "ok"}
             isPaused={(optimisticStatus || statusData.status) === "paused"}
@@ -273,8 +315,12 @@ export default function App() {
             requestId={aiResult?.requestId}
             resultImageUrl={aiResult?.resultImageBase64}
             actualDrawTimeSec={doneInfo?.actualDrawTimeSec}
-            strokesTotal={aiResult?.svgMetrics ? aiResult.svgMetrics.pen_lift_count + 1 : "..."}
-            onCreateNew={handleCreateNewFromDone}
+            strokesTotal={
+              aiResult?.strokeCount != null
+                ? aiResult.strokeCount
+                : (aiResult?.svgMetrics ? aiResult.svgMetrics.pen_lift_count + 1 : "...")
+            }
+            onCreateNew={handleCreateNew}
             onViewHistory={() => {}} // history giờ luôn ở sidebar
           />
         )}

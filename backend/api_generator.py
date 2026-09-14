@@ -41,6 +41,24 @@ DOCX_PATH = BASE_DIR / "TV1_15_prompts.docx"
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 LOGS_DIR.mkdir(parents=True, exist_ok=True)
 
+def _load_env():
+    env_file = BASE_DIR / ".env"
+    if env_file.is_file():
+        try:
+            from dotenv import load_dotenv
+            load_dotenv(str(env_file), encoding="utf-8")
+        except ImportError:
+            try:
+                with open(env_file, "r", encoding="utf-8") as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and not line.startswith("#") and "=" in line:
+                            k, v = line.split("=", 1)
+                            os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
+            except Exception:
+                pass
+
+_load_env()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "sk-demo-key")
 OPENAI_MODEL = "dall-e-3"
 IMAGE_SIZE = "1024x1024"

@@ -1,9 +1,9 @@
 import React from "react";
-import { Plus, Image as ImageIcon, User, X } from "lucide-react";
+import { Plus, Image as ImageIcon, PenLine, User, X } from "lucide-react";
 import { Logo, ComicButton } from "./ComicPrimitives";
 
 /**
- * Sidebar — danh sách lịch sử / thư viện bản vẽ
+ * Sidebar — danh sách lịch sử / thư viện bản vẽ & thư tay
  * Cấu trúc kiểu ChatGPT/Gemini nhưng giữ 100% theme comic OmniDraw
  *
  * Props:
@@ -21,14 +21,14 @@ export default function Sidebar({ items = [], activeItemId, onCreateNew, onOpenI
         <Logo size="text-2xl" />
       </div>
 
-      {/* ── Nút Tạo tranh mới ── */}
+      {/* ── Nút Tạo mới ── */}
       <div className="px-3 pb-3">
         <button
           onClick={onCreateNew}
-          className="w-full flex items-center gap-2 border-[2.5px] border-[#1A1A1A] rounded-lg px-3 py-2.5 bg-white text-[#1A1A1A] text-sm font-bold hover:bg-[#F5F1E0] transition-colors"
+          className="w-full flex items-center gap-2 border-[2.5px] border-[#1A1A1A] rounded-lg px-3 py-2.5 bg-white text-[#1A1A1A] text-sm font-bold hover:bg-[#F5F1E0] transition-colors shadow-[2px_2px_0px_#1A1A1A] active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
         >
           <Plus size={16} />
-          Tạo tranh mới
+          Tạo bản mới
         </button>
       </div>
 
@@ -69,6 +69,10 @@ export default function Sidebar({ items = [], activeItemId, onCreateNew, onOpenI
                       alt={item.title}
                       className="w-8 h-8 rounded object-cover border border-[#1A1A1A] shrink-0"
                     />
+                  ) : item.mode === "letter" || item.inputType === "handwriting" || item.style?.startsWith("hand_") ? (
+                    <div className="w-8 h-8 rounded bg-[#FBEAF0] border border-[#1A1A1A] flex items-center justify-center shrink-0">
+                      <PenLine size={14} className="text-[#C0392B]" />
+                    </div>
                   ) : (
                     <div className="w-8 h-8 rounded bg-[#EDEBDF] border border-[#1A1A1A] flex items-center justify-center shrink-0">
                       <ImageIcon size={14} className="text-[#C0392B]" />

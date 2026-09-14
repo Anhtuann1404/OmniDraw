@@ -163,21 +163,27 @@ def extract_strokes(img, canny_low=30, canny_high=90, min_stroke_len=8,
             
             in_seg = False
             seg_start = None
+            last_valid = None
             for x, y in zip(xs, ys):
+                valid = (0.0 <= x <= (w - 1) and 0.0 <= y <= (h - 1))
                 xi, yi = int(round(x)), int(round(y))
-                valid = (0 <= xi < w and 0 <= yi < h)
-                is_shadow = (valid and gray[yi, xi] < max_thresh)
+                is_shadow = (valid and 0 <= xi < w and 0 <= yi < h and gray[yi, xi] < max_thresh)
                 
-                if is_shadow and not in_seg:
-                    in_seg = True
-                    seg_start = (x, y)
-                elif not is_shadow and in_seg:
+                if is_shadow:
+                    if not in_seg:
+                        in_seg = True
+                        seg_start = (x, y)
+                    last_valid = (x, y)
+                elif in_seg:
                     in_seg = False
-                    seg_end = (x, y)
-                    if math.hypot(seg_end[0] - seg_start[0], seg_end[1] - seg_start[1]) >= min_len:
+                    seg_end = last_valid
+                    if seg_end is not None and math.hypot(seg_end[0] - seg_start[0], seg_end[1] - seg_start[1]) >= min_len:
                         strokes_res.append(np.array([seg_start, seg_end], dtype=np.float64))
-            if in_seg:
-                seg_end = (xs[-1], ys[-1])
+                    seg_start = None
+                    last_valid = None
+
+            if in_seg and last_valid is not None and seg_start is not None:
+                seg_end = last_valid
                 if math.hypot(seg_end[0] - seg_start[0], seg_end[1] - seg_start[1]) >= min_len:
                     strokes_res.append(np.array([seg_start, seg_end], dtype=np.float64))
         return strokes_res
@@ -394,22 +400,27 @@ def extract_strokes_hatching(img, base_spacing=6, cross_spacing=4,
 
             in_seg = False
             seg_start = None
+            last_valid = None
             for x, y in zip(xs, ys):
+                valid = (0.0 <= x <= (w - 1) and 0.0 <= y <= (h - 1))
                 xi, yi = int(round(x)), int(round(y))
-                valid = 0 <= xi < w and 0 <= yi < h
-                dark_enough = valid and gray[yi, xi] < threshold
+                dark_enough = (valid and 0 <= xi < w and 0 <= yi < h and gray[yi, xi] < threshold)
 
-                if dark_enough and not in_seg:
-                    in_seg = True
-                    seg_start = (x, y)
-                elif not dark_enough and in_seg:
+                if dark_enough:
+                    if not in_seg:
+                        in_seg = True
+                        seg_start = (x, y)
+                    last_valid = (x, y)
+                elif in_seg:
                     in_seg = False
-                    seg_end = (x, y)
-                    if math.hypot(seg_end[0] - seg_start[0], seg_end[1] - seg_start[1]) >= min_segment_len:
+                    seg_end = last_valid
+                    if seg_end is not None and math.hypot(seg_end[0] - seg_start[0], seg_end[1] - seg_start[1]) >= min_segment_len:
                         strokes.append(np.array([seg_start, seg_end], dtype=np.float64))
+                    seg_start = None
+                    last_valid = None
 
-            if in_seg:
-                seg_end = (xs[-1], ys[-1])
+            if in_seg and last_valid is not None and seg_start is not None:
+                seg_end = last_valid
                 if math.hypot(seg_end[0] - seg_start[0], seg_end[1] - seg_start[1]) >= min_segment_len:
                     strokes.append(np.array([seg_start, seg_end], dtype=np.float64))
 
@@ -504,44 +515,122 @@ def dist(p, q):
     return math.hypot(p[0] - q[0], p[1] - q[1])
 
 
-def nearest_neighbor_order(strokes):
-    """Sap xep ban dau bang Nearest Neighbor, dung KD-tree de scale tot voi hang nghin stroke."""
+def kinematic_cost(p1, v1, p2, lambda_turn=1.5):
+    """
+    Chiêu 3: Khoang cach Euclid + phat goc quay quan tinh dong hoc: dist + lambda * (1 - cos(theta)).
+    # ponytail: tinh truc tiep bang tich vo huong math.hypot, khong dung them lib ngoai.
+    """
+    dx, dy = p2[0] - p1[0], p2[1] - p1[1]
+    d = math.hypot(dx, dy)
+    if d < 1e-6 or lambda_turn <= 0 or v1 is None:
+        return d
+    v_norm = math.hypot(v1[0], v1[1])
+    if v_norm < 1e-6:
+        return d
+    cos_t = max(-1.0, min(1.0, (v1[0] * dx + v1[1] * dy) / (v_norm * d)))
+    return d + lambda_turn * (1.0 - cos_t)
+
+
+def nearest_neighbor_order(strokes, lambda_turn=1.5):
+    """
+    Sap xep ban dau bang Nearest Neighbor ket hop phat quan tinh dong hoc (Chiêu 1 & Chiêu 3).
+    # ponytail: build cKDTree dung 1 lan tren 2N endpoints; loc top-32 theo kinematic_cost.
+    """
     n = len(strokes)
     starts = np.array([s[0] for s in strokes])
     ends = np.array([s[-1] for s in strokes])
+    all_pts = np.vstack([starts, ends])
+    tree = cKDTree(all_pts)
+
+    fwd_exit = np.array([s[-1] - s[-2] if len(s) >= 2 else [0.0, 0.0] for s in strokes])
+    rev_exit = np.array([s[0] - s[1] if len(s) >= 2 else [0.0, 0.0] for s in strokes])
 
     unused_mask = np.ones(n, dtype=bool)
-    order = []
-    reversed_flags = []
+    order = [0]
+    reversed_flags = [False]
+    unused_mask[0] = False
+    current_end = ends[0]
+    current_exit = fwd_exit[0]
 
-    current_idx = 0
-    order.append(current_idx)
-    reversed_flags.append(False)
-    unused_mask[current_idx] = False
-    current_end = ends[current_idx]
-
-    remaining = n - 1
-    while remaining > 0:
-        valid_ids = np.nonzero(unused_mask)[0]
-        candidate_pts = np.vstack([starts[valid_ids], ends[valid_ids]])
-        tree = cKDTree(candidate_pts)
-
-        k = min(4, len(candidate_pts))
-        dists, idxs = tree.query(current_end, k=k)
+    k_query = min(32, 2 * n)
+    for _ in range(n - 1):
+        _, idxs = tree.query(current_end, k=k_query)
         idxs = np.atleast_1d(idxs)
+        valid_cands = [i for i in idxs if unused_mask[i % n]]
 
-        best_pos = idxs[0]
-        num_valid = len(valid_ids)
-        best_stroke_id = valid_ids[best_pos % num_valid]
-        best_reversed = best_pos >= num_valid
+        if valid_cands:
+            if lambda_turn > 0:
+                costs = [kinematic_cost(current_end, current_exit, all_pts[i], lambda_turn)
+                         for i in valid_cands]
+                best_idx = valid_cands[np.argmin(costs)]
+            else:
+                best_idx = valid_cands[0]
+        else:
+            # Fallback neu ca k hang xom deu da dung
+            valid_ids = np.nonzero(unused_mask)[0]
+            valid_pts_idx = np.concatenate([valid_ids, valid_ids + n])
+            sub_dists = np.hypot(all_pts[valid_pts_idx, 0] - current_end[0],
+                                 all_pts[valid_pts_idx, 1] - current_end[1])
+            best_idx = valid_pts_idx[np.argmin(sub_dists)]
 
-        order.append(best_stroke_id)
-        reversed_flags.append(bool(best_reversed))
-        unused_mask[best_stroke_id] = False
-        current_end = starts[best_stroke_id] if best_reversed else ends[best_stroke_id]
-        remaining -= 1
+        stroke_id = best_idx % n
+        is_rev = (best_idx >= n)
+        order.append(stroke_id)
+        reversed_flags.append(bool(is_rev))
+        unused_mask[stroke_id] = False
+        current_end = starts[stroke_id] if is_rev else ends[stroke_id]
+        current_exit = rev_exit[stroke_id] if is_rev else fwd_exit[stroke_id]
 
     return order, reversed_flags
+
+
+def two_opt_improve(strokes, order, reversed_flags, max_passes=3, time_budget_s=3.0):
+    """
+    2-Opt dao nguoc doan de go cac duong nhac but cat cheo nhau (crossing edges).
+    # ponytail: cua so cuc bo 50 hang xom giu do phuc tap O(N) moi pass thay vi O(N^2).
+    """
+    n = len(order)
+    if n < 4:
+        return order, reversed_flags
+
+    t_start = time.time()
+    order = list(order)
+    reversed_flags = list(reversed_flags)
+
+    def get_pts(pos):
+        idx, rev = order[pos], reversed_flags[pos]
+        s, e = strokes[idx][0], strokes[idx][-1]
+        return (e, s) if rev else (s, e)
+
+    for _ in range(max_passes):
+        improved = False
+        for i in range(n - 2):
+            if time.time() - t_start > time_budget_s:
+                break
+            _, end_i = get_pts(i)
+            start_i1, _ = get_pts(i + 1)
+            d_i = dist(end_i, start_i1)
+
+            for j in range(i + 2, min(i + 50, n)):
+                _, end_j = get_pts(j)
+                start_j1 = get_pts(j + 1)[0] if j + 1 < n else None
+                d_j = dist(end_j, start_j1) if start_j1 is not None else 0.0
+
+                new_d_i = dist(end_i, end_j)
+                new_d_j = dist(start_i1, start_j1) if start_j1 is not None else 0.0
+
+                if (new_d_i + new_d_j) < (d_i + d_j) - 1e-4:
+                    order[i + 1 : j + 1] = order[i + 1 : j + 1][::-1]
+                    reversed_flags[i + 1 : j + 1] = [not r for r in reversed_flags[i + 1 : j + 1][::-1]]
+                    improved = True
+                    break
+            if improved:
+                break
+        if not improved or (time.time() - t_start > time_budget_s):
+            break
+
+    return order, reversed_flags
+
 
 
 def total_travel_distance(strokes, order, reversed_flags):
@@ -674,18 +763,33 @@ def or_opt_improve(strokes, order, reversed_flags, k_neighbors=6,
 
 # ----------------------------- Quy doi pixel -> mm + xuat SVG -----------------------------
 
-def compute_pixel_to_mm_transform(img_size_px, paper_size_mm):
+def compute_pixel_to_mm_transform(img_size_px, paper_size_mm, margin_mm=0.0, render_bounds_px=None):
     """
     Tinh he so quy doi pixel -> mm theo kieu "contain" (giu ty le, can giua
     trong khung giay) - dam bao khong bao gio vuot khung giay (tranh loi
-    SVG_OUT_OF_BOUNDS o muc 8).
+    SVG_OUT_OF_BOUNDS o muc 8). margin_mm dung cho auto-deskew tranh cham le.
+    render_bounds_px: (min_x, min_y, max_x, max_y) de tinh theo geometry thuc te se render.
     """
     img_w_px, img_h_px = img_size_px
     paper_w_mm, paper_h_mm = paper_size_mm
 
-    scale = min(paper_w_mm / img_w_px, paper_h_mm / img_h_px)
-    offset_x = (paper_w_mm - img_w_px * scale) / 2.0
-    offset_y = (paper_h_mm - img_h_px * scale) / 2.0
+    if render_bounds_px is not None:
+        min_x, min_y, max_x, max_y = render_bounds_px
+    else:
+        min_x = 0.0
+        min_y = 0.0
+        max_x = float(img_w_px)
+        max_y = float(img_h_px)
+
+    bbox_w = max(1e-3, max_x - min_x)
+    bbox_h = max(1e-3, max_y - min_y)
+
+    eff_w = max(10.0, paper_w_mm - 2 * margin_mm)
+    eff_h = max(10.0, paper_h_mm - 2 * margin_mm)
+
+    scale = min(eff_w / bbox_w, eff_h / bbox_h)
+    offset_x = (paper_w_mm - (min_x + max_x) * scale) / 2.0
+    offset_y = (paper_h_mm - (min_y + max_y) * scale) / 2.0
 
     return scale, (offset_x, offset_y)
 
@@ -707,33 +811,166 @@ def px_to_mm(pts_px, scale, offset, paper_size_mm=None, clamp_eps=0.001):
     return mm_pts
 
 
+def rotate_points_2d(pts, angle_deg, center, paper_size_mm=None, clamp_eps=0.001):
+    """
+    Xoay toa do 2D quanh tam 'center' mot goc angle_deg (do).
+    Dung de tu dong bu goc lech giay (Auto-Deskew) do Camera phat hien.
+    """
+    if abs(angle_deg) < 1e-4 or len(pts) == 0:
+        return pts
+    rad = math.radians(angle_deg)
+    cos_a, sin_a = math.cos(rad), math.sin(rad)
+    cx, cy = center
+    rel = pts - np.array([cx, cy])
+    rot_x = rel[:, 0] * cos_a - rel[:, 1] * sin_a + cx
+    rot_y = rel[:, 0] * sin_a + rel[:, 1] * cos_a + cy
+    rot_pts = np.column_stack([rot_x, rot_y])
+    if paper_size_mm is not None:
+        w_mm, h_mm = paper_size_mm
+        rot_pts[:, 0] = np.clip(rot_pts[:, 0], clamp_eps, w_mm - clamp_eps)
+        rot_pts[:, 1] = np.clip(rot_pts[:, 1], clamp_eps, h_mm - clamp_eps)
+    return rot_pts
+
+
 def validate_within_bounds(all_mm_points, paper_size_mm, tolerance=0.01):
     w_mm, h_mm = paper_size_mm
     if len(all_mm_points) == 0:
         return True
     xs = all_mm_points[:, 0]
     ys = all_mm_points[:, 1]
-    return (xs.min() >= -tolerance and xs.max() <= w_mm + tolerance and
-            ys.min() >= -tolerance and ys.max() <= h_mm + tolerance)
+    return bool(xs.min() >= -tolerance and xs.max() <= w_mm + tolerance and
+                ys.min() >= -tolerance and ys.max() <= h_mm + tolerance)
 
 
-def polyline_to_path_d(mm_pts):
+def _catmull_rom_cubic_segments(points):
+    """
+    Trả về các segment Cubic Bézier (p1, c1, c2, p2)
+    dùng đúng công thức hiện tại của polyline_to_path_d().
+    """
+    points = np.asarray(points, dtype=float)
+    segments = []
+
+    for i in range(len(points) - 1):
+        p0 = points[max(0, i - 1)]
+        p1 = points[i]
+        p2 = points[i + 1]
+        p3 = points[min(len(points) - 1, i + 2)]
+
+        c1 = p1 + (p2 - p0) / 6.0
+        c2 = p2 - (p3 - p1) / 6.0
+        segments.append((p1, c1, c2, p2))
+
+    return segments
+
+
+def get_render_bounds_px(strokes, img_size_px, smooth=False, skew_angle_deg=0.0):
+    """
+    Lay bounds thuc te se render theo pixel:
+    - Bounds ban dau bao gom rectangle anh [0, img_w] x [0, img_h]
+    - Voi smooth=False: dung cac anchor points
+    - Voi smooth=True: dung anchor va control point tu _catmull_rom_cubic_segments()
+    - Chi mo rong bounds khi geometry that vuot rectangle anh
+    - Voi skew_angle_deg != 0: xoay 4 goc quanh tam rectangle de tinh bounding box sau xoay
+    """
+    img_w, img_h = img_size_px
+    min_x = 0.0
+    min_y = 0.0
+    max_x = float(img_w)
+    max_y = float(img_h)
+
+    for pts in strokes:
+        if len(pts) == 0:
+            continue
+        pts_arr = np.asarray(pts, dtype=np.float64)
+        if smooth and len(pts_arr) >= 3:
+            segments = _catmull_rom_cubic_segments(pts_arr)
+            for p1, c1, c2, p2 in segments:
+                min_x = min(min_x, p1[0], c1[0], c2[0], p2[0])
+                max_x = max(max_x, p1[0], c1[0], c2[0], p2[0])
+                min_y = min(min_y, p1[1], c1[1], c2[1], p2[1])
+                max_y = max(max_y, p1[1], c1[1], c2[1], p2[1])
+        else:
+            min_x = min(min_x, float(np.min(pts_arr[:, 0])))
+            max_x = max(max_x, float(np.max(pts_arr[:, 0])))
+            min_y = min(min_y, float(np.min(pts_arr[:, 1])))
+            max_y = max(max_y, float(np.max(pts_arr[:, 1])))
+
+    # Neu geometry thuc su vuot ngoai anh, mo rong doi xung de khong lam dich tam bbox
+    eps = 1e-3
+    if min_x < 0.0 or max_x > float(img_w):
+        min_x -= eps
+        max_x += eps
+    if min_y < 0.0 or max_y > float(img_h):
+        min_y -= eps
+        max_y += eps
+
+    # Mo rong bounds theo skew_angle_deg truoc khi tinh scale/offset
+    if abs(skew_angle_deg) > 1e-4:
+        cx = (min_x + max_x) / 2.0
+        cy = (min_y + max_y) / 2.0
+        rad = math.radians(skew_angle_deg)
+        cos_a = math.cos(rad)
+        sin_a = math.sin(rad)
+        corners = [
+            (min_x, min_y),
+            (max_x, min_y),
+            (max_x, max_y),
+            (min_x, max_y),
+        ]
+        rot_xs = []
+        rot_ys = []
+        for x, y in corners:
+            dx = x - cx
+            dy = y - cy
+            rx = cx + dx * cos_a - dy * sin_a
+            ry = cy + dx * sin_a + dy * cos_a
+            rot_xs.append(rx)
+            rot_ys.append(ry)
+
+        # Dung chinh bbox da xoay lam bounds cuoi, mo rong doi xung voi eps chong sai so so thuc
+        min_x = min(rot_xs) - eps
+        max_x = max(rot_xs) + eps
+        min_y = min(rot_ys) - eps
+        max_y = max(rot_ys) + eps
+
+    return (min_x, min_y, max_x, max_y)
+
+
+def polyline_to_path_d(mm_pts, smooth=True):
+    """
+    Chuyen doi danh sach toa do mm thanh SVG path data.
+    Neu smooth=True va so diem >= 3: dung Catmull-Rom spline (tau=0.5) chuyen thanh Cubic Bézier ('C'),
+    giup lam muot net ve tu nhien, triet tieu goc nhon rung co khi cua co cau but.
+    Neu smooth=False hoac < 3 diem: giu nguyen tuyen tinh ('L').
+    """
+    n = len(mm_pts)
+    if n == 0:
+        return ""
+    if not smooth or n < 3:
+        parts = [f"M{mm_pts[0][0]:.3f},{mm_pts[0][1]:.3f}"]
+        for x, y in mm_pts[1:]:
+            parts.append(f"L{x:.3f},{y:.3f}")
+        return " ".join(parts)
+
     parts = [f"M{mm_pts[0][0]:.3f},{mm_pts[0][1]:.3f}"]
-    for x, y in mm_pts[1:]:
-        parts.append(f"L{x:.3f},{y:.3f}")
+    for p1, c1, c2, p2 in _catmull_rom_cubic_segments(mm_pts):
+        parts.append(f"C{c1[0]:.3f},{c1[1]:.3f} {c2[0]:.3f},{c2[1]:.3f} {p2[0]:.3f},{p2[1]:.3f}")
     return " ".join(parts)
 
 
 def build_svg(strokes, order, reversed_flags, scale, offset, paper_size_mm,
-              stroke_width_mm=0.3):
+              stroke_width_mm=0.3, smooth=True, skew_angle_deg=0.0):
     """
     Xuat SVG dung chuan muc 4 API Spec:
     - xmlns, width/height dang "{w}mm"/"{h}mm", viewBox theo don vi mm
     - Moi net ve = 1 <path> rieng (khong gop)
     - fill="none" bat buoc
     - Chi dung <path> (khong <text>/<image>/<use>)
+    - smooth: bat Catmull-Rom to Cubic Bézier smoothing cho cac style duong cong
+    - skew_angle_deg: goc tu dong xoay bu nghieng giay (Auto-Deskew) tu camera
     """
     w_mm, h_mm = paper_size_mm
+    center = (w_mm / 2.0, h_mm / 2.0)
     path_lines = []
     all_mm_points_for_validation = []
 
@@ -741,13 +978,29 @@ def build_svg(strokes, order, reversed_flags, scale, offset, paper_size_mm,
         pts = strokes[idx]
         if rev:
             pts = pts[::-1]
-        mm_pts = px_to_mm(pts, scale, offset, paper_size_mm=paper_size_mm)
-        all_mm_points_for_validation.append(mm_pts)
-        d = polyline_to_path_d(mm_pts)
+        raw_mm_pts = px_to_mm(pts, scale, offset, paper_size_mm=None)
+        if abs(skew_angle_deg) > 1e-4:
+            raw_mm_pts = rotate_points_2d(raw_mm_pts, skew_angle_deg, center=center, paper_size_mm=None)
+
+        raw_validation_points = raw_mm_pts
+
+        if smooth and len(raw_mm_pts) >= 3:
+            segments = _catmull_rom_cubic_segments(raw_mm_pts)
+            if segments:
+                raw_validation_points = np.vstack([
+                    np.vstack((p1, c1, c2, p2))
+                    for p1, c1, c2, p2 in segments
+                ])
+
+        all_mm_points_for_validation.append(raw_validation_points)
+
+        mm_pts = raw_mm_pts
+
+        d = polyline_to_path_d(mm_pts, smooth=smooth)
         path_lines.append(f'  <path d="{d}" stroke="black" fill="none" stroke-width="{stroke_width_mm}"/>')
 
     all_pts_concat = np.vstack(all_mm_points_for_validation) if all_mm_points_for_validation else np.empty((0, 2))
-    is_within_bounds = validate_within_bounds(all_pts_concat, paper_size_mm)
+    is_within_bounds = validate_within_bounds(all_pts_concat, paper_size_mm, tolerance=0.0)
 
     svg = (
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{w_mm}mm" height="{h_mm}mm" '
@@ -758,13 +1011,14 @@ def build_svg(strokes, order, reversed_flags, scale, offset, paper_size_mm,
 
 # ----------------------------- Tinh svg_metrics (muc 6) -----------------------------
 
-def compute_svg_metrics(strokes, order, reversed_flags, scale, optimize_time_ms):
+def compute_svg_metrics(strokes, order, reversed_flags, scale, optimize_time_ms, skew_angle_deg=0.0):
     """
     Tinh cac chi so bat buoc cho log CSV khoa hoc (muc 6):
       - total_path_length_mm : tong chieu dai net ve (khong tinh nhac but)
       - pen_lift_distance_mm : tong quang duong nhac but
       - pen_lift_count       : so lan nhac but
       - optimize_time_ms     : thoi gian tinh toan toi uu thu tu net
+      - skew_angle_deg       : goc lech giay duoc tu dong bu tru (auto-deskew)
     """
     total_draw_length_px = sum(polyline_length(strokes[idx]) for idx in order)
     travel_px = total_travel_distance(strokes, order, reversed_flags)
@@ -774,6 +1028,7 @@ def compute_svg_metrics(strokes, order, reversed_flags, scale, optimize_time_ms)
         "pen_lift_distance_mm": round(travel_px * scale, 3),
         "pen_lift_count": max(0, len(order) - 1),
         "optimize_time_ms": round(optimize_time_ms, 1),
+        "skew_angle_deg": round(float(skew_angle_deg), 2),
     }
 
 
@@ -785,7 +1040,7 @@ VALID_STYLES = {"sketch", "line_art", "stipple", "hatching"}
 def process(request_id, image_base64=None, image_path=None,
             style="sketch",
             target_paper_size_mm=(210, 297), output_dir="output",
-            snap_dist=15.0):
+            snap_dist=15.0, skew_angle_deg=0.0):
     """
     Ham xu ly chinh cua module Thuat toan, khop input/output muc 1-3-4-6 cua
     API Spec. Ho tro 4 style: sketch | line_art | stipple | hatching.
@@ -801,7 +1056,24 @@ def process(request_id, image_base64=None, image_path=None,
         }
     """
     os.makedirs(output_dir, exist_ok=True)
-    log_msg(request_id, f"Bat dau xu ly anh -> SVG (style={style})")
+    log_msg(request_id, f"Bat dau xu ly anh -> SVG (style={style}, deskew={skew_angle_deg}deg)")
+
+    def _cleanup_stale_svg():
+        try:
+            base_dir = os.path.abspath(output_dir)
+            target_abs = os.path.abspath(os.path.join(base_dir, f"output_{request_id}.svg"))
+            if (
+                os.path.commonpath([base_dir, target_abs]) == base_dir
+                and os.path.dirname(target_abs) == base_dir
+                and target_abs != base_dir
+                and os.path.isfile(target_abs)
+            ):
+                os.remove(target_abs)
+        except Exception:
+            pass
+
+    # Xóa file SVG cũ của request_id này nếu đang retry
+    _cleanup_stale_svg()
 
     if style not in VALID_STYLES:
         log_msg(request_id, f"CANH BAO: style '{style}' khong hop le "
@@ -812,19 +1084,22 @@ def process(request_id, image_base64=None, image_path=None,
         img = decode_image(image_base64=image_base64, image_path=image_path)
     except Exception as e:
         log_msg(request_id, f"Loi doc anh: {e}")
+        _cleanup_stale_svg()
         return {
             "request_id": request_id, "status": "error", "style": style,
             "svg_path": None, "svg_metrics": None,
             "error": make_error("VECTORIZE_FAILED", f"Khong doc duoc anh dau vao: {e}")
         }
 
-    # Phan nhanh trich stroke theo style. Sketch/line_art dua tren duong vien
-    # (contour) nen phu hop noi chuoi (chain_strokes); stipple/hatching la tap
-    # cac cham/doan gach roi rac theo thiet ke, KHONG noi chuoi (se pha vo
-    # hieu ung cham/gach rieng biet).
+    # Phan nhanh trich stroke theo style.
+    # line_art chi chua duong vien (contour) nen phu hop noi chuoi (chain_strokes).
+    # sketch chua ca contour va cac doan shading roi rac, KHONG noi chuoi de tranh
+    # dinh cac net danh bong vao contour gay vong lap va long gai khi lam muot.
+    # stipple/hatching la tap cac cham/doan gach roi rac, KHONG noi chuoi.
     if style == "sketch":
         strokes, img_size_px = extract_strokes(img)
-        do_chain = True
+        # Sketch chua ca contour va shading strokes nen khong duoc chain chung
+        do_chain = False
     elif style == "line_art":
         strokes, img_size_px = extract_strokes_line_art(img)
         do_chain = True
@@ -839,6 +1114,7 @@ def process(request_id, image_base64=None, image_path=None,
 
     if len(strokes) < 1:
         log_msg(request_id, "Khong trich duoc net nao tu anh")
+        _cleanup_stale_svg()
         return {
             "request_id": request_id, "status": "error", "style": style,
             "svg_path": None, "svg_metrics": None,
@@ -854,18 +1130,29 @@ def process(request_id, image_base64=None, image_path=None,
     t0 = time.time()
     if len(strokes) >= 2:
         order, reversed_flags = nearest_neighbor_order(strokes)
+        order, reversed_flags = two_opt_improve(strokes, order, reversed_flags)
         order, reversed_flags = or_opt_improve(strokes, order, reversed_flags)
     else:
         order, reversed_flags = [0], [False]
     optimize_time_ms = (time.time() - t0) * 1000
     log_msg(request_id, f"Toi uu thu tu xong trong {optimize_time_ms:.1f}ms")
 
-    scale, offset = compute_pixel_to_mm_transform(img_size_px, target_paper_size_mm)
+    margin = 0.0
+    smooth_curve = style in ("sketch", "line_art")
+    render_bounds = get_render_bounds_px(
+        strokes, img_size_px, smooth=smooth_curve, skew_angle_deg=skew_angle_deg
+    )
+    scale, offset = compute_pixel_to_mm_transform(
+        img_size_px, target_paper_size_mm, margin_mm=margin, render_bounds_px=render_bounds
+    )
     svg_content, is_within_bounds = build_svg(strokes, order, reversed_flags,
-                                               scale, offset, target_paper_size_mm)
+                                               scale, offset, target_paper_size_mm,
+                                               smooth=smooth_curve,
+                                               skew_angle_deg=skew_angle_deg)
 
     if not is_within_bounds:
         log_msg(request_id, "CANH BAO: toa do vuot khung giay sau khi quy doi")
+        _cleanup_stale_svg()
         return {
             "request_id": request_id, "status": "error", "style": style,
             "svg_path": None, "svg_metrics": None,
@@ -878,7 +1165,7 @@ def process(request_id, image_base64=None, image_path=None,
         f.write(svg_content)
     log_msg(request_id, f"Da luu SVG: {svg_path}")
 
-    metrics = compute_svg_metrics(strokes, order, reversed_flags, scale, optimize_time_ms)
+    metrics = compute_svg_metrics(strokes, order, reversed_flags, scale, optimize_time_ms, skew_angle_deg=skew_angle_deg)
     log_msg(request_id, f"svg_metrics: {metrics}")
 
     return {
@@ -893,25 +1180,194 @@ def process(request_id, image_base64=None, image_path=None,
 
 # ----------------------------- CLI (test local) -----------------------------
 
+def _run_self_check():
+    """Ponytail runnable check: assert NN + 2-Opt + Or-Opt reduces travel distance."""
+    np.random.seed(42)
+    mock_strokes = [np.array([[x, y], [x + np.random.uniform(-4, 4), y + np.random.uniform(-4, 4)]])
+                    for x in np.linspace(0, 100, 20) for y in np.linspace(0, 100, 5)]
+    d_raw = total_travel_distance(mock_strokes, list(range(len(mock_strokes))), [False] * len(mock_strokes))
+    order, rev = nearest_neighbor_order(mock_strokes)
+    d_nn = total_travel_distance(mock_strokes, order, rev)
+    order_2opt, rev_2opt = two_opt_improve(mock_strokes, order, rev)
+    d_2opt = total_travel_distance(mock_strokes, order_2opt, rev_2opt)
+    order_or, rev_or = or_opt_improve(mock_strokes, order_2opt, rev_2opt)
+    d_final = total_travel_distance(mock_strokes, order_or, rev_or)
+    assert d_final <= d_2opt + 1e-6, f"Or-Opt khong duoc lam tang: {d_final} vs {d_2opt}"
+
+    # Assertion Chiêu 3: Quan tinh dong hoc phat U-turn cao hon duong thang
+    c_straight = kinematic_cost((0, 0), (1, 0), (10, 0), lambda_turn=2.0)
+    c_uturn = kinematic_cost((0, 0), (1, 0), (-10, 0), lambda_turn=2.0)
+    assert c_straight == 10.0, f"Thang phai la 10.0, nhan {c_straight}"
+    assert c_uturn == 14.0, f"U-turn phai la 14.0, nhan {c_uturn}"
+
+    # Assertion Chiêu 4: Bézier smoothing chuyen polyline thanh Cubic Bézier C
+    test_poly = np.array([[0, 0], [10, 5], [20, 0], [30, 10]], dtype=float)
+    d_smooth = polyline_to_path_d(test_poly, smooth=True)
+    d_linear = polyline_to_path_d(test_poly, smooth=False)
+    assert "C" in d_smooth and d_smooth.startswith("M0.000,0.000 C"), f"Smooth loi: {d_smooth}"
+    assert "C" not in d_linear and "L" in d_linear, f"Linear loi: {d_linear}"
+
+    # Assertion Auto-Deskew: Xoay toa do bu goc lech giay
+    test_line = np.array([[5.0, 10.0], [15.0, 10.0]])
+    rot_90 = rotate_points_2d(test_line, 90.0, center=(10.0, 10.0))
+    assert np.allclose(rot_90, [[10.0, 5.0], [10.0, 15.0]]), "Xoay 90 do that bai"
+    rot_0 = rotate_points_2d(test_line, 0.0, center=(10.0, 10.0))
+    assert np.allclose(rot_0, test_line), "Xoay 0 do that bai"
+
+    # Assertion Bézier Overshoot & Bounds Validation
+    overshoot_stroke = np.array([
+        [1.0, 0.1],
+        [2.0, 0.1],
+        [3.0, 0.1],
+        [4.0, 10.0],
+    ])
+    svg_bad, bounds_bad = build_svg(
+        [overshoot_stroke],
+        [0],
+        [False],
+        1.0,
+        (0.0, 0.0),
+        (210.0, 297.0),
+        smooth=True,
+    )
+    assert bounds_bad is False
+
+    segments = _catmull_rom_cubic_segments(overshoot_stroke)
+    controls = np.vstack([
+        np.vstack((c1, c2))
+        for _, c1, c2, _ in segments
+    ])
+    assert controls[:, 1].min() < 0.0
+
+    _, bounds_linear = build_svg(
+        [overshoot_stroke],
+        [0],
+        [False],
+        1.0,
+        (0.0, 0.0),
+        (210.0, 297.0),
+        smooth=False,
+    )
+    assert bounds_linear is True
+
+    almost_outside_stroke = np.array([
+        [10.0, 0.060],
+        [20.0, 0.001],
+        [30.0, 0.001],
+        [40.0, 0.060],
+    ], dtype=float)
+
+    _, almost_outside_bounds = build_svg(
+        [almost_outside_stroke],
+        [0],
+        [False],
+        1.0,
+        (0.0, 0.0),
+        (210.0, 297.0),
+        smooth=True,
+    )
+
+    assert almost_outside_bounds is False
+
+    # Đường cong hợp lệ
+    valid_stroke = np.array([
+        [10.0, 10.0],
+        [30.0, 50.0],
+        [60.0, 20.0],
+        [80.0, 70.0],
+        [100.0, 40.0],
+    ], dtype=float)
+    _, valid_bounds = build_svg(
+        [valid_stroke],
+        [0],
+        [False],
+        1.0,
+        (0.0, 0.0),
+        (210.0, 297.0),
+        smooth=True,
+    )
+    assert valid_bounds is True
+
+    # Bảo toàn output so với baseline cũ (tính theo công thức gốc)
+    orig_parts = [f"M{valid_stroke[0][0]:.3f},{valid_stroke[0][1]:.3f}"]
+    n_pts = len(valid_stroke)
+    for i in range(n_pts - 1):
+        p0 = valid_stroke[max(0, i - 1)]
+        p1 = valid_stroke[i]
+        p2 = valid_stroke[i + 1]
+        p3 = valid_stroke[min(n_pts - 1, i + 2)]
+        c1 = p1 + (p2 - p0) / 6.0
+        c2 = p2 - (p3 - p1) / 6.0
+        orig_parts.append(f"C{c1[0]:.3f},{c1[1]:.3f} {c2[0]:.3f},{c2[1]:.3f} {p2[0]:.3f},{p2[1]:.3f}")
+    expected_d = " ".join(orig_parts)
+    actual_d = polyline_to_path_d(valid_stroke, smooth=True)
+    assert actual_d == expected_d, "Output polyline_to_path_d không khớp baseline cũ byte-for-byte"
+
+    # Regression test: Deskew trên ảnh dọc với stroke Catmull-Rom bất đối xứng vượt bounds ảnh
+    v_img_size_px = (100, 320)
+    specimen_pos40 = np.array([
+        [45.181, 20.217],
+        [96.053, 2.620],
+        [32.548, 65.054]
+    ])
+    specimen_neg40 = np.array([
+        [100.0 - 45.181, 20.217],
+        [100.0 - 96.053, 2.620],
+        [100.0 - 32.548, 65.054]
+    ])
+
+    # Xác nhận control point của spline thực sự vượt ra ngoài rectangle ảnh (y < 0)
+    seg_pos = _catmull_rom_cubic_segments(specimen_pos40)
+    pos_ctrl_min_y = min(min(c1[1], c2[1]) for _, c1, c2, _ in seg_pos)
+    assert pos_ctrl_min_y < 0.0, f"Control point phải vượt ngoài rectangle ảnh, nhận {pos_ctrl_min_y}"
+
+    paper_dim_mm = (210.0, 297.0)
+    # Kiểm tra cả +40° và -40°: build_svg() phải trả is_within_bounds=True
+    for test_name, test_stroke, test_skew in [
+        ("+40 deg", specimen_pos40, 40.0),
+        ("-40 deg", specimen_neg40, -40.0),
+    ]:
+        v_bounds = get_render_bounds_px([test_stroke], v_img_size_px, smooth=True, skew_angle_deg=test_skew)
+        v_scale, v_offset = compute_pixel_to_mm_transform(v_img_size_px, paper_dim_mm, margin_mm=0.0, render_bounds_px=v_bounds)
+        v_svg, v_in_bounds = build_svg([test_stroke], [0], [False], v_scale, v_offset, paper_dim_mm, smooth=True, skew_angle_deg=test_skew)
+        assert v_in_bounds is True, f"Deskew {test_name} phải nằm trong bounds giấy"
+
+    # Giữ lại và kiểm tra toàn diện các góc deskew hiện có: 0°, ±3.5°, ±5°, ±10°
+    for angle in [0.0, 3.5, -3.5, 5.0, -5.0, 10.0, -10.0]:
+        v_bounds = get_render_bounds_px([specimen_pos40], v_img_size_px, smooth=True, skew_angle_deg=angle)
+        v_scale, v_offset = compute_pixel_to_mm_transform(v_img_size_px, paper_dim_mm, margin_mm=0.0, render_bounds_px=v_bounds)
+        _, v_in_bounds = build_svg([specimen_pos40], [0], [False], v_scale, v_offset, paper_dim_mm, smooth=True, skew_angle_deg=angle)
+        assert v_in_bounds is True, f"Deskew {angle}° phải nằm trong bounds giấy"
+
+    reduction = ((d_raw - d_final) / d_raw) * 100
+    print(f"[SELF-CHECK PASS] Raw: {d_raw:.1f} -> Optimized: {d_final:.1f} (Giam {reduction:.1f}%) | Kinematics OK | Bézier OK | Deskew OK")
+
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="OmniDraw - module Thuat toan (anh -> SVG toi uu duong ve)")
-    parser.add_argument("--image", required=True, help="Duong dan anh dau vao (test local)")
+    parser.add_argument("--image", help="Duong dan anh dau vao (test local)")
     parser.add_argument("--request_id", default="test-local", help="request_id (mac dinh: test-local)")
     parser.add_argument("--style", default="sketch", choices=sorted(VALID_STYLES),
                          help="sketch | line_art | stipple | hatching")
     parser.add_argument("--paper_width_mm", type=float, default=210.0)
     parser.add_argument("--paper_height_mm", type=float, default=297.0)
     parser.add_argument("--output_dir", default="output")
+    parser.add_argument("--self-check", action="store_true", help="Chay kiem tra tu dong thuat toan")
     args = parser.parse_args()
 
-    result = process(
-        request_id=args.request_id,
-        image_path=args.image,
-        style=args.style,
-        target_paper_size_mm=(args.paper_width_mm, args.paper_height_mm),
-        output_dir=args.output_dir,
-    )
-
-    print("\n--- Ket qua ---")
-    print(json.dumps(result, indent=2, ensure_ascii=False))
+    if args.self_check:
+        _run_self_check()
+    elif args.image:
+        result = process(
+            request_id=args.request_id,
+            image_path=args.image,
+            style=args.style,
+            target_paper_size_mm=(args.paper_width_mm, args.paper_height_mm),
+            output_dir=args.output_dir,
+        )
+        print("\n--- Ket qua ---")
+        print(json.dumps(result, indent=2, ensure_ascii=False))
+    else:
+        parser.print_help()

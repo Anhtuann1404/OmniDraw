@@ -54,12 +54,12 @@ export default function PrintStatusScreen({
       {/* Canvas vẽ */}
       <div className="mb-4">
         <HardShadowBox shadowOffset={5}>
-          <div className="h-80 flex items-center justify-center bg-[#FEFDF9] rounded-xl overflow-hidden">
+          <div className="h-[420px] flex items-center justify-center bg-[#FEFDF9] rounded-xl overflow-hidden p-2">
             {svgLoading ? (
               <Loader2 size={32} className="animate-spin text-[#C0392B]" />
             ) : svgText ? (
               <>
-                <style>{`#svg-printing svg { width: 100% !important; height: 100% !important; max-height: 300px; }`}</style>
+                <style>{`#svg-printing svg { width: 100% !important; height: 100% !important; max-height: 400px; }`}</style>
                 <div
                   ref={svgContainerRef}
                   id="svg-printing"

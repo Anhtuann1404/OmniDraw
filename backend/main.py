@@ -1,13 +1,57 @@
+import sys
+import os
+
+# Tự động nhận diện và chuyển sang môi trường ảo backend/venv nếu đang chạy bằng Python ngoài
+_backend_dir = os.path.dirname(os.path.abspath(__file__))
+if _backend_dir not in sys.path:
+    sys.path.insert(0, _backend_dir)
+
+_venv_python = os.path.join(_backend_dir, "venv", "bin", "python")
+_in_venv = sys.prefix != getattr(sys, "base_prefix", sys.prefix)
+if not _in_venv and os.path.isfile(_venv_python) and sys.executable != _venv_python:
+    print(f"[OmniDraw] 🔄 Đang tự động chuyển sang môi trường ảo: {_venv_python}")
+    os.execv(_venv_python, [_venv_python] + sys.argv)
+
 import asyncio
 import math
-import os
 import re
 import time
 from typing import Any, Dict, Optional
-from dotenv import load_dotenv
 
-# Load biến môi trường từ file .env TRƯỚC KHI import các module khác
-load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
+# Load biến môi trường từ file .env (hỗ trợ cả python-dotenv lẫn đọc thủ công dự phòng)
+def _load_env():
+    env_paths = [
+        os.path.join(_backend_dir, ".env"),
+        os.path.join(_backend_dir, "..", ".env"),
+    ]
+    loaded = False
+    try:
+        from dotenv import load_dotenv
+        for p in env_paths:
+            if os.path.isfile(p):
+                load_dotenv(p, encoding="utf-8")
+                loaded = True
+                break
+    except ImportError:
+        pass
+
+    # Dự phòng nếu chưa cài thư viện python-dotenv: tự đọc file .env thủ công
+    if not loaded:
+        for p in env_paths:
+            if os.path.isfile(p):
+                try:
+                    with open(p, "r", encoding="utf-8") as f:
+                        for line in f:
+                            line = line.strip()
+                            if line and not line.startswith("#") and "=" in line:
+                                k, v = line.split("=", 1)
+                                os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
+                    loaded = True
+                    break
+                except Exception as e:
+                    print(f"[warn] Không thể đọc {p}: {e}")
+
+_load_env()
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -27,6 +71,23 @@ from api_generator import (
     LOGS_DIR
 )
 from path_optimizer import process as svg_process
+
+if __package__:
+    from .handwriting import (
+        generate_handwriting_svg,
+        resolve_font,
+        TextOverflowError,
+        UnsupportedCharacterError,
+        UnsupportedLetterTypeError,
+    )
+else:
+    from handwriting import (
+        generate_handwriting_svg,
+        resolve_font,
+        TextOverflowError,
+        UnsupportedCharacterError,
+        UnsupportedLetterTypeError,
+    )
 
 # ==============================================================================
 # 2. Khởi tạo FastAPI App
@@ -82,9 +143,33 @@ async def login_admin(request: LoginRequest):
     return custom_error("AUTH_FAILED", "Sai thông tin.", 401)
 
 
+SVG_OUTPUT_DIR = os.environ.get(
+    "OMNIDRAW_SVG_DIR",
+    os.path.join(os.path.dirname(__file__), "svg_output")
+)
+
 # Cache svg_metrics phía server — TV2 ghi vào sau khi convert xong,
 # endpoint /api/log/experiment tự lấy nếu frontend không gửi kèm.
 _svg_metrics_cache: dict[str, dict] = {}
+
+
+def _clear_cached_svg_for_request(request_id: str):
+    """Xóa file SVG và cache metrics của một request_id nếu bị retry hoặc gặp lỗi."""
+    if not request_id or not isinstance(request_id, str):
+        return
+    _svg_metrics_cache.pop(request_id, None)
+    try:
+        base_dir = os.path.abspath(SVG_OUTPUT_DIR)
+        target_file = os.path.abspath(os.path.join(base_dir, f"output_{request_id}.svg"))
+        if (
+            os.path.commonpath([base_dir, target_file]) == base_dir
+            and os.path.dirname(target_file) == base_dir
+            and target_file != base_dir
+            and os.path.isfile(target_file)
+        ):
+            os.remove(target_file)
+    except Exception as e:
+        print(f"[warn] Failed to clear SVG for request_id '{request_id}': {e}")
 
 
 class SvgMetrics(BaseModel):
@@ -152,6 +237,11 @@ def log_experiment(payload: LogPayload):
         title = "Bức tranh OmniDraw" if not payload.dataset_item_id else payload.dataset_item_id
         stroke_count = (metrics.pen_lift_count + 1) if metrics.pen_lift_count is not None else 0
         thumbnail_url = f"http://localhost:8000/api/thumbnail/{payload.request_id}"
+        est_min = None
+        if metrics.total_path_length_mm is not None:
+            est_sec = (metrics.total_path_length_mm + (metrics.pen_lift_distance_mm or 0)) / 40.0
+            est_min = max(1, math.ceil(est_sec / 60.0))
+
         save_history_record(
             request_id=payload.request_id,
             title=title,
@@ -159,7 +249,12 @@ def log_experiment(payload: LogPayload):
             input_type=payload.input_type or "unknown",
             actual_draw_time_sec=payload.actual_draw_time_sec,
             stroke_count=stroke_count,
-            thumbnail_url=thumbnail_url
+            thumbnail_url=thumbnail_url,
+            paper_size="a4",
+            model_used=payload.model_used,
+            estimated_minutes=est_min,
+            total_path_length_mm=metrics.total_path_length_mm,
+            pen_lift_distance_mm=metrics.pen_lift_distance_mm
         )
         
     return {"success": True}
@@ -177,6 +272,168 @@ class GenerateRequest(BaseModel):
 
 @app.post("/api/ai/generate")
 async def generate_ai_image(request: GenerateRequest):
+    # Luôn dọn dẹp cache và file SVG cũ nếu đây là request_id được gửi lại (retry)
+    _clear_cached_svg_for_request(request.request_id)
+
+    # Phân nhánh Viết Thư Tay (Single-Stroke Bio-Mimetic Handwriting)
+    if request.input_type in ("handwriting", "letter") or request.style.startswith("hand_"):
+        text_content = request.prompt or ""
+
+        # Nếu tải lên file văn bản (.docx hoặc .txt) dưới dạng base64
+        if request.image_base64:
+            raw_data = request.image_base64
+            if "," in raw_data:
+                raw_data = raw_data.split(",", 1)[1]
+            try:
+                import io, base64
+                decoded_bytes = base64.b64decode(raw_data)
+                try:
+                    import docx
+                    doc = docx.Document(io.BytesIO(decoded_bytes))
+                    extracted = "\n".join([p.text for p in doc.paragraphs if p.text.strip()])
+                    if extracted.strip():
+                        text_content = extracted
+                except Exception:
+                    text_content = decoded_bytes.decode("utf-8", errors="ignore")
+            except Exception as e:
+                print(f"[warn] Lỗi giải mã file văn bản: {e}")
+
+        if not text_content.strip():
+            _clear_cached_svg_for_request(request.request_id)
+            return {
+                "request_id": request.request_id,
+                "status": "error",
+                "result_image_base64": None,
+                "error": {"code": "EMPTY_TEXT", "message": "Nội dung thư tay không được để trống."}
+            }
+
+        paper_w, paper_h = 210.0, 297.0
+        skew_angle = 0.0
+        if request.options:
+            if request.options.get("target_paper_size_mm"):
+                paper_w, paper_h = request.options["target_paper_size_mm"]
+            if "skew_angle_deg" in request.options:
+                skew_angle = float(request.options["skew_angle_deg"])
+            elif request.options.get("auto_deskew"):
+                from camera_inspector import inspect_paper
+                cam_res = inspect_paper()
+                skew_angle = float(cam_res.get("skew_angle_deg", 0.0))
+
+        font_param = request.options.get("font", "oly") if request.options else "oly"
+        try:
+            resolve_font(font_param)
+        except ValueError:
+            _clear_cached_svg_for_request(request.request_id)
+            return {
+                "request_id": request.request_id,
+                "status": "error",
+                "result_image_base64": None,
+                "error": {
+                    "code": "UNSUPPORTED_FONT",
+                    "message": "Font này chưa được hỗ trợ. Tính năng tải font riêng sẽ được bổ sung sau."
+                }
+            }
+
+        seed_param = request.options.get("seed") if request.options else None
+        if seed_param is not None:
+            if isinstance(seed_param, bool) or not isinstance(seed_param, int) or not (0 <= seed_param <= 0xFFFFFFFF):
+                _clear_cached_svg_for_request(request.request_id)
+                return {
+                    "request_id": request.request_id,
+                    "status": "error",
+                    "result_image_base64": None,
+                    "error": {
+                        "code": "INVALID_SEED",
+                        "message": "Seed phải là số nguyên trong khoảng 0..4294967295."
+                    }
+                }
+
+        letter_type_param = (
+            request.options.get("letter_type", "general")
+            if request.options and "letter_type" in request.options
+            else "general"
+        )
+
+        try:
+            svg_content, metrics, in_bounds = generate_handwriting_svg(
+                text=text_content,
+                font=font_param,
+                style=request.style if request.style.startswith("hand_") else "hand_hocsinh",
+                target_paper_size_mm=(paper_w, paper_h),
+                skew_angle_deg=skew_angle,
+                seed=seed_param,
+                letter_type=letter_type_param,
+            )
+        except UnsupportedLetterTypeError as exc:
+            _clear_cached_svg_for_request(request.request_id)
+            return {
+                "request_id": request.request_id,
+                "status": "error",
+                "result_image_base64": None,
+                "error": {
+                    "code": "UNSUPPORTED_LETTER_TYPE",
+                    "message": str(exc),
+                },
+            }
+        except UnsupportedCharacterError as exc:
+            _clear_cached_svg_for_request(request.request_id)
+            return {
+                "request_id": request.request_id,
+                "status": "error",
+                "result_image_base64": None,
+                "error": {
+                    "code": "UNSUPPORTED_CHARACTER",
+                    "message": str(exc),
+                    "characters": list(exc.characters),
+                },
+            }
+        except TextOverflowError as exc:
+            _clear_cached_svg_for_request(request.request_id)
+            return {
+                "request_id": request.request_id,
+                "status": "error",
+                "result_image_base64": None,
+                "error": {
+                    "code": "TEXT_OVERFLOW",
+                    "message": str(exc),
+                },
+            }
+
+        if not in_bounds:
+            _clear_cached_svg_for_request(request.request_id)
+            return {
+                "request_id": request.request_id,
+                "status": "error",
+                "result_image_base64": None,
+                "error": {
+                    "code": "SVG_OUT_OF_BOUNDS",
+                    "message": "Nét vẽ vượt ngoài khổ giấy sau khi kết xuất.",
+                },
+            }
+
+        svg_filename = f"output_{request.request_id}.svg"
+        svg_path = os.path.join(SVG_OUTPUT_DIR, svg_filename)
+        os.makedirs(SVG_OUTPUT_DIR, exist_ok=True)
+        with open(svg_path, "w", encoding="utf-8") as f:
+            f.write(svg_content)
+
+        _svg_metrics_cache[request.request_id] = metrics
+
+        return {
+            "request_id": request.request_id,
+            "status": "success",
+            "result_image_base64": None,
+            "meta": {
+                "model_used": f"Bio-mimetic ({font_param} / {request.style})",
+                "processing_time_ms": 12.0,
+                "seed": seed_param,
+                "letter_type": letter_type_param,
+            },
+            "svg_ready": True,
+            "svg_metrics": metrics,
+            "error": None
+        }
+
     # TV1: Xử lý Text-to-drawing qua OpenAI API
     if request.input_type == "text" and request.prompt:
         # Chạy đồng bộ trong thread pool để không block event loop của FastAPI
@@ -218,8 +475,16 @@ async def generate_ai_image(request: GenerateRequest):
                     raw_b64 = raw_b64.split(",", 1)[1]
 
                 paper_w, paper_h = 210.0, 297.0
-                if request.options and request.options.get("target_paper_size_mm"):
-                    paper_w, paper_h = request.options["target_paper_size_mm"]
+                skew_angle = 0.0
+                if request.options:
+                    if request.options.get("target_paper_size_mm"):
+                        paper_w, paper_h = request.options["target_paper_size_mm"]
+                    if "skew_angle_deg" in request.options:
+                        skew_angle = float(request.options["skew_angle_deg"])
+                    elif request.options.get("auto_deskew"):
+                        from camera_inspector import inspect_paper
+                        cam_res = inspect_paper()
+                        skew_angle = float(cam_res.get("skew_angle_deg", 0.0))
 
                 svg_result = await asyncio.to_thread(
                     svg_process,
@@ -228,16 +493,45 @@ async def generate_ai_image(request: GenerateRequest):
                     target_paper_size_mm=(paper_w, paper_h),
                     output_dir=SVG_OUTPUT_DIR,
                     style=request.style,  # TV4→TV2: truyền style để TV2 chọn thuật toán tương ứng
+                    skew_angle_deg=skew_angle,
                 )
                 print(f"[pipeline] SVG conversion: {svg_result.get('status')} "
                       f"(metrics={svg_result.get('svg_metrics')})")
 
-                if svg_result.get("status") == "success":
-                    svg_metrics_data = svg_result.get("svg_metrics")
-                    # Lưu vào cache server-side để /api/log/experiment có thể tự lấy
-                    _svg_metrics_cache[resp.request_id] = svg_metrics_data
+                if svg_result.get("status") == "error":
+                    _clear_cached_svg_for_request(resp.request_id)
+                    _clear_cached_svg_for_request(request.request_id)
+                    err = svg_result.get("error") or {}
+                    return {
+                        "request_id": resp.request_id,
+                        "status": "error",
+                        "result_image_base64": None,
+                        "svg_ready": False,
+                        "svg_metrics": None,
+                        "error": {
+                            "code": err.get("code", "VECTORIZE_FAILED"),
+                            "message": err.get("message", "Chuyển đổi vector hoá SVG thất bại.")
+                        }
+                    }
+
+                svg_metrics_data = svg_result.get("svg_metrics")
+                # Lưu vào cache server-side để /api/log/experiment có thể tự lấy
+                _svg_metrics_cache[resp.request_id] = svg_metrics_data
             except Exception as e:
                 print(f"[warn] SVG conversion failed: {e}")
+                _clear_cached_svg_for_request(resp.request_id)
+                _clear_cached_svg_for_request(request.request_id)
+                return {
+                    "request_id": resp.request_id,
+                    "status": "error",
+                    "result_image_base64": None,
+                    "svg_ready": False,
+                    "svg_metrics": None,
+                    "error": {
+                        "code": "VECTORIZE_FAILED",
+                        "message": str(e)
+                    }
+                }
 
             return {
                 "request_id": resp.request_id,
@@ -252,6 +546,8 @@ async def generate_ai_image(request: GenerateRequest):
                 "error": None
             }
         else:
+            _clear_cached_svg_for_request(resp.request_id)
+            _clear_cached_svg_for_request(request.request_id)
             return {
                 "request_id": resp.request_id,
                 "status": "error",
@@ -279,8 +575,16 @@ async def generate_ai_image(request: GenerateRequest):
         svg_metrics_data = None
         try:
             paper_w, paper_h = 210, 297  # Mặc định A4
-            if request.options and "target_paper_size_mm" in request.options:
-                paper_w, paper_h = request.options["target_paper_size_mm"]
+            skew_angle = 0.0
+            if request.options:
+                if "target_paper_size_mm" in request.options:
+                    paper_w, paper_h = request.options["target_paper_size_mm"]
+                if "skew_angle_deg" in request.options:
+                    skew_angle = float(request.options["skew_angle_deg"])
+                elif request.options.get("auto_deskew"):
+                    from camera_inspector import inspect_paper
+                    cam_res = inspect_paper()
+                    skew_angle = float(cam_res.get("skew_angle_deg", 0.0))
 
             # Chạy hàm biến đổi ảnh thành nét vẽ SVG
             svg_result = await asyncio.to_thread(
@@ -290,16 +594,43 @@ async def generate_ai_image(request: GenerateRequest):
                 target_paper_size_mm=(paper_w, paper_h),
                 output_dir=SVG_OUTPUT_DIR,
                 style=request.style,  # TV4→TV2: truyền style để TV2 chọn thuật toán tương ứng
+                skew_angle_deg=skew_angle,
             )
             
             print(f"[pipeline] Image upload SVG conversion: {svg_result.get('status')} "
                   f"(metrics={svg_result.get('svg_metrics')})")
 
-            if svg_result.get("status") == "success":
-                svg_metrics_data = svg_result.get("svg_metrics")
-                _svg_metrics_cache[request.request_id] = svg_metrics_data
+            if svg_result.get("status") == "error":
+                _clear_cached_svg_for_request(request.request_id)
+                err = svg_result.get("error") or {}
+                return {
+                    "request_id": request.request_id,
+                    "status": "error",
+                    "result_image_base64": None,
+                    "svg_ready": False,
+                    "svg_metrics": None,
+                    "error": {
+                        "code": err.get("code", "VECTORIZE_FAILED"),
+                        "message": err.get("message", "Chuyển đổi vector hoá SVG thất bại.")
+                    }
+                }
+
+            svg_metrics_data = svg_result.get("svg_metrics")
+            _svg_metrics_cache[request.request_id] = svg_metrics_data
         except Exception as e:
             print(f"[warn] SVG conversion failed for uploaded image: {e}")
+            _clear_cached_svg_for_request(request.request_id)
+            return {
+                "request_id": request.request_id,
+                "status": "error",
+                "result_image_base64": None,
+                "svg_ready": False,
+                "svg_metrics": None,
+                "error": {
+                    "code": "VECTORIZE_FAILED",
+                    "message": str(e)
+                }
+            }
 
         return {
             "request_id": request.request_id,
@@ -309,11 +640,12 @@ async def generate_ai_image(request: GenerateRequest):
                 "model_used": "uploaded-image",
                 "processing_time_ms": 0
             },
-            "svg_ready": svg_metrics_data is not None,
+            "svg_ready": True,
             "svg_metrics": svg_metrics_data,
             "error": None
         }
 
+    _clear_cached_svg_for_request(request.request_id)
     return {
         "request_id": request.request_id,
         "status": "error",
@@ -335,9 +667,15 @@ async def get_thumbnail(request_id: str):
         return FileResponse(png_path, media_type="image/png")
     
     # Nếu tải ảnh từ ngoài vào (không có PNG gốc ở backend), trả về bản nét vẽ SVG làm thumbnail
-    svg_path = os.path.join(SVG_OUTPUT_DIR, f"output_{request_id}.svg")
-    if os.path.exists(svg_path):
-        return FileResponse(svg_path, media_type="image/svg+xml")
+    base_dir = os.path.abspath(SVG_OUTPUT_DIR)
+    target_file = os.path.abspath(os.path.join(base_dir, f"output_{request_id}.svg"))
+    if (
+        os.path.commonpath([base_dir, target_file]) == base_dir
+        and os.path.dirname(target_file) == base_dir
+        and target_file != base_dir
+        and os.path.isfile(target_file)
+    ):
+        return FileResponse(target_file, media_type="image/svg+xml")
         
     return JSONResponse(status_code=404, content={"error": "Not found"})
 
@@ -351,6 +689,7 @@ async def delete_history(request_id: str):
     from database import delete_history_item
     try:
         delete_history_item(request_id)
+        _clear_cached_svg_for_request(request_id)
         return {"status": "success"}
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
@@ -360,8 +699,14 @@ async def delete_history(request_id: str):
 @app.get("/api/print/svg/{request_id}")
 async def get_svg_content(request_id: str):
     """Trả nội dung SVG thật để giao diện render hiệu ứng 'vẽ dần theo %'."""
-    svg_path = os.path.join(SVG_OUTPUT_DIR, f"output_{request_id}.svg")
-    if not os.path.isfile(svg_path):
+    base_dir = os.path.abspath(SVG_OUTPUT_DIR)
+    target_file = os.path.abspath(os.path.join(base_dir, f"output_{request_id}.svg"))
+    if not (
+        os.path.commonpath([base_dir, target_file]) == base_dir
+        and os.path.dirname(target_file) == base_dir
+        and target_file != base_dir
+        and os.path.isfile(target_file)
+    ):
         return JSONResponse(
             status_code=404,
             content={
@@ -374,12 +719,21 @@ async def get_svg_content(request_id: str):
             }
         )
     try:
-        with open(svg_path, "r", encoding="utf-8") as f:
+        with open(target_file, "r", encoding="utf-8") as f:
             svg_content = f.read()
+
+        metrics = _svg_metrics_cache.get(request_id)
+        if not metrics:
+            from database import parse_svg_info
+            metrics = parse_svg_info(target_file)
+            if metrics:
+                _svg_metrics_cache[request_id] = metrics
+
         return {
             "request_id": request_id,
             "status": "success",
             "svg_content": svg_content,
+            "svg_metrics": metrics,
             "error": None,
         }
     except Exception as exc:
@@ -396,10 +750,6 @@ async def get_svg_content(request_id: str):
 
 
 ASSUMED_PEN_SPEED_MM_PER_SEC = 40.0
-SVG_OUTPUT_DIR = os.environ.get(
-    "OMNIDRAW_SVG_DIR",
-    os.path.join(os.path.dirname(__file__), "svg_output")
-)
 jobs: dict[str, dict] = {}
 DEVICE_CONNECTED = True
 VALID_HARDWARE_ERRORS = {"HARDWARE_NOT_CONNECTED": "Lỗi kết nối", "HARDWARE_PAPER_JAM": "Kẹt giấy",
@@ -552,6 +902,25 @@ async def get_status(request_id: str, simulate_error: Optional[str] = None):
     return res
 
 
+@app.get("/api/camera/inspect-paper")
+async def api_inspect_paper(device: int = 0):
+    """Kiem tra tinh trang giay va goc lech qua camera thi giac (Closed-Loop Vision)."""
+    from camera_inspector import inspect_paper
+    result = inspect_paper(camera_index=device)
+    return result
+
+
 @app.get("/")
 async def root():
     return HTMLResponse("<h1>Trạm OmniDraw đang chạy ở cổng 8000!</h1>")
+
+
+if __name__ == "__main__":
+    try:
+        import uvicorn
+        print("\n🚀 [OmniDraw] Khởi động máy chủ Backend tại http://localhost:8000 ...")
+        uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True, app_dir=_backend_dir)
+    except ImportError:
+        print("\n❌ Lỗi: Chưa tìm thấy thư viện uvicorn. Hãy chạy trong môi trường ảo:")
+        print(f"   source {os.path.join(_backend_dir, 'venv', 'bin', 'activate')}")
+        print("   uvicorn main:app --reload --port 8000")
