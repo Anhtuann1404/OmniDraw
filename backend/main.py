@@ -277,6 +277,7 @@ async def generate_ai_image(request: GenerateRequest):
 
     # Phân nhánh Viết Thư Tay (Single-Stroke Bio-Mimetic Handwriting)
     if request.input_type in ("handwriting", "letter") or request.style.startswith("hand_"):
+        t_start = time.perf_counter()
         text_content = request.prompt or ""
 
         # Nếu tải lên file văn bản (.docx hoặc .txt) dưới dạng base64
@@ -418,6 +419,7 @@ async def generate_ai_image(request: GenerateRequest):
             f.write(svg_content)
 
         _svg_metrics_cache[request.request_id] = metrics
+        processing_time_ms = max(0.0, (time.perf_counter() - t_start) * 1000.0)
 
         return {
             "request_id": request.request_id,
@@ -425,7 +427,7 @@ async def generate_ai_image(request: GenerateRequest):
             "result_image_base64": None,
             "meta": {
                 "model_used": f"Bio-mimetic ({font_param} / {request.style})",
-                "processing_time_ms": 12.0,
+                "processing_time_ms": processing_time_ms,
                 "seed": seed_param,
                 "letter_type": letter_type_param,
             },

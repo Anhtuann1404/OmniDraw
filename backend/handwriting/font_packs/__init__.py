@@ -10,6 +10,7 @@ from .omni_casual import (
     OMNI_CASUAL_GLYPHS,
     OMNI_CASUAL_WIDTHS,
     OMNI_CASUAL_CENTERS,
+    OMNI_CASUAL_WORD_FINAL_GLYPHS,
 )
 from .letter_variants import LETTER_VARIANT_SETS
 
@@ -33,8 +34,11 @@ FONT_PACKS = {
         "default_width": DEFAULT_WIDTH,
         "default_center": DEFAULT_CENTER,
         "dot_below_x_offsets": {
-            "y": 0.0,
+            "y": 0.4,
             "Y": 0.0,
+        },
+        "contextual_glyphs": {
+            "word_final": OMNI_CASUAL_WORD_FINAL_GLYPHS,
         },
         "supports_vietnamese_accents": True,
         "source_type": "builtin_single_stroke_adaptation",

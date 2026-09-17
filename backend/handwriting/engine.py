@@ -919,15 +919,185 @@ def resolve_letter_type(letter_type, font_pack_id):
     return None
 
 
+def group_nfd_graphemes(text):
+    """
+    Phân tách chuỗi văn bản thành danh sách các nhóm Unicode NFD:
+    Mỗi nhóm là một danh sách [base_char, mark1, mark2, ...].
+    Ví dụ: 'ế' -> ['e', '\u0302', '\u0301'], 'ỵ' -> ['y', '\u0323'].
+    """
+    decomposed = unicodedata.normalize("NFD", text)
+    groups = []
+    current_group = []
+    for ch in decomposed:
+        if unicodedata.combining(ch):
+            if current_group:
+                current_group.append(ch)
+            else:
+                current_group = [ch]
+        else:
+            if current_group:
+                groups.append(current_group)
+            current_group = [ch]
+    if current_group:
+        groups.append(current_group)
+    return groups
+
+
+VIETNAMESE_FINAL_UY_TONE_MARKS = frozenset({
+    "\u0301",  # sắc
+    "\u0300",  # huyền
+    "\u0309",  # hỏi
+    "\u0303",  # ngã
+    "\u0323",  # nặng
+})
+
+
+def normalize_vietnamese_final_uy_tone(text: str) -> str:
+    """
+    Chuẩn hóa vị trí dấu thanh cho vần 'uy' kết thúc âm tiết theo quy ước dự án:
+    Chuyển tone mark từ y/Y sang u/U (ví dụ: luỵ -> lụy, thuỵ -> thụy, tuý -> túy, huỷ -> hủy, THUỴ -> THỤY).
+
+    Quy tắc an toàn:
+    1. Chỉ chuyển khi y/Y là ký tự cuối âm tiết (phía sau không còn chữ cái Unicode).
+    2. Không chuyển nếu u ngay trước đó thuộc cụm qu/QU (ví dụ: quỵ, quý, quỳ, quỷ, quỹ, QUỴ giữ nguyên).
+    3. Không chuyển nếu sau y còn chữ cái (ví dụ: suýt, khuỵu giữ nguyên).
+    4. Không chuyển nếu y có 0 hoặc nhiều hơn 1 dấu thanh, hoặc u đã có dấu thanh.
+    5. Không làm mất structural marks (mũ, trăng, móc...).
+    6. Kết quả luôn trả về dạng NFC và đảm bảo tính idempotent:
+       normalize(normalize(text)) == normalize(text).
+    """
+    if not text:
+        return text
+    groups = group_nfd_graphemes(text)
+    modified = False
+
+    for i in range(1, len(groups)):
+        prev_g = groups[i - 1]
+        curr_g = groups[i]
+
+        # Kiểm tra chuỗi u/U đi liền trước y/Y
+        if prev_g[0] not in ("u", "U") or curr_g[0] not in ("y", "Y"):
+            continue
+
+        # Không chuyển nếu u là 'ư' (có dấu móc U+031B)
+        if "\u031B" in prev_g[1:]:
+            continue
+
+        # Kiểm tra y/Y có đúng 1 dấu thanh
+        curr_tones = [m for m in curr_g[1:] if m in VIETNAMESE_FINAL_UY_TONE_MARKS]
+        if len(curr_tones) != 1:
+            continue
+        tone = curr_tones[0]
+
+        # Kiểm tra u/U chưa có dấu thanh nào
+        prev_tones = [m for m in prev_g[1:] if m in VIETNAMESE_FINAL_UY_TONE_MARKS]
+        if len(prev_tones) > 0:
+            continue
+
+        # Ngoại lệ qu/QU: không chuyển nếu u ngay trước đó thuộc cụm qu/QU
+        if i - 2 >= 0 and groups[i - 2][0] in ("q", "Q"):
+            continue
+
+        # Kiểm tra y là ký tự cuối âm tiết: sau y không còn chữ cái Unicode nào
+        if i + 1 < len(groups):
+            next_g = groups[i + 1]
+            if next_g[0].isalpha():
+                continue
+
+        # Chuyển tone mark từ y sang u
+        curr_g.remove(tone)
+        prev_g.append(tone)
+        modified = True
+
+    if not modified:
+        return unicodedata.normalize("NFC", text)
+
+    res_str = "".join("".join(g) for g in groups)
+    return unicodedata.normalize("NFC", res_str)
+
+
+SENTENCE_TERMINATORS = frozenset({".", "!", "?", "…"})
+
+
+def analyze_text_contexts(text):
+    """
+    Context Analyzer v1 (CA-VHC):
+    Phân tích ngữ cảnh vị trí của từng grapheme không phải khoảng trắng theo đúng thứ tự
+    mà text_to_strokes() sẽ render.
+
+    Mỗi phần tử gồm:
+    {
+        "group": [...],
+        "base_char": "...",
+        "is_document_initial": bool,
+        "is_word_initial": bool,
+        "is_word_final": bool,
+        "is_sentence_final": bool,
+    }
+    """
+    all_groups = group_nfd_graphemes(text)
+    if not all_groups:
+        return []
+
+    # Xây dựng context thô cho toàn bộ các grapheme (bao gồm cả khoảng trắng để phân định từ/câu)
+    n = len(all_groups)
+    all_contexts = []
+    for i, g in enumerate(all_groups):
+        b_char = g[0]
+        is_alpha = b_char.isalpha()
+        is_w_init = False
+        is_w_final = False
+        if is_alpha:
+            prev_is_alpha = (i > 0 and all_groups[i - 1][0].isalpha())
+            next_is_alpha = (i < n - 1 and all_groups[i + 1][0].isalpha())
+            is_w_init = not prev_is_alpha
+            is_w_final = not next_is_alpha
+
+        all_contexts.append({
+            "group": g,
+            "base_char": b_char,
+            "is_document_initial": False,
+            "is_word_initial": is_w_init,
+            "is_word_final": is_w_final,
+            "is_sentence_final": False,
+        })
+
+    # Đánh dấu chữ cái cuối cùng của mỗi câu (is_sentence_final)
+    # - Chữ cái cuối trước ., !, ? hoặc …
+    # - Hoặc chữ cái cuối cùng của toàn văn bản nếu không có dấu kết câu
+    # - Dấu câu không được đánh dấu là sentence_final
+    last_alpha_ctx = None
+    for ctx in all_contexts:
+        b_char = ctx["base_char"]
+        if b_char in SENTENCE_TERMINATORS:
+            if last_alpha_ctx is not None:
+                last_alpha_ctx["is_sentence_final"] = True
+                last_alpha_ctx = None
+        elif b_char.isalpha():
+            last_alpha_ctx = ctx
+
+    if last_alpha_ctx is not None:
+        last_alpha_ctx["is_sentence_final"] = True
+
+    # Lọc chỉ giữ các grapheme không phải khoảng trắng (đúng thứ tự render của text_to_strokes)
+    render_contexts = [ctx for ctx in all_contexts if not ctx["base_char"].isspace()]
+
+    # is_document_initial chỉ đúng với grapheme không-whitespace đầu tiên
+    if render_contexts:
+        render_contexts[0]["is_document_initial"] = True
+
+    return render_contexts
+
+
 def select_contextual_glyph(
     base_char,
     font_pack,
     font_pack_id,
     letter_type,
-    is_document_initial,
+    context=None,
 ):
     """
-    Chọn nét hình học, độ rộng và tâm của glyph theo ngữ cảnh tài liệu và loại thư.
+    Chọn nét hình học, độ rộng và tâm của glyph theo ngữ cảnh tài liệu, ngữ cảnh từ và loại thư.
     Trả về: (strokes, width, center, variant_tag)
     """
     glyphs = font_pack["glyphs"]
@@ -936,10 +1106,12 @@ def select_contextual_glyph(
     default_width = font_pack.get("default_width", DEFAULT_WIDTH)
     default_center = font_pack.get("default_center", DEFAULT_CENTER)
 
+    # Ưu tiên 1: formal_initial (chữ hoa mở đầu tài liệu cho kiểu thư formal trên legacy pack)
+    is_doc_init = bool(context.get("is_document_initial")) if isinstance(context, dict) else bool(context)
     if (
         letter_type == "formal"
         and font_pack_id == "omnidraw_legacy"
-        and is_document_initial
+        and is_doc_init
         and base_char in ("K", "T", "C")
     ):
         v_info = LETTER_VARIANT_SETS["formal"]["initial_glyphs"][base_char]
@@ -950,12 +1122,27 @@ def select_contextual_glyph(
             "formal_initial",
         )
 
+    # Ưu tiên 2: word_final (biến thể kết thúc từ riêng của từng font pack)
+    if isinstance(context, dict) and context.get("is_word_final"):
+        ctx_glyphs = font_pack.get("contextual_glyphs", {})
+        wf_glyphs = ctx_glyphs.get("word_final", {})
+        if base_char in wf_glyphs:
+            v_info = wf_glyphs[base_char]
+            return (
+                [s.copy() for s in v_info["strokes"]],
+                v_info.get("width", widths.get(base_char, default_width)),
+                v_info.get("center", centers.get(base_char, default_center)),
+                "word_final",
+            )
+
+    # Ưu tiên 3: glyph base mặc định
     return (
         glyphs[base_char],
         widths.get(base_char, default_width),
         centers.get(base_char, default_center),
         "base",
     )
+
 
 
 def apply_bio_variation(
@@ -1007,6 +1194,11 @@ def text_to_strokes(text, font="oly", style="hand_hocsinh", font_size_mm=7.0, li
     default_center = font_pack.get("default_center", DEFAULT_CENTER)
     dot_below_x_offsets = font_pack.get("dot_below_x_offsets", {})
 
+    if not isinstance(text, str):
+        raise TypeError("text phải là chuỗi Unicode.")
+
+    text = normalize_vietnamese_final_uy_tone(text)
+
     unsupported_chars = find_unsupported_characters(text, glyphs)
     if unsupported_chars:
         raise UnsupportedCharacterError(unsupported_chars)
@@ -1034,6 +1226,9 @@ def text_to_strokes(text, font="oly", style="hand_hocsinh", font_size_mm=7.0, li
     curr_y = margin_mm + font_size_mm
     rendered_char_count = 0
 
+    contexts = analyze_text_contexts(text)
+    context_cursor = 0
+
     words = text.split(" ")
     word_idx = 0
 
@@ -1054,18 +1249,7 @@ def text_to_strokes(text, font="oly", style="hand_hocsinh", font_size_mm=7.0, li
                     )
 
             # Chuẩn hóa NFD để bóc tách dấu thanh tiếng Việt
-            decomposed = unicodedata.normalize('NFD', sub_w)
-            char_queue = []
-            current_group = []
-            for ch in decomposed:
-                if unicodedata.combining(ch):
-                    current_group.append(ch)
-                else:
-                    if current_group:
-                        char_queue.append(current_group)
-                    current_group = [ch]
-            if current_group:
-                char_queue.append(current_group)
+            char_queue = group_nfd_graphemes(sub_w)
 
             # Kiểm tra tràn dòng (Word wrap) theo kích thước proportional
             est_w = sum(widths.get(g[0], default_width) for g in char_queue) * scale * cfg["char_spacing"]
@@ -1084,6 +1268,15 @@ def text_to_strokes(text, font="oly", style="hand_hocsinh", font_size_mm=7.0, li
             char_info_list = []
             tmp_x = curr_x
             for char_idx, group in enumerate(char_queue):
+                if context_cursor >= len(contexts):
+                    raise RuntimeError(
+                        f"Lệch context cursor: index {context_cursor} vượt quá {len(contexts)}"
+                    )
+                context = contexts[context_cursor]
+                assert context["group"] == group, (
+                    f"Lệch context group tại cursor {context_cursor}: {context['group']} != {group}"
+                )
+
                 b_char = group[0]
                 is_d = False
                 if b_char == 'đ':
@@ -1096,16 +1289,16 @@ def text_to_strokes(text, font="oly", style="hand_hocsinh", font_size_mm=7.0, li
                 char_rhythm = 1.0 + 0.02 * math.sin(word_idx * 1.7 + char_idx * 2.3)
                 c_scale_x = scale * char_rhythm * cfg["char_spacing"]
 
-                is_document_initial = (rendered_char_count == 0)
-                raw_s, glyph_w, cx, _variant_tag = select_contextual_glyph(
+                raw_s, glyph_w, cx, _ = select_contextual_glyph(
                     b_char,
                     font_pack,
                     font_pack_id,
                     letter_type,
-                    is_document_initial,
+                    context,
                 )
                 w_char = glyph_w * c_scale_x
                 rendered_char_count += 1
+                context_cursor += 1
 
                 char_info_list.append({
                     "char": b_char,
@@ -1116,6 +1309,7 @@ def text_to_strokes(text, font="oly", style="hand_hocsinh", font_size_mm=7.0, li
                     "offset": np.array([tmp_x, curr_y - 14.0 * scale]),
                     "w_char": w_char,
                     "cx": cx,
+                    "context": context,
                 })
                 tmp_x += w_char
 
@@ -1224,6 +1418,10 @@ def text_to_strokes(text, font="oly", style="hand_hocsinh", font_size_mm=7.0, li
             curr_x += space_w * rng.uniform(0.95, 1.05)
             word_idx += 1
 
+    assert context_cursor == len(contexts), (
+        f"Lệch context cursor khi kết thúc text_to_strokes: {context_cursor} vs {len(contexts)}"
+    )
+
     return strokes
 
 
@@ -1231,9 +1429,9 @@ def generate_handwriting_svg(text, font="oly", style="hand_hocsinh", target_pape
                              font_size_mm=7.0, line_spacing_mm=13.0, skew_angle_deg=0.0, seed=None,
                              letter_type="general"):
     """
-    Sinh file SVG chữ viết tay hoàn chỉnh, chạy qua bộ tối ưu hóa path_optimizer
-    (Catmull-Rom Bézier smoothing, Auto-deskew).
-    Giữ thứ tự viết tự nhiên từ trái sang phải, từ trên xuống dưới.
+    Sinh file SVG chữ viết tay hoàn chỉnh qua path_optimizer
+    (kết xuất Catmull-Rom Bézier smoothing, Auto-deskew).
+    Giữ thứ tự viết tự nhiên từ trái sang phải, từ trên xuống dưới (không tối ưu thứ tự nét).
     """
     try:
         from path_optimizer import build_svg, compute_svg_metrics
@@ -1262,7 +1460,7 @@ def generate_handwriting_svg(text, font="oly", style="hand_hocsinh", target_pape
         stroke_width_mm=0.35, smooth=True, skew_angle_deg=skew_angle_deg
     )
 
-    metrics = compute_svg_metrics(strokes, order, rev, scale=1.0, optimize_time_ms=1.0, skew_angle_deg=skew_angle_deg)
+    metrics = compute_svg_metrics(strokes, order, rev, scale=1.0, optimize_time_ms=0.0, skew_angle_deg=skew_angle_deg)
     return svg_content, metrics, is_within_bounds
 
 
@@ -2554,7 +2752,7 @@ def _run_self_check():
 
     # Kiểm tra căn tâm dấu nặng của Ỵ trong Omni Casual và regression font legacy
     casual_dot_offsets = pack_casual["dot_below_x_offsets"]
-    assert casual_dot_offsets["y"] == 0.0
+    assert casual_dot_offsets["y"] == 0.4
     assert casual_dot_offsets["Y"] == 0.0
 
     raw_y_upper_dot = generate_accents(
@@ -3252,7 +3450,9 @@ def _run_self_check():
     # D. Chỉ áp dụng ở đầu tài liệu
     font_legacy_pack, _ = resolve_font("oly")
     for non_initial_txt, target_char in [("Anh Khoa", "K"), ("Anh Tuấn", "T"), ("Anh Cường", "C")]:
-        _, _, _, v_tag = select_contextual_glyph(target_char, font_legacy_pack, "omnidraw_legacy", "formal", False)
+        _, _, _, v_tag = select_contextual_glyph(
+            target_char, font_legacy_pack, "omnidraw_legacy", "formal", {"is_document_initial": False}
+        )
         assert v_tag == "base", f"'{target_char}' không ở đầu văn bản phải dùng variant 'base'"
 
     # E. Bỏ qua khoảng trắng đầu
@@ -3284,10 +3484,387 @@ def _run_self_check():
         formal_pts = np.vstack(formal_s)
         assert len(formal_pts) != len(legacy_pts) or not np.allclose(formal_pts, legacy_pts), f"Formal glyph '{char_key}' phải có geometry riêng"
 
+    # ----------------------------- Context Analyzer v1 Self-Check -----------------------------
+    # Case 1: "  Kính gửi bạn."
+    # - K là document initial và word initial
+    # - h là word final
+    # - g là word initial
+    # - i trong "gửi" là word final dù có dấu
+    # - n trong "bạn" là word final và sentence final
+    # - dấu . không phải sentence final
+    c1 = analyze_text_contexts("  Kính gửi bạn.")
+    assert c1[0]["base_char"] == "K" and c1[0]["is_document_initial"] and c1[0]["is_word_initial"]
+    assert c1[3]["base_char"] == "h" and c1[3]["is_word_final"]
+    assert c1[4]["base_char"] == "g" and c1[4]["is_word_initial"]
+    assert c1[6]["base_char"] == "i" and c1[6]["is_word_final"]
+    assert c1[9]["base_char"] == "n" and c1[9]["is_word_final"] and c1[9]["is_sentence_final"]
+    assert c1[10]["base_char"] == "." and not c1[10]["is_sentence_final"]
+
+    # Case 2: "Xin chào!\nCảm ơn"
+    # - X, c, C, ơ đầu đúng từ
+    # - chữ o có dấu trong "chào" là word final và sentence final
+    # - chữ n cuối "ơn" là word final và sentence final
+    # - combining marks không xuất hiện thành context độc lập
+    c2 = analyze_text_contexts("Xin chào!\nCảm ơn")
+    assert c2[0]["base_char"] == "X" and c2[0]["is_word_initial"]
+    assert c2[3]["base_char"] == "c" and c2[3]["is_word_initial"]
+    assert c2[8]["base_char"] == "C" and c2[8]["is_word_initial"]
+    assert c2[11]["base_char"] == "o" and c2[11]["is_word_initial"]  # 'ơ' decomposed base is 'o'
+    assert c2[6]["base_char"] == "o" and c2[6]["is_word_final"] and c2[6]["is_sentence_final"]
+    assert c2[12]["base_char"] == "n" and c2[12]["is_word_final"] and c2[12]["is_sentence_final"]
+    assert len(c2) == 13
+
+    # Case 3: "Đẹp quá?"
+    # - Đ chỉ là một grapheme
+    # - nguyên âm có dấu vẫn là một grapheme
+    # - chữ cuối trước ? là sentence final
+    c3 = analyze_text_contexts("Đẹp quá?")
+    assert len(c3[0]["group"]) == 1 and c3[0]["base_char"] == "Đ"
+    assert c3[0]["is_word_initial"]
+    assert c3[5]["base_char"] == "a" and c3[5]["is_word_final"] and c3[5]["is_sentence_final"]
+    assert not c3[6]["is_sentence_final"]
+
+    # Case 4: "\"Kính gửi!\""
+    # - Xác nhận hành vi document initial giữ đúng logic cũ khi văn bản bắt đầu bằng dấu câu
+    # - Không âm thầm đổi glyph K thành formal initial nếu trước đây K không phải rendered character đầu tiên
+    c4 = analyze_text_contexts("\"Kính gửi!\"")
+    assert c4[0]["base_char"] == "\"" and c4[0]["is_document_initial"]
+    assert not c4[0]["is_word_initial"]
+    assert c4[1]["base_char"] == "K" and not c4[1]["is_document_initial"] and c4[1]["is_word_initial"]
+    assert c4[7]["base_char"] == "i" and c4[7]["is_word_final"] and c4[7]["is_sentence_final"]
+    assert not c4[8]["is_sentence_final"]
+    assert not c4[9]["is_sentence_final"]
+
+    # Regression check: 12 baseline SHA-256 fingerprints cho Context Analyzer v1
+    def stroke_fingerprint(strokes):
+        digest = hashlib.sha256()
+        digest.update(len(strokes).to_bytes(4, "little"))
+
+        for stroke in strokes:
+            arr = np.asarray(stroke, dtype="<f8")
+            rounded = np.round(arr, 4).astype("<f8", copy=False)
+            digest.update(np.asarray(arr.shape, dtype="<i8").tobytes())
+            digest.update(rounded.tobytes())
+
+        return digest.hexdigest()
+
+    reg_specimens = [
+        "Kính gửi bạn.",
+        "Thân gửi,\nCảm ơn bạn.",
+        "Tiếng Việt rất đẹp.",
+    ]
+    reg_configs = [
+        ("oly", "general"),
+        ("oly", "formal"),
+        ("thanhdam", "general"),
+        ("omni_casual", "general"),
+    ]
+
+    context_regression_baselines = {
+        ("Kính gửi bạn.", "oly", "general"): "3b0204fc05e508ecefd5ddcb53d5e17b8e32d99b1a3dba7233d2927eeb2fda45",
+        ("Kính gửi bạn.", "oly", "formal"): "959ef60164489f46ebf3471d6f656cf17bac65ab45aa64f5b7e84bfd8d9b6c0e",
+        ("Kính gửi bạn.", "thanhdam", "general"): "080105869dcdcaea219e4a14983cb62e1b4b54996c6cee441551e3895294251f",
+        ("Kính gửi bạn.", "omni_casual", "general"): "22dabe2bd547fedbccffa856a0ab064a7d3e747139a6ef7bd28572f838685164",
+        ("Thân gửi,\nCảm ơn bạn.", "oly", "general"): "585508b7b7fff44a98ca5442194468ea8fbad3275bf69af50fd6dafb0be5e95a",
+        ("Thân gửi,\nCảm ơn bạn.", "oly", "formal"): "dd04ad7a98b0bb8ed8605facfdd27e13a9fc9779800a0ea60162b0c0a3e17d37",
+        ("Thân gửi,\nCảm ơn bạn.", "thanhdam", "general"): "5b1fc4f779204d276593cf87ea31f7fcf2db394de28de6cdf4ec5497f3d159c6",
+        ("Thân gửi,\nCảm ơn bạn.", "omni_casual", "general"): "32b69745bc39a352b4c9da2a3632c89aad76b3582c2c9f877aa641ad81d39897",
+        ("Tiếng Việt rất đẹp.", "oly", "general"): "b755158548ef14f37db14b4346ca4bd2b27b0faf965dff3a3d91a67d7cc5fe44",
+        ("Tiếng Việt rất đẹp.", "oly", "formal"): "751f1f82fc2bb2185b352023fd1f9abb01abff5ce404d45f4a6f7b5ce6ccffb2",
+        ("Tiếng Việt rất đẹp.", "thanhdam", "general"): "1e8213f3fee79b26fa627139dc791d1a342f9f8b3747d44dc5bbfb7be971cb49",
+        ("Tiếng Việt rất đẹp.", "omni_casual", "general"): "75ba83eccb3a83ac791af9d24d7901bffa2ef2824076a7fb86673985d7ca23c8",
+    }
+
+    # Assertion xác nhận tính toàn vẹn của bảng baseline
+    assert len(context_regression_baselines) == 12, (
+        f"Bảng baseline phải có đúng 12 entry, nhận {len(context_regression_baselines)}"
+    )
+    for reg_text in reg_specimens:
+        for reg_font, reg_letter_type in reg_configs:
+            key = (reg_text, reg_font, reg_letter_type)
+            assert key in context_regression_baselines, f"Thiếu baseline cho cấu hình {key}"
+            expected_digest = context_regression_baselines[key]
+            assert isinstance(expected_digest, str) and len(expected_digest) == 64, (
+                f"Digest cho {key} phải là chuỗi hex 64 ký tự, nhận {expected_digest!r}"
+            )
+            assert all(c in "0123456789abcdef" for c in expected_digest), (
+                f"Digest cho {key} chứa ký tự hex không hợp lệ: {expected_digest!r}"
+            )
+
+            actual_digest = stroke_fingerprint(
+                text_to_strokes(
+                    reg_text,
+                    font=reg_font,
+                    seed=42,
+                    letter_type=reg_letter_type,
+                )
+            )
+            assert actual_digest == expected_digest, (
+                f"Context regression mismatch: "
+                f"text={reg_text!r}, font={reg_font!r}, "
+                f"letter_type={reg_letter_type!r}, "
+                f"expected={expected_digest}, actual={actual_digest}"
+            )
+
+    # ------------------- Contextual Variants v1 Self-Check (Omni Casual n, m) -------------------
+    # A. Metadata
+    pack_casual, _ = resolve_font("omni_casual")
+    assert "contextual_glyphs" in pack_casual, "Thiếu contextual_glyphs trong omni_casual"
+    assert "word_final" in pack_casual["contextual_glyphs"], "Thiếu nhóm word_final trong contextual_glyphs"
+    wf_glyphs = pack_casual["contextual_glyphs"]["word_final"]
+    assert set(wf_glyphs.keys()) == {"n", "m"}, f"Batch word_final phải có đúng {{n, m}}, nhận {set(wf_glyphs.keys())}"
+
+    for ch in ("n", "m"):
+        v_info = wf_glyphs[ch]
+        assert "strokes" in v_info and "width" in v_info and "center" in v_info, f"Variant {ch} thiếu trường"
+        assert len(v_info["strokes"]) >= 1, f"Variant {ch} không có stroke"
+        pts = np.concatenate(v_info["strokes"], axis=0)
+        assert not np.any(np.isnan(pts)) and not np.any(np.isinf(pts)), f"Variant {ch} chứa NaN/Inf"
+        for s in v_info["strokes"]:
+            assert s.ndim == 2 and s.shape[1] == 2 and s.shape[0] >= 2, f"Variant {ch} có stroke shape sai: {s.shape}"
+        assert v_info["width"] == pack_casual["widths"][ch], f"Variant {ch} width lệch base width"
+        assert v_info["center"] == pack_casual["centers"].get(ch, pack_casual.get("default_center", DEFAULT_CENTER)), f"Variant {ch} center lệch base center"
+        min_x, min_y = np.min(pts, axis=0)
+        max_x, max_y = np.max(pts, axis=0)
+        assert min_x >= 0.0, f"Variant {ch} min_x < 0: {min_x}"
+        assert max_x <= v_info["width"], f"Variant {ch} max_x ({max_x}) vượt width ({v_info['width']})"
+
+    assert "dot_below_x_offset" not in wf_glyphs["n"], "word_final n không được có dot_below_x_offset"
+    assert "dot_below_x_offset" not in wf_glyphs["m"], "word_final m không được có dot_below_x_offset"
+    assert pack_casual["dot_below_x_offsets"]["y"] == 0.4, "base y dot_below_x_offsets phải là 0.4"
+    assert pack_casual["dot_below_x_offsets"]["Y"] == 0.0, "base Y dot_below_x_offsets phải là 0.0"
+
+    # B. Chọn đúng theo vị trí (y dùng base ở mọi vị trí)
+    pos_cases = [
+        ("na", 0, "base"),
+        ("an", 1, "word_final"),
+        ("ma", 0, "base"),
+        ("am", 1, "word_final"),
+        ("ya", 0, "base"),
+        ("ay", 1, "base"),
+        ("an.", 1, "word_final"),
+    ]
+    for p_text, p_idx, exp_tag in pos_cases:
+        p_ctxs = analyze_text_contexts(p_text)
+        p_ctx = p_ctxs[p_idx]
+        p_ch = p_ctx["base_char"]
+        _, _, _, act_tag = select_contextual_glyph(p_ch, pack_casual, "omni_casual", "general", p_ctx)
+        assert act_tag == exp_tag, f"Chọn sai variant cho {p_text}[{p_idx}]: {act_tag} != {exp_tag}"
+
+    # Font Pack legacy cùng context cuối từ vẫn phải dùng base
+    for l_text, l_idx in [("an", 1), ("am", 1), ("ay", 1)]:
+        l_ctxs = analyze_text_contexts(l_text)
+        l_ctx = l_ctxs[l_idx]
+        l_ch = l_ctx["base_char"]
+        _, _, _, act_l_tag = select_contextual_glyph(l_ch, font_legacy_pack, "omnidraw_legacy", "general", l_ctx)
+        assert act_l_tag == "base", f"Legacy font cho {l_text}[{l_idx}] phải trả base, nhận {act_l_tag}"
+
+    # C. Geometry thực sự khác base và đạt ngưỡng hình học
+    # n và m: endpoint nhô ra ngoài (n: 8.05..8.15, m: 11.70..11.78), endpoint distance >= 1.2, tiếp tuyến dx > 0, dy < 0
+    base_end_n = pack_casual["glyphs"]["n"][-1][-1]
+    wf_end_n = wf_glyphs["n"]["strokes"][-1][-1]
+    dist_n = float(np.linalg.norm(wf_end_n - base_end_n))
+    assert dist_n >= 1.2, f"Endpoint distance cho 'n' ({dist_n:.3f}) < 1.2"
+    assert 8.05 <= wf_end_n[0] <= 8.15, f"Endpoint x của 'n' ({wf_end_n[0]:.3f}) ngoài [8.05, 8.15]"
+    assert 11.3 <= wf_end_n[1] <= 11.7, f"Endpoint y của 'n' ({wf_end_n[1]:.3f}) ngoài [11.3, 11.7]"
+    assert wf_end_n[0] > 7.80, f"Endpoint x của 'n' ({wf_end_n[0]:.3f}) chưa nhô ra hơn phiên bản trước (7.80)"
+    dx_n = float(wf_glyphs["n"]["strokes"][-1][-1][0] - wf_glyphs["n"]["strokes"][-1][-2][0])
+    dy_n = float(wf_glyphs["n"]["strokes"][-1][-1][1] - wf_glyphs["n"]["strokes"][-1][-2][1])
+    assert dx_n > 0, f"Tiếp tuyến dx cho 'n' ({dx_n:.3f}) <= 0"
+    assert dy_n < 0, f"Tiếp tuyến dy cho 'n' ({dy_n:.3f}) >= 0"
+
+    base_end_m = pack_casual["glyphs"]["m"][-1][-1]
+    wf_end_m = wf_glyphs["m"]["strokes"][-1][-1]
+    dist_m = float(np.linalg.norm(wf_end_m - base_end_m))
+    assert dist_m >= 1.2, f"Endpoint distance cho 'm' ({dist_m:.3f}) < 1.2"
+    assert 11.70 <= wf_end_m[0] <= 11.78, f"Endpoint x của 'm' ({wf_end_m[0]:.3f}) ngoài [11.70, 11.78]"
+    assert 11.3 <= wf_end_m[1] <= 11.7, f"Endpoint y của 'm' ({wf_end_m[1]:.3f}) ngoài [11.3, 11.7]"
+    assert wf_end_m[0] > 11.50, f"Endpoint x của 'm' ({wf_end_m[0]:.3f}) chưa nhô ra hơn phiên bản trước (11.50)"
+    dx_m = float(wf_glyphs["m"]["strokes"][-1][-1][0] - wf_glyphs["m"]["strokes"][-1][-2][0])
+    dy_m = float(wf_glyphs["m"]["strokes"][-1][-1][1] - wf_glyphs["m"]["strokes"][-1][-2][1])
+    assert dx_m > 0, f"Tiếp tuyến dx cho 'm' ({dx_m:.3f}) <= 0"
+    assert dy_m < 0, f"Tiếp tuyến dy cho 'm' ({dy_m:.3f}) >= 0"
+
+    for ch in ("n", "m"):
+        base_s = pack_casual["glyphs"][ch]
+        wf_s = wf_glyphs[ch]["strokes"]
+        is_diff = False
+        if len(base_s) != len(wf_s):
+            is_diff = True
+        else:
+            for s1, s2 in zip(base_s, wf_s):
+                if s1.shape != s2.shape or not np.allclose(s1, s2):
+                    is_diff = True
+                    break
+        assert is_diff, f"Geometry word_final của '{ch}' không được trùng hoàn toàn với base glyph"
+
+    # D. Normalizer v1 & Vietnamese Accent Checks
+    # 1. Các ca phải chuyển
+    assert normalize_vietnamese_final_uy_tone("luỵ") == "lụy"
+    assert normalize_vietnamese_final_uy_tone("thuỵ") == "thụy"
+    assert normalize_vietnamese_final_uy_tone("tuý") == "túy"
+    assert normalize_vietnamese_final_uy_tone("huỷ") == "hủy"
+    assert normalize_vietnamese_final_uy_tone("luỳ") == "lùy"
+    assert normalize_vietnamese_final_uy_tone("luỷ") == "lủy"
+    assert normalize_vietnamese_final_uy_tone("luỹ") == "lũy"
+    assert normalize_vietnamese_final_uy_tone("nguỵ") == "ngụy"
+    assert normalize_vietnamese_final_uy_tone("THUỴ") == "THỤY"
+    assert normalize_vietnamese_final_uy_tone("luỵ,") == "lụy,"
+
+    # 2. Các ca phải giữ nguyên
+    assert normalize_vietnamese_final_uy_tone("quỵ") == "quỵ"
+    assert normalize_vietnamese_final_uy_tone("quý") == "quý"
+    assert normalize_vietnamese_final_uy_tone("quỳ") == "quỳ"
+    assert normalize_vietnamese_final_uy_tone("quỷ") == "quỷ"
+    assert normalize_vietnamese_final_uy_tone("quỹ") == "quỹ"
+    assert normalize_vietnamese_final_uy_tone("QUỴ") == "QUỴ"
+    assert normalize_vietnamese_final_uy_tone("suýt") == "suýt"
+    assert normalize_vietnamese_final_uy_tone("khuỵu") == "khuỵu"
+    assert normalize_vietnamese_final_uy_tone("lụy") == "lụy"
+    assert normalize_vietnamese_final_uy_tone("thụy") == "thụy"
+
+    # 3. Idempotence
+    for t_case in ("luỵ", "thuỵ", "tuý", "huỷ", "luỳ", "luỷ", "luỹ", "nguỵ", "THUỴ", "luỵ,",
+                   "quỵ", "quý", "quỳ", "quỷ", "quỹ", "QUỴ", "suýt", "khuỵu", "lụy", "thụy"):
+        once = normalize_vietnamese_final_uy_tone(t_case)
+        twice = normalize_vietnamese_final_uy_tone(once)
+        assert once == twice, f"Không idempotent cho {t_case}: {once} != {twice}"
+
+    # 4. Xác nhận combining mark đã chuyển đúng grapheme
+    g_luy = group_nfd_graphemes(normalize_vietnamese_final_uy_tone("luỵ"))
+    assert "\u0323" in next(g for g in g_luy if g[0] == "u"), "Dấu nặng phải nằm trong group u của lụy"
+    assert "\u0323" not in next(g for g in g_luy if g[0] == "y"), "Group y của lụy không được chứa dấu nặng"
+
+    g_thuy = group_nfd_graphemes(normalize_vietnamese_final_uy_tone("thuỵ"))
+    assert "\u0323" in next(g for g in g_thuy if g[0] == "u"), "Dấu nặng phải nằm trong group u của thụy"
+    assert "\u0323" not in next(g for g in g_thuy if g[0] == "y"), "Group y của thụy không được chứa dấu nặng"
+
+    g_quy = group_nfd_graphemes(normalize_vietnamese_final_uy_tone("quỵ"))
+    assert "\u0323" in next(g for g in g_quy if g[0] == "y"), "Dấu nặng của quỵ phải nằm trong group y"
+    assert "\u0323" not in next(g for g in g_quy if g[0] == "u"), "Group u của quỵ không được chứa dấu nặng"
+
+    # 5. Render equality giữa hai cách nhập
+    for w_raw, w_norm in [("luỵ", "lụy"), ("thuỵ", "thụy"), ("tuý", "túy"), ("huỷ", "hủy")]:
+        st_raw = text_to_strokes(w_raw, font="omni_casual", seed=42, letter_type="general")
+        st_norm = text_to_strokes(w_norm, font="omni_casual", seed=42, letter_type="general")
+        assert len(st_raw) == len(st_norm), f"Số stroke không khớp cho {w_raw} vs {w_norm}"
+        for s1, s2 in zip(st_raw, st_norm):
+            assert s1.shape == s2.shape, f"Shape không khớp cho {w_raw} vs {w_norm}"
+            assert np.allclose(s1, s2, atol=1e-5), f"Tọa độ không khớp cho {w_raw} vs {w_norm}"
+        assert stroke_fingerprint(st_raw) == stroke_fingerprint(st_norm)
+
+    # 6. Kiểm tra raw geometry cho y với offset +0.4 và Y với offset 0.0
+    raw_dot_y = generate_accents("y", ["\u0323"], pack_casual["centers"]["y"], dot_below_x_offset=0.4)
+    assert len(raw_dot_y) == 1, "Dấu nặng y thô phải có đúng 1 stroke"
+    dot_stroke = raw_dot_y[0]
+    cx_raw_y = float(np.min(dot_stroke[:, 0]) + np.max(dot_stroke[:, 0])) / 2.0
+    assert abs(cx_raw_y - 4.7) <= 0.05, f"Tâm X dấu nặng y ({cx_raw_y:.3f}) phải gần 4.7"
+    assert 4.10 <= np.min(dot_stroke[:, 0]) and np.max(dot_stroke[:, 0]) <= 5.30, "Bounds X dấu nặng y lệch ngoài [4.15, 5.25]"
+    assert np.min(dot_stroke[:, 1]) >= 14.0, "Dấu nặng y phải nằm dưới baseline"
+    assert np.max(dot_stroke[:, 0]) <= pack_casual["widths"]["y"], "Dấu nặng y vượt width 8.2"
+    clearance_raw_y = _stroke_min_distance(pack_casual["glyphs"]["y"][0], dot_stroke)
+    assert clearance_raw_y >= 1.0, f"Raw clearance cho y ({clearance_raw_y:.3f}) < 1.0"
+
+    raw_dot_Y = generate_accents("Y", ["\u0323"], pack_casual["centers"]["Y"], dot_below_x_offset=0.0)
+    assert len(raw_dot_Y) == 1, "Dấu nặng Y thô phải có đúng 1 stroke"
+    cx_raw_Y = float(np.min(raw_dot_Y[0][:, 0]) + np.max(raw_dot_Y[0][:, 0])) / 2.0
+    assert abs(cx_raw_Y - pack_casual["centers"]["Y"]) <= 0.05, "Tâm dấu nặng Y phải giữ nguyên"
+
+    # 7. Kiểm tra pipeline thật cho các từ chứa dấu nặng trên y: ỵ, quỵ, mỵ, ỵa
+    for w in ("ỵ", "quỵ", "mỵ", "ỵa"):
+        st_w = text_to_strokes(w, font="omni_casual", seed=42, letter_type="general")
+        for s in st_w:
+            assert not np.any(np.isnan(s)) and not np.any(np.isinf(s))
+        if w == "ỵ":
+            assert len(st_w) == 2
+            c_w = _stroke_min_distance(st_w[0], st_w[1])
+            assert c_w >= 0.35, f"Clearance y-dot trong ỵ ({c_w:.3f}) < 0.35"
+        elif w == "quỵ":
+            assert len(st_w) == 5
+            c_w = _stroke_min_distance(st_w[3], st_w[4])
+            assert c_w >= 0.35, f"Clearance y-dot trong quỵ ({c_w:.3f}) < 0.35"
+        elif w == "mỵ":
+            assert len(st_w) == 5
+            c_w = _stroke_min_distance(st_w[3], st_w[4])
+            assert c_w >= 0.35, f"Clearance y-dot trong mỵ ({c_w:.3f}) < 0.35"
+        elif w == "ỵa":
+            assert len(st_w) == 3
+            c_w = _stroke_min_distance(st_w[0], st_w[2])
+            assert c_w >= 0.35, f"Clearance y-dot trong ỵa ({c_w:.3f}) < 0.35"
+
+    # 8. Kiểm tra nhiều seed và style cho ỵ với offset +0.4
+    styles_to_check = ("hand_hocsinh", "hand_nguoilon", "hand_thuphap", "hand_chukinhanh")
+    seeds_to_check = (0, 1, 42, 999)
+    for st_name in styles_to_check:
+        for sd in seeds_to_check:
+            st_check = text_to_strokes("ỵ", font="omni_casual", style=st_name, seed=sd, letter_type="general")
+            assert len(st_check) == 2, f"ỵ phải có 2 strokes, nhận {len(st_check)}"
+            for s in st_check:
+                assert not np.any(np.isnan(s)) and not np.any(np.isinf(s))
+            c_check = _stroke_min_distance(st_check[0], st_check[1])
+            assert c_check >= 0.35, f"Clearance quá thấp cho {st_name}, seed {sd}: {c_check:.4f} < 0.35"
+
+    # 9. lụy và thụy: dấu nặng thuộc u, y dùng base, không va chạm
+    st_luy = text_to_strokes("lụy", font="omni_casual", seed=42, letter_type="general")
+    assert len(st_luy) == 4, f"lụy phải có đúng 4 strokes (l:1, u:1, y:1, dot:1), nhận {len(st_luy)}"
+    assert st_luy[2].shape == (29, 2), f"y trong lụy phải dùng base glyph (29, 2), nhận {st_luy[2].shape}"
+    dist_u_dot = _stroke_min_distance(st_luy[1], st_luy[3])
+    dist_y_dot = _stroke_min_distance(st_luy[2], st_luy[3])
+    assert dist_u_dot >= 0.5, f"Khoảng cách giữa u và dấu nặng trong lụy ({dist_u_dot:.3f}) < 0.5"
+    assert dist_y_dot >= 0.5, f"Khoảng cách giữa y và dấu nặng của u trong lụy ({dist_y_dot:.3f}) < 0.5"
+
+    st_thuy = text_to_strokes("thụy", font="omni_casual", seed=42, letter_type="general")
+    assert len(st_thuy) == 7, f"thụy phải có đúng 7 strokes (t:1, h:2, u:1, y:1, bar:1, dot:1), nhận {len(st_thuy)}"
+    for s in st_thuy:
+        assert not np.any(np.isnan(s)) and not np.any(np.isinf(s))
+
+    for y_word in ("ỵ", "mỹ", "mỳ", "ý"):
+        st_yw = text_to_strokes(y_word, font="omni_casual", seed=42, letter_type="general")
+        assert len(st_yw) > 0, f"Rỗng khi render {y_word}"
+        for s in st_yw:
+            assert not np.any(np.isnan(s)) and not np.any(np.isinf(s)), f"{y_word} chứa NaN/Inf"
+
+    st_my = text_to_strokes("mỹ", font="omni_casual", seed=42, letter_type="general")
+    assert len(st_my) >= 3, f"mỹ phải có ít nhất 3 strokes (m + y + ngã)"
+
+    # 10. Context Analyzer không lệch cursor khi render các chuỗi uy
+    for ctx_text in ("luỵ thuỵ", "lụy thụy", "quỵ", "suýt khuỵu", "THUỴ"):
+        st_ctx = text_to_strokes(ctx_text, font="omni_casual", seed=42, letter_type="general")
+        assert len(st_ctx) > 0
+        g_orig = group_nfd_graphemes(ctx_text)
+        g_norm = group_nfd_graphemes(normalize_vietnamese_final_uy_tone(ctx_text))
+        assert len(g_orig) == len(g_norm)
+        assert [g[0] for g in g_orig] == [g[0] for g in g_norm]
+
+    # 11. Kiểm tra validation kiểu dữ liệu đầu vào (Input Type Validation)
+    for invalid_text in (None, 123, True, [], {}):
+        try:
+            text_to_strokes(invalid_text, font="omni_casual")
+            assert False, f"Phải từ chối text không phải str: {invalid_text!r}"
+        except TypeError as exc:
+            assert "chuỗi Unicode" in str(exc), f"Thông báo lỗi TypeError không đúng: {exc}"
+
+    # Xác nhận các chuỗi hợp lệ vẫn hoạt động bình thường
+    assert text_to_strokes("", font="omni_casual") == []
+    for valid_word in ("lụy", "luỵ", "thụy", "thuỵ", "quỵ"):
+        st_v = text_to_strokes(valid_word, font="omni_casual", seed=42)
+        assert len(st_v) > 0, f"Render chuỗi hợp lệ rỗng: {valid_word}"
+
+    # E. Không ảnh hưởng formal initial (K, T, C)
+    for f_char in ("K", "T", "C"):
+        _, _, _, formal_tag = select_contextual_glyph(
+            f_char, font_legacy_pack, "omnidraw_legacy", "formal", {"is_document_initial": True}
+        )
+        assert formal_tag == "formal_initial", f"Formal initial cho {f_char} phải trả 'formal_initial', nhận {formal_tag}"
+        _, _, _, non_formal_tag = select_contextual_glyph(
+            f_char, font_legacy_pack, "omnidraw_legacy", "formal", {"is_document_initial": False}
+        )
+        assert non_formal_tag == "base", f"Formal non-initial cho {f_char} phải trả 'base', nhận {non_formal_tag}"
+
     svg, metrics, in_bounds = generate_handwriting_svg(text_sample, font="cursive", style="hand_nguoilon", skew_angle_deg=2.5)
     assert "<svg" in svg and "C" in svg, "SVG phải hợp lệ và chứa lệnh Bézier C"
     assert in_bounds, "Tọa độ phải nằm trong khổ giấy"
-    print(f"[HANDWRITING SELF-CHECK PASS] Kiểm tra thành công {len(font_results)} kiểu nét: {font_results} | DAG DP OK | SVG Cursive: {metrics['total_path_length_mm']:.1f}mm | Deskew OK")
+    print(f"[HANDWRITING SELF-CHECK PASS] Kiểm tra thành công {len(font_results)} kiểu nét: {font_results} | DAG DP OK | SVG Cursive: {metrics['total_path_length_mm']:.1f}mm | Deskew OK | Context Analyzer v1 OK | Contextual Variants v1 OK")
 
 
 if __name__ == "__main__":

@@ -51,18 +51,18 @@ export default function App() {
     }
   }, [step, statusData]);
 
-  async function handleCreateSubmit({ mode = "art", inputType, style, font, imageBase64, prompt, fileName, paperSize }) {
+  async function handleCreateSubmit({ mode = "art", inputType, style, font, letterType, seed, imageBase64, prompt, fileName, paperSize }) {
     setLoading(true);
     setErrorMsg(null);
     try {
-      const result = await generateArt({ inputType, style, font, imageBase64, prompt, paperSize, mode });
+      const result = await generateArt({ inputType, style, font, letterType, seed, imageBase64, prompt, paperSize, mode });
       let title = "Bản vẽ OmniDraw";
       if (mode === "letter") {
         title = fileName || (prompt ? (prompt.length > 32 ? prompt.slice(0, 32) + "..." : prompt) : "Thư tay");
       } else {
         title = inputType === "text" ? prompt : (fileName || "Bản vẽ upload");
       }
-      setAiResult({ ...result, mode, style, font, inputType, title, paperSize }); // lưu thêm paperSize để ConfirmScreen dùng
+      setAiResult({ ...result, mode, style, font, letterType, seed, inputType, title, paperSize }); // lưu thêm paperSize để ConfirmScreen dùng
       setStep("preview");
     } catch (err) {
       setErrorMsg(err.message || "Có lỗi khi tạo tranh hoặc thư tay, thử lại nhé.");
