@@ -555,3 +555,32 @@ OMNI_CASUAL_CENTERS.update({
     "'": 2.4, '"': 3.3, "‘": 2.4, "’": 2.4, "“": 3.3, "”": 3.3,
     "(": 3.5, ")": 3.5,
 })
+
+# Contextual Variants v1: biến thể kết thúc từ (word-final) cho n, m trong Omni Casual
+OMNI_CASUAL_WORD_FINAL_GLYPHS = {
+    "n": {
+        "strokes": [
+            bz(np.array([2.0, 7.3]), np.array([2.0, 9.6]), np.array([2.1, 12.3]), np.array([2.2, 13.8]), n=8),
+            np.vstack([
+                bz(np.array([2.2, 10.2]), np.array([3.5, 6.8]), np.array([6.5, 6.8]), np.array([6.5, 10.4]), n=8),
+                bz(np.array([6.5, 10.4]), np.array([6.55, 12.0]), np.array([6.68, 13.3]), np.array([6.75, 13.8]), n=7)[1:],
+                bz(np.array([6.75, 13.8]), np.array([6.82, 14.25]), np.array([7.45, 13.90]), np.array([8.10, 11.50]), n=8)[1:],
+            ]),
+        ],
+        "width": 8.2,
+        "center": 4.8,
+    },
+    "m": {
+        "strokes": [
+            bz(np.array([2.0, 7.3]), np.array([2.0, 9.5]), np.array([2.1, 12.2]), np.array([2.2, 13.8]), n=8),
+            bz(np.array([2.2, 10.2]), np.array([3.4, 6.8]), np.array([6.2, 6.8]), np.array([6.2, 13.8]), n=10),
+            np.vstack([
+                bz(np.array([6.2, 10.3]), np.array([7.5, 6.8]), np.array([10.2, 6.8]), np.array([10.2, 10.4]), n=8),
+                bz(np.array([10.2, 10.4]), np.array([10.25, 12.0]), np.array([10.38, 13.3]), np.array([10.45, 13.8]), n=7)[1:],
+                bz(np.array([10.45, 13.8]), np.array([10.52, 14.25]), np.array([11.15, 13.90]), np.array([11.75, 11.50]), n=8)[1:],
+            ]),
+        ],
+        "width": 11.8,
+        "center": 4.8,
+    },
+}

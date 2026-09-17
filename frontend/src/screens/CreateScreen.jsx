@@ -24,11 +24,29 @@ const HAND_STYLES = [
   { id: "hand_chukinhanh", label: "Ký tên", desc: "Phóng khoáng, bay", icon: PenLine },
 ];
 
-const SAMPLES = {
-  tho: `Nam quốc sơn hà Nam đế cư,\nTuyệt nhiên định phận tại thiên thư.\nNhư hà nghịch lỗ lai xâm phạm,\nNhữ đẳng hành khan thủ bại hư!`,
-  thiep: `Kính gửi thầy cô kính yêu,\nNhân ngày Nhà giáo Việt Nam 20/11, em xin kính chúc thầy cô luôn dồi dào sức khỏe, ngập tràn hạnh phúc và thành công trên con đường trồng người cao quý!`,
-  bangken: `HIỆU TRƯỞNG TRƯỜNG ĐẠI HỌC BÁCH KHOA\nChứng nhận sinh viên đã đạt Giải Nhất\nCuộc thi Nghiên Cứu Khoa Học 2026-2027\nĐề tài: Máy vẽ & viết thư tay tự động OmniDraw.`
-};
+const LETTER_TYPES = [
+  {
+    id: "general",
+    name: "Thư thường ngày (General)",
+    desc: "Thơ ca, ghi chú, thư từ thân mật",
+    icon: "💌",
+  },
+  {
+    id: "formal",
+    name: "Văn bản trang trọng (Formal)",
+    desc: "Giấy khen, công văn, khởi bút hoa văn (K, T, C)",
+    icon: "📜",
+  },
+];
+
+function generateSeed() {
+  if (typeof crypto !== "undefined" && typeof crypto.getRandomValues === "function") {
+    const arr = new Uint32Array(1);
+    crypto.getRandomValues(arr);
+    return arr[0];
+  }
+  return Math.floor(Math.random() * 4294967296);
+}
 
 const MAX_FILE_MB = 10;
 
@@ -49,7 +67,10 @@ export default function CreateScreen({ onSubmit, loading = false }) {
   const [prompt, setPrompt] = useState("");
 
   // State cho chế độ Viết thư tay
+  const [handwritingSeed] = useState(generateSeed);
   const [letterInputType, setLetterInputType] = useState("text"); // "file" | "text"
+  const [letterType, setLetterType] = useState("general"); // "general" | "formal"
+  const [isLetterTypeDropdownOpen, setIsLetterTypeDropdownOpen] = useState(false);
   const [handFont, setHandFont] = useState("oly");
   const [isFontDropdownOpen, setIsFontDropdownOpen] = useState(false);
   const [handStyle, setHandStyle] = useState("hand_hocsinh");
@@ -161,7 +182,18 @@ export default function CreateScreen({ onSubmit, loading = false }) {
     }
   }
 
+  const selectedLetterType = LETTER_TYPES.find((t) => t.id === letterType) || LETTER_TYPES[0];
   const selectedFont = HAND_FONTS.find((f) => f.id === handFont) || HAND_FONTS[0];
+
+  function handleSelectLetterType(typeId) {
+    setLetterType(typeId);
+    setIsLetterTypeDropdownOpen(false);
+    // Ràng buộc tương thích: "formal" chỉ hỗ trợ font pack legacy
+    // Nếu đang chọn omni_casual, tự động chuyển sang font tương thích (thanhdam)
+    if (typeId === "formal" && handFont === "omni_casual") {
+      setHandFont("thanhdam");
+    }
+  }
 
   function handleSubmit() {
     if (mode === "art") {
@@ -222,8 +254,10 @@ export default function CreateScreen({ onSubmit, loading = false }) {
       onSubmit?.({
         mode: "letter",
         inputType: "handwriting",
+        letterType,
         style: handStyle,
         font: handFont,
+        seed: handwritingSeed,
         paperSize,
         imageBase64: submitImageBase64,
         prompt: submitPrompt,
@@ -344,11 +378,13 @@ export default function CreateScreen({ onSubmit, loading = false }) {
                   key={id}
                   type="button"
                   onClick={() => setStyle(id)}
-                  className={`relative min-w-0 h-[64px] flex flex-col items-center justify-center border-[2.5px] rounded-lg px-1.5 text-center overflow-hidden transition-colors duration-150 shadow-[2px_2px_0px_#1A1A1A] cursor-pointer ${
-                    active ? "border-[#C0392B] bg-[#FBEAF0] text-[#C0392B]" : "border-[#1A1A1A] bg-white text-[#1A1A1A] hover:bg-[#FDF9EE]"
+                  className={`relative min-w-0 h-[64px] flex flex-col items-center justify-center border-[2.5px] border-[#1A1A1A] rounded-lg px-1.5 text-center overflow-hidden transition-all duration-150 cursor-pointer ${
+                    active
+                      ? "bg-white shadow-[3px_3px_0px_0px_#1A1A1A] -translate-y-[2px] -translate-x-[2px] text-[#1A1A1A]"
+                      : "bg-white text-[#1A1A1A] hover:bg-[#F5F1E0]"
                   }`}
                 >
-                  <Icon size={18} className={`shrink-0 ${active ? "text-[#C0392B]" : "text-[#1A1A1A]"}`} />
+                  <Icon size={18} className="shrink-0 text-[#1A1A1A]" />
                   <p className="w-full text-xs mt-1 truncate font-bold">
                     {label}
                   </p>
@@ -403,49 +439,100 @@ export default function CreateScreen({ onSubmit, loading = false }) {
                 className="w-full border-[3px] border-[#1A1A1A] rounded-xl p-3.5 bg-[#FEFDF9] text-sm h-32 resize-none focus:outline-none leading-relaxed"
                 placeholder="Nhập nội dung thư tay, bài thơ, hoặc lời chúc mừng của bạn..."
               />
-              <div className="flex flex-wrap items-center gap-1.5 mt-1.5 mb-1 text-xs font-bold">
-                <span className="text-[#6B6B66] mr-1 text-[11px]">Chèn nhanh mẫu:</span>
-                <button
-                  type="button"
-                  onClick={() => setLetterPrompt(SAMPLES.tho)}
-                  className="bg-[#F0EEE6] hover:bg-[#FFEAA7] border border-[#1A1A1A] px-2 py-0.5 rounded text-[11px] transition-colors"
-                >
-                  📜 Bài thơ
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setLetterPrompt(SAMPLES.thiep)}
-                  className="bg-[#F0EEE6] hover:bg-[#FFEAA7] border border-[#1A1A1A] px-2 py-0.5 rounded text-[11px] transition-colors"
-                >
-                  💌 Thiệp 20/11
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setLetterPrompt(SAMPLES.bangken)}
-                  className="bg-[#F0EEE6] hover:bg-[#FFEAA7] border border-[#1A1A1A] px-2 py-0.5 rounded text-[11px] transition-colors"
-                >
-                  🎖️ Giấy khen
-                </button>
-              </div>
             </div>
           )}
 
           {fileError && <p className="text-xs font-bold text-[#C0392B] mb-3">{fileError}</p>}
           {!fileError && <div className="mb-2" />}
 
-          {/* ── BẢNG ĐIỀU KHIỂN: 1. KIỂU NÉT ROBOT (THANH TRÒN DROPDOWN) ── */}
+          {/* ── BẢNG ĐIỀU KHIỂN: 1. THỂ THỨC VĂN BẢN (THANH TRÒN DROPDOWN) ── */}
           <div className="mb-4 relative">
             <div className="flex items-center justify-between mb-1.5">
               <p className="text-xs font-bold text-[#1A1A1A] uppercase tracking-wide flex items-center gap-1.5">
-                <span>🔤</span> 1. Kiểu nét robot
+                <span>📋</span> 1. Thể thức văn bản
               </p>
               <span className="text-[10px] font-bold text-[#6B6B66]">Bấm thanh để mở rộng</span>
             </div>
 
-            {/* Thanh selector: Tên kiểu nét bên trái, Mũi tên bên phải */}
+            {/* Thanh selector Thể thức */}
             <button
               type="button"
-              onClick={() => setIsFontDropdownOpen((prev) => !prev)}
+              onClick={() => {
+                setIsLetterTypeDropdownOpen((prev) => !prev);
+                setIsFontDropdownOpen(false);
+              }}
+              className="w-full flex items-center justify-between px-4 py-2.5 bg-white border-[2.5px] border-[#1A1A1A] rounded-full shadow-[2px_2px_0px_#1A1A1A] hover:bg-[#FDF9EE] transition-colors duration-150 cursor-pointer select-none"
+            >
+              <span className="text-xs font-bold text-[#1A1A1A] truncate flex items-center gap-2">
+                <span>{selectedLetterType.icon}</span>
+                <span>{selectedLetterType.name}</span>
+              </span>
+              <ChevronDown
+                size={16}
+                className={`text-[#1A1A1A] transition-transform duration-200 shrink-0 ml-2 ${
+                  isLetterTypeDropdownOpen ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+
+            {/* Menu thả nổi Thể thức */}
+            {isLetterTypeDropdownOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setIsLetterTypeDropdownOpen(false)}
+                />
+                <div className="absolute top-full left-0 right-0 mt-1.5 bg-[#FFFDF7] border-[2.5px] border-[#1A1A1A] rounded-2xl p-2.5 shadow-[4px_4px_0px_#1A1A1A] z-50">
+                  <div className="flex flex-col gap-1.5">
+                    {LETTER_TYPES.map((lt) => {
+                      const isSelected = letterType === lt.id;
+                      return (
+                        <button
+                          key={lt.id}
+                          type="button"
+                          onClick={() => handleSelectLetterType(lt.id)}
+                          className={`w-full flex flex-col gap-0.5 px-3 py-2 rounded-xl border transition-colors duration-150 text-left cursor-pointer ${
+                            isSelected
+                              ? "border-[#1A1A1A] bg-[#FFEAA7] shadow-[1px_1px_0px_#1A1A1A]"
+                              : "border-transparent hover:border-[#1A1A1A] hover:bg-[#FDF9EE]"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-[#1A1A1A] flex items-center gap-1.5">
+                              <span>{lt.icon}</span> {lt.name}
+                            </span>
+                            {isSelected && (
+                              <span className="text-xs font-black text-[#1A1A1A] shrink-0 ml-2">✓</span>
+                            )}
+                          </div>
+                          <span className="text-[10px] text-[#6B6B66] font-medium pl-5">
+                            {lt.desc}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* ── BẢNG ĐIỀU KHIỂN: 2. KIỂU NÉT ROBOT (THANH TRÒN DROPDOWN TƯƠNG ỨNG) ── */}
+          <div className="mb-4 relative">
+            <div className="flex items-center justify-between mb-1.5">
+              <p className="text-xs font-bold text-[#1A1A1A] uppercase tracking-wide flex items-center gap-1.5">
+                <span>🔤</span> 2. Kiểu nét robot (Font chữ)
+              </p>
+              <span className="text-[10px] font-bold text-[#6B6B66]">Bấm thanh để mở rộng</span>
+            </div>
+
+            {/* Thanh selector Font */}
+            <button
+              type="button"
+              onClick={() => {
+                setIsFontDropdownOpen((prev) => !prev);
+                setIsLetterTypeDropdownOpen(false);
+              }}
               className="w-full flex items-center justify-between px-4 py-2.5 bg-white border-[2.5px] border-[#1A1A1A] rounded-full shadow-[2px_2px_0px_#1A1A1A] hover:bg-[#FDF9EE] transition-colors duration-150 cursor-pointer select-none"
             >
               <span className="text-xs font-bold text-[#1A1A1A] truncate">
@@ -459,39 +546,51 @@ export default function CreateScreen({ onSubmit, loading = false }) {
               />
             </button>
 
-            {/* Menu thả nổi đè lên trên (Overlay Popover) */}
+            {/* Menu thả nổi Font */}
             {isFontDropdownOpen && (
               <>
-                {/* Lớp nền trong suốt bắt sự kiện click ra ngoài để đóng menu */}
                 <div
                   className="fixed inset-0 z-40"
                   onClick={() => setIsFontDropdownOpen(false)}
                 />
 
                 <div className="absolute top-full left-0 right-0 mt-1.5 bg-[#FFFDF7] border-[2.5px] border-[#1A1A1A] rounded-2xl p-2.5 shadow-[4px_4px_0px_#1A1A1A] z-50">
-                  <div className="flex flex-col gap-1 max-h-[175px] overflow-y-auto pr-1">
+                  <div className="flex flex-col gap-1 max-h-[190px] overflow-y-auto pr-1">
                     {HAND_FONTS.map((f) => {
                       const isSelected = handFont === f.id;
+                      const isCompatible = !(letterType === "formal" && f.id === "omni_casual");
                       return (
                         <button
                           key={f.id}
                           type="button"
+                          disabled={!isCompatible}
                           onClick={() => {
-                            setHandFont(f.id);
-                            setIsFontDropdownOpen(false);
+                            if (isCompatible) {
+                              setHandFont(f.id);
+                              setIsFontDropdownOpen(false);
+                            }
                           }}
-                          className={`w-full flex items-center justify-between px-3 py-2 rounded-xl border transition-colors duration-150 text-left cursor-pointer ${
-                            isSelected
-                              ? "border-[#1A1A1A] bg-[#FFEAA7] shadow-[1px_1px_0px_#1A1A1A]"
-                              : "border-transparent hover:border-[#1A1A1A] hover:bg-[#FDF9EE]"
+                          className={`w-full flex items-center justify-between px-3 py-2 rounded-xl border transition-colors duration-150 text-left ${
+                            !isCompatible
+                              ? "opacity-50 cursor-not-allowed bg-[#F0EEE6] border-dashed border-[#D1CEC4]"
+                              : isSelected
+                              ? "border-[#1A1A1A] bg-[#FFEAA7] shadow-[1px_1px_0px_#1A1A1A] cursor-pointer"
+                              : "border-transparent hover:border-[#1A1A1A] hover:bg-[#FDF9EE] cursor-pointer"
                           }`}
                         >
                           <span className="text-xs font-bold text-[#1A1A1A] truncate">
                             {f.name}
                           </span>
-                          {isSelected && (
-                            <span className="text-xs font-black text-[#1A1A1A] shrink-0 ml-2">✓</span>
-                          )}
+                          <div className="flex items-center gap-1.5 ml-2 shrink-0">
+                            {!isCompatible && (
+                              <span className="text-[9px] font-bold text-[#C0392B] bg-[#FBEAF0] px-1.5 py-0.5 rounded border border-[#C0392B]/30">
+                                Chỉ Thường ngày
+                              </span>
+                            )}
+                            {isSelected && (
+                              <span className="text-xs font-black text-[#1A1A1A]">✓</span>
+                            )}
+                          </div>
                         </button>
                       );
                     })}
@@ -501,10 +600,10 @@ export default function CreateScreen({ onSubmit, loading = false }) {
             )}
           </div>
 
-          {/* ── BẢNG ĐIỀU KHIỂN: 2. ĐẶC TÍNH NÉT BÚT (PHONG CÁCH VIẾT) ── */}
+          {/* ── BẢNG ĐIỀU KHIỂN: 3. ĐẶC TÍNH NÉT BÚT (PHONG CÁCH VIẾT) ── */}
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs font-bold text-[#1A1A1A] uppercase tracking-wide flex items-center gap-1.5">
-              <span>✍️</span> 2. Đặc tính nét bút (Phong cách)
+              <span>✍️</span> 3. Đặc tính nét bút (Phong cách)
             </p>
             <span className="text-[10px] font-bold bg-[#E8F5E9] text-[#2E7D32] border border-[#2E7D32] px-1.5 py-0.5 rounded shadow-[1px_1px_0px_#2E7D32]">
               Động học ngòi bút
@@ -518,15 +617,15 @@ export default function CreateScreen({ onSubmit, loading = false }) {
                   key={id}
                   type="button"
                   onClick={() => setHandStyle(id)}
-                  className={`relative min-w-0 h-[64px] flex flex-col items-center justify-center border-[2.5px] rounded-lg px-1.5 text-center overflow-hidden transition-colors duration-150 shadow-[2px_2px_0px_#1A1A1A] cursor-pointer ${
+                  className={`relative min-w-0 h-[64px] flex flex-col items-center justify-center border-[2.5px] border-[#1A1A1A] rounded-lg px-1.5 text-center overflow-hidden transition-all duration-150 cursor-pointer ${
                     active
-                      ? "border-[#C0392B] bg-[#FBEAF0] text-[#C0392B]"
-                      : "border-[#1A1A1A] bg-white text-[#1A1A1A] hover:bg-[#FDF9EE]"
+                      ? "bg-white shadow-[3px_3px_0px_0px_#1A1A1A] -translate-y-[2px] -translate-x-[2px] text-[#1A1A1A]"
+                      : "bg-white text-[#1A1A1A] hover:bg-[#F5F1E0]"
                   }`}
                 >
                   <Icon
                     size={18}
-                    className={`shrink-0 ${active ? "text-[#C0392B]" : "text-[#1A1A1A]"}`}
+                    className="shrink-0 text-[#1A1A1A]"
                   />
                   <p className="w-full text-xs mt-1 truncate font-bold">
                     {label}
