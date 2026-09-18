@@ -1,6 +1,6 @@
 # OmniDraw — Roadmap
 
-**Cập nhật lần cuối:** 17/09/2026
+**Cập nhật lần cuối:** 18/09/2026
 **Chu kỳ làm việc:** Sprint 2 tuần
 **Deadline cuối cùng (nộp/bảo vệ):** *(điền ngày khi có lịch chính thức của đơn vị)*
 
@@ -22,23 +22,24 @@ Hệ thống R&D của OmniDraw được tổ chức theo **4 đường chạy �
          ┌──────────────────────────┼──────────────────────────┐
          ▼                          ▼                          ▼
 ┌──────────────────┐       ┌──────────────────┐       ┌──────────────────┐
-│  TV1: AI DỮ LIỆU │       │   TV2: LÕI THUẬT │       │  TV3: PHẦN CỨNG  │
-│  & WRITER PROFILE│       │    TOÁN CA-VHC   │       │  & HIỆU CHUẨN    │
-│  - Dataset mẫu   │       │  - Trellis DAG DP│       │  - pyaxidraw     │
-│  - Anonymization │       │  - Dấu tiếng Việt│       │  - Simulator     │
-│  - Feature extract       │  - Delayed stroke│       │  - Actual timing │
-│  - Rule-based MVP│       │  - 3 Baselines   │       │  - Sai số quỹ đạo│
+│  TV1: AI DỮ LIỆU │       │  TV2: TỐI ƯU NÉT │       │  TV3: PHẦN CỨNG  │
+│  & WRITER PROFILE│       │  & QUY HOẠCH ĐƯỜNG       │  & THỰC NGHIỆM   │
+│  - Gemini API    │       │  - Nearest Neighb│       │  - pyaxidraw     │
+│  - Dataset mẫu   │       │  - cKDTree/Or-opt│       │  - Simulator     │
+│  - WriterProfile │       │  - Kinematic cost│       │  - Actual timing │
+│  - Feature extract       │  - DAG Path Plan │       │  - Sai số quỹ đạo│
 └────────┬─────────┘       └────────┬─────────┘       └────────┬─────────┘
          │                          │                          │
          └──────────────────────────┼──────────────────────────┘
                                     ▼
                  ┌──────────────────────────────────────┐
-                 │       TV4: NỀN TẢNG, TÍCH HỢP        │
-                 │         & FRAMEWORK ĐÁNH GIÁ         │
-                 │  - Frontend & API Gateway            │
-                 │  - Strict validation (no silent fall)│
+                 │ TV4: PROJECT LEAD & HANDWRITING CORE │
+                 │      NỀN TẢNG, TÍCH HỢP & EVAL       │
+                 │  - Toàn bộ backend/handwriting/      │
+                 │  - Font Pack, NFD, diacritics, rules │
+                 │  - Frontend React & API Gateway      │
                  │  - Experiment runner & CSV logging   │
-                 │  - Khung Báo cáo NCKH 5 chương       │
+                 │  - Điều phối Báo cáo NCKH 5 chương   │
                  └──────────────────────────────────────┘
 ```
 
@@ -46,18 +47,20 @@ Hệ thống R&D của OmniDraw được tổ chức theo **4 đường chạy �
 
 | Đường chạy / Thành viên | Module sở hữu | Đầu ra chính (Deliverables) | Tiêu chí hoàn thành (DoD) | Ranh giới phạm vi (Boundary) |
 | :--- | :--- | :--- | :--- | :--- |
-| **TV2 — Trưởng lõi thuật toán CA-VHC** | `backend/handwriting/engine.py`, `backend/handwriting/font_packs/`, Trellis DAG, Viterbi DP, diacritic obstacle-avoidance, delayed-stroke ordering, 3 baselines, ablation study | • Quỹ đạo SVG centerline nét đơn tái lập bằng seed<br>• Hàm mục tiêu $J$ được toán học hóa chính thức<br>• Bộ test hồi quy hình học và dấu tiếng Việt<br>• Kết quả 3 baseline và ablation study | • 0 lỗi hình học trong phạm vi bộ kiểm tra<br>• Dấu tiếng Việt tuân thủ quy tắc chính tả, không va chạm<br>• Tái lập nhất quán 100% với cùng seed | Không phụ trách frontend, firmware máy vẽ, hoặc telemetry |
-| **TV1 — AI cá nhân hóa & dữ liệu Writer Profile** | Data protocol, `WriterProfile` schema (versioned), trích xuất đặc trưng chữ viết (slant, aspect ratio, spacing, baseline jitter...), dataset runner tự động hóa | • Schema `WriterProfile` chuẩn hóa có version<br>• Bộ trích xuất đặc trưng có unit test<br>• Writer Profile mẫu & tài liệu ánh xạ sang engine<br>• Baseline cá nhân hóa rule-based | • Schema validate thành công<br>• Trích xuất tin cậy tối thiểu 4 đặc trưng trên dữ liệu mẫu<br>• Ánh xạ sang tham số engine qua contract | Không sửa trực tiếp `handwriting/engine.py`; tích hợp thuần túy qua contract |
-| **TV3 — Phần cứng, hiệu chuẩn & Thị giác máy tính** | Hardware adapter & simulator, kết nối AxiDraw qua `pyaxidraw`, hiệu chuẩn tọa độ/tốc độ/gia tốc/bút, đo `actual_draw_time_sec`, camera inspector | • File SVG chuẩn vẽ thành công trên máy thật<br>• Bộ thông số hiệu chuẩn có version<br>• Log thời gian vẽ thực tế<br>• Simulator và máy thật dùng chung interface | • Máy vẽ vật lý thi công đúng nét, không lệch lề<br>• Sai số tọa độ trong ngưỡng cho phép<br>• Khi chưa có máy: simulator pass smoke test, ghi rõ "blocked by hardware" | Không gọi thời gian mô phỏng là số đo máy thật |
-| **TV4 — Nền tảng, tích hợp & Framework đánh giá** | Frontend React, API integration, strict validation, experiment runner & CSV logging, QA specimens, layout/phân trang, tổng hợp báo cáo NCKH 5 chương | • Luồng demo frontend–backend ổn định<br>• Validation nghiêm ngặt, không fallback ngầm<br>• Dataset runner chạy nhiều method/seed<br>• Log CSV đủ `request_id`, `method_tag`, metrics<br>• Khung Báo cáo NCKH 5 chương chuẩn IEEE/APA | • Toàn bộ API request/response tuân thủ contract v1.4<br>• Dataset test chạy tự động không can thiệp tay<br>• Tài liệu và báo cáo phản ánh chính xác code | Là integrator cho các file dùng chung (`main.py`, API Spec, docs), không nhận việc không có owner |
+| **TV4 — Project Lead & Handwriting / CA-VHC Composition Lead** | Toàn bộ `backend/handwriting/` (engine, font packs, Unicode NFD, diacritic anchors/offsets, contextual allographs, rules, Catmull–Rom smoothing, geometry auditor, QA specimens), Frontend React, API Gateway (`backend/main.py`), experiment runner & CSV logging, điều phối kiến trúc và tổng hợp Báo cáo NCKH 5 chương | • Quỹ đạo SVG centerline nét đơn tái lập bằng seed<br>• Handwriting Composition Core hoàn thiện (NFD, dấu tiếng Việt, allographs)<br>• Bộ test hình học (`qa_specimens.py`, polyline auditor) pass không finding suy biến<br>• Toàn bộ API request/response tuân thủ contract v1.4<br>• Dataset test chạy tự động, log CSV đầy đủ metrics | Đảm bảo tính toàn vẹn của handwriting subsystem; điều phối kỹ thuật chung; không trực tiếp làm firmware máy vẽ (TV3) hoặc module trích contour vẽ tranh / KD-tree (TV2) |
+| **TV2 — Stroke Optimization & Path Planning Lead** | `backend/path_optimizer.py`, tối ưu thứ tự nét vẽ tranh (NN + Or-opt + `cKDTree` + Kinematic Turn Penalty), mô hình chi phí động học (pen-up distance minimization, kinematic cost), transition/path cost trong Trellis DAG (co-designed với TV4), 2 bộ đối sánh thực nghiệm (comparison sets) và ablation study chuyển động | • Thuật toán tối ưu đường vẽ tranh giảm thiểu nhấc bút và góc bẻ tiếp tuyến<br>• Hàm chi phí chuyển trạng thái ($D_{\text{penup}}$, $N_{\text{lift}}$, $C_{\text{curvature}}$) trong Trellis DAG<br>• Thiết lập và đo đạc thực nghiệm bộ đối sánh Art Mode và các baseline chuyển động trong CA-VHC | • Giảm rõ rệt quãng đường pen-up và thời gian chuyển động so với Naive/Greedy<br>• Thời gian tính toán $O(N \log N)$ qua KD-tree scale tốt với hàng nghìn nét<br>• Kết quả deterministic với cùng phiên bản code, cấu hình, seed và môi trường thực thi được hỗ trợ | Không sở hữu `backend/handwriting/`, không sở hữu font packs hay quy tắc ngữ cảnh chữ viết tay; tập trung vào tối ưu chuyển động và quy hoạch quỹ đạo |
+| **TV1 — AI Data & Writer Profile Lead** | Chuẩn bị benchmark corpus, synthetic data fixtures, data protocol, `WriterProfile` schema (versioned, P2), trích xuất đặc trưng chữ viết mẫu, tích hợp API sinh ảnh Gemini | • Benchmark corpus & fixture đầu vào cho experiment runner<br>• Schema `WriterProfile` chuẩn hóa (P2 preparation)<br>• Bộ trích xuất đặc trưng độc lập có unit test<br>• Tài liệu ánh xạ sang engine | • Schema validate thành công<br>• Trích xuất tin cậy tối thiểu 4 đặc trưng trên dữ liệu mẫu<br>• Dữ liệu corpus sẵn sàng cho runner | Không sở hữu experiment runner/logging (TV4); không sửa trực tiếp `backend/handwriting/`; tích hợp thuần túy qua contract |
+| **TV3 — Hardware, Calibration & Physical Validation Lead** | Hardware adapter & simulator, kết nối AxiDraw qua `pyaxidraw`, hiệu chuẩn tọa độ/tốc độ/gia tốc/bút, đo `actual_draw_time_sec`, camera inspector | • File SVG chuẩn vẽ thành công trên máy thật<br>• Bộ thông số hiệu chuẩn có version<br>• Log thời gian vẽ thực tế<br>• Simulator và máy thật dùng chung interface | • Máy vẽ vật lý thi công đúng nét, không lệch lề<br>• Sai số tọa độ trong ngưỡng cho phép<br>• Khi chưa có máy: simulator pass smoke test, ghi rõ "blocked by hardware" | Không gọi thời gian mô phỏng là số đo máy thật |
 
 ---
 
 ## 2. Quy tắc Ownership và Merge Code
 
 - **Nguyên tắc Single-owner:** Mỗi module chỉ có một thành viên chịu trách nhiệm chính. Thành viên khác có thể đóng góp ý kiến hoặc phản biện nhưng không tự ý sửa đổi code hoặc contract ngoài phạm vi sở hữu.
-- **Điều phối file dùng chung:** Các file dùng chung (`backend/main.py`, `docs/OmniDraw_API_Spec-4.md`, hệ thống tài liệu NCKH) do **TV4** điều phối merge sau khi có sự đồng thuận của owner mảng liên quan:
-  - Thay đổi logic `handwriting/engine.py` và `font_packs/`: Bắt buộc có review và duyệt từ **TV2**.
+- **Điều phối file dùng chung & Kiến trúc:** Các file dùng chung (`backend/main.py`, `docs/OmniDraw_API_Spec-4.md`, hệ thống tài liệu NCKH) do **TV4 (Project Lead)** điều phối merge sau khi có sự đồng thuận của owner mảng liên quan:
+  - Thay đổi logic `backend/handwriting/` và `font_packs/`: Bắt buộc có review và duyệt từ **TV4** (Handwriting Composition Lead).
+  - Thay đổi logic tối ưu đường vẽ `backend/path_optimizer.py` hoặc hàm chi phí chuyển động: Bắt buộc có review và duyệt từ **TV2** (Stroke Optimization Lead).
+  - Thay đổi giải thuật Trellis DAG / Viterbi đồng thiết kế: Bắt buộc có sự thống nhất giữa **TV2** (phần path/transition cost) và **TV4** (phần glyph/state/diacritic context).
   - Thay đổi cấu trúc dữ liệu `WriterProfile`: Bắt buộc có review từ **TV1**.
   - Thay đổi phần cứng, adapter hoặc telemetry: Bắt buộc có review từ **TV3**.
   - Thay đổi schema API, logging hoặc UI contract: Bắt buộc có review từ **TV4**.
@@ -92,11 +95,11 @@ Một nhiệm vụ hoặc tính năng chỉ được đánh dấu hoàn thành (
 - Định nghĩa và toán học hóa hình thức hàm mục tiêu CA-VHC.
 - Đưa dấu tiếng Việt theo quy tắc chính tả và vùng cấm va chạm trực tiếp vào bài toán Trellis DAG.
 - Tối ưu hóa thứ tự nét trễ (Delayed-stroke ordering) cho dấu tiếng Việt.
-- Thiết lập và đo đạc thực nghiệm 3 baseline đối chứng (Static, Greedy, Trellis DAG hiện tại).
+- Thiết lập và đo đạc thực nghiệm 2 bộ baseline đối chứng (Art Mode: Naive, Greedy NN, cKDTree+Or-opt; CA-VHC: Static, Greedy Heuristic, Current Trellis DAG).
 - Bộ thực nghiệm định lượng (Quantitative Benchmark) chữ viết tay và vẽ tranh.
 - Nghiên cứu độ nhạy thành phần (Ablation Study) cho hàm chi phí $J$.
 - Kiểm chứng thi công vật lý trên máy vẽ thật AxiDraw.
-- Framework ghi log CSV chuẩn và khả năng tái lập 100% bằng seed.
+- Framework ghi log CSV chuẩn và bảo đảm tính tái lập kết quả deterministic qua seed.
 - Xây dựng hoàn chỉnh Báo cáo NCKH 5 chương và slide bảo vệ.
 
 ### P1 — Hoàn thiện hệ thống nghiên cứu (Core Supporting)
@@ -108,11 +111,13 @@ Một nhiệm vụ hoặc tính năng chỉ được đánh dấu hoàn thành (
 - Camera inspector cơ bản hỗ trợ căn góc giấy.
 
 ### P2 — Mở rộng nếu tiến độ P0/P1 ổn định (Optional Extensions)
-*Chỉ triển khai khi các hạng mục P0 và P1 đã hoàn thành đúng hạn và hoạt động ổn định.*
-- Xây dựng mô hình Writer Profile MVP (rule-based).
-- Thử nghiệm trích xuất đặc trưng chữ viết tay từ tập mẫu nhỏ (few-shot personalization).
-- Telemetry phản hồi trạng thái vẽ từ phần cứng theo thời gian thực.
-- Đồng bộ hiệu ứng preview trên canvas theo tiến trình nét vẽ máy thật.
+*Quy tắc thực hiện hạng mục P2 (Writer Profile & Telemetry):*
+- **Được phép thực hiện song song trong Sprint 1–2 (P2 Preparation):** Nghiên cứu sơ bộ, thiết kế JSON schema `WriterProfile` (versioned), soạn protocol đạo đức và ẩn danh hóa, chuẩn bị synthetic fixtures, viết prototype feature extractor độc lập, và viết tài liệu ánh xạ tham số dự kiến. Các công việc chuẩn bị này chỉ được thực hiện khi không làm chậm tiến độ P0/P1.
+- **Chỉ được thực hiện sau Gate 2 hoặc khi P0/P1 đã ổn định:** Tích hợp Writer Profile vào Handwriting Engine, triển khai Writer Profile MVP chạy end-to-end, thu thập dữ liệu người dùng thật, huấn luyện/fine-tune mô hình machine learning, few-shot personalization trên dữ liệu thật, telemetry phản hồi thời gian thực từ phần cứng, hoặc đánh giá/tuyên bố hiệu quả cá nhân hóa nét chữ.
+- Xây dựng mô hình Writer Profile MVP (rule-based) [P2 — sau Gate 2].
+- Thử nghiệm trích xuất đặc trưng chữ viết tay từ tập mẫu nhỏ (few-shot personalization) [P2 — sau Gate 2].
+- Telemetry phản hồi trạng thái vẽ từ phần cứng theo thời gian thực [P2 — sau Gate 2].
+- Đồng bộ hiệu ứng preview trên canvas theo tiến trình nét vẽ máy thật [P2 — sau Gate 2].
 
 ### P3 — Backlog nghiên cứu xa (Post-Defense Backlog)
 *Tuyệt đối không thực hiện trước khi đóng băng tính năng (Feature Freeze).*
@@ -142,8 +147,10 @@ Nghiên cứu               Song song                 & Đánh giá             
   - Chốt danh sách Research Questions (RQ1, RQ2, RQ3) và giả thuyết kiểm chứng.
   - Toán học hóa hàm mục tiêu $J$, chuẩn hóa ký hiệu toán học cho Trellis DAG và Viterbi DP.
   - Chốt input/output contract giữa 4 module qua API Spec v1.4.
-  - Chốt corpus câu/từ chuẩn tiếng Việt cho benchmark và định nghĩa 3 phương pháp baseline.
-  - Mỗi thành viên thiết lập backlog 2 tuần chi tiết kèm tiêu chí DoD tương ứng.
+  - Chốt benchmark corpus câu/từ chuẩn tiếng Việt và định nghĩa rõ ràng **2 bộ đối sánh độc lập (comparison sets)**:
+    - *Bộ đối sánh Art Mode / Path Optimization (TV2 lead):* So sánh 3 phương pháp gồm (1) Original contour order / Naive, (2) Greedy Nearest Neighbor, và (3) Phương pháp tối ưu OmniDraw `cKDTree + Or-opt + Kinematic Turn Penalty`.
+    - *Bộ đối sánh Handwriting CA-VHC (TV4 lead composition/runner, TV2 lead motion):* Đánh giá Phương pháp đề xuất (**Proposed CA-VHC** có diacritic constraints, delayed-stroke ordering và kinematic cost — là phương pháp nghiên cứu được đánh giá, không phải baseline thứ tư) đối chứng với **3 baseline**: (1) Static Glyph Renderer, (2) Greedy contextual/connection heuristic, và (3) Current Trellis DAG (chưa có ràng buộc dấu nâng cao).
+  - Mỗi thành viên thiết lập backlog 2 tuần chi tiết kèm tiêu chí DoD tương ứng (TV1 thực hiện P2 Preparation cho Writer Profile mà không ảnh hưởng P0/P1).
 - **Cổng hoàn thành (Gate 1):**
   - Không còn thuật ngữ nghiên cứu mơ hồ trong toàn bộ tài liệu dự án.
   - Mọi module có duy nhất một owner chịu trách nhiệm.
@@ -152,10 +159,10 @@ Nghiên cứu               Song song                 & Đánh giá             
 ### Sprint 3–6 (Tháng 3–5) — Phát triển song song 4 đường chạy (Parallel Development)
 - **Mục tiêu:** Triển khai các thành phần P0 và P1 cốt lõi theo ranh giới module độc lập.
 - **Nội dung thực hiện:**
-  - **TV2:** Xây dựng lõi CA-VHC Diacritic-Aware alpha (đưa dấu và vùng cấm va chạm vào DAG).
-  - **TV1:** Xây dựng schema `WriterProfile` và prototype bộ trích xuất đặc trưng hình học.
+  - **TV4:** Hoàn thiện Handwriting Composition Core (đưa ràng buộc dấu tiếng Việt theo chính tả và vùng cấm va chạm phía handwriting vào DAG), triển khai strict validation (xóa fallback ngầm), hoàn thiện experiment runner và logging CSV.
+  - **TV2:** Xây dựng phần tối ưu hóa quỹ đạo và transition cost cho Trellis DAG; chuẩn hóa bộ đối sánh Art Mode (Naive, Greedy NN, cKDTree+Or-opt) và các baseline chuyển động trong CA-VHC.
+  - **TV1:** Hoàn thiện benchmark corpus/fixtures phục vụ P0; chỉ tiếp tục P2 Preparation cho Writer Profile nếu không ảnh hưởng tiến độ P0/P1.
   - **TV3:** Hoàn thiện hardware simulator, xây dựng calibration checklist và smoke test AxiDraw (nếu có máy).
-  - **TV4:** Triển khai strict validation (xóa fallback ngầm), hoàn thiện experiment runner và logging CSV.
 - **Cổng hoàn thành (Gate 2):**
   - Có bản demo tích hợp end-to-end chạy tự động trên tập corpus mẫu với seed cố định.
   - Mỗi module phản hồi đúng cấu trúc JSON/SVG của contract, không crash với input lỗi.
@@ -167,7 +174,7 @@ Nghiên cứu               Song song                 & Đánh giá             
   - Hoàn thiện thuật toán né tránh va chạm dấu phụ và tối ưu thứ tự nét trễ (delayed-stroke ordering).
   - Tích hợp Writer Profile MVP nếu dữ liệu mẫu đã sẵn sàng và chứng minh được tính khả thi.
   - Thu thập số đo thời gian thực tế `actual_draw_time_sec` trên máy vẽ vật lý.
-  - Thử nghiệm ngắt dòng thông minh và phân trang trên 1 trang giấy.
+  - Thử nghiệm bố cục và ngắt dòng thông minh trong phạm vi một trang giấy.
   - Chạy thử nghiệm benchmark sơ bộ, phát hiện và sửa toàn bộ lỗi lệch contract.
 - **Cổng quyết định (Gate 3):**
   - *Quyết định Writer Profile:* Nếu Writer Profile chưa có dữ liệu mẫu thực tế hoặc chưa vượt qua baseline rule-based, lập tức chuyển về mục tiêu nghiên cứu tương lai, không làm chậm tiến độ P0.
@@ -178,7 +185,7 @@ Nghiên cứu               Song song                 & Đánh giá             
 - **Mục tiêu:** Đóng băng toàn bộ mã nguồn, thực thi toàn bộ benchmark định lượng và kiểm thử hồi quy.
 - **Quy tắc đóng băng:** Tuyệt đối không bổ sung tính năng mới, không sửa đổi cấu trúc dữ liệu hoặc thuật toán.
 - **Nội dung thực hiện:**
-  - Chạy trọn vẹn bộ benchmark định lượng so sánh CA-VHC với 3 baseline trên toàn bộ corpus.
+  - Chạy trọn vẹn bộ thực nghiệm định lượng đối sánh CA-VHC với 3 baseline đối chứng và bộ đối sánh Art Mode trên toàn bộ corpus.
   - Thực hiện đầy đủ Ablation Study đánh giá độ nhạy tham số và bóc tách từng chi phí trong $J$.
   - Chạy regression test QA hình học trên toàn bộ ma trận font/style.
   - Kiểm chứng vẽ thực tế trên máy vẽ AxiDraw vật lý và đo sai số quỹ đạo.
@@ -200,7 +207,7 @@ Nghiên cứu               Song song                 & Đánh giá             
 
 ### Giai đoạn 1 — Khảo sát & Nền tảng
 
-**Trạng thái:** ✅ Hoàn thành | **Hạn giai đoạn:** *(đã xong)*
+**Trạng thái:** 🟡 Hoàn thành nền tảng phần mềm; phần cứng đang bị block | **Hạn giai đoạn:** *(phần mềm hoàn thành; phần cứng tiếp tục hoàn thiện khi có máy)*
 
 #### 1.1 Khảo sát & chốt hướng AI
 **Trạng thái:** ✅ | **Phụ trách:** TV1, TV2
@@ -233,15 +240,16 @@ Nghiên cứu               Song song                 & Đánh giá             
 
 **Trạng thái:** 🟡 Đang làm | **Hạn giai đoạn:** *(theo Sprint 3–6)*
 
-#### 2.1 AI Core & Dataset Runner (Đường chạy TV1)
+#### 2.1 AI Core & Benchmark Dataset Preparation (Đường chạy TV1)
 **Trạng thái:** 🟡 Đang làm | **Phụ trách:** TV1 | **Mức ưu tiên:** P0 / P1
-- [x] Tích hợp model/API sinh ảnh từ text (`POST /api/ai/generate`), nhận kết quả đúng chuẩn [P1]
+- [x] Tích hợp model/API sinh ảnh từ text (`POST /api/ai/generate` với Google Gemini API), nhận kết quả đúng chuẩn [P1]
 - [x] Test với bộ prompt mẫu, đánh giá latency và chất lượng đầu ra [P1]
-- [ ] Xây dựng dataset test chuẩn phục vụ benchmark tự động hóa [P0]
-- [ ] Viết script tự động hóa chạy corpus mẫu với nhiều seed, xuất kết quả sang CSV [P0]
+- [ ] Xây dựng benchmark corpus câu/từ chuẩn phục vụ thực nghiệm tự động hóa [P0]
+- [ ] Chuẩn bị synthetic fixtures và dữ liệu đầu vào chuẩn cho experiment runner của TV4 [P0]
 
 #### 2.2 AI Cá nhân hóa & Dữ liệu Writer Profile (Đường chạy TV1)
-**Trạng thái:** ⬜ Chưa bắt đầu | **Phụ trách:** TV1 | **Mức ưu tiên:** P2
+**Trạng thái:** 🟡 Chuẩn bị nghiên cứu / Chưa tích hợp | **Phụ trách:** TV1 | **Mức ưu tiên:** P2
+*(Lưu ý: Writer Profile là hướng nghiên cứu mở rộng P2. Trong Sprint 1–2 chỉ thực hiện các bước chuẩn bị nhẹ (P2 Preparation): schema, protocol đạo đức/ẩn danh, fixture giả lập và prototype trích xuất đặc trưng độc lập; chưa tích hợp vào engine, việc tích hợp chỉ xem xét sau Gate 2 hoặc khi P0/P1 ổn định; chưa coi là Writer Profile MVP hoàn thành, không huấn luyện mô hình lớn).*
 - [ ] Thiết kế cấu trúc dữ liệu mẫu chữ viết tay và protocol ẩn danh hóa thông tin người dùng [P2]
 - [ ] Định nghĩa JSON schema `WriterProfile` chuẩn hóa có version [P2]
 - [ ] Xây dựng prototype trích xuất 4 đặc trưng cơ bản (slant, aspect ratio, spacing, baseline jitter) [P2]
@@ -253,44 +261,52 @@ Nghiên cứu               Song song                 & Đánh giá             
 - [ ] Nhận diện & đo góc nghiêng mép giấy tự động qua camera [P1]
 - [ ] Truyền góc bù nắn thẳng vào pipeline kết xuất vector [P1]
 
-#### 2.4 Lõi thuật toán CA-VHC & Tối ưu nét vẽ (Đường chạy TV2)
-**Trạng thái:** 🟡 Đang làm | **Phụ trách:** TV2 | **Mức ưu tiên:** P0 (lõi) / P1 / P2 / P3
+#### 2.4 Khung giải thuật CA-VHC & Tối ưu đường nét (Đường chạy TV4 & TV2)
+**Trạng thái:** 🟡 Đang làm | **Phụ trách:** TV4 & TV2 | **Mức ưu tiên:** P0 (lõi) / P1 / P2 / P3
 
 ##### A. Tối ưu đường vẽ tranh (Line-art Art Mode) — Đã xong
+**Phụ trách:** TV2 (Stroke Optimization Lead)
 - [x] Chuyển ảnh → vector line-art qua Canny Edge + FindContours
 - [x] Tối ưu thứ tự nét vẽ tranh: giảm quãng đường pen-up qua `cKDTree` + Or-opt + Kinematic Turn Penalty
 - [x] Xuất chuẩn SVG đường vẽ tranh kèm metrics hình học
 
 ##### B. Lõi giải thuật CA-VHC & Stroke Graph Optimizer — P0
-- [x] Cấu trúc Font Pack nét đơn độc lập (`font_packs/`: geometry, metrics, anchors)
-- [x] Hoàn thiện 81 ký tự nét đơn custom trong gói Omni Casual v1
-- [x] Thuật toán lõi Stroke Graph Optimizer: Quy hoạch động Viterbi DP trên Trellis DAG theo từng từ (`optimize_word_dag()`, `eval_transition()`) lựa chọn biến thể và quyết định nối nét/nhấc bút theo hàm chi phí $J$
-- [x] Xuất đường nét đơn mượt qua Catmull–Rom sang Cubic Bézier kết hợp auto-deskew
-- [x] Tái lập kết quả dựa trên seed số nguyên 32-bit không dấu
-- [ ] Mở rộng tối ưu hóa quỹ đạo nét ở cấp độ từ và dòng văn bản thay vì chỉ xử lý cục bộ [P0]
+**Phụ trách:** TV4 (Handwriting Lead) & TV2 (Optimization Lead) [Đồng thiết kế / Co-designed]
+- [x] Cấu trúc Font Pack nét đơn độc lập (`font_packs/`: geometry, metrics, anchors — TV4 sở hữu)
+- [x] Hoàn thiện 81 ký tự nét đơn custom trong gói Omni Casual v1 (TV4)
+- [x] Thuật toán lõi Stroke Graph Optimizer: Quy hoạch động Viterbi DP trên Trellis DAG theo từng từ (`optimize_word_dag()`, `eval_transition()`) kết hợp state/context representation của TV4 và transition optimization của TV2
+- [x] Xuất đường nét đơn mượt qua Catmull–Rom sang Cubic Bézier kết hợp auto-deskew (TV4)
+- [x] Tái lập kết quả dựa trên seed số nguyên 32-bit không dấu (TV4)
+- [ ] Mở rộng tối ưu hóa quỹ đạo nét ở cấp độ từ và dòng văn bản thay vì chỉ xử lý cục bộ [P0] (TV4 & TV2)
 
 ##### C. Bố trí dấu tiếng Việt & Thứ tự nét trễ — P0
-- [x] Xử lý chuẩn hóa Unicode NFD, tự động ghép dấu thanh và dấu phụ theo mỏ neo (anchors) và offset
-- [ ] Đưa dấu tiếng Việt theo quy tắc chính tả, cấu trúc âm tiết và vùng cấm va chạm trực tiếp vào bài toán tối ưu DAG (`diacritic obstacle-avoidance`) [P0]
-- [ ] Nghiên cứu tối ưu hóa thứ tự nét trễ (`delayed-stroke ordering`): quyết định viết dấu ngay sau nguyên âm, sau khi viết xong thân từ, hay theo nhóm nét trễ để cân bằng giữa quãng đường di chuyển quay lại, số lần nhấc bút và độ dễ đọc [P0]
-- [ ] Xử lý an toàn tổ hợp nhiều dấu tiếng Việt chồng tầng (dấu mũ + thanh, dấu móc + thanh) [P0]
+**Phụ trách:** TV4 (chủ trì chính tả & mỏ neo dấu) + TV2 (phối hợp tối ưu nét trễ)
+- [x] Xử lý chuẩn hóa Unicode NFD, tự động ghép dấu thanh và dấu phụ theo mỏ neo (anchors) và offset (TV4)
+- [ ] Đưa dấu tiếng Việt theo quy tắc chính tả, cấu trúc âm tiết và vùng cấm va chạm trực tiếp vào bài toán tối ưu DAG (`diacritic obstacle-avoidance`) [P0] (TV4 lead biểu diễn & ràng buộc chính tả, TV2 phối hợp mô hình hóa chi phí chuyển động)
+- [ ] Nghiên cứu tối ưu hóa thứ tự nét trễ (`delayed-stroke ordering`): quyết định viết dấu ngay sau nguyên âm, sau khi viết xong thân từ, hay theo nhóm nét trễ để cân bằng giữa quãng đường di chuyển quay lại, số lần nhấc bút và độ dễ đọc [P0] (TV4 & TV2)
+- [ ] Xử lý an toàn tổ hợp nhiều dấu tiếng Việt chồng tầng (dấu mũ + thanh, dấu móc + thanh) [P0] (TV4)
 
 ##### D. Contextual allographs có kiểm soát — P1
-- [x] Biến thể chữ hoa mở đầu trang trọng (`formal_initial`) cho K, T, C trên font pack legacy
-- [x] Biến thể hình học kết thúc từ (`word_final`) cho n, m trong Omni Casual
-- [ ] Mở rộng kho allographs theo các cấp ngữ cảnh: đầu đoạn, đầu câu, đầu từ, cuối từ, cuối câu, loại thư [P1]
-- [ ] Đánh giá định lượng chất lượng nối nét và mức độ phù hợp ngữ cảnh [P1]
+**Phụ trách:** TV4 (Handwriting Composition Lead)
+- [x] Biến thể chữ hoa mở đầu trang trọng (`formal_initial`) cho K, T, C trên font pack legacy (TV4)
+- [x] Biến thể hình học kết thúc từ (`word_final`) cho n, m trong Omni Casual (TV4)
+- [ ] Mở rộng kho allographs theo các cấp ngữ cảnh: đầu đoạn, đầu câu, đầu từ, cuối từ, cuối câu, loại thư [P1] (TV4)
+- [ ] Đánh giá định lượng chất lượng nối nét và mức độ phù hợp ngữ cảnh [P1] (TV4 phối hợp TV2)
 
-##### E. AI cá nhân hóa nét chữ (Writer Profile) — P2 (TV1 phối hợp TV2 qua contract)
-- [ ] Ánh xạ các đặc trưng từ Writer Profile (TV1) sang tham số biến đổi hình học trong Font Pack và Render Profile [P2]
-- [ ] Tích hợp thử nghiệm cá nhân hóa rule-based vào luồng sinh SVG [P2]
+##### E. AI cá nhân hóa nét chữ (Writer Profile) — P2 (TV1 chủ trì phối hợp TV4 & TV2 qua contract)
+**Phụ trách:** TV1 (chủ trì) phối hợp TV4 & TV2
+- [ ] Ánh xạ các đặc trưng từ Writer Profile (TV1) sang tham số biến đổi hình học trong Font Pack và Render Profile (TV4) [P2]
+- [ ] Tích hợp thử nghiệm cá nhân hóa rule-based vào luồng sinh SVG (TV4 phối hợp TV2) [P2]
 
-##### F. Bố cục trang, Cỡ chữ & Phân trang — P1 (TV4 phối hợp sau khi engine ổn định)
-- [ ] Tùy biến cỡ chữ (`font_size_pt`), lề trang (`margins_mm`), căn lề (trái/giữa/phải) trên 1 trang A4 [P1]
+##### F. Bố cục trang, Cỡ chữ & Phân trang — P1 (TV4 phụ trách)
+**Phụ trách:** TV4 (Handwriting Composition Lead)
+*(Lưu ý: UI controls căn lề và giãn dòng đã có trên giao diện CreateScreen, nhưng backend layout engine thực tế, áp dụng lề vào tọa độ render, font size động và ngắt dòng thông minh xét ascender/descender/dấu tiếng Việt chưa hoàn thiện; không đánh dấu hoàn thành chỉ vì giao diện đã có control).*
+- [ ] Hoàn thiện backend layout engine áp dụng cỡ chữ (`font_size_pt`), lề trang (`margins_mm`), căn lề (trái/giữa/phải) có hiệu lực thực tế trên 1 trang A4 [P1]
 - [ ] Tự động ngắt dòng thông minh có xét đến chiều cao ascender, descender và dấu tiếng Việt [P1]
 - [ ] Nghiên cứu phân trang đa trang (multi-page) xuất mảng file SVG (hiện tại từ chối tràn trang bằng `TEXT_OVERFLOW`) [P2]
 
 ##### G. Tính năng trình diễn & Mở rộng nét đơn (Demos & Embellishments) — P3 Backlog
+**Phụ trách:** TV4 (Handwriting Composition Lead)
 - [ ] Nét kéo dài lượn sóng dưới từ cuối câu (Terminal swash) [P3]
 - [ ] Chữ hoa đầu đoạn trang trí nghệ thuật (Drop cap) [P3]
 - [ ] Cụm từ nối liền khối (Logograms: "Kính gửi", "Thân gửi", "Cảm ơn") [P3]
@@ -298,9 +314,10 @@ Nghiên cứu               Song song                 & Đánh giá             
 - [ ] Đường phân đoạn hoa văn centerline [P3]
 
 ##### H. QA & Kiểm thử hình học — P0 / P1
-- [x] Công cụ kiểm thử trực quan ma trận font/style và đối chiếu biến thể thư tay (`backend/handwriting/qa_specimens.py`) [P1]
-- [x] Bộ kiểm tra polyline (`audit_font_pack_geometry()`, `_stroke_min_distance()`) phát hiện đoạn suy biến, nét đè lặp trong bộ ký tự hiện tại [P0]
-- [ ] Mở rộng kiểm thử hình học và QA trực quan cho toàn bộ bảng chữ cái, chữ hoa và tổ hợp dấu tiếng Việt phức tạp [P1]
+**Phụ trách:** TV4 (Handwriting Composition Lead)
+- [x] Công cụ kiểm thử trực quan ma trận font/style và đối chiếu biến thể thư tay (`backend/handwriting/qa_specimens.py`) [P1] (TV4)
+- [x] Bộ kiểm tra polyline (`audit_font_pack_geometry()`, `_stroke_min_distance()`) phát hiện đoạn suy biến, nét đè lặp trong bộ ký tự hiện tại [P0] (TV4)
+- [ ] Mở rộng kiểm thử hình học và QA trực quan cho toàn bộ bảng chữ cái, chữ hoa và tổ hợp dấu tiếng Việt phức tạp [P1] (TV4)
 
 #### 2.5 Phần cứng — Firmware & Điều khiển chuyển động (Đường chạy TV3)
 **Trạng thái:** ⬜ Chưa bắt đầu | **Phụ trách:** TV3 | **Mức ưu tiên:** P0
@@ -327,27 +344,28 @@ Nghiên cứu               Song song                 & Đánh giá             
 
 #### 2.8 Checklist module & Đánh giá nội bộ
 **Trạng thái:** 🟡 Đang làm | **Phụ trách:** Cả 4 người | **Mức ưu tiên:** P0
-- [x] TV2 (Tối ưu vẽ & Thư tay) và TV4 (Giao diện & API): Đã test input chuẩn, input lỗi (trả đúng mã lỗi chuẩn), và truyền `request_id` xuyên suốt [P0]
+- [x] TV4 (Handwriting & API Gateway): Đã test sinh chữ viết tay chuẩn, xử lý lỗi contract, và truyền `request_id` xuyên suốt [P0]
+- [x] TV2 (Tối ưu nét vẽ tranh): Đã test thuật toán tối ưu nét vẽ tranh, KD-tree, giảm quãng đường nhấc bút [P0]
 - [x] TV1 (AI sinh ảnh): Đã test gọi API sinh ảnh text-to-image với prompt mẫu và xử lý lỗi phản hồi [P1]
-- [ ] TV1 (Dữ liệu & Writer Profile): Kiểm thử schema `WriterProfile` và bộ trích xuất đặc trưng với fixture giả lập [P1]
+- [ ] TV1 (Dữ liệu & Writer Profile): Kiểm thử schema `WriterProfile` và bộ trích xuất đặc trưng với fixture giả lập [P2]
 - [ ] TV3 (Phần cứng & Firmware): Kiểm thử simulator qua smoke test; thực thi trên máy vẽ vật lý thật khi có thiết bị [P0]
 
 ---
 
 ### Giai đoạn 3 — Tích hợp hệ thống
 
-**Trạng thái:** 🟡 Đang làm | **Hạn giai đoạn:** *(theo Sprint 7–10)*
+**Trạng thái:** 🟡 Hoàn thành một phần sớm; tích hợp máy thật chưa bắt đầu | **Hạn giai đoạn:** *(theo Sprint 7–10; các mục 3.1 và 3.2 đã được tích hợp sớm ở mức phần mềm)*
 
 #### 3.1 Tích hợp luồng AI & Sinh vector vào giao diện
-**Trạng thái:** ✅ Hoàn thành | **Phụ trách:** TV1 + TV4
+**Trạng thái:** ✅ Hoàn thành | **Phụ trách:** TV1 + TV4 (TV4 lead tích hợp)
 - [x] Thay mock data bằng gọi API backend thật cho luồng sinh ảnh AI từ text (`/api/ai/generate`) và chuyển ảnh thành SVG theo các style vector hóa hiện có (`path_optimizer.py`)
 - [x] Xử lý lỗi/timeout hiển thị đúng trên giao diện
 
 #### 3.2 Tích hợp CV & Tối ưu chữ viết tay vào giao diện
-**Trạng thái:** ✅ Hoàn thành | **Phụ trách:** TV2 + TV4
-- [x] Nối module CV/tối ưu vào luồng thật sau bước AI sinh ảnh
-- [x] Kiểm tra SVG xuất ra đúng khổ giấy, đúng chuẩn
-- [x] Nối module sinh chữ viết tay tiếng Việt nét đơn vào API Gateway `/api/ai/generate` và tích hợp hiển thị preview SVG
+**Trạng thái:** ✅ Hoàn thành | **Phụ trách:** TV4 (lead) + TV2
+- [x] Nối module CV/tối ưu đường vẽ tranh vào luồng thật sau bước AI sinh ảnh (TV2 + TV4)
+- [x] Kiểm tra SVG xuất ra đúng khổ giấy, đúng chuẩn (TV4)
+- [x] Nối module sinh chữ viết tay tiếng Việt nét đơn vào API Gateway `/api/ai/generate` và tích hợp hiển thị preview SVG (TV4)
 
 #### 3.3 Tích hợp máy vẽ vật lý
 **Trạng thái:** ⬜ Chưa bắt đầu | **Phụ trách:** TV3 + TV4 | **Mức ưu tiên:** P0
@@ -355,7 +373,7 @@ Nghiên cứu               Song song                 & Đánh giá             
 - [ ] Test các trường hợp lỗi thật (mất kết nối cáp, kẹt giấy...) xem hệ thống phản ứng đúng mã lỗi
 
 #### 3.4 Test end-to-end toàn hệ thống
-**Trạng thái:** ⬜ Chưa bắt đầu | **Phụ trách:** Cả nhóm | **Mức ưu tiên:** P0
+**Trạng thái:** ⬜ Chưa bắt đầu | **Phụ trách:** Cả nhóm (TV4 điều phối)
 - [ ] Chạy thử toàn bộ luồng từ nhập văn bản/prompt đến lúc máy vẽ hoàn tất bức vẽ thật, tối thiểu 5 lần với input khác nhau
 - [ ] Ghi lại lỗi phát sinh vào `04_progress-log.md`, phân công owner sửa theo đúng phân quyền module
 
@@ -366,18 +384,22 @@ Nghiên cứu               Song song                 & Đánh giá             
 **Trạng thái:** ⬜ Chưa bắt đầu | **Hạn giai đoạn:** *(Tháng 8–12)*
 
 #### 4.1 Benchmark Thực nghiệm Định lượng & Ablation Study — P0
-**Trạng thái:** ⬜ | **Phụ trách:** Cả nhóm (TV2 lead thuật toán, TV4 lead runner/logging, TV3 lead đo máy)
+**Trạng thái:** ⬜ | **Phụ trách:** Cả nhóm (TV4 lead framework thực nghiệm/runner/logging & handwriting metrics, TV2 lead phân tích thuật toán chuyển động, TV3 lead đo máy)
 
-##### A. Thực nghiệm Tối ưu đường vẽ tranh (Line-art Art Mode) — P1
-- [ ] Chạy bộ thực nghiệm định lượng so sánh 3 phương pháp đường vẽ tranh (Naive/Original order vs Greedy Nearest Neighbor vs OmniDraw cKDTree + Or-opt + Kinematic Turn Penalty): đo tổng chiều dài nhấc bút ($mm$), số lần nhấc bút, thời gian tính toán ($ms$), và độ mượt góc đổi hướng.
+##### A. Thực nghiệm Tối ưu đường vẽ tranh (Line-art Art Mode) — P1 (TV2 lead)
+- [ ] Chạy bộ thực nghiệm định lượng so sánh **3 phương pháp đường vẽ tranh**:
+  1. *Baseline 1 (Naive / Original Order):* Thứ tự contour nguyên bản trích từ ảnh, không tối ưu pen-up.
+  2. *Baseline 2 (Greedy Nearest Neighbor):* Chọn nét kế tiếp gần nhất theo khoảng cách Euclid đơn thuần.
+  3. *Phương pháp tối ưu OmniDraw:* Thuật toán `cKDTree + Or-opt + Kinematic Turn Penalty`.
+- [ ] Hệ chỉ số đo đạc: tổng chiều dài nhấc bút ($mm$), số lần nhấc bút, thời gian tính toán ($ms$), và độ mượt góc đổi hướng.
 - [ ] Đo lường độ chính xác nắn thẳng giấy tự động của module thị giác máy tính ($MAE$ góc nghiêng $\Delta\theta$).
 
-##### B. Thực nghiệm Tối ưu chữ viết tay CA-VHC (Handwriting Mode) — P0
-- [ ] Chạy bộ thực nghiệm đối sánh phương pháp CA-VHC trên cùng tập corpus văn bản chuẩn với **3 phương pháp đối chứng (Baselines)**:
-  1. *Baseline 1 (Static Glyphs):* Bộ render glyph tĩnh (không có biến thể allographs ngữ cảnh, không nối nét động).
-  2. *Baseline 2 (Greedy Heuristic):* Lựa chọn biến thể và quyết định nối nét theo thuật toán tham lam bước kế tiếp gần nhất.
+##### B. Thực nghiệm Tối ưu chữ viết tay CA-VHC (Handwriting Mode) — P0 (TV4 lead composition & runner, TV2 lead motion metrics)
+- [ ] Chạy bộ thực nghiệm đối sánh trên cùng tập corpus văn bản chuẩn với **3 phương pháp đối chứng (Baselines)**:
+  1. *Baseline 1 (Static Glyph Renderer):* Bộ render glyph tĩnh (không có biến thể allographs ngữ cảnh, không nối nét động).
+  2. *Baseline 2 (Greedy Heuristic):* Lựa chọn biến thể và quyết định nối nét theo thuật toán tham lam bước kế tiếp gần nhất (Greedy contextual/connection heuristic).
   3. *Baseline 3 (Current Trellis DAG):* Giải thuật Trellis DAG Viterbi DP hiện tại (chưa có ràng buộc dấu nâng cao).
-  4. *Phương pháp đề xuất (Proposed CA-VHC):* CA-VHC mở rộng tích hợp ràng buộc dấu tiếng Việt, thứ tự nét trễ và động học máy vẽ.
+- [ ] Đánh giá đối chứng với **Phương pháp đề xuất (Proposed CA-VHC)**: CA-VHC mở rộng tích hợp ràng buộc dấu tiếng Việt theo chính tả/âm tiết, thứ tự nét trễ (delayed-stroke ordering) và chi phí động học máy vẽ (đây là phương pháp nghiên cứu đề xuất của nhóm, không tính là baseline đối chứng thứ tư).
 - [ ] Đo đạc và đối sánh hệ chỉ số: tổng chiều dài nét ($mm$), quãng đường nhấc bút ($mm$), số lần nhấc bút, thời gian tính toán giải thuật ($ms$), tỷ lệ va chạm hình học giữa dấu và nét chữ, độ liên tục tiếp tuyến $C^1$.
 - [ ] Thực hiện **Ablation Study** đánh giá mức độ đóng góp của từng thành phần trong hàm mục tiêu $J$: bóc tách lần lượt contextual allograph cost, collision cost, curvature cost, legibility cost, diacritic constraints và kinematic cost.
 
@@ -404,7 +426,7 @@ Nghiên cứu               Song song                 & Đánh giá             
   - **Chương 1: Mở đầu** (Bối cảnh, tính cấp thiết, mục tiêu đề tài và 3 câu hỏi nghiên cứu RQ1, RQ2, RQ3).
   - **Chương 2: Tổng quan & Cơ sở lý thuyết** (Nghiên cứu liên quan về vector hóa ảnh, tối ưu hóa quỹ đạo nét và sinh chữ viết tay nét đơn cho máy vẽ).
   - **Chương 3: Phương pháp & Thiết kế Thuật toán CA-VHC** (Mô hình hóa Trellis DAG, hàm mục tiêu đa tiêu chí $J$, thuật toán Viterbi DP, quy tắc xử lý dấu tiếng Việt theo chính tả và âm tiết, thứ tự nét trễ).
-  - **Chương 4: Thực nghiệm & Đánh giá kết quả** (Kết quả benchmark so sánh CA-VHC với 3 baseline, đồ thị Ablation Study, kết quả khảo sát người dùng Likert, số liệu thời gian vẽ thực tế trên AxiDraw).
+  - **Chương 4: Thực nghiệm & Đánh giá kết quả** (Kết quả benchmark đối sánh CA-VHC với 3 baseline đối chứng, kết quả bộ đối sánh Art Mode, đồ thị Ablation Study, kết quả khảo sát người dùng Likert, số liệu thời gian vẽ thực tế trên AxiDraw).
   - **Chương 5: Kết luận & Hướng phát triển** (Tóm tắt đóng góp, hạn chế kỹ thuật, định hướng Writer Profile và phân trang đa trang).
 - [ ] Bổ sung mô hình hóa toán học hình thức: Phương trình Bellman của Viterbi DP, biểu thức hàm phạt quán tính Kinematic Cost, phân tích độ phức tạp thuật toán Big-O.
 - [ ] Biên tập thống nhất văn phong học thuật, kiểm tra đạo văn và chuẩn hóa trích dẫn tài liệu tham khảo theo IEEE/APA.

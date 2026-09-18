@@ -1,7 +1,7 @@
 # OmniDraw — Tài liệu chuẩn giao tiếp giữa các mảng (API/Data Contract)
 
 **Phiên bản:** v1.4 (bổ sung contract cho chế độ thư tay nét đơn `input_type="handwriting"`, làm rõ cấu trúc `svg_metrics` nghiên cứu và chuẩn hóa bảng mã lỗi; kế thừa v1.3 — mục 5d lấy SVG thật; kế thừa v1.2 — điều khiển máy vẽ và lịch sử; kế thừa v1.1 — log CSV nghiên cứu)
-**Người giữ tài liệu (owner):** Thành viên phụ trách Giao diện & Tích hợp
+**Người giữ tài liệu (owner):** TV4 — Project Lead & Handwriting / CA-VHC Composition Lead
 **Mục đích:** Đây là "hợp đồng" bắt buộc giữa 4 mảng (AI, Xử lý ảnh/Thuật toán, Phần cứng, Giao diện). Mọi thay đổi định dạng phải được cập nhật vào file này TRƯỚC khi code, không tự ý đổi format một mình.
 
 > Quy tắc chung: mỗi module chỉ cần quan tâm **input mình nhận** và **output mình phải trả**, không cần biết logic bên trong của module khác.
@@ -469,9 +469,9 @@ Phục vụ màn Thư viện (màn 5).
 
 ## 6. Ghi log CSV phục vụ nghiên cứu khoa học (mới — v1.1, chuẩn hóa v1.4)
 
-**Bối cảnh:** theo nhận xét của giảng viên hướng dẫn, đề tài phải sinh ra được số liệu so sánh được cho bài báo khoa học (RQ1–RQ4), không chỉ chạy demo. Mục này định nghĩa cơ chế ghi log tự động để số liệu **tích luỹ tự nhiên trong quá trình phát triển**, không phải "chạy bù" cuối kỳ.
+**Bối cảnh:** theo nhận xét của giảng viên hướng dẫn, đề tài phải sinh ra được số liệu so sánh được cho bài báo khoa học (RQ1–RQ3), không chỉ chạy demo. Mục này định nghĩa cơ chế ghi log tự động để số liệu **tích luỹ tự nhiên trong quá trình phát triển**, không phải "chạy bù" cuối kỳ.
 
-**Trách nhiệm:** TV4 xây dựng cơ chế ghi log ở tầng giao diện/backend (nơi tổng hợp đủ dữ liệu từ mọi module qua `request_id`). TV1/TV2/TV3 chỉ cần đảm bảo module của mình trả đủ các trường được yêu cầu ở mục 2-5 (đặc biệt là `experiment`, `svg_metrics`, `actual_draw_time_sec`).
+**Trách nhiệm:** TV4 (Project Lead & Handwriting / CA-VHC Composition Lead) xây dựng cơ chế ghi log ở tầng giao diện/backend (nơi tổng hợp đủ dữ liệu từ mọi module qua `request_id`). TV1 (AI Data & Writer Profile Lead), TV2 (Stroke Optimization & Path Planning Lead), và TV3 (Hardware, Calibration & Physical Validation Lead) đảm bảo module của mình trả đủ các trường được yêu cầu ở mục 2-5 (đặc biệt là `experiment`, `svg_metrics`, `actual_draw_time_sec`).
 
 **Thời điểm ghi:** ngay khi một `request_id` đạt trạng thái `status = "done"` hoặc `status = "error"` (ghi cả trường hợp lỗi — dữ liệu lỗi cũng có giá trị thống kê).
 
@@ -484,7 +484,7 @@ Phục vụ màn Thư viện (màn 5).
 - `svg_metrics.pen_lift_distance_mm`: Tổng quãng đường đầu bút di chuyển trên không khi nhấc bút ($mm$) — chỉ số chính RQ2.
 - `svg_metrics.pen_lift_count`: Số lần nhấc đầu bút di chuyển giữa các stroke rời rạc — chỉ số chính RQ2.
 - `svg_metrics.optimize_time_ms`: Thời gian tính toán thuật toán tối ưu thứ tự nét ($ms$) — chỉ số chính RQ2. *(Lưu ý: Đối với chế độ handwriting, do duy trì thứ tự nét tự nhiên theo từng từ nên `optimize_time_ms = 0.0`).*
-- `svg_metrics.skew_angle_deg`: Góc nắn bù nghiêng giấy đã áp dụng (độ) — chỉ số RQ4.
+- `svg_metrics.skew_angle_deg`: Góc nắn bù nghiêng giấy đã áp dụng (độ) — chỉ số RQ3.
 - `ai_processing_time_ms`: Tổng thời gian xử lý thực tế trên backend của request ($ms$, trích xuất từ `meta.processing_time_ms`) — phục vụ chỉ số thời gian tính toán ở RQ1/RQ3.
 
 #### Nhóm 2: Metrics phần cứng (Hardware Execution Metrics)
