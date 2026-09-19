@@ -264,93 +264,305 @@ def extract_strokes_line_art(img, canny_low=40, canny_high=120,
     return strokes, (w, h)
 
 
-def extract_strokes_stipple(img, target_grid_dim=160, contrast_boost=1.7,
-                             dot_radius=0.75, resize_max_dim=1024, seed=42):
-    """
-    [NANG CAP v3] Style stipple: CLAHE + Direct Edge Enhancement + Floyd-Steinberg Dithering.
-    
-    Cai tien vuot bac:
-    - CLAHE (Adaptive Histogram): Tu dong lam bat do sau va chi tiet o ca vung toi lan vung sang.
-    - target_grid_dim tang len 160 -> do phan giai cao gap 3 lan ban dau, chi tiet cuc ky ro net.
-    - Canny Edge Detection truc tiep tren luoi grid: Bat 100% cac duong vien chinh (mat, mui,
-      mieng, nep nhan, vien do vat) va dat cham chinh xac khong lech 1 pixel.
-    - Khu nhieu jitter o vung vien net: Giup duong bao sac gon, dứt khoát.
-    """
-    _, gray, (w, h) = _resize_and_gray(img, resize_max_dim)
-    
-    # 1. CLAHE tang cuong tuong phan cuc bo giup lam ro mat, mui, chi tiet nho
-    clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
-    gray_clahe = clahe.apply(gray)
-    
-    # 2. Tinh kich thuoc luoi tinh toan phu hop theo ty le anh
-    if w >= h:
-        grid_w = target_grid_dim
-        grid_h = max(10, int(round(target_grid_dim * (h / float(w)))))
-    else:
-        grid_h = target_grid_dim
-        grid_w = max(10, int(round(target_grid_dim * (w / float(h)))))
+def _is_background_already_white(gray, threshold=235.0):
+    """Kiem tra 2 goc tren va vien tren cua anh da la nen trang/sang hay chua."""
+    h, w = gray.shape[:2]
+    corner_box = max(4, int(min(h, w) * 0.05))
+    tl_mean = float(np.mean(gray[:corner_box, :corner_box]))
+    tr_mean = float(np.mean(gray[:corner_box, -corner_box:]))
+    return tl_mean >= threshold and tr_mean >= threshold
 
-    # Resize anh xam ve kich thuoc grid
-    small_gray = cv2.resize(gray_clahe, (grid_w, grid_h), interpolation=cv2.INTER_AREA).astype(np.float32)
-    
-    # 3. Tang cuong tuong phan va gamma
-    small_gray = np.clip(128.0 + (small_gray - 128.0) * contrast_boost, 0.0, 255.0)
-    small_gray = 255.0 * ((small_gray / 255.0) ** 1.35)
-    
-    # 4. Trich xuat vien net truc tiep tren grid de chac chan giu 100% duong net quan trong
-    edges = cv2.Canny(cv2.GaussianBlur(small_gray.astype(np.uint8), (3, 3), 0), 30, 95)
-    is_edge_pixel = (edges > 0)
-    small_gray[is_edge_pixel] = np.minimum(small_gray[is_edge_pixel], 10.0)
 
-    # 5. Floyd-Steinberg Error Diffusion Dithering
-    dithered = small_gray.copy()
-    dot_coords = []
-    scale_x = w / float(grid_w)
-    scale_y = h / float(grid_h)
+def _auto_isolate_background(img_bgr, gray):
+    """
+    Tu dong phat hien va tach chu the khoi phong nen ngoai canh (sa mac, phong, cay coi...):
+    - Bo qua neu anh nho (min(h, w) < 100), anh dong nhat (std < 15.0) hoac da co nen trang.
+    - Su dung GrabCut tang toc tren anh thu nho (~400px, 2 iterations, portrait seed mask).
+    - Tra ve fg_mask kieu float32 (1.0 = chu the, 0.0 = nen trang bi loai bo).
+    """
+    h, w = gray.shape[:2]
+    if min(h, w) < 100 or np.std(gray) < 15.0:
+        return np.ones((h, w), dtype=np.float32)
+
+    if _is_background_already_white(gray):
+        return np.ones((h, w), dtype=np.float32)
+
+    gc_s = 400.0 / float(max(h, w))
+    small = cv2.resize(img_bgr, (int(w * gc_s), int(h * gc_s)))
+    gh, gw = small.shape[:2]
+
+    mask = np.full((gh, gw), cv2.GC_PR_FGD, dtype=np.uint8)
+    bg_w = max(2, int(gw * 0.18))
+    bg_h = max(2, int(gh * 0.25))
+    top_bar = max(1, int(gh * 0.04))
+    mask[:bg_h, :bg_w] = cv2.GC_BGD
+    mask[:bg_h, -bg_w:] = cv2.GC_BGD
+    mask[:top_bar, :] = cv2.GC_BGD
+
+    bgd_model = np.zeros((1, 65), np.float64)
+    fgd_model = np.zeros((1, 65), np.float64)
+
+    try:
+        cv2.grabCut(small, mask, None, bgd_model, fgd_model, 2, cv2.GC_INIT_WITH_MASK)
+        mask_bin = np.where((mask == cv2.GC_FGD) | (mask == cv2.GC_PR_FGD), 255, 0).astype(np.uint8)
+        if np.sum(mask_bin > 0) < 0.05 * gh * gw:
+            return np.ones((h, w), dtype=np.float32)
+
+        nb_comp, output, stats, centroids = cv2.connectedComponentsWithStats(mask_bin, connectivity=8)
+        if nb_comp > 1:
+            largest_label = 1 + np.argmax(stats[1:, cv2.CC_STAT_AREA])
+            mask_bin = np.where(output == largest_label, 255, 0).astype(np.uint8)
+
+        contours, _ = cv2.findContours(mask_bin, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cv2.drawContours(mask_bin, contours, -1, 255, -1)
+
+        fg_mask_full = cv2.resize(mask_bin, (w, h), interpolation=cv2.INTER_LINEAR)
+        fg_mask_full = cv2.GaussianBlur(fg_mask_full, (7, 7), 2.0)
+        return (fg_mask_full > 128).astype(np.float32)
+    except Exception:
+        return np.ones((h, w), dtype=np.float32)
+
+
+def _extract_stipple_contours(gray_clahe, darkness, cell_size, min_contour_len=18.0,
+                              simplify_eps=0.75, canny_low=30, canny_high=85):
+    """
+    Lop 1: Trich xuat cac duong contour vector lien tuc (Continuous Line Contours)
+    dien ta ro net: kinh, mat, long may, song mui, mieng, khoe moi, cam, duong vien mat,
+    lon toc va duong nep ao. Khong bien cac duong nay thanh chuoi hat cham roi rac.
+    Dong thoi tao contour_mask de bao ve (protection margin), ngan cham sac do chen vao.
+    """
+    h, w = gray_clahe.shape[:2]
+    contour_strokes = []
+    contour_mask = np.zeros((h, w), dtype=np.uint8)
+
+    if min(h, w) < 50:
+        return contour_strokes, contour_mask
+
+    # Phat hien vung toi dong nhat de loai bo nhieu cham ben trong texture qua toi
+    k_size = max(5, int(round(cell_size * 2)) | 1)
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (k_size, k_size))
+    dark_interior = cv2.erode(darkness, kernel)
+
+    smoothed = cv2.bilateralFilter(gray_clahe, d=7, sigmaColor=40, sigmaSpace=40)
+    canny = cv2.Canny(smoothed, canny_low, canny_high)
+    contours, _ = cv2.findContours(canny, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+
+    for c in contours:
+        pts = c.reshape(-1, 2).astype(np.float64)
+        l = cv2.arcLength(c, False)
+        if l < min_contour_len:
+            continue
+        bx, by, bw, bh = cv2.boundingRect(c)
+        if max(bw, bh) < 12:
+            continue
+        sub = np.mean(dark_interior[pts[:, 1].astype(int), pts[:, 0].astype(int)])
+        if sub > 0.80 and l < 100.0:
+            continue
+        simplified = cv2.approxPolyDP(c, epsilon=simplify_eps, closed=False)
+        pts_s = simplified.reshape(-1, 2).astype(np.float64)
+        if len(pts_s) >= 2:
+            contour_strokes.append(pts_s)
+            thick = max(2, int(round(0.5 * cell_size)))
+            cv2.polylines(contour_mask, [pts_s.astype(np.int32)], isClosed=False, color=255, thickness=thick)
+
+    return contour_strokes, contour_mask
+
+
+def _extract_stipple_dots_poisson(darkness, contour_mask, cell_size,
+                                  min_radius_factor=0.22, max_radius_factor=0.38,
+                                  n_seg=6, seed=42, is_segmented=False):
+    """
+    Lop 2: Trich xuat cac hat sac do (Tone & Shading Dots) bang phuong phap
+    Adaptive Poisson-Disk Sampling:
+    - Khoang cach thich ung theo do toi S(d): toi thi day dac, sang thi thua dan.
+    - Ban kinh thich ung R(d): toi thi cham to, sang thi cham nho, vung sang han de trang.
+    - Triet tieu hoan toan hieu ung luoi ban co va giun bo (worm artifacts).
+    - Cac hat cham khep kin (n_seg >= 6), tuong thich hoan hao voi pen plotter.
+    - Toi uu thoi gian: gian cach nhe o vung ao/than duoi de giam tong so net ve ma van dep.
+    """
+    h, w = darkness.shape[:2]
+    min_s = max(2.5, 0.85 * cell_size)
+    max_s = max(5.0, 2.0 * cell_size)
     rng = np.random.default_rng(seed)
 
-    for y in range(grid_h):
-        for x in range(grid_w):
-            old_val = dithered[y, x]
-            new_val = 0.0 if old_val < 128.0 else 255.0
-            dithered[y, x] = new_val
-            err = old_val - new_val
-            
-            # Khuech tan sai so sang cac pixel lan can
-            if x + 1 < grid_w:
-                dithered[y, x + 1] += err * (7.0 / 16.0)
-            if y + 1 < grid_h:
-                if x - 1 >= 0:
-                    dithered[y + 1, x - 1] += err * (3.0 / 16.0)
-                dithered[y + 1, x] += err * (5.0 / 16.0)
-                if x + 1 < grid_w:
-                    dithered[y + 1, x + 1] += err * (1.0 / 16.0)
-                    
-            if new_val == 0.0:
-                # Neu la diem vien net: khong them jitter de net thang tap, sac gon
-                if is_edge_pixel[y, x]:
-                    jitter_x, jitter_y = 0.0, 0.0
-                else:
-                    jitter_x = (rng.uniform(-0.15, 0.15)) * scale_x
-                    jitter_y = (rng.uniform(-0.15, 0.15)) * scale_y
-                    
-                px = max(1.0, min(w - 1.0, (x + 0.5) * scale_x + jitter_x))
-                py = max(1.0, min(h - 1.0, (y + 0.5) * scale_y + jitter_y))
-                dot_coords.append((px, py))
+    grid_cell = min_s / math.sqrt(2.0)
+    grid_w = int(w / grid_cell) + 1
+    grid_h = int(h / grid_cell) + 1
+    bg_grid = -np.ones((grid_h, grid_w), dtype=np.int32)
+    samples = []
+    active_list = []
 
-    # 6. Chuyen toa do dot thanh cac stroke vong tron nho (fill='none')
-    strokes = []
-    n_seg = 6
-    r = max(0.5, dot_radius * (scale_x / 8.0))
-    for px, py in dot_coords:
+    def get_spacing(d_val, y_pos):
+        t = np.clip((d_val - 0.08) / 0.82, 0.0, 1.0)
+        base = max_s - (t ** 0.85) * (max_s - min_s)
+        if is_segmented and y_pos > 0.52 * h:
+            torso_factor = 1.0 + 0.85 * min(1.0, (y_pos - 0.52 * h) / (0.25 * h))
+            return base * torso_factor
+        return base
+
+    def get_radius(d_val, y_pos):
+        t = np.clip((d_val - 0.08) / 0.82, 0.0, 1.0)
+        r_min = min_radius_factor * cell_size
+        r_max = max_radius_factor * cell_size
+        r = max(0.40, r_min + (r_max - r_min) * (t ** 1.1))
+        if is_segmented and y_pos > 0.52 * h:
+            torso_scale = 1.0 + 0.12 * min(1.0, (y_pos - 0.52 * h) / (0.25 * h))
+            r *= torso_scale
+        return r
+
+    # Khoi tao hat giong theo luoi thua de dam bao moi vung co sac do deu duoc lay mau
+    step_seed = max(2, int(max_s * 1.5))
+    for sy in range(step_seed // 2, h, step_seed):
+        for sx in range(step_seed // 2, w, step_seed):
+            if contour_mask[sy, sx] > 0:
+                continue
+            d_val = float(darkness[sy, sx])
+            if d_val > 0.08:
+                r = get_radius(d_val, sy)
+                gx = int(sx / grid_cell)
+                gy = int(sy / grid_cell)
+                if 0 <= gy < grid_h and 0 <= gx < grid_w and bg_grid[gy, gx] < 0:
+                    idx = len(samples)
+                    samples.append((float(sx), float(sy), float(r)))
+                    bg_grid[gy, gx] = idx
+                    active_list.append(idx)
+
+    max_k = 18
+    while active_list:
+        rand_idx = rng.integers(0, len(active_list))
+        p_idx = active_list[rand_idx]
+        px, py, pr = samples[p_idx]
+        d_center = float(darkness[int(py), int(px)])
+        desired_s = get_spacing(d_center, py)
+
+        found = False
+        for _ in range(max_k):
+            angle = rng.uniform(0, 2.0 * math.pi)
+            dist = rng.uniform(desired_s, 1.6 * desired_s)
+            cx = px + dist * math.cos(angle)
+            cy = py + dist * math.sin(angle)
+            if not (1.0 <= cx < w - 1.0 and 1.0 <= cy < h - 1.0):
+                continue
+            xi, yi = int(cx), int(cy)
+            if contour_mask[yi, xi] > 0:
+                continue
+            d_cand = float(darkness[yi, xi])
+            if d_cand < 0.08:
+                continue
+            cand_s = get_spacing(d_cand, cy)
+            min_allowed_dist = 0.85 * min(desired_s, cand_s)
+            gx = int(cx / grid_cell)
+            gy = int(cy / grid_cell)
+            cell_radius = int(math.ceil(desired_s / grid_cell)) + 1
+            conflict = False
+            r_min_y = max(0, gy - cell_radius)
+            r_max_y = min(grid_h, gy + cell_radius + 1)
+            r_min_x = max(0, gx - cell_radius)
+            r_max_x = min(grid_w, gx + cell_radius + 1)
+            for ny in range(r_min_y, r_max_y):
+                for nx in range(r_min_x, r_max_x):
+                    n_samp_idx = bg_grid[ny, nx]
+                    if n_samp_idx >= 0:
+                        nx_pt, ny_pt, _ = samples[n_samp_idx]
+                        if (cx - nx_pt)**2 + (cy - ny_pt)**2 < min_allowed_dist**2:
+                            conflict = True
+                            break
+                if conflict:
+                    break
+            if not conflict:
+                cr = get_radius(d_cand, cy)
+                new_idx = len(samples)
+                samples.append((float(cx), float(cy), float(cr)))
+                bg_grid[gy, gx] = new_idx
+                active_list.append(new_idx)
+                found = True
+                break
+        if not found:
+            active_list.pop(rand_idx)
+
+    dot_strokes = []
+    for px, py, r in samples:
         circle_pts = [
             [px + r * math.cos(2 * math.pi * k / n_seg),
              py + r * math.sin(2 * math.pi * k / n_seg)]
             for k in range(n_seg + 1)
         ]
-        strokes.append(np.array(circle_pts, dtype=np.float64))
+        dot_strokes.append(np.array(circle_pts, dtype=np.float64))
 
-    return strokes, (w, h)
+    return dot_strokes
+
+
+def extract_strokes_stipple(img, target_grid_dim=105, contrast_boost=1.4,
+                             gamma=1.2, n_seg=6, canny_low=30, canny_high=85,
+                             min_contour_len=18.0, simplify_eps=0.75,
+                             min_radius_factor=0.22, max_radius_factor=0.38,
+                             resize_max_dim=1024, seed=42, **kwargs):
+    """
+    [HYBRID TWO-LAYER STIPPLING] Ket hop giua vector contours sac net va halftone dots tu nhien:
+    1. Tu dong tach chu the (Subject Isolation): Loai bo sach hoan toan nen ngoai canh,
+       giu nen giay trang tuyet doi (0 cham rac ngoai nen).
+    2. High-Key Tone Mapping: Giu vung da mat sang ro mau giay trang, dien ta ro net kinh,
+       mat, long may, mui, mieng, cam va lon toc bang net vector lien tuc.
+    3. Lop 2 Halftone Shading: Lay mau Adaptive Poisson-Disk voi mat do va ban kinh cham
+       bien thien mem mai, khong bi luoi co hoc, toi uu thoi gian ve tren pen plotter.
+    """
+    img_resized, gray, (w, h) = _resize_and_gray(img, resize_max_dim)
+
+    # 1. Tu dong tach nen ngoai canh neu can
+    fg_mask = _auto_isolate_background(img_resized, gray)
+    is_segmented = bool(np.any(fg_mask < 0.5))
+
+    if is_segmented:
+        # Nen ngoai canh thanh trang tuyet doi
+        gray_clean = (gray.astype(np.float32) * fg_mask + 255.0 * (1.0 - fg_mask)).astype(np.uint8)
+        # Chuan hoa sac do chu the: dua vung highlight sang tren da ve giay trang
+        fg_pixels = gray[fg_mask > 0.5]
+        if len(fg_pixels) > 0:
+            p_high = float(np.percentile(fg_pixels, 98))
+            p_low = float(np.percentile(fg_pixels, 2))
+            norm_fg = np.clip((gray.astype(np.float32) - p_low) / max(1.0, p_high - p_low) * 255.0, 0, 255)
+            norm_fg[fg_mask < 0.5] = 255.0
+            gray_proc = norm_fg.astype(np.uint8)
+        else:
+            gray_proc = gray_clean
+    else:
+        gray_proc = gray
+
+    # CLAHE tang cuong tuong phan cuc bo cho vector contours
+    clahe = cv2.createCLAHE(clipLimit=2.2, tileGridSize=(8, 8))
+    gray_clahe = clahe.apply(gray_proc)
+    if is_segmented:
+        gray_clahe[fg_mask < 0.5] = 255
+
+    # Ban do sac do lam mo lien tuc de do do toi
+    tone_map = (cv2.GaussianBlur(gray_proc, (25, 25), 7.0)
+                if min(h, w) >= 50 else cv2.GaussianBlur(gray_proc, (5, 5), 1.0))
+    raw_darkness = 1.0 - (tone_map.astype(np.float32) / 255.0)
+
+    # High-Key tone remapping
+    if is_segmented:
+        darkness = np.clip((raw_darkness - 0.15) / 0.85, 0.0, 1.0) ** 1.6
+        darkness[fg_mask < 0.5] = 0.0
+    else:
+        darkness = np.clip((raw_darkness - 0.10) / 0.90, 0.0, 1.0) ** 1.4
+
+    cell_size = min(w, h) / float(target_grid_dim)
+
+    # Lop 1: Continuous Line Contours
+    contour_strokes, contour_mask = _extract_stipple_contours(
+        gray_clahe, darkness, cell_size, min_contour_len=min_contour_len,
+        simplify_eps=simplify_eps, canny_low=canny_low, canny_high=canny_high
+    )
+
+    # Lop 2: Halftone Tone Dots
+    dot_strokes = _extract_stipple_dots_poisson(
+        darkness, contour_mask, cell_size,
+        min_radius_factor=min_radius_factor, max_radius_factor=max_radius_factor,
+        n_seg=n_seg, seed=seed, is_segmented=is_segmented
+    )
+
+    all_strokes = contour_strokes + dot_strokes
+    return all_strokes, (w, h)
 
 
 def extract_strokes_hatching(img, base_spacing=6, cross_spacing=4,
@@ -1339,8 +1551,38 @@ def _run_self_check():
         _, v_in_bounds = build_svg([specimen_pos40], [0], [False], v_scale, v_offset, paper_dim_mm, smooth=True, skew_angle_deg=angle)
         assert v_in_bounds is True, f"Deskew {angle}° phải nằm trong bounds giấy"
 
+    # Regression test cho style stipple: kiem tra toan dien chat luong thuat toan stipple
+    test_stipple_img = np.zeros((40, 40, 3), dtype=np.uint8)
+    stipple_strokes, (st_w, st_h) = extract_strokes_stipple(test_stipple_img, target_grid_dim=20, seed=42)
+    assert len(stipple_strokes) > 1, "Stipple phai tao duoc cac cham tren anh test"
+    st_scale_x = st_w / 20.0
+    st_scale_y = st_h / 20.0
+    st_cell_size = min(st_scale_x, st_scale_y)
+
+    # 1. Kiem tra ban kinh moi cham nam trong dai thich ung hop le [0.20, 0.45] va n_seg >= 6
+    for s in stipple_strokes:
+        c = np.mean(s[:-1], axis=0)
+        r = float(np.linalg.norm(s[0] - c))
+        r_factor = r / st_cell_size
+        assert 0.20 <= r_factor <= 0.45, f"Stipple dot radius factor {r_factor:.3f} ngoai gioi han hop le"
+        assert len(s) >= 7, f"Moi cham stipple phai co it nhat 7 diem (n_seg >= 6), nhan {len(s)}"
+        assert np.allclose(s[0], s[-1]), "Cham stipple phai la vong tron khep kin"
+
+    # 2. Kiem tra anh trang tao 0 cham
+    white_img = np.ones((40, 40, 3), dtype=np.uint8) * 255
+    white_strokes, _ = extract_strokes_stipple(white_img, target_grid_dim=20)
+    assert len(white_strokes) == 0, f"Anh trang khong duoc tao cham, nhan {len(white_strokes)}"
+
+    # 3. Kiem tra tinh hop le va toa do trong giay khi build SVG
+    st_rb = get_render_bounds_px(stipple_strokes, (st_w, st_h), smooth=False)
+    st_scale, st_offset = compute_pixel_to_mm_transform((st_w, st_h), paper_dim_mm, render_bounds_px=st_rb)
+    st_order, st_rev = nearest_neighbor_order(stipple_strokes)
+    st_svg, st_in_bounds = build_svg(stipple_strokes, st_order, st_rev, st_scale, st_offset, paper_dim_mm, smooth=False)
+    assert st_in_bounds is True, "SVG stipple phai nam trong bounds giay"
+    assert "<svg" in st_svg and "</svg>" in st_svg
+
     reduction = ((d_raw - d_final) / d_raw) * 100
-    print(f"[SELF-CHECK PASS] Raw: {d_raw:.1f} -> Optimized: {d_final:.1f} (Giam {reduction:.1f}%) | Kinematics OK | Bézier OK | Deskew OK")
+    print(f"[SELF-CHECK PASS] Raw: {d_raw:.1f} -> Optimized: {d_final:.1f} (Giam {reduction:.1f}%) | Kinematics OK | Bézier OK | Deskew OK | Stipple Quality OK")
 
 
 

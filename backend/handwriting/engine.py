@@ -14,10 +14,13 @@ Tạo nét bút đơn (Single-Stroke Vector Centerline) cho chữ viết tay Ti�
 import math
 import random
 import sys
+import time
+from typing import Any, Dict, List, NamedTuple, Optional, Sequence, Tuple
 import unicodedata
 import numpy as np
 
 if __package__:
+    from .metrics_evaluator import TraceStroke
     from .font_packs import FONT_PACKS, LETTER_VARIANT_SETS
     from .font_packs.geometry import (
         bz,
@@ -48,6 +51,7 @@ else:
     if _parent_dir not in sys.path:
         sys.path.insert(0, _parent_dir)
     try:
+        from handwriting.metrics_evaluator import TraceStroke
         from handwriting.font_packs import FONT_PACKS, LETTER_VARIANT_SETS
         from handwriting.font_packs.geometry import (
             bz,
@@ -72,6 +76,7 @@ else:
             OMNI_CASUAL_CENTERS,
         )
     except ImportError:
+        from backend.handwriting.metrics_evaluator import TraceStroke
         from backend.handwriting.font_packs import FONT_PACKS, LETTER_VARIANT_SETS
         from backend.handwriting.font_packs.geometry import (
             bz,
@@ -95,6 +100,12 @@ else:
             OMNI_CASUAL_WIDTHS,
             OMNI_CASUAL_CENTERS,
         )
+
+
+class StructuredRenderResult(NamedTuple):
+    strokes: List[np.ndarray]
+    trace: List[TraceStroke]
+    optimize_time_ms: float
 
 class TextOverflowError(ValueError):
     """Nội dung thư tay không thể đặt trọn vẹn trong một trang."""
@@ -1176,11 +1187,21 @@ def apply_bio_variation(
     return out
 
 
-def text_to_strokes(text, font="oly", style="hand_hocsinh", font_size_mm=7.0, line_spacing_mm=13.0,
-                    paper_size_mm=(210.0, 297.0), margin_mm=20.0, seed=None, letter_type="general"):
+def _text_to_strokes_impl(
+    text,
+    font="oly",
+    style="hand_hocsinh",
+    font_size_mm=7.0,
+    line_spacing_mm=13.0,
+    paper_size_mm=(210.0, 297.0),
+    margin_mm=20.0,
+    seed=None,
+    letter_type="general",
+    return_trace=False,
+):
     """
-    Biến đổi văn bản tiếng Việt thành mảng các nét vẽ mm (List of ndarray (N, 2)).
-    Hỗ trợ xuống dòng tự động, căn lề, proportional kerning, nối nét cursive và chống dính dấu.
+    Hàm thực thi cốt lõi của text_to_strokes và text_to_strokes_structured.
+    Dùng chung 100% pipeline hình học, biến thiên sinh học, thứ tự ngẫu nhiên.
     """
     if not isinstance(style, str) or style not in STYLE_CONFIGS:
         raise ValueError(
@@ -1226,6 +1247,10 @@ def text_to_strokes(text, font="oly", style="hand_hocsinh", font_size_mm=7.0, li
     space_w = 4.8 * scale * cfg["char_spacing"]
 
     strokes = []
+    trace_strokes = []
+    total_optimize_time_ms = 0.0
+    global_stroke_idx = 0
+
     curr_x = margin_mm
     curr_y = margin_mm + font_size_mm
     rendered_char_count = 0
@@ -1321,10 +1346,15 @@ def text_to_strokes(text, font="oly", style="hand_hocsinh", font_size_mm=7.0, li
             enable_lig = f_cfg.get("ligature", False)
             # ponytail: w2=0 when font disables ligature to force pen-lift without changing DP structure
             weights = (0.5, 4.0 if enable_lig else 0.0, 2.0, 15.0, 1.0)
+
+            t_dag_0 = time.perf_counter()
             dp_sol = optimize_word_dag(char_info_list, weights=weights, force_lift=(not enable_lig))
+            total_optimize_time_ms += (time.perf_counter() - t_dag_0) * 1000.0
 
             word_base_strokes = []
+            stroke_pieces = []
             word_secondary_strokes = []
+            word_secondary_meta = []
 
             for char_idx, info in enumerate(char_info_list):
                 var = dp_sol["variants"][char_idx]
@@ -1335,9 +1365,21 @@ def text_to_strokes(text, font="oly", style="hand_hocsinh", font_size_mm=7.0, li
                 prim_strokes, sec_strokes = split_glyph_strokes(b_char, scaled_s)
                 if b_char in ('i', 'j'):
                     if len(info["accents"]) == 0:
-                        word_secondary_strokes.extend(sec_strokes)
+                        for s in sec_strokes:
+                            word_secondary_strokes.append(s)
+                            word_secondary_meta.append({
+                                "stroke_type": "secondary_stroke",
+                                "char": b_char,
+                                "meta": {"part": "dot", "char_idx": char_idx},
+                            })
                 else:
-                    word_secondary_strokes.extend(sec_strokes)
+                    for s in sec_strokes:
+                        word_secondary_strokes.append(s)
+                        word_secondary_meta.append({
+                            "stroke_type": "secondary_stroke",
+                            "char": b_char,
+                            "meta": {"part": "secondary", "char_idx": char_idx},
+                        })
 
                 # Ghép nét nối liên tục (Ligature) theo quyết định tối ưu của DP
                 if char_idx > 0 and dp_sol["conns"][char_idx - 1] and len(word_base_strokes) > 0:
@@ -1351,15 +1393,62 @@ def text_to_strokes(text, font="oly", style="hand_hocsinh", font_size_mm=7.0, li
                     v_en_world = var.v_entry * info["scale_vec"]
                     v_en_world = v_en_world / (np.linalg.norm(v_en_world) + 1e-6)
 
+                    # Tính chi phí góc bẻ tiếp tuyến giải tích
+                    d_vec = p_entry - p_exit
+                    d_norm = float(np.linalg.norm(d_vec))
+                    if d_norm > 1e-4:
+                        u_d = d_vec / d_norm
+                        cos1 = float(np.clip(np.dot(v_ex_world, u_d), -1.0, 1.0))
+                        cos2 = float(np.clip(np.dot(u_d, v_en_world), -1.0, 1.0))
+                        bridge_curv_cost = (1.0 - cos1) + (1.0 - cos2)
+                    else:
+                        bridge_curv_cost = 0.0
+
                     bridge = build_ligature_bridge(
                         p_exit, v_ex_world, p_entry, v_en_world, scale_hint=scale_hint, n=6
                     )
                     merged = np.vstack([word_base_strokes[-1], bridge[1:-1], prim_strokes[0]])
                     word_base_strokes[-1] = merged
+
+                    stroke_pieces[-1].append({
+                        "type": "bridge_stroke",
+                        "char": f"{prev_info['char']}->{b_char}",
+                        "len_inner": len(bridge) - 2,
+                        "meta": {
+                            "char_from": prev_info["char"],
+                            "char_to": b_char,
+                            "curvature_cost": bridge_curv_cost,
+                            "p_exit": p_exit,
+                            "p_entry": p_entry,
+                            "v_exit": v_ex_world,
+                            "v_entry": v_en_world,
+                        },
+                    })
+                    stroke_pieces[-1].append({
+                        "type": "base_stroke",
+                        "char": b_char,
+                        "len": len(prim_strokes[0]),
+                        "meta": {"char_idx": char_idx},
+                    })
+
                     if len(prim_strokes) > 1:
-                        word_base_strokes.extend(prim_strokes[1:])
+                        for extra_s in prim_strokes[1:]:
+                            word_base_strokes.append(extra_s)
+                            stroke_pieces.append([{
+                                "type": "base_stroke",
+                                "char": b_char,
+                                "len": len(extra_s),
+                                "meta": {"char_idx": char_idx},
+                            }])
                 else:
-                    word_base_strokes.extend(prim_strokes)
+                    for prim_s in prim_strokes:
+                        word_base_strokes.append(prim_s)
+                        stroke_pieces.append([{
+                            "type": "base_stroke",
+                            "char": b_char,
+                            "len": len(prim_s),
+                            "meta": {"char_idx": char_idx},
+                        }])
 
                 # Nét thanh đậm (thanhdam)
                 if f_cfg["thanhdam"]:
@@ -1368,18 +1457,33 @@ def text_to_strokes(text, font="oly", style="hand_hocsinh", font_size_mm=7.0, li
                         offset_s = p_first.copy().astype(float)
                         offset_s[:, 0] += 0.22
                         word_secondary_strokes.append(offset_s)
+                        word_secondary_meta.append({
+                            "stroke_type": "secondary_stroke",
+                            "char": b_char,
+                            "meta": {"part": "thanhdam", "char_idx": char_idx},
+                        })
 
                 # Nét thư pháp móc đuôi chữ cuối từ
                 if f_cfg["flourish"] and char_idx == len(char_info_list) - 1:
                     last_pt = prim_strokes[-1][-1]
                     hook = np.array([last_pt, last_pt + np.array([0.7 * scale, -1.4 * scale])])
                     word_secondary_strokes.append(hook)
+                    word_secondary_meta.append({
+                        "stroke_type": "secondary_stroke",
+                        "char": b_char,
+                        "meta": {"part": "flourish", "char_idx": char_idx},
+                    })
 
                 # Gạch ngang đ/Đ
                 if info["is_d_stroke"]:
                     d_bar = STROKE_D_BAR if b_char == 'd' else STROKE_CAP_D_BAR
                     bar_scaled = d_bar.astype(float) * info["scale_vec"]
                     word_secondary_strokes.append(bar_scaled + info["offset"])
+                    word_secondary_meta.append({
+                        "stroke_type": "secondary_stroke",
+                        "char": b_char,
+                        "meta": {"part": "d_bar", "char_idx": char_idx},
+                    })
 
                 # Sinh và đặt dấu theo quy tắc hình học
                 if info["accents"]:
@@ -1389,19 +1493,84 @@ def text_to_strokes(text, font="oly", style="hand_hocsinh", font_size_mm=7.0, li
                         info["cx"],
                         dot_below_x_offset=dot_below_x_offsets.get(b_char),
                     )
-                    for acc_s in acc_list:
+                    for acc_idx, acc_s in enumerate(acc_list):
                         acc_scaled = acc_s.astype(float) * info["scale_vec"]
                         acc_placed = acc_scaled + info["offset"]
                         word_secondary_strokes.append(acc_placed)
+                        word_secondary_meta.append({
+                            "stroke_type": "diacritic_stroke",
+                            "char": b_char,
+                            "meta": {
+                                "accents": info["accents"],
+                                "accent_index": acc_idx,
+                                "char_idx": char_idx,
+                            },
+                        })
 
             curr_x = tmp_x
 
             # Gom nét từ và áp dụng biến thiên sinh học (Bio-mimetic Variation)
             rendered_word_strokes = []
-            for s in word_base_strokes:
-                rendered_word_strokes.append(apply_bio_variation(s, slant=slant, jitter_amp=jitter, drift_y=drift_y, rng=rng))
-            for s in word_secondary_strokes:
-                rendered_word_strokes.append(apply_bio_variation(s, slant=slant, jitter_amp=jitter, drift_y=drift_y, rng=rng))
+            word_trace_strokes = []
+
+            for stroke_idx, s in enumerate(word_base_strokes):
+                varied_s = apply_bio_variation(s, slant=slant, jitter_amp=jitter, drift_y=drift_y, rng=rng)
+                rendered_word_strokes.append(varied_s)
+
+                if return_trace:
+                    pieces = stroke_pieces[stroke_idx]
+                    cursor = 0
+                    for comp in pieces:
+                        comp_type = comp["type"]
+                        comp_char = comp["char"]
+                        comp_meta = comp.get("meta", {}).copy()
+                        comp_meta["continuous_stroke_id"] = global_stroke_idx
+
+                        if comp_type == "base_stroke":
+                            comp_len = comp["len"]
+                            if cursor == 0 and len(pieces) == 1:
+                                pts = varied_s
+                            else:
+                                pts = varied_s[cursor : cursor + comp_len]
+                            cursor += comp_len
+                            word_trace_strokes.append(TraceStroke(
+                                points=pts,
+                                stroke_type=comp_type,
+                                char=comp_char,
+                                word_idx=word_idx,
+                                meta=comp_meta,
+                            ))
+                        elif comp_type == "bridge_stroke":
+                            inner_len = comp["len_inner"]
+                            start = cursor - 1
+                            end = cursor + inner_len + 1
+                            pts = varied_s[start : end]
+                            cursor += inner_len
+                            word_trace_strokes.append(TraceStroke(
+                                points=pts,
+                                stroke_type=comp_type,
+                                char=comp_char,
+                                word_idx=word_idx,
+                                meta=comp_meta,
+                            ))
+                global_stroke_idx += 1
+
+            for sec_idx, s in enumerate(word_secondary_strokes):
+                varied_s = apply_bio_variation(s, slant=slant, jitter_amp=jitter, drift_y=drift_y, rng=rng)
+                rendered_word_strokes.append(varied_s)
+
+                if return_trace:
+                    sec_meta_item = word_secondary_meta[sec_idx]
+                    sec_meta = sec_meta_item.get("meta", {}).copy()
+                    sec_meta["continuous_stroke_id"] = global_stroke_idx
+                    word_trace_strokes.append(TraceStroke(
+                        points=varied_s,
+                        stroke_type=sec_meta_item["stroke_type"],
+                        char=sec_meta_item["char"],
+                        word_idx=word_idx,
+                        meta=sec_meta,
+                    ))
+                global_stroke_idx += 1
 
             if rendered_word_strokes:
                 word_points = np.concatenate(rendered_word_strokes, axis=0)
@@ -1417,6 +1586,8 @@ def text_to_strokes(text, font="oly", style="hand_hocsinh", font_size_mm=7.0, li
                         "Nội dung thư quá dài để đặt trong một trang với cỡ chữ và giãn dòng hiện tại."
                     )
                 strokes.extend(rendered_word_strokes)
+                if return_trace:
+                    trace_strokes.extend(word_trace_strokes)
 
             # Khoảng cách giữa các từ
             curr_x += space_w * rng.uniform(0.95, 1.05)
@@ -1426,7 +1597,43 @@ def text_to_strokes(text, font="oly", style="hand_hocsinh", font_size_mm=7.0, li
         f"Lệch context cursor khi kết thúc text_to_strokes: {context_cursor} vs {len(contexts)}"
     )
 
+    if return_trace:
+        return StructuredRenderResult(
+            strokes=strokes,
+            trace=trace_strokes,
+            optimize_time_ms=total_optimize_time_ms,
+        )
+
     return strokes
+
+
+def text_to_strokes(text, font="oly", style="hand_hocsinh", font_size_mm=7.0, line_spacing_mm=13.0,
+                    paper_size_mm=(210.0, 297.0), margin_mm=20.0, seed=None, letter_type="general"):
+    """
+    Biến đổi văn bản tiếng Việt thành mảng các nét vẽ mm (List of ndarray (N, 2)).
+    Hỗ trợ xuống dòng tự động, căn lề, proportional kerning, nối nét cursive và chống dính dấu.
+    Public API giữ nguyên 100% chữ ký và kiểu trả về.
+    """
+    return _text_to_strokes_impl(
+        text, font=font, style=style, font_size_mm=font_size_mm, line_spacing_mm=line_spacing_mm,
+        paper_size_mm=paper_size_mm, margin_mm=margin_mm, seed=seed, letter_type=letter_type,
+        return_trace=False
+    )
+
+
+def text_to_strokes_structured(text, font="oly", style="hand_hocsinh", font_size_mm=7.0, line_spacing_mm=13.0,
+                               paper_size_mm=(210.0, 297.0), margin_mm=20.0, seed=None, letter_type="general"):
+    """
+    Hàm nội bộ dành cho nghiên cứu CA-VHC: Trích xuất strokes kèm Structured Render Trace
+    (phân loại base_stroke, bridge_stroke, secondary_stroke, diacritic_stroke)
+    và thời gian tối ưu DAG thực tế optimize_time_ms.
+    Trả về StructuredRenderResult(strokes, trace, optimize_time_ms).
+    """
+    return _text_to_strokes_impl(
+        text, font=font, style=style, font_size_mm=font_size_mm, line_spacing_mm=line_spacing_mm,
+        paper_size_mm=paper_size_mm, margin_mm=margin_mm, seed=seed, letter_type=letter_type,
+        return_trace=True
+    )
 
 
 def generate_handwriting_svg(text, font="oly", style="hand_hocsinh", target_paper_size_mm=(210.0, 297.0),
@@ -1442,11 +1649,13 @@ def generate_handwriting_svg(text, font="oly", style="hand_hocsinh", target_pape
     except ImportError:
         from backend.path_optimizer import build_svg, compute_svg_metrics
 
-    strokes = text_to_strokes(
+    res = text_to_strokes_structured(
         text, font=font, style=style, font_size_mm=font_size_mm,
         line_spacing_mm=line_spacing_mm, paper_size_mm=target_paper_size_mm,
         seed=seed, letter_type=letter_type,
     )
+    strokes = res.strokes
+    opt_time_ms = res.optimize_time_ms
 
     if not strokes:
         strokes = [np.array([[20.0, 20.0], [21.0, 20.0]])]
@@ -1464,7 +1673,7 @@ def generate_handwriting_svg(text, font="oly", style="hand_hocsinh", target_pape
         stroke_width_mm=0.35, smooth=True, skew_angle_deg=skew_angle_deg
     )
 
-    metrics = compute_svg_metrics(strokes, order, rev, scale=1.0, optimize_time_ms=0.0, skew_angle_deg=skew_angle_deg)
+    metrics = compute_svg_metrics(strokes, order, rev, scale=1.0, optimize_time_ms=opt_time_ms, skew_angle_deg=skew_angle_deg)
     return svg_content, metrics, is_within_bounds
 
 

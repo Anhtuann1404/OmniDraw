@@ -132,6 +132,22 @@ app.add_middleware(
 )
 
 
+class DoubleSlashMiddleware:
+    """Tự động chuẩn hóa các URL bị thừa dấu gạch chéo (ví dụ: //api/history -> /api/history)"""
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] == "http":
+            path = scope.get("path", "")
+            if "//" in path:
+                scope["path"] = re.sub(r"/+", "/", path)
+        await self.app(scope, receive, send)
+
+
+app.add_middleware(DoubleSlashMiddleware)
+
+
 def custom_error(code: str, message: str, status_code: int = 400):
     return JSONResponse(
         status_code=status_code,
