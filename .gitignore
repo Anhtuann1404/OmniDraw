@@ -76,12 +76,7 @@ frontend/dist/
 *.local
 
 # =========================
-# Graphify (Knowledge Graph)
-# Giữ lại: graph.json, GRAPH_REPORT.md, wiki/, các file HTML xem trực quan
-# Bỏ qua: cache tạm, snapshot backup, obsidian vault, config máy cá nhân
+# Agents & Graphify (Local AI/Tool Artifacts)
 # =========================
-graphify-out/cache/
-graphify-out/converted/
-graphify-out/obsidian/
-graphify-out/202*
-graphify-out/.graphify_*
+.agents/
+graphify-out/
