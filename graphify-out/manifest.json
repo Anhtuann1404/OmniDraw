@@ -24,10 +24,10 @@
     "semantic_hash": "1265442097b55c996fa2eb899527808f"
   },
   "backend/handwriting/engine.py": {
-    "mtime": 1789743004.2942696,
-    "seen": 1789749162.435732,
-    "ast_hash": "c8415a1c09f3e3c845877f905b920d70",
-    "semantic_hash": "c8415a1c09f3e3c845877f905b920d70"
+    "mtime": 1789854468.9220488,
+    "seen": 1789854496.4790149,
+    "ast_hash": "1f606a850ba2cff48cb0d8a2cc667e11",
+    "semantic_hash": ""
   },
   "backend/handwriting/font_packs/__init__.py": {
     "mtime": 1789447611.2227497,
@@ -72,16 +72,16 @@
     "semantic_hash": "2778eff04085e47284ece8e5e7ccec18"
   },
   "backend/main.py": {
-    "mtime": 1789747912.1780593,
-    "seen": 1789749162.4357362,
-    "ast_hash": "b2656a447e3419a137d66fff0373d161",
-    "semantic_hash": "b2656a447e3419a137d66fff0373d161"
+    "mtime": 1789854468.9260857,
+    "seen": 1789854496.47902,
+    "ast_hash": "6f06cf81af59853d0faa423b2155bfbc",
+    "semantic_hash": ""
   },
   "backend/path_optimizer.py": {
-    "mtime": 1789414658.0057395,
-    "seen": 1789749162.4357362,
-    "ast_hash": "1d87bd4cbaf319e31630f7fbdfe465e8",
-    "semantic_hash": "1d87bd4cbaf319e31630f7fbdfe465e8"
+    "mtime": 1789854468.9267364,
+    "seen": 1789854496.47902,
+    "ast_hash": "dfd02980c849bcc35ac10427e5f2741b",
+    "semantic_hash": ""
   },
   "backend/run.sh": {
     "mtime": 1788847959.5606942,
@@ -120,10 +120,10 @@
     "semantic_hash": "59be9af59a22e2c2014f91f875b428d1"
   },
   "frontend/src/api/client.js": {
-    "mtime": 1788195679.6018994,
-    "seen": 1789749162.4357388,
-    "ast_hash": "d252f28414998982ce02a3f5fd82e935",
-    "semantic_hash": "d252f28414998982ce02a3f5fd82e935"
+    "mtime": 1789854468.9276826,
+    "seen": 1789854496.4790242,
+    "ast_hash": "d922c57420a43405e505abebbfd03e46",
+    "semantic_hash": ""
   },
   "frontend/src/api/config.js": {
     "mtime": 1788195679.6020863,
@@ -369,6 +369,36 @@
     "mtime": 1789853893.5645745,
     "seen": 1789854463.841593,
     "ast_hash": "a37cca61083db3c5f67e91b9b984f73a",
+    "semantic_hash": ""
+  },
+  "backend/handwriting/benchmark_fixtures.py": {
+    "mtime": 1789854468.9209628,
+    "seen": 1789854496.479014,
+    "ast_hash": "fb4d7cb09d8a475211eeeb8d09afaac1",
+    "semantic_hash": ""
+  },
+  "backend/handwriting/metrics_evaluator.py": {
+    "mtime": 1789854468.9225712,
+    "seen": 1789854496.479018,
+    "ast_hash": "b9de907410f35ea30da2f98b623e3aa7",
+    "semantic_hash": ""
+  },
+  "tests/test_ca_vhc_metrics.py": {
+    "mtime": 1789854468.9280317,
+    "seen": 1789854496.4790342,
+    "ast_hash": "2cd0001b931e5c3486c32d4a55b0fda9",
+    "semantic_hash": ""
+  },
+  "tests/test_stipple_optimizer.py": {
+    "mtime": 1789854468.9282384,
+    "seen": 1789854496.4790342,
+    "ast_hash": "66f104e2c6e22d940ab1f33590152f47",
+    "semantic_hash": ""
+  },
+  "docs/05_ca_vhc_research_spec.md": {
+    "mtime": 1789854468.9271061,
+    "seen": 1789854496.479051,
+    "ast_hash": "157a1469eacd528d146d807b71f41ada",
     "semantic_hash": ""
   }
 }
