@@ -282,7 +282,7 @@ Nghiên cứu               Song song                 & Đánh giá             
 ##### C. Bố trí dấu tiếng Việt & Thứ tự nét trễ — P0
 **Phụ trách:** TV4 (chủ trì chính tả & mỏ neo dấu) + TV2 (phối hợp tối ưu nét trễ)
 - [x] Xử lý chuẩn hóa Unicode NFD, tự động ghép dấu thanh và dấu phụ theo mỏ neo (anchors) và offset (TV4)
-- [ ] Đưa dấu tiếng Việt theo quy tắc chính tả, cấu trúc âm tiết và vùng cấm va chạm trực tiếp vào bài toán tối ưu DAG (`diacritic obstacle-avoidance`) [P0] (TV4 lead biểu diễn & ràng buộc chính tả, TV2 phối hợp mô hình hóa chi phí chuyển động)
+- [ ] Đưa dấu tiếng Việt theo quy tắc chính tả, cấu trúc âm tiết và vùng cấm va chạm trực tiếp vào bài toán tối ưu DAG (`diacritic obstacle-avoidance`) [P0] (TV4 lead biểu diễn & ràng buộc chính tả, TV2 phối hợp mô hình hóa chi phí chuyển động; *Bước A Audit completed: `docs/06_audit_trellis_dag_report.md`; Bước B State Architecture Design in progress: `docs/07_diacritic_aware_state_design.md`*)
 - [ ] Nghiên cứu tối ưu hóa thứ tự nét trễ (`delayed-stroke ordering`): quyết định viết dấu ngay sau nguyên âm, sau khi viết xong thân từ, hay theo nhóm nét trễ để cân bằng giữa quãng đường di chuyển quay lại, số lần nhấc bút và độ dễ đọc [P0] (TV4 & TV2)
 - [ ] Xử lý an toàn tổ hợp nhiều dấu tiếng Việt chồng tầng (dấu mũ + thanh, dấu móc + thanh) [P0] (TV4)
 

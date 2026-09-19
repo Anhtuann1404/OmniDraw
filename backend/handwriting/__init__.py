@@ -20,6 +20,9 @@ if __name__ != "backend.handwriting":
     text_to_strokes = _canonical.text_to_strokes
     resolve_font = _canonical.resolve_font
     resolve_letter_type = _canonical.resolve_letter_type
+    STYLE_CONFIGS = _canonical.STYLE_CONFIGS
+    RENDER_PROFILES = _canonical.RENDER_PROFILES
+    LETTER_TYPES = _canonical.LETTER_TYPES
     UnsupportedCharacterError = _canonical.UnsupportedCharacterError
     UnsupportedLetterTypeError = _canonical.UnsupportedLetterTypeError
     TextOverflowError = _canonical.TextOverflowError
@@ -38,6 +41,9 @@ else:
         text_to_strokes,
         resolve_font,
         resolve_letter_type,
+        STYLE_CONFIGS,
+        RENDER_PROFILES,
+        LETTER_TYPES,
         UnsupportedCharacterError,
         UnsupportedLetterTypeError,
         TextOverflowError,
@@ -50,6 +56,9 @@ else:
         "text_to_strokes",
         "resolve_font",
         "resolve_letter_type",
+        "STYLE_CONFIGS",
+        "RENDER_PROFILES",
+        "LETTER_TYPES",
         "UnsupportedCharacterError",
         "UnsupportedLetterTypeError",
         "TextOverflowError",

@@ -16,7 +16,7 @@ import asyncio
 import math
 import re
 import time
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
 # Load biến môi trường từ file .env (hỗ trợ cả python-dotenv lẫn đọc thủ công dự phòng)
 def _load_env():
@@ -70,12 +70,16 @@ from api_generator import (
     DATA_DIR,
     LOGS_DIR
 )
-from path_optimizer import process as svg_process
+from path_optimizer import process as svg_process, VALID_STYLES as ART_MODE_STYLES
 
 if __package__:
     from .handwriting import (
         generate_handwriting_svg,
         resolve_font,
+        resolve_letter_type,
+        STYLE_CONFIGS,
+        RENDER_PROFILES,
+        LETTER_TYPES,
         TextOverflowError,
         UnsupportedCharacterError,
         UnsupportedLetterTypeError,
@@ -84,6 +88,10 @@ else:
     from handwriting import (
         generate_handwriting_svg,
         resolve_font,
+        resolve_letter_type,
+        STYLE_CONFIGS,
+        RENDER_PROFILES,
+        LETTER_TYPES,
         TextOverflowError,
         UnsupportedCharacterError,
         UnsupportedLetterTypeError,
@@ -262,21 +270,108 @@ def log_experiment(payload: LogPayload):
 
 class GenerateRequest(BaseModel):
     request_id: str
-    input_type: str
+    input_type: Optional[Any] = None
     image_base64: Optional[str] = None
     prompt: Optional[str] = None
-    style: str
+    style: Optional[Any] = None
     options: Optional[Dict[str, Any]] = None
     experiment: Optional[Dict[str, Any]] = None
 
 
+def resolve_art_style(style: Any) -> Tuple[Optional[str], Optional[dict]]:
+    """
+    Resolve and validate style for Art Mode (input_type in {'text', 'image'}).
+    Contract:
+      - omitted / None: default to 'sketch'
+      - valid: 'sketch', 'line_art', 'stipple', 'hatching'
+      - empty string, invalid datatype, or non-enum string: reject with INPUT_INVALID_FORMAT
+    """
+    if style is None:
+        return "sketch", None
+    if not isinstance(style, str):
+        return None, {
+            "code": "INPUT_INVALID_FORMAT",
+            "message": f"Phong cách Art Mode '{style}' không hợp lệ (sai kiểu dữ liệu). Các phong cách khả dụng: {sorted(ART_MODE_STYLES)}."
+        }
+    if style not in ART_MODE_STYLES:
+        return None, {
+            "code": "INPUT_INVALID_FORMAT",
+            "message": f"Phong cách Art Mode '{style}' không hợp lệ. Các phong cách khả dụng: {sorted(ART_MODE_STYLES)}."
+        }
+    return style, None
+
+
+def validate_target_paper_size(options: Optional[Dict[str, Any]]) -> Tuple[Tuple[float, float], Optional[dict]]:
+    """
+    Validates target_paper_size_mm in options.
+    Contract:
+      - omitted: default A4 [210.0, 297.0]
+      - explicit null, wrong length, not numbers, bool, <= 0, NaN, Inf: reject with INPUT_INVALID_FORMAT
+    """
+    paper_w, paper_h = 210.0, 297.0
+    if not options or "target_paper_size_mm" not in options:
+        return (paper_w, paper_h), None
+    paper_size = options["target_paper_size_mm"]
+    if (
+        not isinstance(paper_size, (list, tuple))
+        or len(paper_size) != 2
+        or isinstance(paper_size[0], bool)
+        or isinstance(paper_size[1], bool)
+        or not isinstance(paper_size[0], (int, float))
+        or not isinstance(paper_size[1], (int, float))
+        or not math.isfinite(paper_size[0])
+        or not math.isfinite(paper_size[1])
+        or paper_size[0] <= 0
+        or paper_size[1] <= 0
+    ):
+        return (paper_w, paper_h), {
+            "code": "INPUT_INVALID_FORMAT",
+            "message": "target_paper_size_mm phải là danh sách [width, height] gồm 2 số dương (mm).",
+        }
+    return (float(paper_size[0]), float(paper_size[1])), None
+
+
+def validate_skew_angle(options: Optional[Dict[str, Any]]) -> Tuple[float, Optional[dict]]:
+    """
+    Validates skew_angle_deg in options.
+    """
+    skew_angle = 0.0
+    if not options:
+        return skew_angle, None
+    if "skew_angle_deg" in options and options["skew_angle_deg"] is not None:
+        try:
+            val = float(options["skew_angle_deg"])
+            if not math.isfinite(val):
+                raise ValueError()
+            skew_angle = val
+        except (ValueError, TypeError):
+            return 0.0, {
+                "code": "INPUT_INVALID_FORMAT",
+                "message": "skew_angle_deg phải là số thực hữu hạn.",
+            }
+    elif options.get("auto_deskew"):
+        from camera_inspector import inspect_paper
+        cam_res = inspect_paper()
+        skew_angle = float(cam_res.get("skew_angle_deg", 0.0))
+    return skew_angle, None
+
+
 @app.post("/api/ai/generate")
 async def generate_ai_image(request: GenerateRequest):
-    # Luôn dọn dẹp cache và file SVG cũ nếu đây là request_id được gửi lại (retry)
-    _clear_cached_svg_for_request(request.request_id)
+    # 1. Kiểm tra input_type hợp lệ
+    if request.input_type not in ("handwriting", "letter", "text", "image"):
+        return {
+            "request_id": request.request_id,
+            "status": "error",
+            "result_image_base64": None,
+            "error": {
+                "code": "INPUT_INVALID_FORMAT",
+                "message": f"input_type '{request.input_type}' không hợp lệ. Các loại hỗ trợ: 'handwriting', 'text', 'image'."
+            }
+        }
 
-    # Phân nhánh Viết Thư Tay (Single-Stroke Bio-Mimetic Handwriting)
-    if request.input_type in ("handwriting", "letter") or request.style.startswith("hand_"):
+    # 2. Phân nhánh Viết Thư Tay (Single-Stroke Bio-Mimetic Handwriting)
+    if request.input_type in ("handwriting", "letter"):
         t_start = time.perf_counter()
         text_content = request.prompt or ""
 
@@ -300,7 +395,6 @@ async def generate_ai_image(request: GenerateRequest):
                 print(f"[warn] Lỗi giải mã file văn bản: {e}")
 
         if not text_content.strip():
-            _clear_cached_svg_for_request(request.request_id)
             return {
                 "request_id": request.request_id,
                 "status": "error",
@@ -308,37 +402,58 @@ async def generate_ai_image(request: GenerateRequest):
                 "error": {"code": "EMPTY_TEXT", "message": "Nội dung thư tay không được để trống."}
             }
 
-        paper_w, paper_h = 210.0, 297.0
-        skew_angle = 0.0
-        if request.options:
-            if request.options.get("target_paper_size_mm"):
-                paper_w, paper_h = request.options["target_paper_size_mm"]
-            if "skew_angle_deg" in request.options:
-                skew_angle = float(request.options["skew_angle_deg"])
-            elif request.options.get("auto_deskew"):
-                from camera_inspector import inspect_paper
-                cam_res = inspect_paper()
-                skew_angle = float(cam_res.get("skew_angle_deg", 0.0))
-
-        font_param = request.options.get("font", "oly") if request.options else "oly"
-        try:
-            resolve_font(font_param)
-        except ValueError:
-            _clear_cached_svg_for_request(request.request_id)
+        if not isinstance(request.style, str) or request.style not in STYLE_CONFIGS:
+            msg = (
+                f"Phong cách chữ '{request.style}' không hợp lệ (trường 'style' là bắt buộc đối với chế độ viết thư tay). "
+                f"Các phong cách khả dụng: {sorted(STYLE_CONFIGS.keys())}."
+            )
             return {
                 "request_id": request.request_id,
                 "status": "error",
                 "result_image_base64": None,
                 "error": {
-                    "code": "UNSUPPORTED_FONT",
-                    "message": "Font này chưa được hỗ trợ. Tính năng tải font riêng sẽ được bổ sung sau."
+                    "code": "INPUT_INVALID_FORMAT",
+                    "message": msg,
                 }
             }
+        effective_style = request.style
+
+        # Validation target_paper_size_mm
+        (paper_w, paper_h), paper_err = validate_target_paper_size(request.options)
+        if paper_err:
+            return {
+                "request_id": request.request_id,
+                "status": "error",
+                "result_image_base64": None,
+                "error": paper_err,
+            }
+
+        skew_angle, skew_err = validate_skew_angle(request.options)
+        if skew_err:
+            return {
+                "request_id": request.request_id,
+                "status": "error",
+                "result_image_base64": None,
+                "error": skew_err,
+            }
+
+        font_param = "oly"
+        if request.options and "font" in request.options:
+            font_param = request.options["font"]
+            if not isinstance(font_param, str) or font_param not in RENDER_PROFILES:
+                return {
+                    "request_id": request.request_id,
+                    "status": "error",
+                    "result_image_base64": None,
+                    "error": {
+                        "code": "UNSUPPORTED_FONT",
+                        "message": f"Font '{font_param}' chưa được hỗ trợ. Các font khả dụng: {sorted(RENDER_PROFILES.keys())}."
+                    }
+                }
 
         seed_param = request.options.get("seed") if request.options else None
         if seed_param is not None:
             if isinstance(seed_param, bool) or not isinstance(seed_param, int) or not (0 <= seed_param <= 0xFFFFFFFF):
-                _clear_cached_svg_for_request(request.request_id)
                 return {
                     "request_id": request.request_id,
                     "status": "error",
@@ -349,17 +464,42 @@ async def generate_ai_image(request: GenerateRequest):
                     }
                 }
 
-        letter_type_param = (
-            request.options.get("letter_type", "general")
-            if request.options and "letter_type" in request.options
-            else "general"
-        )
+        letter_type_param = "general"
+        if request.options and "letter_type" in request.options:
+            letter_type_param = request.options["letter_type"]
+            if not isinstance(letter_type_param, str) or letter_type_param not in LETTER_TYPES:
+                return {
+                    "request_id": request.request_id,
+                    "status": "error",
+                    "result_image_base64": None,
+                    "error": {
+                        "code": "UNSUPPORTED_LETTER_TYPE",
+                        "message": f"Loại thư '{letter_type_param}' không được hỗ trợ. Các loại thư hợp lệ: {sorted(LETTER_TYPES)}.",
+                    }
+                }
+
+        font_pack_id = RENDER_PROFILES.get(font_param, {}).get("font_pack", "omnidraw_legacy")
+        try:
+            resolve_letter_type(letter_type_param, font_pack_id)
+        except UnsupportedLetterTypeError as exc:
+            return {
+                "request_id": request.request_id,
+                "status": "error",
+                "result_image_base64": None,
+                "error": {
+                    "code": "UNSUPPORTED_LETTER_TYPE",
+                    "message": str(exc),
+                }
+            }
+
+        # Toàn bộ validation thành công -> Dọn dẹp cache & file SVG cũ cho request_id này trước khi thực thi pipeline
+        _clear_cached_svg_for_request(request.request_id)
 
         try:
             svg_content, metrics, in_bounds = generate_handwriting_svg(
                 text=text_content,
                 font=font_param,
-                style=request.style if request.style.startswith("hand_") else "hand_hocsinh",
+                style=request.style,
                 target_paper_size_mm=(paper_w, paper_h),
                 skew_angle_deg=skew_angle,
                 seed=seed_param,
@@ -396,6 +536,17 @@ async def generate_ai_image(request: GenerateRequest):
                 "result_image_base64": None,
                 "error": {
                     "code": "TEXT_OVERFLOW",
+                    "message": str(exc),
+                },
+            }
+        except ValueError as exc:
+            _clear_cached_svg_for_request(request.request_id)
+            return {
+                "request_id": request.request_id,
+                "status": "error",
+                "result_image_base64": None,
+                "error": {
+                    "code": "INPUT_INVALID_FORMAT",
                     "message": str(exc),
                 },
             }
@@ -436,76 +587,213 @@ async def generate_ai_image(request: GenerateRequest):
             "error": None
         }
 
-    # TV1: Xử lý Text-to-drawing qua OpenAI API
-    if request.input_type == "text" and request.prompt:
-        # Chạy đồng bộ trong thread pool để không block event loop của FastAPI
-        resp: APIResponse = await asyncio.to_thread(
-            call_openai_image_api,
-            prompt=request.prompt,
-            request_id=request.request_id,
-            style=request.style,
-        )
+    # 3. Phân nhánh Art Mode (Text-to-Drawing & Image-to-Drawing)
+    elif request.input_type in ("text", "image"):
+        # 1. Validation & resolve style cho Art Mode
+        effective_style, style_err = resolve_art_style(request.style)
+        if style_err:
+            return {
+                "request_id": request.request_id,
+                "status": "error",
+                "result_image_base64": None,
+                "error": style_err,
+            }
 
-        if resp.status == "success" and resp.result_image_base64:
-            img_data = resp.result_image_base64
+        # 2. Validation target_paper_size_mm
+        (paper_w, paper_h), paper_err = validate_target_paper_size(request.options)
+        if paper_err:
+            return {
+                "request_id": request.request_id,
+                "status": "error",
+                "result_image_base64": None,
+                "error": paper_err,
+            }
+
+        # 3. Validation skew_angle
+        skew_angle, skew_err = validate_skew_angle(request.options)
+        if skew_err:
+            return {
+                "request_id": request.request_id,
+                "status": "error",
+                "result_image_base64": None,
+                "error": skew_err,
+            }
+
+        # TV1: Xử lý Text-to-drawing qua OpenAI API
+        if request.input_type == "text":
+            if not request.prompt or not str(request.prompt).strip():
+                return {
+                    "request_id": request.request_id,
+                    "status": "error",
+                    "result_image_base64": None,
+                    "error": {
+                        "code": "INPUT_INVALID_FORMAT",
+                        "message": "Prompt không được để trống khi input_type='text'."
+                    }
+                }
+
+            # Validation thành công -> Dọn dẹp cache & SVG cũ cho request_id này trước khi gọi pipeline AI
+            _clear_cached_svg_for_request(request.request_id)
+
+            # Chạy đồng bộ trong thread pool để không block event loop của FastAPI
+            resp: APIResponse = await asyncio.to_thread(
+                call_openai_image_api,
+                prompt=request.prompt,
+                request_id=request.request_id,
+                style=effective_style,
+            )
+
+            if resp.status == "success" and resp.result_image_base64:
+                img_data = resp.result_image_base64
+                if not img_data.startswith("data:") and not img_data.startswith("http"):
+                    img_data = f"data:image/png;base64,{img_data}"
+
+                # Lưu ảnh & metadata nếu cần ghi nhận
+                try:
+                    dataset_item_id = (
+                        request.experiment.get("dataset_item_id")
+                        if request.experiment and request.experiment.get("dataset_item_id")
+                        else "web_prompt"
+                    )
+                    p_data = PromptData(
+                        dataset_item_id=dataset_item_id,
+                        style=effective_style,
+                        prompt_text=request.prompt,
+                        prompt_vi=request.prompt
+                    )
+                    save_image_and_metadata(resp, p_data)
+                except Exception as e:
+                    print(f"[warn] Không thể lưu metadata: {e}")
+
+                # --- Pipeline: gọi TV2 chuyển ảnh → SVG ngay sau khi AI trả kết quả ---
+                svg_metrics_data = None
+                try:
+                    raw_b64 = resp.result_image_base64
+                    # Loại bỏ prefix data:image/...;base64, nếu có
+                    if raw_b64 and "," in raw_b64 and raw_b64.startswith("data:"):
+                        raw_b64 = raw_b64.split(",", 1)[1]
+
+                    svg_result = await asyncio.to_thread(
+                        svg_process,
+                        request_id=resp.request_id,
+                        image_base64=raw_b64,
+                        target_paper_size_mm=(paper_w, paper_h),
+                        output_dir=SVG_OUTPUT_DIR,
+                        style=effective_style,
+                        skew_angle_deg=skew_angle,
+                    )
+                    print(f"[pipeline] SVG conversion: {svg_result.get('status')} "
+                          f"(metrics={svg_result.get('svg_metrics')})")
+
+                    if svg_result.get("status") == "error":
+                        _clear_cached_svg_for_request(resp.request_id)
+                        _clear_cached_svg_for_request(request.request_id)
+                        err = svg_result.get("error") or {}
+                        return {
+                            "request_id": resp.request_id,
+                            "status": "error",
+                            "result_image_base64": None,
+                            "svg_ready": False,
+                            "svg_metrics": None,
+                            "error": {
+                                "code": err.get("code", "VECTORIZE_FAILED"),
+                                "message": err.get("message", "Chuyển đổi vector hoá SVG thất bại.")
+                            }
+                        }
+
+                    svg_metrics_data = svg_result.get("svg_metrics")
+                    # Lưu vào cache server-side để /api/log/experiment có thể tự lấy
+                    _svg_metrics_cache[resp.request_id] = svg_metrics_data
+                except Exception as e:
+                    print(f"[warn] SVG conversion failed: {e}")
+                    _clear_cached_svg_for_request(resp.request_id)
+                    _clear_cached_svg_for_request(request.request_id)
+                    return {
+                        "request_id": resp.request_id,
+                        "status": "error",
+                        "result_image_base64": None,
+                        "svg_ready": False,
+                        "svg_metrics": None,
+                        "error": {
+                            "code": "VECTORIZE_FAILED",
+                            "message": str(e)
+                        }
+                    }
+
+                return {
+                    "request_id": resp.request_id,
+                    "status": "success",
+                    "result_image_base64": img_data,
+                    "meta": {
+                        "model_used": resp.model_used or "dall-e-3",
+                        "processing_time_ms": resp.processing_time_ms
+                    },
+                    "svg_ready": svg_metrics_data is not None,
+                    "svg_metrics": svg_metrics_data,
+                    "error": None
+                }
+            else:
+                _clear_cached_svg_for_request(resp.request_id)
+                _clear_cached_svg_for_request(request.request_id)
+                return {
+                    "request_id": resp.request_id,
+                    "status": "error",
+                    "result_image_base64": None,
+                    "error": {
+                        "code": resp.error_code or "AI_GENERATION_FAILED",
+                        "message": resp.error_message or "Không thể sinh ảnh từ AI."
+                    }
+                }
+
+        elif request.input_type == "image":
+            if not request.image_base64 or not str(request.image_base64).strip():
+                return {
+                    "request_id": request.request_id,
+                    "status": "error",
+                    "result_image_base64": None,
+                    "error": {
+                        "code": "INPUT_INVALID_FORMAT",
+                        "message": "image_base64 không được để trống khi input_type='image'."
+                    }
+                }
+
+            # Validation thành công -> Dọn dẹp cache & SVG cũ cho request_id này trước khi gọi pipeline vector hóa
+            _clear_cached_svg_for_request(request.request_id)
+
+            # Nhận ảnh trực tiếp từ người dùng tải lên và chuyển sang SVG
+            img_data = request.image_base64
+
+            # Đảm bảo format đúng chuẩn base64 để render trên web
             if not img_data.startswith("data:") and not img_data.startswith("http"):
                 img_data = f"data:image/png;base64,{img_data}"
 
-            # Lưu ảnh & metadata nếu cần ghi nhận
-            try:
-                dataset_item_id = (
-                    request.experiment.get("dataset_item_id")
-                    if request.experiment and request.experiment.get("dataset_item_id")
-                    else "web_prompt"
-                )
-                p_data = PromptData(
-                    dataset_item_id=dataset_item_id,
-                    style=request.style,
-                    prompt_text=request.prompt,
-                    prompt_vi=request.prompt
-                )
-                save_image_and_metadata(resp, p_data)
-            except Exception as e:
-                print(f"[warn] Không thể lưu metadata: {e}")
+            # Lấy base64 thuần để đưa vào OpenCV
+            raw_b64 = request.image_base64
+            if "base64," in raw_b64:
+                raw_b64 = raw_b64.split("base64,")[1]
 
-            # --- Pipeline: gọi TV2 chuyển ảnh → SVG ngay sau khi AI trả kết quả ---
+            # TV2: Chạy thuật toán tạo SVG
             svg_metrics_data = None
             try:
-                raw_b64 = resp.result_image_base64
-                # Loại bỏ prefix data:image/...;base64, nếu có
-                if raw_b64 and "," in raw_b64 and raw_b64.startswith("data:"):
-                    raw_b64 = raw_b64.split(",", 1)[1]
-
-                paper_w, paper_h = 210.0, 297.0
-                skew_angle = 0.0
-                if request.options:
-                    if request.options.get("target_paper_size_mm"):
-                        paper_w, paper_h = request.options["target_paper_size_mm"]
-                    if "skew_angle_deg" in request.options:
-                        skew_angle = float(request.options["skew_angle_deg"])
-                    elif request.options.get("auto_deskew"):
-                        from camera_inspector import inspect_paper
-                        cam_res = inspect_paper()
-                        skew_angle = float(cam_res.get("skew_angle_deg", 0.0))
-
+                # Chạy hàm biến đổi ảnh thành nét vẽ SVG
                 svg_result = await asyncio.to_thread(
                     svg_process,
-                    request_id=resp.request_id,
+                    request_id=request.request_id,
                     image_base64=raw_b64,
                     target_paper_size_mm=(paper_w, paper_h),
                     output_dir=SVG_OUTPUT_DIR,
-                    style=request.style,  # TV4→TV2: truyền style để TV2 chọn thuật toán tương ứng
+                    style=effective_style,
                     skew_angle_deg=skew_angle,
                 )
-                print(f"[pipeline] SVG conversion: {svg_result.get('status')} "
+
+                print(f"[pipeline] Image upload SVG conversion: {svg_result.get('status')} "
                       f"(metrics={svg_result.get('svg_metrics')})")
 
                 if svg_result.get("status") == "error":
-                    _clear_cached_svg_for_request(resp.request_id)
                     _clear_cached_svg_for_request(request.request_id)
                     err = svg_result.get("error") or {}
                     return {
-                        "request_id": resp.request_id,
+                        "request_id": request.request_id,
                         "status": "error",
                         "result_image_base64": None,
                         "svg_ready": False,
@@ -517,14 +805,12 @@ async def generate_ai_image(request: GenerateRequest):
                     }
 
                 svg_metrics_data = svg_result.get("svg_metrics")
-                # Lưu vào cache server-side để /api/log/experiment có thể tự lấy
-                _svg_metrics_cache[resp.request_id] = svg_metrics_data
+                _svg_metrics_cache[request.request_id] = svg_metrics_data
             except Exception as e:
-                print(f"[warn] SVG conversion failed: {e}")
-                _clear_cached_svg_for_request(resp.request_id)
+                print(f"[warn] SVG conversion failed for uploaded image: {e}")
                 _clear_cached_svg_for_request(request.request_id)
                 return {
-                    "request_id": resp.request_id,
+                    "request_id": request.request_id,
                     "status": "error",
                     "result_image_base64": None,
                     "svg_ready": False,
@@ -536,118 +822,18 @@ async def generate_ai_image(request: GenerateRequest):
                 }
 
             return {
-                "request_id": resp.request_id,
+                "request_id": request.request_id,
                 "status": "success",
                 "result_image_base64": img_data,
                 "meta": {
-                    "model_used": resp.model_used or "dall-e-3",
-                    "processing_time_ms": resp.processing_time_ms
+                    "model_used": "uploaded-image",
+                    "processing_time_ms": 0
                 },
-                "svg_ready": svg_metrics_data is not None,
+                "svg_ready": True,
                 "svg_metrics": svg_metrics_data,
                 "error": None
             }
-        else:
-            _clear_cached_svg_for_request(resp.request_id)
-            _clear_cached_svg_for_request(request.request_id)
-            return {
-                "request_id": resp.request_id,
-                "status": "error",
-                "result_image_base64": None,
-                "error": {
-                    "code": resp.error_code or "AI_GENERATION_FAILED",
-                    "message": resp.error_message or "Không thể sinh ảnh từ AI."
-                }
-            }
 
-    elif request.input_type == "image" and request.image_base64:
-        # Nhận ảnh trực tiếp từ người dùng tải lên và chuyển sang SVG
-        img_data = request.image_base64
-        
-        # Đảm bảo format đúng chuẩn base64 để render trên web
-        if not img_data.startswith("data:") and not img_data.startswith("http"):
-            img_data = f"data:image/png;base64,{img_data}"
-            
-        # Lấy base64 thuần để đưa vào OpenCV
-        raw_b64 = request.image_base64
-        if "base64," in raw_b64:
-            raw_b64 = raw_b64.split("base64,")[1]
-            
-        # TV2: Chạy thuật toán tạo SVG 
-        svg_metrics_data = None
-        try:
-            paper_w, paper_h = 210, 297  # Mặc định A4
-            skew_angle = 0.0
-            if request.options:
-                if "target_paper_size_mm" in request.options:
-                    paper_w, paper_h = request.options["target_paper_size_mm"]
-                if "skew_angle_deg" in request.options:
-                    skew_angle = float(request.options["skew_angle_deg"])
-                elif request.options.get("auto_deskew"):
-                    from camera_inspector import inspect_paper
-                    cam_res = inspect_paper()
-                    skew_angle = float(cam_res.get("skew_angle_deg", 0.0))
-
-            # Chạy hàm biến đổi ảnh thành nét vẽ SVG
-            svg_result = await asyncio.to_thread(
-                svg_process,
-                request_id=request.request_id,
-                image_base64=raw_b64,
-                target_paper_size_mm=(paper_w, paper_h),
-                output_dir=SVG_OUTPUT_DIR,
-                style=request.style,  # TV4→TV2: truyền style để TV2 chọn thuật toán tương ứng
-                skew_angle_deg=skew_angle,
-            )
-            
-            print(f"[pipeline] Image upload SVG conversion: {svg_result.get('status')} "
-                  f"(metrics={svg_result.get('svg_metrics')})")
-
-            if svg_result.get("status") == "error":
-                _clear_cached_svg_for_request(request.request_id)
-                err = svg_result.get("error") or {}
-                return {
-                    "request_id": request.request_id,
-                    "status": "error",
-                    "result_image_base64": None,
-                    "svg_ready": False,
-                    "svg_metrics": None,
-                    "error": {
-                        "code": err.get("code", "VECTORIZE_FAILED"),
-                        "message": err.get("message", "Chuyển đổi vector hoá SVG thất bại.")
-                    }
-                }
-
-            svg_metrics_data = svg_result.get("svg_metrics")
-            _svg_metrics_cache[request.request_id] = svg_metrics_data
-        except Exception as e:
-            print(f"[warn] SVG conversion failed for uploaded image: {e}")
-            _clear_cached_svg_for_request(request.request_id)
-            return {
-                "request_id": request.request_id,
-                "status": "error",
-                "result_image_base64": None,
-                "svg_ready": False,
-                "svg_metrics": None,
-                "error": {
-                    "code": "VECTORIZE_FAILED",
-                    "message": str(e)
-                }
-            }
-
-        return {
-            "request_id": request.request_id,
-            "status": "success",
-            "result_image_base64": img_data,
-            "meta": {
-                "model_used": "uploaded-image",
-                "processing_time_ms": 0
-            },
-            "svg_ready": True,
-            "svg_metrics": svg_metrics_data,
-            "error": None
-        }
-
-    _clear_cached_svg_for_request(request.request_id)
     return {
         "request_id": request.request_id,
         "status": "error",

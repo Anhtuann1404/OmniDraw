@@ -74,3 +74,14 @@ frontend/node_modules/
 dist/
 frontend/dist/
 *.local
+
+# =========================
+# Graphify (Knowledge Graph)
+# Giữ lại: graph.json, GRAPH_REPORT.md, wiki/, các file HTML xem trực quan
+# Bỏ qua: cache tạm, snapshot backup, obsidian vault, config máy cá nhân
+# =========================
+graphify-out/cache/
+graphify-out/converted/
+graphify-out/obsidian/
+graphify-out/202*
+graphify-out/.graphify_*

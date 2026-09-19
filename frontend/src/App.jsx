@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import CreateScreen from "./screens/CreateScreen";
+import StudioScreen from "./screens/StudioScreen";
 import PreviewScreen from "./screens/PreviewScreen";
 import ConfirmScreen from "./screens/ConfirmScreen";
 import PrintStatusScreen from "./screens/PrintStatusScreen";
@@ -71,12 +72,14 @@ export default function App() {
     }
   }
 
-  async function handleStartPrint() {
+  async function handleStartPrint(options = {}) {
     if (!aiResult?.requestId) return;
+    const chosenPaperSize = options?.paperSize || aiResult.paperSize || "a4";
     setLoading(true);
     setOptimisticStatus("printing"); // Cập nhật giao diện ngay lập tức
     try {
-      await startPrint({ requestId: aiResult.requestId, paperSize: aiResult.paperSize || "a4" });
+      await startPrint({ requestId: aiResult.requestId, paperSize: chosenPaperSize });
+      setAiResult((prev) => (prev ? { ...prev, paperSize: chosenPaperSize } : prev));
       setStep("printing");
       
       // Log trạng thái queued
@@ -209,6 +212,31 @@ export default function App() {
     }
   }
 
+  const strokeCount =
+    aiResult?.strokeCount != null
+      ? aiResult.strokeCount
+      : (aiResult?.svgMetrics?.pen_lift_count != null
+          ? aiResult.svgMetrics.pen_lift_count + 1
+          : 248);
+
+  const estimatedMinutes =
+    aiResult?.estimatedMinutes != null
+      ? aiResult.estimatedMinutes
+      : (aiResult?.svgMetrics?.total_path_length_mm != null
+          ? Math.max(1, Math.ceil(((aiResult.svgMetrics.total_path_length_mm || 0) + (aiResult.svgMetrics.pen_lift_distance_mm || 0)) / 40 / 60))
+          : (aiResult?.minutes != null ? aiResult.minutes : 12));
+
+  const strokesTotal = strokeCount;
+  const strokesDone =
+    statusData && statusData.progressPercent != null
+      ? Math.floor((strokesTotal * statusData.progressPercent) / 100)
+      : 0;
+
+  const etaMinutes =
+    statusData?.etaSec != null
+      ? Math.ceil(statusData.etaSec / 60)
+      : Math.ceil((estimatedMinutes * (100 - (statusData?.progressPercent || 0))) / 100);
+
   return (
     <div className="flex h-screen overflow-hidden bg-[#F5F3EA]">
 
@@ -221,137 +249,127 @@ export default function App() {
         onDeleteItem={handleDeleteHistory}
       />
 
-      {/* ── Vùng chính — card căn giữa nâng cao về phía trên ── */}
-      <main className="flex-1 flex flex-col items-center justify-center pt-2 pb-8 px-6 gap-2.5 overflow-y-auto">
+      {/* ── Vùng chính: Create Screen hoặc White Paper Studio ── */}
+      {step === "create" ? (
+        <main className="flex-1 flex flex-col items-center justify-center pt-2 pb-8 px-6 gap-2.5 overflow-y-auto">
+          {MOCK_MODE && (
+            <div className="text-xs font-bold text-[#6B6B66] bg-white border-2 border-[#1A1A1A] rounded-full px-3 py-1">
+              🧪 MOCK MODE — chưa nối backend thật (đổi VITE_MOCK_MODE=false trong .env khi sẵn sàng)
+            </div>
+          )}
 
-        {MOCK_MODE && (
-          <div className="text-xs font-bold text-[#6B6B66] bg-white border-2 border-[#1A1A1A] rounded-full px-3 py-1">
-            🧪 MOCK MODE — chưa nối backend thật (đổi VITE_MOCK_MODE=false trong .env khi sẵn sàng)
-          </div>
-        )}
+          {errorMsg && (
+            <div className="text-xs font-bold text-[#C0392B] bg-[#FBEAF0] border-2 border-[#C0392B] rounded-lg px-3 py-2 max-w-md text-center">
+              {errorMsg}
+            </div>
+          )}
 
-        {errorMsg && (
-          <div className="text-xs font-bold text-[#C0392B] bg-[#FBEAF0] border-2 border-[#C0392B] rounded-lg px-3 py-2 max-w-md text-center">
-            {errorMsg}
-          </div>
-        )}
-
-        <div
-          className={step === "create" ? "contents" : "hidden"}
-          aria-hidden={step !== "create"}
-        >
           <CreateScreen
             key={createSessionKey}
             onSubmit={handleCreateSubmit}
             loading={loading}
           />
-        </div>
+        </main>
+      ) : (
+        <main className="flex-1 relative flex flex-col items-center justify-center overflow-hidden bg-[#ECE8DC] bg-grid-dots">
+          {/* Status badge & error message floating at top-left */}
+          <div className="absolute top-3 left-6 flex items-center gap-2 z-40">
+            {MOCK_MODE && (
+              <div className="text-[11px] font-bold text-[#6B6B66] bg-white/90 backdrop-blur border-2 border-[#1A1A1A] rounded-full px-3 py-0.5 shadow-sm">
+                🧪 MOCK MODE
+              </div>
+            )}
+            {errorMsg && (
+              <div className="text-[11px] font-bold text-[#C0392B] bg-[#FBEAF0] border-2 border-[#C0392B] rounded-full px-3 py-0.5 shadow-sm">
+                {errorMsg}
+              </div>
+            )}
+          </div>
 
-        {step === "preview" && aiResult && (
-          <PreviewScreen
-            requestId={aiResult.requestId}
-            inputType={aiResult.inputType}
-            resultImageUrl={aiResult.resultImageBase64}
-            svgReady={aiResult.svgReady || false}
-            style={labelForStyle(aiResult.style)}
-            modelUsed={aiResult.meta?.modelUsed}
-            processingTimeSec={aiResult.meta?.processingTimeMs ? aiResult.meta.processingTimeMs / 1000 : undefined}
-            onRetry={() => setStep("create")}
-            onConfirm={() => setStep("confirm")}
-          />
-        )}
-
-        {step === "confirm" && (
-          <ConfirmScreen
+          <StudioScreen
+            studioPhase={step === "printing" ? "printing" : (step === "done" ? "done" : "preview")}
             requestId={aiResult?.requestId}
-            strokeCount={
-              aiResult?.strokeCount != null
-                ? aiResult.strokeCount
-                : (aiResult?.svgMetrics?.pen_lift_count != null
-                    ? aiResult.svgMetrics.pen_lift_count + 1
-                    : "...")
-            }
-            estimatedMinutes={
-              aiResult?.estimatedMinutes != null
-                ? aiResult.estimatedMinutes
-                : (aiResult?.svgMetrics?.total_path_length_mm != null
-                    ? Math.ceil(((aiResult.svgMetrics.total_path_length_mm || 0) + (aiResult.svgMetrics.pen_lift_distance_mm || 0)) / 40 / 60)
-                    : (aiResult?.minutes != null ? aiResult.minutes : "..."))
-            }
+            mode={aiResult?.mode || "art"}
+            inputType={aiResult?.inputType || "text"}
+            resultImageUrl={aiResult?.resultImageBase64}
+            svgReady={aiResult?.svgReady || false}
+            style={labelForStyle(aiResult?.style)}
+            modelUsed={aiResult?.meta?.modelUsed}
+            title={aiResult?.title || "Bản vẽ OmniDraw"}
+            strokeCount={strokeCount}
+            estimatedMinutes={estimatedMinutes}
+            actualDrawTimeSec={doneInfo?.actualDrawTimeSec || statusData?.actualDrawTimeSec}
             paperSize={aiResult?.paperSize || "a4"}
-            onBack={() => setStep("preview")}
-            onStart={handleStartPrint}
-          />
-        )}
-
-        {step === "printing" && statusData && statusData.status !== "done" && (
-          <PrintStatusScreen
-            requestId={aiResult?.requestId}
-            progressPercent={statusData.progressPercent}
-            strokesDone={
-              aiResult?.strokeCount != null
-                ? Math.floor((aiResult.strokeCount * statusData.progressPercent) / 100)
-                : (aiResult?.svgMetrics
-                    ? Math.floor(((aiResult.svgMetrics.pen_lift_count + 1) * statusData.progressPercent) / 100)
-                    : "...")
+            onPaperSizeChange={(newSize) =>
+              setAiResult((prev) => (prev ? { ...prev, paperSize: newSize } : prev))
             }
-            strokesTotal={
-              aiResult?.strokeCount != null
-                ? aiResult.strokeCount
-                : (aiResult?.svgMetrics ? aiResult.svgMetrics.pen_lift_count + 1 : "...")
-            }
-            etaMinutes={Math.ceil((statusData.etaSec || 0) / 60)}
-            machineStatus={statusData.status === "error" ? "error" : "ok"}
-            isPaused={(optimisticStatus || statusData.status) === "paused"}
+            progressPercent={statusData?.progressPercent || 0}
+            strokesDone={strokesDone}
+            strokesTotal={strokesTotal}
+            etaMinutes={etaMinutes}
+            isPaused={(optimisticStatus || statusData?.status) === "paused"}
+            onRetry={() => setStep("create")}
+            onStartPrint={handleStartPrint}
             onPause={handlePause}
             onResume={handleResume}
             onCancel={handleCancel}
-          />
-        )}
-
-        {step === "done" && (
-          <DoneScreen
-            inputType={aiResult?.inputType}
-            requestId={aiResult?.requestId}
-            resultImageUrl={aiResult?.resultImageBase64}
-            actualDrawTimeSec={doneInfo?.actualDrawTimeSec}
-            strokesTotal={
-              aiResult?.strokeCount != null
-                ? aiResult.strokeCount
-                : (aiResult?.svgMetrics ? aiResult.svgMetrics.pen_lift_count + 1 : "...")
-            }
             onCreateNew={handleCreateNew}
-            onViewHistory={() => {}} // history giờ luôn ở sidebar
+            loading={loading}
           />
-        )}
+        </main>
+      )}
 
-        {/* ── Debug nav bar (dev only) ── */}
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bg-white border-2 border-[#1A1A1A] rounded-full px-3 py-2 shadow-lg">
+      {/* ── Debug nav bar (dev only - top right) ── */}
+      {MOCK_MODE && (
+        <div className="fixed top-3 right-6 flex gap-1 bg-white/90 backdrop-blur border-2 border-[#1A1A1A] rounded-full p-1 shadow-md z-50">
           {[
             ["create", "create"],
             ["preview", "preview"],
-            ["confirm", "confirm"],
             ["printing", "printing"],
             ["done", "done"],
           ].map(([key, label]) => (
             <button
               key={key}
-              onClick={() => setStep(key)}
-              className={`text-[10px] font-bold px-2 py-1 rounded-full ${
-                step === key ? "bg-[#1A1A1A] text-white" : "text-[#1A1A1A]"
+              onClick={() => {
+                if (!aiResult && key !== "create") {
+                  setAiResult({
+                    requestId: "mock-debug-specimen",
+                    title: "Bản vẽ Demo OmniDraw",
+                    style: "sketch",
+                    inputType: "text",
+                    mode: "art",
+                    paperSize: "a4",
+                    strokeCount: 248,
+                    estimatedMinutes: 12,
+                    meta: { modelUsed: "style-transfer-v1 (mock)", processingTimeMs: 1200 },
+                  });
+                }
+                setStep(key);
+              }}
+              className={`text-[10px] font-bold px-2 py-0.5 rounded-full transition-all ${
+                step === key ? "bg-[#1A1A1A] text-white" : "text-[#1A1A1A] hover:bg-[#F5F3EA]"
               }`}
             >
               {label}
             </button>
           ))}
         </div>
+      )}
 
-      </main>
     </div>
   );
 }
 
 function labelForStyle(id) {
-  const map = { sketch: "Ký hoạ", line_art: "Line art", stipple: "Chấm bi", hatching: "Hatching" };
+  const map = {
+    sketch: "Ký hoạ",
+    line_art: "Line art",
+    stipple: "Chấm bi",
+    hatching: "Hatching",
+    hand_hocsinh: "Chữ Học Sinh",
+    hand_nguoilon: "Chữ Thảo Nghiêng",
+    hand_thuphap: "Chữ Thư Pháp",
+    hand_chukinhanh: "Chữ Ký Tên",
+  };
   return map[id] || id || "Ký hoạ";
 }
