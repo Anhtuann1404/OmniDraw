@@ -121,6 +121,17 @@ Chuẩn hoá **ngay tại tầng giao diện**, trước khi gửi đi bất k�
 `request_id` **bắt buộc** — dùng xuyên suốt toàn bộ pipeline để lần theo 1 yêu cầu khi debug (xem mục 7).
 `experiment` **tuỳ chọn** — chỉ điền khi đang chạy thí nghiệm chính thức cho bài báo (xem mục 6); để trống khi người dùng dùng app bình thường.
 
+**Quy chuẩn Validation & Downstream Contract cho Art Mode:**
+
+| Trường | Kiểu dữ liệu | Bắt buộc | Quy tắc xử lý & Ràng buộc giá trị |
+| :--- | :--- | :--- | :--- |
+| `input_type` | string | Có | Giá trị hợp lệ trong Art Mode: `"text"` hoặc `"image"`. Nếu truyền giá trị khác (hoặc `null`, số, chuỗi rỗng) $\rightarrow$ từ chối ngay với mã lỗi `INPUT_INVALID_FORMAT`. |
+| `prompt` | string / null | Có* | Bắt buộc khi `input_type = "text"`. Không được để rỗng, `null` hoặc chỉ chứa khoảng trắng. Nếu không hợp lệ $\rightarrow$ trả lỗi `INPUT_INVALID_FORMAT` ngay trước khi gọi AI. |
+| `image_base64` | string / null | Có* | Bắt buộc khi `input_type = "image"`. Không được để rỗng, `null` hoặc chỉ chứa khoảng trắng. Nếu không hợp lệ $\rightarrow$ trả lỗi `INPUT_INVALID_FORMAT` ngay trước khi vector hóa. |
+| `style` | string / null | Không | Enum phong cách Art Mode: `["sketch", "line_art", "stipple", "hatching"]`.<br>• **Omitted / `null`:** Tự động giải quyết thành `effective_style = "sketch"` trước khi kích hoạt pipeline downstream.<br>• **Không hợp lệ:** Chuỗi rỗng `""`, sai datatype (số, mảng, boolean), hoặc chuỗi ngoài enum (kể cả phong cách handwriting như `"hand_hocsinh"`, `"abc"`) $\rightarrow$ từ chối ngay với mã lỗi `INPUT_INVALID_FORMAT`, tuyệt đối không fallback ngầm về `"sketch"`.<br>• **Bảo đảm downstream:** Các hàm gọi hạ tầng (`call_openai_image_api`, `svg_process`, metadata logging) luôn nhận `effective_style`, **không bao giờ nhận `None`** và không nhận style sai hợp đồng. |
+| `options.target_paper_size_mm` | [number, number] | Không | Kích thước khổ giấy [width, height] tính bằng mm. Mặc định `[210, 297]` (A4). Tuân thủ strict validation: khuyết key nhận mặc định A4; truyền tường minh `null`, sai kiểu dữ liệu, len $\neq 2$, $\le 0$, NaN, Inf $\rightarrow$ trả lỗi `INPUT_INVALID_FORMAT`. |
+| `timing & side effects` | - | - | Mọi khâu kiểm tra tính hợp lệ diễn ra trước khi gọi AI API, vector hóa SVG, lưu file hay ghi log CSV thực nghiệm. Nếu request lỗi, không phát sinh bất kỳ side effect nào. |
+
 ---
 
 
@@ -162,11 +173,11 @@ Chuẩn hoá **ngay tại tầng giao diện**, trước khi gửi đi bất k�
 | `input_type` | string | Có | Bắt buộc là `"handwriting"`. *(Lưu ý: backend còn hỗ trợ `"letter"` như một alias tương thích ngược; contract chính thức chuẩn hóa là `"handwriting"`).* |
 | `prompt` | string / null | Có* | Nội dung văn bản Unicode tiếng Việt cần viết tay (hỗ trợ ký tự xuống dòng `\n`). Bắt buộc nếu `image_base64` là null. Nếu để trống sẽ trả lỗi `EMPTY_TEXT`. |
 | `image_base64` | string / null | Không | Chuỗi base64 của file tài liệu (`.docx` hoặc `.txt`). Nếu được truyền, backend sẽ tự động giải mã và trích xuất nội dung văn bản. |
-| `style` | string | Có | Enum phong cách nét viết tay hỗ trợ trong backend (`STYLE_CONFIGS`):<br>• `"hand_hocsinh"`: Chữ Học Sinh (nét đứng, nắn nót, góc nghiêng slant = 0.0)<br>• `"hand_nguoilon"`: Chữ Thảo Nghiêng (tự nhiên, mềm mại, slant = 0.20 ~ 11°)<br>• `"hand_thuphap"`: Chữ Thư Pháp (phóng khoáng, bổng trầm, slant = 0.15)<br>• `"hand_chukinhanh"`: Chữ Ký Tên (nghiêng mạnh, bay bướm, slant = 0.32 ~ 18°)<br>*(Chú thích triển khai: 4 giá trị trên là enum contract chính thức. Hiện tại backend còn fallback về `"hand_hocsinh"` đối với style không tìm thấy trong `STYLE_CONFIGS`. Đây là khoảng lệch triển khai (implementation gap) cần sửa: backend tương lai phải validate nghiêm và trả lỗi có cấu trúc, không fallback âm thầm. Tài liệu không tự thêm mã lỗi chưa tồn tại vào bảng mã lỗi binding).* |
-| `options.font` | string | Không | Enum font chữ nét đơn hỗ trợ trong backend (`RENDER_PROFILES`):<br>• `"oly"`: Tiểu Học Nét Đều (pack `omnidraw_legacy`, mặc định)<br>• `"omni_casual"`: Omni Casual (pack `omni_casual`, thân thiện tự nhiên)<br>• `"thanhdam"`: Bút Máy Thanh Đậm (pack `omnidraw_legacy`, nhân đôi nét sổ)<br>• `"thuphap"`: Thư Pháp Thủy Mặc (pack `omnidraw_legacy`, móc vát đuôi)<br>• `"cursive"`: Chữ Thảo Cursive (pack `omnidraw_legacy`, nối nét liền mạch)<br>*(Lưu ý: Không hỗ trợ tải lên file TTF/OTF. Font không hợp lệ phải trả lỗi `UNSUPPORTED_FONT`, không tự ý fallback ngầm).* |
-| `options.letter_type` | string | Không | Enum phân loại văn bản (`LETTER_TYPES`):<br>• `"general"`: Thư thường ngày (hỗ trợ cho mọi font pack, mặc định)<br>• `"formal"`: Văn bản trang trọng (kích hoạt chữ hoa mở đầu trang trọng K, T, C; chỉ hỗ trợ font pack legacy: `oly`, `thanhdam`, `thuphap`, `cursive`; nếu dùng với `omni_casual` sẽ trả lỗi `UNSUPPORTED_LETTER_TYPE`). |
-| `options.seed` | number / null | Không | Số nguyên 32-bit không dấu trong khoảng `0` đến `4294967295` (`0 <= seed <= 0xFFFFFFFF`). Dùng để tái lập chính xác nét chữ giữa các lần render khi kiểm thử và so sánh nghiệm. Nếu không truyền, hệ thống sẽ sinh ngẫu nhiên. |
-| `options.target_paper_size_mm` | [number, number] | Không | Kích thước khổ giấy đích theo trục [width, height] tính bằng mm. Mặc định `[210, 297]` (A4). |
+| `style` | string | Có | Enum phong cách nét viết tay hỗ trợ trong backend (`STYLE_CONFIGS`):<br>• `"hand_hocsinh"`: Chữ Học Sinh (nét đứng, nắn nót, góc nghiêng slant = 0.0)<br>• `"hand_nguoilon"`: Chữ Thảo Nghiêng (tự nhiên, mềm mại, slant = 0.20 ~ 11°)<br>• `"hand_thuphap"`: Chữ Thư Pháp (phóng khoáng, bổng trầm, slant = 0.15)<br>• `"hand_chukinhanh"`: Chữ Ký Tên (nghiêng mạnh, bay bướm, slant = 0.32 ~ 18°)<br>*(Chú thích triển khai: 4 giá trị trên là enum contract chính thức. Trường `style` là bắt buộc đối với chế độ viết thư tay. Nếu thiếu trường, truyền `null`, sai kiểu dữ liệu hoặc style không nằm trong `STYLE_CONFIGS` $\rightarrow$ backend trả mã lỗi `INPUT_INVALID_FORMAT` có cấu trúc, tuyệt đối không fallback âm thầm về `"hand_hocsinh"`).* |
+| `options.font` | string | Không | Enum font chữ nét đơn hỗ trợ trong backend (`RENDER_PROFILES`):<br>• `"oly"`: Tiểu Học Nét Đều (pack `omnidraw_legacy`, mặc định)<br>• `"omni_casual"`: Omni Casual (pack `omni_casual`, thân thiện tự nhiên)<br>• `"thanhdam"`: Bút Máy Thanh Đậm (pack `omnidraw_legacy`, nhân đôi nét sổ)<br>• `"thuphap"`: Thư Pháp Thủy Mặc (pack `omnidraw_legacy`, móc vát đuôi)<br>• `"cursive"`: Chữ Thảo Cursive (pack `omnidraw_legacy`, nối nét liền mạch)<br>*(Quy ước strict validation: Không hỗ trợ tải lên file TTF/OTF. Nếu không truyền key `"font"` trong `options` $\rightarrow$ sử dụng mặc định `"oly"`. Nếu truyền key `"font"` nhưng giá trị là `null`, sai kiểu dữ liệu hoặc chuỗi không nằm trong `RENDER_PROFILES` $\rightarrow$ trả mã lỗi `UNSUPPORTED_FONT`, không tự ý fallback ngầm).* |
+| `options.letter_type` | string | Không | Enum phân loại văn bản (`LETTER_TYPES`):<br>• `"general"`: Thư thường ngày (hỗ trợ cho mọi font pack, mặc định)<br>• `"formal"`: Văn bản trang trọng (kích hoạt chữ hoa mở đầu trang trọng K, T, C; chỉ hỗ trợ font pack legacy: `oly`, `thanhdam`, `thuphap`, `cursive`; nếu dùng với `omni_casual` sẽ trả lỗi `UNSUPPORTED_LETTER_TYPE`).<br>*(Quy ước strict validation: Nếu không truyền key `"letter_type"` trong `options` $\rightarrow$ sử dụng mặc định `"general"`. Nếu truyền key `"letter_type"` nhưng giá trị là `null`, sai kiểu dữ liệu hoặc chuỗi không nằm trong `LETTER_TYPES` $\rightarrow$ trả mã lỗi `UNSUPPORTED_LETTER_TYPE`).* |
+| `options.seed` | number / null | Không | Số nguyên 32-bit không dấu trong khoảng `0` đến `4294967295` (`0 <= seed <= 0xFFFFFFFF`). Dùng để tái lập chính xác nét chữ giữa các lần render khi kiểm thử và so sánh nghiệm. Nếu không truyền, hệ thống sẽ sinh ngẫu nhiên.<br>*(Quy ước strict validation: Nếu không truyền key `seed` hoặc truyền `null` $\rightarrow$ sinh ngẫu nhiên; nếu truyền sai kiểu dữ liệu như boolean, số thực, chuỗi, hoặc giá trị âm/vượt quá $4294967295$ $\rightarrow$ từ chối bằng mã lỗi `INVALID_SEED`, tuyệt đối không fallback ngầm).* |
+| `options.target_paper_size_mm` | [number, number] | Không | Kích thước khổ giấy đích theo trục [width, height] tính bằng mm. Mặc định `[210, 297]` (A4).<br>*(Quy ước strict validation: Không truyền key `target_paper_size_mm` trong `options` $\rightarrow$ sử dụng mặc định A4 `[210, 297]`. Nếu truyền key `target_paper_size_mm` nhưng giá trị là `null`, sai kiểu dữ liệu, không phải danh sách đúng 2 phần tử, hoặc chứa giá trị không phải số dương hữu hạn $\rightarrow$ trả mã lỗi `INPUT_INVALID_FORMAT`, tuyệt đối không fallback âm thầm về mặc định).* |
 | `options.auto_deskew` | boolean | Không | Mặc định `false`. Nếu `true`, tự động áp dụng góc bù nắn thẳng giấy khi kết xuất. |
 | `experiment` | object / null | Không | Chứa `dataset_item_id` và `method_tag` phục vụ đối chuẩn thực nghiệm NCKH. |
 
@@ -567,6 +578,9 @@ hw5e6f7g,2026-09-17T08:20:15Z,letter_001,cavhc_current,handwriting,hand_hocsinh,
 
 Mỗi lỗi trả về đều theo cùng cấu trúc `{ "code": "...", "message": "..." }` (riêng `UNSUPPORTED_CHARACTER` có thêm trường `characters: [...]`) — không tự chế cấu trúc lỗi riêng.
 
+> [!IMPORTANT]
+> **Nguyên tắc không side-effect khi validation thất bại:** Request bị từ chối ở tầng validation tuyệt đối không được tạo side effect lên file SVG, bộ nhớ cache, lịch sử database, log CSV thực nghiệm, hay hàng đợi máy vẽ hiện có. Việc dọn dẹp cache/file cũ (`_clear_cached_svg_for_request`) chỉ được kích hoạt sau khi request đã vượt qua toàn bộ các bước kiểm tra tính hợp lệ.
+
 ---
 
 
@@ -585,7 +599,7 @@ Mỗi lỗi trả về đều theo cùng cấu trúc `{ "code": "...", "message"
 
 ### Checklist riêng cho Module Viết Thư Tay (Handwriting Mode — mới v1.4)
 - [ ] Chuỗi văn bản tiếng Việt Unicode được xử lý chuẩn hóa NFD, các cụm âm ghép dấu được đặt mỏ neo và tính offset chính xác.
-- [ ] Kiểm tra và validate nghiêm ngặt các tham số `font`, `style`, `letter_type`, `seed` (không fallback ngầm khi tham số sai lệch; ghi nhận hiện tại backend còn khoảng lệch triển khai: tự fallback `style` về `hand_hocsinh` thay vì báo lỗi — cần khắc phục).
+- [x] Kiểm tra và validate nghiêm ngặt các tham số theo từng mode (`Handwriting Mode`: `style`, `font`, `letter_type`, `seed` $\rightarrow$ `INVALID_SEED`, `target_paper_size_mm`, `EMPTY_TEXT`; `Art Mode`: `style` resolve default `"sketch"` khi omitted/null, reject `INPUT_INVALID_FORMAT` khi style/input/paper size sai định dạng, bảo đảm downstream luôn nhận `effective_style` và không nhận `None`; validation diễn ra trước mọi side effect; có 34 automated validation tests được định nghĩa trong `backend/test_handwriting_validation.py` với 34/34 passed theo lần chạy test gần nhất).
 - [ ] Đảm bảo tính tất định: cùng input text + cùng seed cho ra kết quả hình học và tọa độ nét tái lập nhất quán.
 - [ ] Xử lý và trả lỗi có cấu trúc khi gặp ký tự chưa hỗ trợ (`UNSUPPORTED_CHARACTER`) hoặc tràn trang (`TEXT_OVERFLOW`), không tự ý đổi ký tự lạ thành `?`.
 - [ ] SVG xuất xưởng tuân thủ chuẩn nét đơn centerline `<path>` với `fill="none"`, chỉ chứa geometry máy vẽ hỗ trợ.
@@ -600,6 +614,7 @@ Mỗi lỗi trả về đều theo cùng cấu trúc `{ "code": "...", "message"
 > - Các trường, cấu trúc và tên gọi dưới đây **KHÔNG có hiệu lực contract binding** cho phiên bản v1.4 hiện tại.
 > - Client và backend **không** được đưa các trường này vào validation bắt buộc của API v1.4.
 > - Tên trường, kiểu dữ liệu và cấu trúc có thể thay đổi khi nhóm tiến hành triển khai thực tế.
+> - **Ranh giới dữ liệu nghiên cứu:** Writer Profile Dataset và CA-VHC Dataset là các thành phần phục vụ nghiên cứu khoa học, trích xuất đặc trưng và hiệu chuẩn ngoại tuyến (offline processing) được đặc tả riêng tại [`05_handwriting_dataset_spec.md`](file:///Users/yingjunn_/Study_/Nckh_2026-2027/OmniDraw/docs/05_handwriting_dataset_spec.md); hoàn toàn không làm thay đổi hay ảnh hưởng đến contract của endpoint `POST /api/ai/generate` hiện tại.
 > - **Hiện trạng xử lý văn bản dài:** Backend hiện tại xử lý trên 1 trang duy nhất và từ chối văn bản vượt quá giới hạn khổ giấy bằng mã lỗi `TEXT_OVERFLOW`.
 
 ### A. Cá nhân hóa nét chữ & Hồ sơ người viết (Writer Profile / Personalization)

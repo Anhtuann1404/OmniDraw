@@ -15,6 +15,9 @@
 | Thư viện chính       | `google-genai`, `requests`                         | Giao tiếp API Google Gemini hiện hành; `openai` là thư viện từng dùng trong prototype ban đầu |
 | Quản trị dữ liệu & Schema | JSON Schema (versioned), Pandas/Numpy           | Định nghĩa cấu trúc `WriterProfile`, protocol thu thập mẫu chữ viết tay và bộ trích xuất đặc trưng hình học |
 
+> *(Chi tiết quy chuẩn phân tách giữa CA-VHC Structural Dataset và Writer Profile Dataset, quy trình thu thập, schema và ranh giới ownership: xem [`05_handwriting_dataset_spec.md`](file:///Users/yingjunn_/Study_/Nckh_2026-2027/OmniDraw/docs/05_handwriting_dataset_spec.md)).*
+
+
 ---
 
 ## 2. Tối ưu đường vẽ & Quy hoạch quỹ đạo (TV2 — Stroke Optimization & Path Planning Lead)
@@ -53,7 +56,7 @@
 | Kiến trúc hệ thống | Modular Monolith / API Gateway | TV4 điều phối kiến trúc tổng thể OmniDraw, quản lý contract và kết nối liên mảng |
 | Frontend framework | React.js          | Render SPA mượt mà, quản lý component tốt            |
 | Backend framework  | Python / FastAPI  | Tốc độ cao, đồng bộ ngôn ngữ với toàn bộ pipeline    |
-| Handwriting Subsystem | `backend/handwriting/` | TV4 trực tiếp thiết kế và lập trình toàn bộ engine thư tay nét đơn, kiến trúc Font Pack, Unicode NFD, ghép dấu tiếng Việt, contextual allographs, smoothing và auditor |
+| Handwriting Subsystem | `backend/handwriting/` | TV4 trực tiếp thiết kế và lập trình toàn bộ engine thư tay nét đơn, kiến trúc Font Pack, Unicode NFD, ghép dấu tiếng Việt, contextual allographs, smoothing và auditor (đặc tả dữ liệu cấu trúc CA-VHC và ranh giới với dữ liệu cá nhân hóa xem tại `05_handwriting_dataset_spec.md`) |
 | Giao tiếp realtime | REST polling      | Theo quyết định đã chốt trong `OmniDraw_API_Spec-4.md` |
 | Database (nếu cần) | SQLite            | Gọn nhẹ, lưu file cục bộ, khởi tạo nhanh chóng       |
 | Trích xuất văn bản (.docx) | `python-docx` | Hỗ trợ người dùng tải file Word lên trong chế độ Viết Thư Tay để tự động trích xuất nội dung |
@@ -113,11 +116,13 @@
 - **Thực nghiệm & So sánh:** Xây dựng bộ thực nghiệm so sánh với các phương pháp cơ sở (baseline) và ablation study bóc tách từng thành phần trong hàm chi phí DAG (TV2 lead baseline chuyển động, TV1 chuẩn bị corpus dữ liệu, TV4 lead experiment runner và logging).
 - **Đánh giá đa tiêu chí:** Đánh giá đồng thời cả chất lượng hình học, độ dễ đọc và chi phí chuyển động của máy vẽ.
 
-#### D. Phân biệt 4 khái niệm trong hệ thống chữ viết
-1. **Font Pack:** Tập dữ liệu hình học nét đơn chuẩn hóa (`geometry`, `metrics`, `anchors`, `contextual variants`).
-2. **Render Profile:** Tham số biến đổi hình học khi kết xuất (độ nghiêng `slant`, tỷ lệ co giãn `scale`, khoảng cách dòng `line_spacing`).
+#### D. Phân biệt 5 khái niệm trong hệ thống chữ viết
+1. **Font Pack:** Tập dữ liệu hình học nét đơn chuẩn hóa (`geometry`, `metrics`, `anchors`, `contextual variants`) định nghĩa tọa độ centerline của các ký tự (do TV4 thiết kế và quản lý).
+2. **Render Profile:** Tham số biến đổi hình học khi kết xuất (độ nghiêng `slant`, tỷ lệ co giãn `scale`, khoảng cách dòng `line_spacing`) áp dụng đồng nhất lên font pack trong một phiên vẽ.
 3. **Letter Type:** Ngữ cảnh văn bản quy định quy tắc lựa chọn biến thể glyph và bố cục (hiện tại: `general`, `formal`; tương lai: thân mật, tình cảm, thiệp mời, học sinh...).
-4. **Writer Profile:** Hồ sơ đặc trưng thói quen người viết (thuộc nhánh nghiên cứu AI cá nhân hóa nét chữ do TV1 chủ trì).
+4. **Writer Profile:** Hồ sơ đặc trưng thói quen và phong cách cá nhân hóa của một người viết cụ thể (độ nghiêng, jitter baseline, spacing, thiên hướng chọn allograph) phục vụ few-shot personalization (thuộc nhánh nghiên cứu mở rộng P2 do TV1 chủ trì; chưa tích hợp vào engine lõi).
+5. **CA-VHC Structural Dataset:** Tập dữ liệu mẫu chữ viết tay tiếng Việt tập trung vào CẤU TRÚC và CHÍNH TẢ (tọa độ mỏ neo anchor, độ lệch diacritic offset, vùng cấm va chạm, biến thể allograph theo vị trí từ và tổ hợp dấu thanh). Do TV1 thu thập và chuẩn bị dữ liệu, nhưng toàn bộ quy tắc sử dụng và logic chính tả do TV4 sở hữu phục vụ calibrate và đánh giá CA-VHC engine.
+*(Xem phân định chi tiết tại [`05_handwriting_dataset_spec.md`](file:///Users/yingjunn_/Study_/Nckh_2026-2027/OmniDraw/docs/05_handwriting_dataset_spec.md)).*
 
 #### E. Phân biệt lõi nghiên cứu và tính năng trình diễn
 - **Lõi nghiên cứu (Core Contributions):**
