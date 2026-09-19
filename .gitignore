@@ -74,3 +74,9 @@ frontend/node_modules/
 dist/
 frontend/dist/
 *.local
+
+# =========================
+# Agents & Graphify (Local AI/Tool Artifacts)
+# =========================
+.agents/
+graphify-out/

@@ -1,6 +1,6 @@
 # OmniDraw — Current Task & Sprint Backlog
 
-**Cập nhật lần cuối:** 18/09/2026
+**Cập nhật lần cuối:** 20/09/2026
 **Chu kỳ hiện tại:** Sprint 1–2 (2 tuần tới: Khóa nền nghiên cứu CA-VHC & Thiết lập framework thực nghiệm)
 **Nguyên tắc:** Mỗi người làm chủ một đường chạy độc lập, tuân thủ Definition of Done và review chéo định kỳ.
 
@@ -10,9 +10,9 @@
 
 | Thành viên / Đường chạy | Nhiệm vụ trọng tâm Sprint 1–2 | Điểm nghẽn (Blocker) | Trạng thái |
 | :--- | :--- | :--- | :--- |
-| **TV4 — Project Lead & Handwriting / CA-VHC Composition Lead** | Thiết kế cơ chế đưa dấu tiếng Việt theo chính tả và vùng cấm va chạm (representation & constraints) vào Trellis DAG; hoàn tất Strict Validation toàn diện (DONE); chuẩn hóa schema logging CSV; xây dựng experiment runner; tổng hợp và khóa Research Questions (RQ1–RQ3) toàn đề tài; dựng khung báo cáo Chương 3 & 4 | Không | 🟡 Đang làm |
+| **TV4 — Project Lead & Handwriting / CA-VHC Composition Lead** | Hoàn tất Strict Validation (34/34 PASS); hoàn tất BƯỚC A — Trellis DAG / CA-VHC Architecture Audit (`docs/06_audit_trellis_dag_report.md`); hoàn tất bản thảo BƯỚC B — Thiết kế kiến trúc Diacritic-Aware State Representation (`docs/07_diacritic_aware_state_design.md`) (chờ TV2 cross-review trước khi sang Bước C); chuẩn hóa schema logging CSV; xây dựng experiment runner; tổng hợp và khóa Research Questions (RQ1–RQ3); dựng khung báo cáo Chương 3 & 4 | Không | 🟡 Đang làm |
 | **TV2 — Stroke Optimization & Path Planning Lead** | Soạn thảo Research Questions (RQ) & giả thuyết về tối ưu chuyển động; chuẩn hóa ký hiệu toán học hàm mục tiêu $J$ (phần transition cost & kinematics); chuẩn hóa 2 bộ baseline đối chứng (Art Mode & CA-VHC motion); phối hợp thiết kế hàm chi phí di chuyển ngòi bút cho Trellis DAG | Không | 🟡 Đang làm |
-| **TV1 — AI Data & Writer Profile Lead** | Chuẩn bị benchmark corpus và data fixtures phục vụ CA-VHC (cung cấp cho TV4); chuẩn bị P2 Writer Profile: định nghĩa JSON schema (versioned), soạn thảo protocol thu thập & ẩn danh hóa dữ liệu, code prototype trích xuất 4 đặc trưng hình học độc lập (tuân thủ `05_handwriting_dataset_spec.md`, chưa tích hợp engine, không huấn luyện mô hình lớn) | Không | 🟡 Đang làm |
+| **TV1 — AI Data & Writer Profile Lead** | Chuẩn bị benchmark corpus và data fixtures phục vụ CA-VHC (cung cấp cho TV4); chuẩn bị P2 Writer Profile: định nghĩa JSON schema (versioned), soạn thảo protocol thu thập & ẩn danh hóa dữ liệu, code prototype trích xuất 4 đặc trưng hình học độc lập (tuân thủ `08_handwriting_dataset_spec.md`, chưa tích hợp engine, không huấn luyện mô hình lớn) | Không | 🟡 Đang làm |
 | **TV3 — Hardware, Calibration & Physical Validation Lead** | Chuẩn hóa interface chung giữa simulator và máy vẽ thật; chuẩn bị SVG smoke test fixture; lập checklist hiệu chuẩn phần cứng; xác định metrics phần cứng bắt buộc (phân biệt simulator time và `actual_draw_time_sec` thật) | *Blocked by hardware:* chờ setup cáp & máy vẽ thực tế (tập trung hoàn thiện simulator & test protocol) | 🟡 Đang làm |
 
 ---
@@ -21,13 +21,27 @@
 
 ### TV4 — Project Lead & Handwriting / CA-VHC Composition Lead
 - [ ] **Điều phối kỹ thuật & Khóa Research Questions (Project Lead):** Tổng hợp, điều phối và khóa cấu trúc Research Questions (RQ1–RQ3) và giả thuyết khoa học toàn đề tài (kết nối giả thuyết chuyển động của TV2, giả thuyết thi công phần cứng của TV3 và giả thuyết Writer Profile P2 của TV1); rà soát tính nhất quán giữa Roadmap, Current Task, API Spec v1.4 và codebase.
-- [ ] **Ràng buộc chính tả & Dấu tiếng Việt trong DAG:** Thiết kế giải pháp đưa dấu tiếng Việt theo quy tắc chính tả, cấu trúc âm tiết, mỏ neo và vùng cấm va chạm (`diacritic obstacle-avoidance`) vào không gian trạng thái của Trellis DAG.
-- [ ] **Tiêu chuẩn kiểm thử dấu:** Xây dựng tiêu chuẩn định lượng pass/fail cho kiểm tra va chạm dấu tiếng Việt (`diacritic collision clearance threshold`) và mở rộng kịch bản kiểm thử trong `backend/handwriting/qa_specimens.py`.
-- [x] **Strict Validation & Mode-Aware Validation Hardening (✅ Hoàn thành mốc - DONE):** Đã loại bỏ triệt để silent fallback, khóa chặt chẽ mode-aware validation theo từng `input_type`, bảo đảm validation diễn ra trước mọi side effect, và bảo đảm an toàn toàn diện cho pipeline backend; toàn bộ 34 automated tests trong `backend/test_handwriting_validation.py` đạt 34/34 passed:
+- [x] **✅ Strict Validation completed (34/34 automated tests PASS):** Đã loại bỏ triệt để silent fallback, khóa chặt chẽ mode-aware validation theo từng `input_type`, bảo đảm validation diễn ra trước mọi side effect, và bảo đảm an toàn toàn diện cho pipeline backend; toàn bộ 34 automated tests trong `backend/test_handwriting_validation.py` đạt 34/34 passed:
   - *Handwriting Mode (`input_type in {"handwriting", "letter"}`):* Bắt buộc có `style` trong `STYLE_CONFIGS`, khuyết/null/sai kiểu trả `INPUT_INVALID_FORMAT`; text rỗng trả `EMPTY_TEXT`; `options.font` không truyền default `"oly"`, sai/null trả `UNSUPPORTED_FONT`; `options.letter_type` không truyền default `"general"`, sai/null/không tương thích trả `UNSUPPORTED_LETTER_TYPE`; `options.seed` sai kiểu/biên trả `INVALID_SEED`; `options.target_paper_size_mm` khuyết nhận default A4 `[210, 297]`, explicit `null`/sai kiểu/len $\neq 2$/không dương/NaN/Inf trả `INPUT_INVALID_FORMAT`.
   - *Art Mode (`input_type in {"text", "image"}`):* Phong cách hợp lệ thuộc `ART_MODE_STYLES` (`sketch`, `line_art`, `stipple`, `hatching`). Khi `style` khuyết hoặc `null`, tự động giải quyết an toàn thành `effective_style = "sketch"` trước pipeline; khi truyền `style` không hợp lệ (`""`, số, mảng, bool, hoặc chuỗi ngoài enum kể cả style handwriting) $\rightarrow$ từ chối ngay với `INPUT_INVALID_FORMAT` không gọi pipeline; `text` bắt buộc có `prompt` không rỗng; `image` bắt buộc có `image_base64` không rỗng; toàn bộ downstream (`call_openai_image_api`, `svg_process`, metadata logging) được assert kiểm chứng luôn nhận `effective_style`, không bao giờ nhận `None`.
   - *Invalid input_type:* Mọi `input_type` lạ (kể cả `null`, số, chuỗi rỗng) đều được Gateway xử lý trả lỗi có cấu trúc `INPUT_INVALID_FORMAT`.
   - *Validation trước side effect:* Request invalid tuyệt đối không gọi `_clear_cached_svg_for_request` và không xóa/thay đổi SVG hay cache hiện có; request hợp lệ thực hiện cleanup đúng 1 lần trước khi pipeline chạy.
+- [x] **✅ BƯỚC A — Trellis DAG / CA-VHC Architecture Audit completed:** Hoàn tất rà soát read-only toàn diện kiến trúc hiện tại, ban hành báo cáo kỹ thuật [`docs/06_audit_trellis_dag_report.md`](file:///Users/yingjunn_/Study_/Nckh_2026-2027/OmniDraw/docs/06_audit_trellis_dag_report.md). Audit xác nhận các điểm then chốt:
+  - Current DAG chỉ tối ưu base glyph variants (`std`, `mid_in`, `high_out`, `closed`, `isolated`).
+  - `GlyphVariant` chưa chứa diacritics hay thông tin dấu.
+  - Tiền xử lý Unicode NFD đã tách đúng base character + combining marks.
+  - `generate_accents()` hiện đang chạy hoàn toàn POST-DAG theo tọa độ mỏ neo tĩnh.
+  - Runtime bridge collision (`bridge_collision_cost`) chưa xét va chạm với dấu tiếng Việt.
+  - Delayed-stroke optimization chưa được triển khai trong engine.
+  - Current DAG recurrence vẫn là Viterbi chuẩn: $DP[i, j] = \min_p (DP[i-1, p] + \text{transition\_cost})$.
+- [ ] **🟡 BƯỚC B — Diacritic-Aware State Architecture Design (Design specification completed, pending TV2 cross-review before Step C):** Khóa kiến trúc state mới cho CA-VHC: `GlyphVariant` giữ nguyên semantic biến thể hình học thân chữ gốc (base-glyph), `DiacriticCandidate` biểu diễn cấu hình dấu ở tọa độ cục bộ (local coordinates: marks, placement, clearance zone, offsets), `CompositionState` trở thành node logic chính thức của Trellis DAG. Phân tách rõ State Cost $C_{\text{state}}$ (TV4) và Transition Cost $J_{\text{transition}}$ (TV2/TV4), kiểm soát cắt tỉa cứng các ứng viên bất hợp lệ ($K_{\text{raw}} \le 9$), xác lập mục tiêu bảo toàn hành vi cho ký tự không dấu (ASCII), và xây dựng chiến lược 12 unit tests trước khi triển khai mã nguồn (Đặc tả thiết kế: [`docs/07_diacritic_aware_state_design.md`](file:///Users/yingjunn_/Study_/Nckh_2026-2027/OmniDraw/docs/07_diacritic_aware_state_design.md)).
+  - *Sub-status:*
+    - Architecture draft: DONE
+    - Internal design review & technical cleanup: DONE
+    - TV2 cross-review: PENDING
+    - Source implementation: NOT STARTED
+    - Step C readiness: NO (Pending TV2 cross-review)
+- [ ] **Tiêu chuẩn kiểm thử dấu:** Xây dựng tiêu chuẩn định lượng pass/fail cho kiểm tra va chạm dấu tiếng Việt (`diacritic collision clearance threshold`) và mở rộng kịch bản kiểm thử trong `backend/handwriting/qa_specimens.py`.
 - [ ] **Chuẩn hóa CSV Logging:** Chuẩn hóa cấu trúc file log thực nghiệm CSV ở backend (`backend/main.py:append_experiment_log`), đảm bảo ghi nhận đầy đủ các trường phục vụ phân tích RQ.
 - [ ] **Experiment Runner & CSV Logging:** Lập kế hoạch và viết script experiment runner chạy tự động một loạt câu văn tiếng Việt chuẩn qua nhiều phương pháp (`method_tag`) và các `seed` khác nhau, ghi nhận log CSV đầy đủ metrics (nhận benchmark corpus và data fixtures từ TV1).
 - [ ] **Khung Báo cáo NCKH:** Dựng khung cấu trúc chi tiết cho Chương 3 (Phương pháp & Thiết kế Thuật toán) và Chương 4 (Thực nghiệm & Đánh giá) trong Báo cáo NCKH 5 chương.
@@ -44,15 +58,15 @@
 - [ ] *Lưu ý phạm vi:* Tập trung vào thuật toán tối ưu chuyển động, không sửa logic hình học hay quy tắc ngữ cảnh trong `backend/handwriting/`.
 
 ### TV1 — AI Data & Writer Profile Lead
-- [ ] **Chuẩn bị benchmark corpus và data fixtures cho CA-VHC:** Chuẩn bị tập ngữ liệu câu/từ chuẩn tiếng Việt và synthetic fixtures đầu vào cho experiment runner của TV4 (tuân thủ quy chuẩn CA-VHC Dataset trong `05_handwriting_dataset_spec.md`).
-- [ ] **Chuẩn bị nghiên cứu Writer Profile (P2 Preparation):** Xây dựng bản nháp JSON schema `WriterProfile` (có trường `version`, `metadata`, `feature_vector`) và protocol thu thập & ẩn danh hóa dữ liệu (tuân thủ quy chuẩn Writer Profile Dataset trong `05_handwriting_dataset_spec.md`, cam kết có sự đồng thuận của người viết, loại bỏ chữ ký và thông tin định danh cá nhân nhạy cảm).
+- [ ] **Chuẩn bị benchmark corpus và data fixtures cho CA-VHC:** Chuẩn bị tập ngữ liệu câu/từ chuẩn tiếng Việt và synthetic fixtures đầu vào cho experiment runner của TV4 (tuân thủ quy chuẩn CA-VHC Dataset trong `08_handwriting_dataset_spec.md`).
+- [ ] **Chuẩn bị nghiên cứu Writer Profile (P2 Preparation):** Xây dựng bản nháp JSON schema `WriterProfile` (có trường `version`, `metadata`, `feature_vector`) và protocol thu thập & ẩn danh hóa dữ liệu (tuân thủ quy chuẩn Writer Profile Dataset trong `08_handwriting_dataset_spec.md`, cam kết có sự đồng thuận của người viết, loại bỏ chữ ký và thông tin định danh cá nhân nhạy cảm).
 - [ ] **Prototype trích xuất đặc trưng độc lập (P2 Preparation):** Lập trình module prototype trích xuất tối thiểu 4 đặc trưng hình học định lượng cơ bản:
   1. Độ nghiêng trung bình (`slant_deg`);
   2. Tỷ lệ kích thước chữ (`aspect_ratio`);
   3. Khoảng cách chữ và từ (`letter_spacing`, `word_spacing`);
   4. Độ dao động baseline (`baseline_jitter_sigma`).
 - [ ] **Tạo fixture dữ liệu mẫu giả lập:** Tạo synthetic data fixtures để kiểm thử bộ trích xuất độc lập, không phụ thuộc vào tiến độ thu thập dữ liệu người dùng thật.
-- [ ] *Lưu ý phạm vi:* Đây là công việc chuẩn bị P2; chưa tích hợp Writer Profile vào engine, chưa được xem là Writer Profile MVP hoàn thành; không huấn luyện mô hình học sâu (deep learning) phức tạp trong sprint này; ưu tiên hoàn thiện quy trình rule-based rõ ràng và có thể kiểm chứng (chi tiết xem [`05_handwriting_dataset_spec.md`](file:///Users/yingjunn_/Study_/Nckh_2026-2027/OmniDraw/docs/05_handwriting_dataset_spec.md)).
+- [ ] *Lưu ý phạm vi:* Đây là công việc chuẩn bị P2; chưa tích hợp Writer Profile vào engine, chưa được xem là Writer Profile MVP hoàn thành; không huấn luyện mô hình học sâu (deep learning) phức tạp trong sprint này; ưu tiên hoàn thiện quy trình rule-based rõ ràng và có thể kiểm chứng (chi tiết xem [`08_handwriting_dataset_spec.md`](file:///Users/yingjunn_/Study_/Nckh_2026-2027/OmniDraw/docs/08_handwriting_dataset_spec.md)).
 
 ### TV3 — Hardware, Calibration & Physical Validation Lead
 - [ ] Chuẩn hóa và đồng nhất interface phần mềm chung (`HardwareAdapterInterface`) dùng chung cho cả phần cứng AxiDraw thật và bộ giả lập `mock_grbl`.
@@ -88,11 +102,17 @@ Một task trong backlog chỉ được tích `[x]` khi:
 
 ## 4. Nhật ký tiến độ theo ngày (Progress Log by Date)
 
+**Ngày 20/9**
+
+| Thành viên | Nội dung thực hiện | Bị nghẽn ở đâu | Trạng thái |
+|---|---|---|---|
+| TV4 | (1) Kiểm chứng và hoàn tất dứt điểm Strict Validation hardening toàn diện: 34/34 regression tests passed, bảo đảm nguyên tắc validation-before-side-effect.<br>(2) Hoàn tất BƯỚC A — Audit kiến trúc Trellis DAG / CA-VHC hiện tại ([`docs/06_audit_trellis_dag_report.md`](file:///Users/yingjunn_/Study_/Nckh_2026-2027/OmniDraw/docs/06_audit_trellis_dag_report.md)).<br>(3) Hoàn thành bản dự thảo thiết kế BƯỚC B — Diacritic-Aware State Architecture ([`docs/07_diacritic_aware_state_design.md`](file:///Users/yingjunn_/Study_/Nckh_2026-2027/OmniDraw/docs/07_diacritic_aware_state_design.md)) theo mô hình Hybrid (`GlyphVariant` + `DiacriticCandidate` $\rightarrow$ `CompositionState`), chuẩn hóa quy ước hệ tọa độ local/world, loại bỏ double-count chi phí vị trí, xác lập Single Source of Truth `DiacriticConfig`, khống chế candidate thô $K_{\text{raw}} \le 9$ chỉ cắt tỉa hard-invalid, và xây dựng danh mục 12 unit tests; chuyển sang trạng thái chờ review chéo từ TV2 trước khi sang Bước C (chưa sửa mã nguồn). | Không | Đang làm |
+
 **Ngày 19/9**
 
 | Thành viên | Nội dung thực hiện | Bị nghẽn ở đâu | Trạng thái |
 |---|---|---|---|
-| TV1 & TV4 | Rà soát và chuẩn hóa toàn diện tài liệu kỹ thuật Dataset Chữ viết tay: tách bạch hoàn toàn giữa **Vietnamese Diacritic / CA-VHC Dataset** (cấu trúc, chính tả, anchor mỏ neo, offset, allographs do TV4 sở hữu quy tắc, TV1 chuẩn bị data) và **Writer Profile / Personalization Dataset** (đặc trưng cá nhân hóa, TV1 sở hữu, nghiên cứu mở rộng P2); xác lập nguyên tắc Shared Raw Input; ban hành tài liệu đặc tả kỹ thuật `05_handwriting_dataset_spec.md` gồm 12 chương; đồng bộ cross-references trên `01_tech-stack.md`, `02_roadmap.md`, `03_current-task.md`, `04_progress-log.md` và `OmniDraw_API_Spec-4.md`. | Không | Đã xong |
+| TV1 & TV4 | Rà soát và chuẩn hóa toàn diện tài liệu kỹ thuật Dataset Chữ viết tay: tách bạch hoàn toàn giữa **Vietnamese Diacritic / CA-VHC Dataset** (cấu trúc, chính tả, anchor mỏ neo, offset, allographs do TV4 sở hữu quy tắc, TV1 chuẩn bị data) và **Writer Profile / Personalization Dataset** (đặc trưng cá nhân hóa, TV1 sở hữu, nghiên cứu mở rộng P2); xác lập nguyên tắc Shared Raw Input; ban hành tài liệu đặc tả kỹ thuật `08_handwriting_dataset_spec.md` gồm 12 chương; đồng bộ cross-references trên `01_tech-stack.md`, `02_roadmap.md`, `03_current-task.md`, `04_progress-log.md` và `OmniDraw_API_Spec-4.md`. | Không | Đã xong |
 
 **Ngày 18/9**
 

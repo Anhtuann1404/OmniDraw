@@ -1203,7 +1203,11 @@ def _text_to_strokes_impl(
     Hàm thực thi cốt lõi của text_to_strokes và text_to_strokes_structured.
     Dùng chung 100% pipeline hình học, biến thiên sinh học, thứ tự ngẫu nhiên.
     """
-    cfg = STYLE_CONFIGS.get(style, STYLE_CONFIGS["hand_hocsinh"])
+    if not isinstance(style, str) or style not in STYLE_CONFIGS:
+        raise ValueError(
+            f"Phong cách chữ '{style}' không được hỗ trợ. Các phong cách khả dụng: {sorted(STYLE_CONFIGS.keys())}."
+        )
+    cfg = STYLE_CONFIGS[style]
     font_pack, f_cfg = resolve_font(font)
     font_pack_id = f_cfg.get("font_pack", "omnidraw_legacy")
     resolve_letter_type(letter_type, font_pack_id)
@@ -4052,6 +4056,14 @@ def _run_self_check():
             assert False, f"Phải từ chối text không phải str: {invalid_text!r}"
         except TypeError as exc:
             assert "chuỗi Unicode" in str(exc), f"Thông báo lỗi TypeError không đúng: {exc}"
+
+    # Kiểm tra strict validation style: style không tồn tại phải raise ValueError, không fallback ngầm
+    for invalid_style in ("hand_fake", "abc_xyz", "", None, 123):
+        try:
+            text_to_strokes("test", font="omni_casual", style=invalid_style)
+            assert False, f"text_to_strokes phải raise ValueError khi style không hợp lệ: {invalid_style!r}"
+        except ValueError as exc:
+            assert "Phong cách" in str(exc), f"Thông báo lỗi không đúng: {exc}"
 
     # Xác nhận các chuỗi hợp lệ vẫn hoạt động bình thường
     assert text_to_strokes("", font="omni_casual") == []
