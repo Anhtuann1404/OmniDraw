@@ -1,6 +1,6 @@
 # OmniDraw — Đặc tả Kỹ thuật Dataset Chữ viết tay (Handwriting Dataset Specification)
 
-**Tài liệu mã số:** `DOC-SPEC-05-DATASET`  
+**Tài liệu mã số:** `DOC-SPEC-08-DATASET`  
 **Phiên bản:** `v1.0.0` (Chuẩn hóa ranh giới CA-VHC Dataset vs. Writer Profile Dataset)  
 **Ngày ban hành:** 19/09/2026  
 **Chủ trì soạn thảo & Quản trị dữ liệu:** TV1 (AI Data & Writer Personalization Lead)  
@@ -670,7 +670,7 @@ Nhằm duy trì tính trung thực khoa học tuyệt đối trong toàn bộ h�
 
 | Hạng mục | Trách nhiệm | Trạng thái thực tế | Ghi chú & Ranh giới hiện hành |
 | :--- | :--- | :--- | :--- |
-| **Đặc tả ranh giới 2 Dataset (CA-VHC vs Writer Profile)** | TV1 & TV4 | **IMPLEMENTED** | Đã chuẩn hóa toàn diện trong tài liệu `05_handwriting_dataset_spec.md`. |
+| **Đặc tả ranh giới 2 Dataset (CA-VHC vs Writer Profile)** | TV1 & TV4 | **IMPLEMENTED** | Đã chuẩn hóa toàn diện trong tài liệu `08_handwriting_dataset_spec.md`. |
 | **Bảng chữ cái & Ghép dấu Unicode NFD chuẩn** | TV4 | **IMPLEMENTED** | Đã hoạt động trong `backend/handwriting/engine.py` cho các font hiện có. |
 | **Kiến trúc Font Pack nét đơn độc lập** | TV4 | **IMPLEMENTED** | Đã tách thành package `backend/handwriting/font_packs/` (`legacy`, `omni_casual`). |
 | **Auditor kiểm tra hình học polyline** | TV4 | **IMPLEMENTED** | Đã có `audit_font_pack_geometry()` và `qa_specimens.py`. |

@@ -614,7 +614,7 @@ Mỗi lỗi trả về đều theo cùng cấu trúc `{ "code": "...", "message"
 > - Các trường, cấu trúc và tên gọi dưới đây **KHÔNG có hiệu lực contract binding** cho phiên bản v1.4 hiện tại.
 > - Client và backend **không** được đưa các trường này vào validation bắt buộc của API v1.4.
 > - Tên trường, kiểu dữ liệu và cấu trúc có thể thay đổi khi nhóm tiến hành triển khai thực tế.
-> - **Ranh giới dữ liệu nghiên cứu:** Writer Profile Dataset và CA-VHC Dataset là các thành phần phục vụ nghiên cứu khoa học, trích xuất đặc trưng và hiệu chuẩn ngoại tuyến (offline processing) được đặc tả riêng tại [`05_handwriting_dataset_spec.md`](file:///Users/yingjunn_/Study_/Nckh_2026-2027/OmniDraw/docs/05_handwriting_dataset_spec.md); hoàn toàn không làm thay đổi hay ảnh hưởng đến contract của endpoint `POST /api/ai/generate` hiện tại.
+> - **Ranh giới dữ liệu nghiên cứu:** Writer Profile Dataset và CA-VHC Dataset là các thành phần phục vụ nghiên cứu khoa học, trích xuất đặc trưng và hiệu chuẩn ngoại tuyến (offline processing) được đặc tả riêng tại [`08_handwriting_dataset_spec.md`](file:///Users/yingjunn_/Study_/Nckh_2026-2027/OmniDraw/docs/08_handwriting_dataset_spec.md); hoàn toàn không làm thay đổi hay ảnh hưởng đến contract của endpoint `POST /api/ai/generate` hiện tại.
 > - **Hiện trạng xử lý văn bản dài:** Backend hiện tại xử lý trên 1 trang duy nhất và từ chối văn bản vượt quá giới hạn khổ giấy bằng mã lỗi `TEXT_OVERFLOW`.
 
 ### A. Cá nhân hóa nét chữ & Hồ sơ người viết (Writer Profile / Personalization)

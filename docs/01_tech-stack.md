@@ -15,7 +15,7 @@
 | Thư viện chính       | `google-genai`, `requests`                         | Giao tiếp API Google Gemini hiện hành; `openai` là thư viện từng dùng trong prototype ban đầu |
 | Quản trị dữ liệu & Schema | JSON Schema (versioned), Pandas/Numpy           | Định nghĩa cấu trúc `WriterProfile`, protocol thu thập mẫu chữ viết tay và bộ trích xuất đặc trưng hình học |
 
-> *(Chi tiết quy chuẩn phân tách giữa CA-VHC Structural Dataset và Writer Profile Dataset, quy trình thu thập, schema và ranh giới ownership: xem [`05_handwriting_dataset_spec.md`](file:///Users/yingjunn_/Study_/Nckh_2026-2027/OmniDraw/docs/05_handwriting_dataset_spec.md)).*
+> *(Chi tiết quy chuẩn phân tách giữa CA-VHC Structural Dataset và Writer Profile Dataset, quy trình thu thập, schema và ranh giới ownership: xem [`08_handwriting_dataset_spec.md`](file:///Users/yingjunn_/Study_/Nckh_2026-2027/OmniDraw/docs/08_handwriting_dataset_spec.md)).*
 
 
 ---
@@ -56,7 +56,7 @@
 | Kiến trúc hệ thống | Modular Monolith / API Gateway | TV4 điều phối kiến trúc tổng thể OmniDraw, quản lý contract và kết nối liên mảng |
 | Frontend framework | React.js          | Render SPA mượt mà, quản lý component tốt            |
 | Backend framework  | Python / FastAPI  | Tốc độ cao, đồng bộ ngôn ngữ với toàn bộ pipeline    |
-| Handwriting Subsystem | `backend/handwriting/` | TV4 trực tiếp thiết kế và lập trình toàn bộ engine thư tay nét đơn, kiến trúc Font Pack, Unicode NFD, ghép dấu tiếng Việt, contextual allographs, smoothing và auditor (đặc tả dữ liệu cấu trúc CA-VHC và ranh giới với dữ liệu cá nhân hóa xem tại `05_handwriting_dataset_spec.md`) |
+| Handwriting Subsystem | `backend/handwriting/` | TV4 trực tiếp thiết kế và lập trình toàn bộ engine thư tay nét đơn, kiến trúc Font Pack, Unicode NFD, ghép dấu tiếng Việt, contextual allographs, smoothing và auditor (đặc tả dữ liệu cấu trúc CA-VHC và ranh giới với dữ liệu cá nhân hóa xem tại `08_handwriting_dataset_spec.md`) |
 | Giao tiếp realtime | REST polling      | Theo quyết định đã chốt trong `OmniDraw_API_Spec-4.md` |
 | Database (nếu cần) | SQLite            | Gọn nhẹ, lưu file cục bộ, khởi tạo nhanh chóng       |
 | Trích xuất văn bản (.docx) | `python-docx` | Hỗ trợ người dùng tải file Word lên trong chế độ Viết Thư Tay để tự động trích xuất nội dung |
@@ -122,7 +122,7 @@
 3. **Letter Type:** Ngữ cảnh văn bản quy định quy tắc lựa chọn biến thể glyph và bố cục (hiện tại: `general`, `formal`; tương lai: thân mật, tình cảm, thiệp mời, học sinh...).
 4. **Writer Profile:** Hồ sơ đặc trưng thói quen và phong cách cá nhân hóa của một người viết cụ thể (độ nghiêng, jitter baseline, spacing, thiên hướng chọn allograph) phục vụ few-shot personalization (thuộc nhánh nghiên cứu mở rộng P2 do TV1 chủ trì; chưa tích hợp vào engine lõi).
 5. **CA-VHC Structural Dataset:** Tập dữ liệu mẫu chữ viết tay tiếng Việt tập trung vào CẤU TRÚC và CHÍNH TẢ (tọa độ mỏ neo anchor, độ lệch diacritic offset, vùng cấm va chạm, biến thể allograph theo vị trí từ và tổ hợp dấu thanh). Do TV1 thu thập và chuẩn bị dữ liệu, nhưng toàn bộ quy tắc sử dụng và logic chính tả do TV4 sở hữu phục vụ calibrate và đánh giá CA-VHC engine.
-*(Xem phân định chi tiết tại [`05_handwriting_dataset_spec.md`](file:///Users/yingjunn_/Study_/Nckh_2026-2027/OmniDraw/docs/05_handwriting_dataset_spec.md)).*
+*(Xem phân định chi tiết tại [`08_handwriting_dataset_spec.md`](file:///Users/yingjunn_/Study_/Nckh_2026-2027/OmniDraw/docs/08_handwriting_dataset_spec.md)).*
 
 #### E. Phân biệt lõi nghiên cứu và tính năng trình diễn
 - **Lõi nghiên cứu (Core Contributions):**

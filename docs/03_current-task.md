@@ -12,7 +12,7 @@
 | :--- | :--- | :--- | :--- |
 | **TV4 — Project Lead & Handwriting / CA-VHC Composition Lead** | Hoàn tất Strict Validation (34/34 PASS); hoàn tất BƯỚC A — Trellis DAG / CA-VHC Architecture Audit (`docs/06_audit_trellis_dag_report.md`); hoàn tất bản thảo BƯỚC B — Thiết kế kiến trúc Diacritic-Aware State Representation (`docs/07_diacritic_aware_state_design.md`) (chờ TV2 cross-review trước khi sang Bước C); chuẩn hóa schema logging CSV; xây dựng experiment runner; tổng hợp và khóa Research Questions (RQ1–RQ3); dựng khung báo cáo Chương 3 & 4 | Không | 🟡 Đang làm |
 | **TV2 — Stroke Optimization & Path Planning Lead** | Soạn thảo Research Questions (RQ) & giả thuyết về tối ưu chuyển động; chuẩn hóa ký hiệu toán học hàm mục tiêu $J$ (phần transition cost & kinematics); chuẩn hóa 2 bộ baseline đối chứng (Art Mode & CA-VHC motion); phối hợp thiết kế hàm chi phí di chuyển ngòi bút cho Trellis DAG | Không | 🟡 Đang làm |
-| **TV1 — AI Data & Writer Profile Lead** | Chuẩn bị benchmark corpus và data fixtures phục vụ CA-VHC (cung cấp cho TV4); chuẩn bị P2 Writer Profile: định nghĩa JSON schema (versioned), soạn thảo protocol thu thập & ẩn danh hóa dữ liệu, code prototype trích xuất 4 đặc trưng hình học độc lập (tuân thủ `05_handwriting_dataset_spec.md`, chưa tích hợp engine, không huấn luyện mô hình lớn) | Không | 🟡 Đang làm |
+| **TV1 — AI Data & Writer Profile Lead** | Chuẩn bị benchmark corpus và data fixtures phục vụ CA-VHC (cung cấp cho TV4); chuẩn bị P2 Writer Profile: định nghĩa JSON schema (versioned), soạn thảo protocol thu thập & ẩn danh hóa dữ liệu, code prototype trích xuất 4 đặc trưng hình học độc lập (tuân thủ `08_handwriting_dataset_spec.md`, chưa tích hợp engine, không huấn luyện mô hình lớn) | Không | 🟡 Đang làm |
 | **TV3 — Hardware, Calibration & Physical Validation Lead** | Chuẩn hóa interface chung giữa simulator và máy vẽ thật; chuẩn bị SVG smoke test fixture; lập checklist hiệu chuẩn phần cứng; xác định metrics phần cứng bắt buộc (phân biệt simulator time và `actual_draw_time_sec` thật) | *Blocked by hardware:* chờ setup cáp & máy vẽ thực tế (tập trung hoàn thiện simulator & test protocol) | 🟡 Đang làm |
 
 ---
@@ -58,15 +58,15 @@
 - [ ] *Lưu ý phạm vi:* Tập trung vào thuật toán tối ưu chuyển động, không sửa logic hình học hay quy tắc ngữ cảnh trong `backend/handwriting/`.
 
 ### TV1 — AI Data & Writer Profile Lead
-- [ ] **Chuẩn bị benchmark corpus và data fixtures cho CA-VHC:** Chuẩn bị tập ngữ liệu câu/từ chuẩn tiếng Việt và synthetic fixtures đầu vào cho experiment runner của TV4 (tuân thủ quy chuẩn CA-VHC Dataset trong `05_handwriting_dataset_spec.md`).
-- [ ] **Chuẩn bị nghiên cứu Writer Profile (P2 Preparation):** Xây dựng bản nháp JSON schema `WriterProfile` (có trường `version`, `metadata`, `feature_vector`) và protocol thu thập & ẩn danh hóa dữ liệu (tuân thủ quy chuẩn Writer Profile Dataset trong `05_handwriting_dataset_spec.md`, cam kết có sự đồng thuận của người viết, loại bỏ chữ ký và thông tin định danh cá nhân nhạy cảm).
+- [ ] **Chuẩn bị benchmark corpus và data fixtures cho CA-VHC:** Chuẩn bị tập ngữ liệu câu/từ chuẩn tiếng Việt và synthetic fixtures đầu vào cho experiment runner của TV4 (tuân thủ quy chuẩn CA-VHC Dataset trong `08_handwriting_dataset_spec.md`).
+- [ ] **Chuẩn bị nghiên cứu Writer Profile (P2 Preparation):** Xây dựng bản nháp JSON schema `WriterProfile` (có trường `version`, `metadata`, `feature_vector`) và protocol thu thập & ẩn danh hóa dữ liệu (tuân thủ quy chuẩn Writer Profile Dataset trong `08_handwriting_dataset_spec.md`, cam kết có sự đồng thuận của người viết, loại bỏ chữ ký và thông tin định danh cá nhân nhạy cảm).
 - [ ] **Prototype trích xuất đặc trưng độc lập (P2 Preparation):** Lập trình module prototype trích xuất tối thiểu 4 đặc trưng hình học định lượng cơ bản:
   1. Độ nghiêng trung bình (`slant_deg`);
   2. Tỷ lệ kích thước chữ (`aspect_ratio`);
   3. Khoảng cách chữ và từ (`letter_spacing`, `word_spacing`);
   4. Độ dao động baseline (`baseline_jitter_sigma`).
 - [ ] **Tạo fixture dữ liệu mẫu giả lập:** Tạo synthetic data fixtures để kiểm thử bộ trích xuất độc lập, không phụ thuộc vào tiến độ thu thập dữ liệu người dùng thật.
-- [ ] *Lưu ý phạm vi:* Đây là công việc chuẩn bị P2; chưa tích hợp Writer Profile vào engine, chưa được xem là Writer Profile MVP hoàn thành; không huấn luyện mô hình học sâu (deep learning) phức tạp trong sprint này; ưu tiên hoàn thiện quy trình rule-based rõ ràng và có thể kiểm chứng (chi tiết xem [`05_handwriting_dataset_spec.md`](file:///Users/yingjunn_/Study_/Nckh_2026-2027/OmniDraw/docs/05_handwriting_dataset_spec.md)).
+- [ ] *Lưu ý phạm vi:* Đây là công việc chuẩn bị P2; chưa tích hợp Writer Profile vào engine, chưa được xem là Writer Profile MVP hoàn thành; không huấn luyện mô hình học sâu (deep learning) phức tạp trong sprint này; ưu tiên hoàn thiện quy trình rule-based rõ ràng và có thể kiểm chứng (chi tiết xem [`08_handwriting_dataset_spec.md`](file:///Users/yingjunn_/Study_/Nckh_2026-2027/OmniDraw/docs/08_handwriting_dataset_spec.md)).
 
 ### TV3 — Hardware, Calibration & Physical Validation Lead
 - [ ] Chuẩn hóa và đồng nhất interface phần mềm chung (`HardwareAdapterInterface`) dùng chung cho cả phần cứng AxiDraw thật và bộ giả lập `mock_grbl`.
@@ -112,7 +112,7 @@ Một task trong backlog chỉ được tích `[x]` khi:
 
 | Thành viên | Nội dung thực hiện | Bị nghẽn ở đâu | Trạng thái |
 |---|---|---|---|
-| TV1 & TV4 | Rà soát và chuẩn hóa toàn diện tài liệu kỹ thuật Dataset Chữ viết tay: tách bạch hoàn toàn giữa **Vietnamese Diacritic / CA-VHC Dataset** (cấu trúc, chính tả, anchor mỏ neo, offset, allographs do TV4 sở hữu quy tắc, TV1 chuẩn bị data) và **Writer Profile / Personalization Dataset** (đặc trưng cá nhân hóa, TV1 sở hữu, nghiên cứu mở rộng P2); xác lập nguyên tắc Shared Raw Input; ban hành tài liệu đặc tả kỹ thuật `05_handwriting_dataset_spec.md` gồm 12 chương; đồng bộ cross-references trên `01_tech-stack.md`, `02_roadmap.md`, `03_current-task.md`, `04_progress-log.md` và `OmniDraw_API_Spec-4.md`. | Không | Đã xong |
+| TV1 & TV4 | Rà soát và chuẩn hóa toàn diện tài liệu kỹ thuật Dataset Chữ viết tay: tách bạch hoàn toàn giữa **Vietnamese Diacritic / CA-VHC Dataset** (cấu trúc, chính tả, anchor mỏ neo, offset, allographs do TV4 sở hữu quy tắc, TV1 chuẩn bị data) và **Writer Profile / Personalization Dataset** (đặc trưng cá nhân hóa, TV1 sở hữu, nghiên cứu mở rộng P2); xác lập nguyên tắc Shared Raw Input; ban hành tài liệu đặc tả kỹ thuật `08_handwriting_dataset_spec.md` gồm 12 chương; đồng bộ cross-references trên `01_tech-stack.md`, `02_roadmap.md`, `03_current-task.md`, `04_progress-log.md` và `OmniDraw_API_Spec-4.md`. | Không | Đã xong |
 
 **Ngày 18/9**
 
