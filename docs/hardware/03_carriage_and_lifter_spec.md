@@ -128,7 +128,7 @@ Preserved exactly from the accepted V1.1 kinematic baseline without modification
     - $V2$: Center $(-6.000, -12.000, 4.200)\text{ mm}$, axis $+26.57^\circ$ from $+Y$ toward $+X$.
     - $V3$: Center (+6.000, -12.000, 4.200)\text{ mm}$, axis $-26.57^\circ$ from $+Y$ toward $+X$.
     - Profile: $90^\circ$ included angle, mouth width $W = 4.800\text{ mm}$, depth $D = 2.400\text{ mm}$, length $L = 5.000\text{ mm}$, lead-in chamfer $0.200\text{ mm} \times 45^\circ$.
-  - Magnets: 3x pockets $\varnothing 8.000 \times 2.200\text{ mm}$ depth.
+  - Magnets: Magnet geometry $\varnothing 8.000 \times 2.000\text{ mm}$; 3x pockets $\varnothing 8.200\text{ mm}$ diameter, depth $= 2.200\text{ mm}$.
 - **Receiver Plate V1 (`Receiver_Plate_V1.step`):**
   - Main Body: $22.000 \times 48.000 \times 6.000\text{ mm}$.
   - Balls: 3x $\varnothing 6.000\text{ mm}$ hardened chrome steel balls (G28 design spec), centers at $RY = 0.000\text{ mm}$ (protrusion $3.000\text{ mm}$):
@@ -137,7 +137,7 @@ Preserved exactly from the accepted V1.1 kinematic baseline without modification
     - $B3$: $(RX = +6.000, RZ = +12.000)\text{ mm}$
   - Ball Seats: Guide bore $\varnothing 6.100\text{ mm}$ ($RY\ 0 \to -1.193$), $90^\circ$ conical shoulder ($RY\ -1.193 \to -2.993$), apex $RY = -4.242641\text{ mm}$, contact ring diameter $\varnothing 4.242641\text{ mm}$ at $RY = -2.121320\text{ mm}$, adhesive/vent channel $\varnothing 2.500\text{ mm}$ ($RY\ -2.993 \to -6.000$).
   - Nominal Mating Gap: $G_{face} = 1.842641\text{ mm} \approx 1.843\text{ mm}$.
-  - Magnet Pockets: 3x $\varnothing 8.000 \times 2.200\text{ mm}$ depth at:
+  - Magnet Pockets: Magnet geometry $\varnothing 8.000 \times 2.000\text{ mm}$; 3x pockets $\varnothing 8.200\text{ mm}$ diameter, depth $= 2.200\text{ mm}$ at:
     - $M1$: $(RX = 0.000, RY = -1.200, RZ = +2.000)\text{ mm}$
     - $M2$: $(RX = -5.000, RY = -1.200, RZ = -6.000)\text{ mm}$
     - $M3$: $(RX = +5.000, RY = -1.200, RZ = -6.000)\text{ mm}$
@@ -188,7 +188,7 @@ During the active rise phase ($\phi \ge \phi_{contact}$):
 - **Maximum Pressure Angle:**
   $$\alpha_{max} \approx 29.12^\circ \quad (\text{at } \theta_{profile} = 0.000^\circ)$$
 - **Operational Pressure Angles:** $\alpha(Z=-1.5\text{ mm}) = 27.23^\circ$, $\alpha(Z=0\text{ mm}) = 24.74^\circ$, $\alpha(Z=+6.5\text{ mm}) = 17.66^\circ$, $\alpha(Z=+8.0\text{ mm}) = 15.47^\circ$.
-- **Evaluation:** Meets the analytical criterion $\alpha < 30.0^\circ$ across all operating states, avoiding mechanical binding.
+- **Evaluation:** Meets the current analytical pressure-angle design criterion ($\alpha < 30.0^\circ$ across the evaluated active rise). Physical running friction, backdrive and binding behavior remain subject to prototype validation.
 
 ### 3.4 B-Rep Clearance Verification in FREE_DRAW_PARK ($\gamma_{cam} = +120.000^\circ$)
 - At $Z_{slider} = +1.500\text{ mm}$ (Compliance High): Follower clearance $= +4.086\text{ mm}$ (Clear).
@@ -213,8 +213,8 @@ Tool release from the carriage receiver into the dock bay is executed as a coord
 - **Theoretical Separation Clearance:** $+0.066\text{ mm}$ minimum clearance under assumed prototype tolerances.
 
 ### 3.7 Parametric Moving Mass Estimates (Sensitivity Baseline)
-Values are analytical CAD estimates only (not physically measured):
-- Reference Non-Printed Subtotal: $29.51\text{ g}$ (MGN9C block $16.0\text{ g}$, 3x steel balls $2.65\text{ g}$, 6x magnets $4.56\text{ g}$, follower bearing & pin $6.30\text{ g}$).
+Values are parametric mass estimates only (not physically measured):
+- Reference Non-Printed Subtotal: $29.51\text{ g}$ (REFERENCE ANALYTICAL SUBTOTAL — NOT MEASURED — NOT FROZEN).
 - LOW Scenario: $52.92\text{ g}$ total moving mass ($F_{gravity} = 0.5190\text{ N}$).
 - NOMINAL Scenario: $62.13\text{ g}$ total moving mass ($F_{gravity} = 0.6093\text{ N}$).
 - HIGH (PLA) Scenario: $81.62\text{ g}$ total moving mass ($F_{gravity} = 0.8004\text{ N}$).
@@ -263,7 +263,7 @@ The following components represent CAD packaging baselines. Exact commercial man
 | **Roller Follower** | MR84ZZ-class miniature deep-groove ball bearing | $\text{OD } 8.0\text{ mm}, \text{ID } 4.0\text{ mm}, \text{Width } 3.0\text{ mm}$ | Q3 CANDIDATE / Exact SKU TBD |
 | **Actuator** | MG90S-class 9g metal-gear micro servo | $28.5\text{ mm } (X) \times 32.5\text{ mm } (Y) \times 12.2\text{ mm } (Z)$ | Q3 CANDIDATE / Exact SKU TBD |
 | **Coupling Balls** | Chrome steel bearing balls $\varnothing 6.000\text{ mm}$ | Grade 28 design specification | DESIGN SPEC / Vendor TBD |
-| **Coupling Magnets** | Sintered NdFeB disc magnets $\varnothing 8.000 \times 2.000\text{ mm}$ | Pockets $\varnothing 8.000 \times 2.200\text{ mm}$ | BOM CANDIDATE / Grade TBD |
+| **Coupling Magnets** | Sintered NdFeB disc magnets $\varnothing 8.000 \times 2.000\text{ mm}$ | Pockets $\varnothing 8.200\text{ mm} \times 2.200\text{ mm}$ depth | BOM CANDIDATE / Grade TBD |
 
 ### 4.1 Provisional Actuator Selection Targets
 - Continuous Holding Torque: $\tau_{cont} \ge 1.50\text{ N}\cdot\text{cm}$
@@ -287,7 +287,7 @@ The following parameters are explicitly NOT frozen by CAD or analytical results 
 9. **Poka-Yoke Reversed Rejection Test:** Physical verification that $180^\circ$ reversed docking is mechanically arrested without magnetic snapping.
 10. **Coupled Release Test:** Multi-cycle confirmation of smooth tool drop-off without jamming or dock deflection.
 11. **Baseplate & Dock Structural Rigidity:** Physical deflection testing under magnetic release loads (FEA / physical validation).
-12. **Endurance Cycling:** Multi-thousand cycle lifetime validation of cam, follower, and kinematic ball seats.
+12. **Endurance Cycling:** Endurance cycling of cam, follower and kinematic ball seats; cycle count and acceptance criteria TBD before test.
 
 ---
 

@@ -82,7 +82,7 @@ This log records all formal architectural, mathematical, and mechanical interfac
 - **Decision:** Adopt 3 pairs of $\varnothing 8.000 \times 2.000\text{ mm}$ NdFeB-class disc magnets.
   - Magnet Geometry: $\varnothing 8.000 \times 2.000\text{ mm}$ disc geometry is FROZEN.
   - Magnet Grade: Exact magnetic grade remains BOM CANDIDATE / TBD. N52 may be evaluated as a candidate during procurement/validation.
-  - Pocket depth: $2.200\text{ mm}$ ($0.200\text{ mm}$ recess below mating faces).
+  - Pocket Geometry: $\varnothing 8.200\text{ mm}$ diameter, depth $2.200\text{ mm}$ ($0.200\text{ mm}$ recess below mating faces).
   - Nominal face gap: $1.843\text{ mm}$.
   - Nominal magnetic gap: $2.243\text{ mm}$.
   - Preload force target: $18.0 - 22.0\text{ N}$ (`ASPIRATIONAL / UNMEASURED TARGET`).
