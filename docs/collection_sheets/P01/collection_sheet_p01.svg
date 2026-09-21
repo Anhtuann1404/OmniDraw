@@ -1,0 +1,481 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 210 297" width="210mm" height="297mm">
+  <!-- Paper Surface -->
+  <rect x="0" y="0" width="210" height="297" fill="#ffffff"/>
+  <!-- 4 Corner Fiducial Markers (5.0 x 5.0 mm) -->
+  <g id="fiducials">
+    <rect id="fiducial_tl" x="12.0" y="12.0" width="5.0" height="5.0" fill="#000000"/>
+    <rect id="fiducial_tr" x="193.0" y="12.0" width="5.0" height="5.0" fill="#000000"/>
+    <rect id="fiducial_bl" x="12.0" y="280.0" width="5.0" height="5.0" fill="#000000"/>
+    <rect id="fiducial_br" x="193.0" y="280.0" width="5.0" height="5.0" fill="#000000"/>
+  </g>
+  <!-- Header -->
+  <g id="header">
+    <text x="21.0" y="16.5" font-family="Helvetica, Arial, sans-serif" font-size="4.2" font-weight="bold" fill="#111111" letter-spacing="0.2">OMNIDRAW RESEARCH DATASET</text>
+    <text x="21.0" y="21.0" font-family="Helvetica, Arial, sans-serif" font-size="2.8" font-weight="bold" fill="#333333">P01 — Character &amp; Diacritic Collection Sheet</text>
+    <text x="21.0" y="24.8" font-family="Courier, monospace" font-size="2.0" fill="#555555">FORM VERSION: ODW-HW-P01-DEMO-v0.2 • PROTOCOL: DOC-SPEC-08-DATASET</text>
+    <text x="189.0" y="16.5" text-anchor="end" font-family="Courier, monospace" font-size="1.9" font-weight="bold" fill="#444444">RESEARCH USE ONLY</text>
+    <text x="189.0" y="20.5" text-anchor="end" font-family="Courier, monospace" font-size="1.9" fill="#666666">ANONYMIZED PROTOCOL • NO PII COLLECTED</text>
+    <text x="189.0" y="24.5" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="1.9" font-weight="bold" fill="#c93b2b">PILOT CANDIDATE — NOT APPROVED FOR FORMAL DATA COLLECTION</text>
+    <line x1="21.0" y1="26.8" x2="189.0" y2="26.8" stroke="#cccccc" stroke-width="0.25"/>
+    <rect x="13.0" y="28.5" width="184.0" height="7.5" fill="#f8f9fa" stroke="#cccccc" stroke-width="0.25" rx="0.6"/>
+    <text x="16.0" y="33.5" font-family="Helvetica, Arial, sans-serif" font-size="2.3" font-weight="bold" fill="#222222">Writer ID: <tspan font-family="Courier, monospace" font-weight="normal" fill="#555555">W_________</tspan></text>
+    <text x="64.0" y="33.5" font-family="Helvetica, Arial, sans-serif" font-size="2.3" font-weight="bold" fill="#222222">Session: <tspan font-family="Courier, monospace" font-weight="normal" fill="#555555">S______</tspan></text>
+    <text x="105.0" y="33.5" font-family="Helvetica, Arial, sans-serif" font-size="2.3" font-weight="bold" fill="#222222">Page: <tspan font-family="Courier, monospace" font-weight="bold" fill="#111111">P01</tspan></text>
+    <text x="145.0" y="33.5" font-family="Helvetica, Arial, sans-serif" font-size="2.3" font-weight="bold" fill="#222222">Date: <tspan font-family="Courier, monospace" font-weight="normal" fill="#555555">_____ / _____ / 202___</tspan></text>
+  </g>
+  <!-- Instructions -->
+  <g id="instructions">
+    <rect x="13.0" y="38.0" width="184.0" height="13.5" fill="#ffffff" stroke="#b0b0b0" stroke-width="0.3" rx="0.8"/>
+    <rect x="13.0" y="38.0" width="184.0" height="3.6" fill="#eceff1" stroke="#b0b0b0" stroke-width="0.3" rx="0.8"/>
+    <text x="16.0" y="40.7" font-family="Helvetica, Arial, sans-serif" font-size="2.1" font-weight="bold" fill="#111111">HƯỚNG DẪN VIẾT MẪU / WRITING INSTRUCTIONS</text>
+    <text x="194.0" y="40.7" text-anchor="end" font-family="Courier, monospace" font-size="1.8" fill="#555555">SPECIFICATION: 0.5MM BLACK GEL PEN</text>
+    <text x="16.0" y="44.5" font-family="Helvetica, Arial, sans-serif" font-size="1.9" fill="#333333">• Viết bằng nét chữ tự nhiên của bạn; tuyệt đối KHÔNG cố tình nắn nót đẹp hơn bình thường.</text>
+    <text x="16.0" y="48.2" font-family="Helvetica, Arial, sans-serif" font-size="1.9" fill="#333333">• Dùng bút gel đen 0.5 mm do nhóm cung cấp (hoặc tương thích); không dùng bút xanh, dạ hoặc chì.</text>
+    <text x="106.0" y="44.5" font-family="Helvetica, Arial, sans-serif" font-size="1.9" fill="#333333">• Viết đúng ký tự Target yêu cầu; chỉ viết trong vùng 4 đường kẻ; KHÔNG chạm vào dải nhãn trên.</text>
+    <text x="106.0" y="48.2" font-family="Helvetica, Arial, sans-serif" font-size="1.9" fill="#333333">• Không viết đè, không tô lại nét lỗi, không dùng bút xóa; không ký tên hay viết thông tin cá nhân.</text>
+  </g>
+  <!-- 24 Character Writing Cells -->
+  <g id="character_grid">
+    <!-- Cell BASE_001 -->
+    <g id="cell_BASE_001">
+      <rect x="13.00" y="53.50" width="43.50" height="31.00" fill="#ffffff" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <rect x="13.00" y="53.50" width="43.50" height="6.5" fill="#f4f6f8" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <line x1="13.00" y1="60.00" x2="56.50" y2="60.00" stroke="#777777" stroke-width="0.3"/>
+      <text x="14.80" y="58.00" font-family="Courier, monospace" font-size="2.0" font-weight="bold" fill="#222222">BASE_001<tspan font-family="Helvetica, Arial, sans-serif" font-size="1.6" font-weight="normal" fill="#666666"></tspan></text>
+      <text x="47.50" y="58.00" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="2.0" fill="#555555">Target:</text>
+      <text x="52.50" y="58.70" text-anchor="middle" font-family="Times New Roman, Georgia, serif" font-size="4.2" font-weight="bold" fill="#000000">a</text>
+      <line x1="14.50" y1="64.00" x2="55.00" y2="64.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="14.50" y1="70.00" x2="55.00" y2="70.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="14.50" y1="76.00" x2="55.00" y2="76.00" stroke="#7e7e7e" stroke-width="0.28"/>
+      <line x1="14.50" y1="81.00" x2="55.00" y2="81.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="13.00" y1="76.00" x2="14.00" y2="76.00" stroke="#555555" stroke-width="0.35"/>
+      <line x1="55.50" y1="76.00" x2="56.50" y2="76.00" stroke="#555555" stroke-width="0.35"/>
+    </g>
+    <!-- Cell BASE_002 -->
+    <g id="cell_BASE_002">
+      <rect x="59.83" y="53.50" width="43.50" height="31.00" fill="#ffffff" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <rect x="59.83" y="53.50" width="43.50" height="6.5" fill="#f4f6f8" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <line x1="59.83" y1="60.00" x2="103.33" y2="60.00" stroke="#777777" stroke-width="0.3"/>
+      <text x="61.63" y="58.00" font-family="Courier, monospace" font-size="2.0" font-weight="bold" fill="#222222">BASE_002<tspan font-family="Helvetica, Arial, sans-serif" font-size="1.6" font-weight="normal" fill="#666666"></tspan></text>
+      <text x="94.33" y="58.00" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="2.0" fill="#555555">Target:</text>
+      <text x="99.33" y="58.70" text-anchor="middle" font-family="Times New Roman, Georgia, serif" font-size="4.2" font-weight="bold" fill="#000000">e</text>
+      <line x1="61.33" y1="64.00" x2="101.83" y2="64.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="61.33" y1="70.00" x2="101.83" y2="70.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="61.33" y1="76.00" x2="101.83" y2="76.00" stroke="#7e7e7e" stroke-width="0.28"/>
+      <line x1="61.33" y1="81.00" x2="101.83" y2="81.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="59.83" y1="76.00" x2="60.83" y2="76.00" stroke="#555555" stroke-width="0.35"/>
+      <line x1="102.33" y1="76.00" x2="103.33" y2="76.00" stroke="#555555" stroke-width="0.35"/>
+    </g>
+    <!-- Cell BASE_003 -->
+    <g id="cell_BASE_003">
+      <rect x="106.67" y="53.50" width="43.50" height="31.00" fill="#ffffff" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <rect x="106.67" y="53.50" width="43.50" height="6.5" fill="#f4f6f8" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <line x1="106.67" y1="60.00" x2="150.17" y2="60.00" stroke="#777777" stroke-width="0.3"/>
+      <text x="108.47" y="58.00" font-family="Courier, monospace" font-size="2.0" font-weight="bold" fill="#222222">BASE_003<tspan font-family="Helvetica, Arial, sans-serif" font-size="1.6" font-weight="normal" fill="#666666"></tspan></text>
+      <text x="141.17" y="58.00" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="2.0" fill="#555555">Target:</text>
+      <text x="146.17" y="58.70" text-anchor="middle" font-family="Times New Roman, Georgia, serif" font-size="4.2" font-weight="bold" fill="#000000">o</text>
+      <line x1="108.17" y1="64.00" x2="148.67" y2="64.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="108.17" y1="70.00" x2="148.67" y2="70.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="108.17" y1="76.00" x2="148.67" y2="76.00" stroke="#7e7e7e" stroke-width="0.28"/>
+      <line x1="108.17" y1="81.00" x2="148.67" y2="81.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="106.67" y1="76.00" x2="107.67" y2="76.00" stroke="#555555" stroke-width="0.35"/>
+      <line x1="149.17" y1="76.00" x2="150.17" y2="76.00" stroke="#555555" stroke-width="0.35"/>
+    </g>
+    <!-- Cell BASE_004 -->
+    <g id="cell_BASE_004">
+      <rect x="153.50" y="53.50" width="43.50" height="31.00" fill="#ffffff" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <rect x="153.50" y="53.50" width="43.50" height="6.5" fill="#f4f6f8" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <line x1="153.50" y1="60.00" x2="197.00" y2="60.00" stroke="#777777" stroke-width="0.3"/>
+      <text x="155.30" y="58.00" font-family="Courier, monospace" font-size="2.0" font-weight="bold" fill="#222222">BASE_004<tspan font-family="Helvetica, Arial, sans-serif" font-size="1.6" font-weight="normal" fill="#666666"></tspan></text>
+      <text x="188.00" y="58.00" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="2.0" fill="#555555">Target:</text>
+      <text x="193.00" y="58.70" text-anchor="middle" font-family="Times New Roman, Georgia, serif" font-size="4.2" font-weight="bold" fill="#000000">u</text>
+      <line x1="155.00" y1="64.00" x2="195.50" y2="64.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="155.00" y1="70.00" x2="195.50" y2="70.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="155.00" y1="76.00" x2="195.50" y2="76.00" stroke="#7e7e7e" stroke-width="0.28"/>
+      <line x1="155.00" y1="81.00" x2="195.50" y2="81.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="153.50" y1="76.00" x2="154.50" y2="76.00" stroke="#555555" stroke-width="0.35"/>
+      <line x1="196.00" y1="76.00" x2="197.00" y2="76.00" stroke="#555555" stroke-width="0.35"/>
+    </g>
+    <!-- Cell STR_001 -->
+    <g id="cell_STR_001">
+      <rect x="13.00" y="87.50" width="43.50" height="31.00" fill="#ffffff" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <rect x="13.00" y="87.50" width="43.50" height="6.5" fill="#f4f6f8" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <line x1="13.00" y1="94.00" x2="56.50" y2="94.00" stroke="#777777" stroke-width="0.3"/>
+      <text x="14.80" y="92.00" font-family="Courier, monospace" font-size="2.0" font-weight="bold" fill="#222222">STR_001<tspan font-family="Helvetica, Arial, sans-serif" font-size="1.6" font-weight="normal" fill="#666666"></tspan></text>
+      <text x="47.50" y="92.00" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="2.0" fill="#555555">Target:</text>
+      <text x="52.50" y="92.70" text-anchor="middle" font-family="Times New Roman, Georgia, serif" font-size="4.2" font-weight="bold" fill="#000000">ă</text>
+      <line x1="14.50" y1="98.00" x2="55.00" y2="98.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="14.50" y1="104.00" x2="55.00" y2="104.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="14.50" y1="110.00" x2="55.00" y2="110.00" stroke="#7e7e7e" stroke-width="0.28"/>
+      <line x1="14.50" y1="115.00" x2="55.00" y2="115.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="13.00" y1="110.00" x2="14.00" y2="110.00" stroke="#555555" stroke-width="0.35"/>
+      <line x1="55.50" y1="110.00" x2="56.50" y2="110.00" stroke="#555555" stroke-width="0.35"/>
+    </g>
+    <!-- Cell STR_002 -->
+    <g id="cell_STR_002">
+      <rect x="59.83" y="87.50" width="43.50" height="31.00" fill="#ffffff" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <rect x="59.83" y="87.50" width="43.50" height="6.5" fill="#f4f6f8" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <line x1="59.83" y1="94.00" x2="103.33" y2="94.00" stroke="#777777" stroke-width="0.3"/>
+      <text x="61.63" y="92.00" font-family="Courier, monospace" font-size="2.0" font-weight="bold" fill="#222222">STR_002<tspan font-family="Helvetica, Arial, sans-serif" font-size="1.6" font-weight="normal" fill="#666666"></tspan></text>
+      <text x="94.33" y="92.00" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="2.0" fill="#555555">Target:</text>
+      <text x="99.33" y="92.70" text-anchor="middle" font-family="Times New Roman, Georgia, serif" font-size="4.2" font-weight="bold" fill="#000000">â</text>
+      <line x1="61.33" y1="98.00" x2="101.83" y2="98.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="61.33" y1="104.00" x2="101.83" y2="104.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="61.33" y1="110.00" x2="101.83" y2="110.00" stroke="#7e7e7e" stroke-width="0.28"/>
+      <line x1="61.33" y1="115.00" x2="101.83" y2="115.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="59.83" y1="110.00" x2="60.83" y2="110.00" stroke="#555555" stroke-width="0.35"/>
+      <line x1="102.33" y1="110.00" x2="103.33" y2="110.00" stroke="#555555" stroke-width="0.35"/>
+    </g>
+    <!-- Cell STR_003 -->
+    <g id="cell_STR_003">
+      <rect x="106.67" y="87.50" width="43.50" height="31.00" fill="#ffffff" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <rect x="106.67" y="87.50" width="43.50" height="6.5" fill="#f4f6f8" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <line x1="106.67" y1="94.00" x2="150.17" y2="94.00" stroke="#777777" stroke-width="0.3"/>
+      <text x="108.47" y="92.00" font-family="Courier, monospace" font-size="2.0" font-weight="bold" fill="#222222">STR_003<tspan font-family="Helvetica, Arial, sans-serif" font-size="1.6" font-weight="normal" fill="#666666"></tspan></text>
+      <text x="141.17" y="92.00" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="2.0" fill="#555555">Target:</text>
+      <text x="146.17" y="92.70" text-anchor="middle" font-family="Times New Roman, Georgia, serif" font-size="4.2" font-weight="bold" fill="#000000">ê</text>
+      <line x1="108.17" y1="98.00" x2="148.67" y2="98.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="108.17" y1="104.00" x2="148.67" y2="104.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="108.17" y1="110.00" x2="148.67" y2="110.00" stroke="#7e7e7e" stroke-width="0.28"/>
+      <line x1="108.17" y1="115.00" x2="148.67" y2="115.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="106.67" y1="110.00" x2="107.67" y2="110.00" stroke="#555555" stroke-width="0.35"/>
+      <line x1="149.17" y1="110.00" x2="150.17" y2="110.00" stroke="#555555" stroke-width="0.35"/>
+    </g>
+    <!-- Cell STR_004 -->
+    <g id="cell_STR_004">
+      <rect x="153.50" y="87.50" width="43.50" height="31.00" fill="#ffffff" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <rect x="153.50" y="87.50" width="43.50" height="6.5" fill="#f4f6f8" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <line x1="153.50" y1="94.00" x2="197.00" y2="94.00" stroke="#777777" stroke-width="0.3"/>
+      <text x="155.30" y="92.00" font-family="Courier, monospace" font-size="2.0" font-weight="bold" fill="#222222">STR_004<tspan font-family="Helvetica, Arial, sans-serif" font-size="1.6" font-weight="normal" fill="#666666"></tspan></text>
+      <text x="188.00" y="92.00" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="2.0" fill="#555555">Target:</text>
+      <text x="193.00" y="92.70" text-anchor="middle" font-family="Times New Roman, Georgia, serif" font-size="4.2" font-weight="bold" fill="#000000">ơ</text>
+      <line x1="155.00" y1="98.00" x2="195.50" y2="98.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="155.00" y1="104.00" x2="195.50" y2="104.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="155.00" y1="110.00" x2="195.50" y2="110.00" stroke="#7e7e7e" stroke-width="0.28"/>
+      <line x1="155.00" y1="115.00" x2="195.50" y2="115.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="153.50" y1="110.00" x2="154.50" y2="110.00" stroke="#555555" stroke-width="0.35"/>
+      <line x1="196.00" y1="110.00" x2="197.00" y2="110.00" stroke="#555555" stroke-width="0.35"/>
+    </g>
+    <!-- Cell TONE_001 -->
+    <g id="cell_TONE_001">
+      <rect x="13.00" y="121.50" width="43.50" height="31.00" fill="#ffffff" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <rect x="13.00" y="121.50" width="43.50" height="6.5" fill="#f4f6f8" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <line x1="13.00" y1="128.00" x2="56.50" y2="128.00" stroke="#777777" stroke-width="0.3"/>
+      <text x="14.80" y="126.00" font-family="Courier, monospace" font-size="2.0" font-weight="bold" fill="#222222">TONE_001<tspan font-family="Helvetica, Arial, sans-serif" font-size="1.6" font-weight="normal" fill="#666666"></tspan></text>
+      <text x="47.50" y="126.00" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="2.0" fill="#555555">Target:</text>
+      <text x="52.50" y="126.70" text-anchor="middle" font-family="Times New Roman, Georgia, serif" font-size="4.2" font-weight="bold" fill="#000000">á</text>
+      <line x1="14.50" y1="132.00" x2="55.00" y2="132.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="14.50" y1="138.00" x2="55.00" y2="138.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="14.50" y1="144.00" x2="55.00" y2="144.00" stroke="#7e7e7e" stroke-width="0.28"/>
+      <line x1="14.50" y1="149.00" x2="55.00" y2="149.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="13.00" y1="144.00" x2="14.00" y2="144.00" stroke="#555555" stroke-width="0.35"/>
+      <line x1="55.50" y1="144.00" x2="56.50" y2="144.00" stroke="#555555" stroke-width="0.35"/>
+    </g>
+    <!-- Cell TONE_002 -->
+    <g id="cell_TONE_002">
+      <rect x="59.83" y="121.50" width="43.50" height="31.00" fill="#ffffff" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <rect x="59.83" y="121.50" width="43.50" height="6.5" fill="#f4f6f8" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <line x1="59.83" y1="128.00" x2="103.33" y2="128.00" stroke="#777777" stroke-width="0.3"/>
+      <text x="61.63" y="126.00" font-family="Courier, monospace" font-size="2.0" font-weight="bold" fill="#222222">TONE_002<tspan font-family="Helvetica, Arial, sans-serif" font-size="1.6" font-weight="normal" fill="#666666"></tspan></text>
+      <text x="94.33" y="126.00" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="2.0" fill="#555555">Target:</text>
+      <text x="99.33" y="126.70" text-anchor="middle" font-family="Times New Roman, Georgia, serif" font-size="4.2" font-weight="bold" fill="#000000">à</text>
+      <line x1="61.33" y1="132.00" x2="101.83" y2="132.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="61.33" y1="138.00" x2="101.83" y2="138.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="61.33" y1="144.00" x2="101.83" y2="144.00" stroke="#7e7e7e" stroke-width="0.28"/>
+      <line x1="61.33" y1="149.00" x2="101.83" y2="149.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="59.83" y1="144.00" x2="60.83" y2="144.00" stroke="#555555" stroke-width="0.35"/>
+      <line x1="102.33" y1="144.00" x2="103.33" y2="144.00" stroke="#555555" stroke-width="0.35"/>
+    </g>
+    <!-- Cell TONE_003 -->
+    <g id="cell_TONE_003">
+      <rect x="106.67" y="121.50" width="43.50" height="31.00" fill="#ffffff" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <rect x="106.67" y="121.50" width="43.50" height="6.5" fill="#f4f6f8" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <line x1="106.67" y1="128.00" x2="150.17" y2="128.00" stroke="#777777" stroke-width="0.3"/>
+      <text x="108.47" y="126.00" font-family="Courier, monospace" font-size="2.0" font-weight="bold" fill="#222222">TONE_003<tspan font-family="Helvetica, Arial, sans-serif" font-size="1.6" font-weight="normal" fill="#666666"></tspan></text>
+      <text x="141.17" y="126.00" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="2.0" fill="#555555">Target:</text>
+      <text x="146.17" y="126.70" text-anchor="middle" font-family="Times New Roman, Georgia, serif" font-size="4.2" font-weight="bold" fill="#000000">ả</text>
+      <line x1="108.17" y1="132.00" x2="148.67" y2="132.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="108.17" y1="138.00" x2="148.67" y2="138.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="108.17" y1="144.00" x2="148.67" y2="144.00" stroke="#7e7e7e" stroke-width="0.28"/>
+      <line x1="108.17" y1="149.00" x2="148.67" y2="149.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="106.67" y1="144.00" x2="107.67" y2="144.00" stroke="#555555" stroke-width="0.35"/>
+      <line x1="149.17" y1="144.00" x2="150.17" y2="144.00" stroke="#555555" stroke-width="0.35"/>
+    </g>
+    <!-- Cell TONE_004 -->
+    <g id="cell_TONE_004">
+      <rect x="153.50" y="121.50" width="43.50" height="31.00" fill="#ffffff" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <rect x="153.50" y="121.50" width="43.50" height="6.5" fill="#f4f6f8" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <line x1="153.50" y1="128.00" x2="197.00" y2="128.00" stroke="#777777" stroke-width="0.3"/>
+      <text x="155.30" y="126.00" font-family="Courier, monospace" font-size="2.0" font-weight="bold" fill="#222222">TONE_004<tspan font-family="Helvetica, Arial, sans-serif" font-size="1.6" font-weight="normal" fill="#666666"></tspan></text>
+      <text x="188.00" y="126.00" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="2.0" fill="#555555">Target:</text>
+      <text x="193.00" y="126.70" text-anchor="middle" font-family="Times New Roman, Georgia, serif" font-size="4.2" font-weight="bold" fill="#000000">ạ</text>
+      <line x1="155.00" y1="132.00" x2="195.50" y2="132.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="155.00" y1="138.00" x2="195.50" y2="138.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="155.00" y1="144.00" x2="195.50" y2="144.00" stroke="#7e7e7e" stroke-width="0.28"/>
+      <line x1="155.00" y1="149.00" x2="195.50" y2="149.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="153.50" y1="144.00" x2="154.50" y2="144.00" stroke="#555555" stroke-width="0.35"/>
+      <line x1="196.00" y1="144.00" x2="197.00" y2="144.00" stroke="#555555" stroke-width="0.35"/>
+    </g>
+    <!-- Cell SEC_001 -->
+    <g id="cell_SEC_001">
+      <rect x="13.00" y="155.50" width="43.50" height="31.00" fill="#ffffff" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <rect x="13.00" y="155.50" width="43.50" height="6.5" fill="#f4f6f8" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <line x1="13.00" y1="162.00" x2="56.50" y2="162.00" stroke="#777777" stroke-width="0.3"/>
+      <text x="14.80" y="160.00" font-family="Courier, monospace" font-size="2.0" font-weight="bold" fill="#222222">SEC_001<tspan font-family="Helvetica, Arial, sans-serif" font-size="1.6" font-weight="normal" fill="#666666"></tspan></text>
+      <text x="47.50" y="160.00" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="2.0" fill="#555555">Target:</text>
+      <text x="52.50" y="160.70" text-anchor="middle" font-family="Times New Roman, Georgia, serif" font-size="4.2" font-weight="bold" fill="#000000">đ</text>
+      <line x1="14.50" y1="166.00" x2="55.00" y2="166.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="14.50" y1="172.00" x2="55.00" y2="172.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="14.50" y1="178.00" x2="55.00" y2="178.00" stroke="#7e7e7e" stroke-width="0.28"/>
+      <line x1="14.50" y1="183.00" x2="55.00" y2="183.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="13.00" y1="178.00" x2="14.00" y2="178.00" stroke="#555555" stroke-width="0.35"/>
+      <line x1="55.50" y1="178.00" x2="56.50" y2="178.00" stroke="#555555" stroke-width="0.35"/>
+    </g>
+    <!-- Cell STR_005 -->
+    <g id="cell_STR_005">
+      <rect x="59.83" y="155.50" width="43.50" height="31.00" fill="#ffffff" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <rect x="59.83" y="155.50" width="43.50" height="6.5" fill="#f4f6f8" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <line x1="59.83" y1="162.00" x2="103.33" y2="162.00" stroke="#777777" stroke-width="0.3"/>
+      <text x="61.63" y="160.00" font-family="Courier, monospace" font-size="2.0" font-weight="bold" fill="#222222">STR_005<tspan font-family="Helvetica, Arial, sans-serif" font-size="1.6" font-weight="normal" fill="#666666"></tspan></text>
+      <text x="94.33" y="160.00" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="2.0" fill="#555555">Target:</text>
+      <text x="99.33" y="160.70" text-anchor="middle" font-family="Times New Roman, Georgia, serif" font-size="4.2" font-weight="bold" fill="#000000">ư</text>
+      <line x1="61.33" y1="166.00" x2="101.83" y2="166.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="61.33" y1="172.00" x2="101.83" y2="172.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="61.33" y1="178.00" x2="101.83" y2="178.00" stroke="#7e7e7e" stroke-width="0.28"/>
+      <line x1="61.33" y1="183.00" x2="101.83" y2="183.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="59.83" y1="178.00" x2="60.83" y2="178.00" stroke="#555555" stroke-width="0.35"/>
+      <line x1="102.33" y1="178.00" x2="103.33" y2="178.00" stroke="#555555" stroke-width="0.35"/>
+    </g>
+    <!-- Cell BASE_005 -->
+    <g id="cell_BASE_005">
+      <rect x="106.67" y="155.50" width="43.50" height="31.00" fill="#ffffff" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <rect x="106.67" y="155.50" width="43.50" height="6.5" fill="#f4f6f8" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <line x1="106.67" y1="162.00" x2="150.17" y2="162.00" stroke="#777777" stroke-width="0.3"/>
+      <text x="108.47" y="160.00" font-family="Courier, monospace" font-size="2.0" font-weight="bold" fill="#222222">BASE_005<tspan font-family="Helvetica, Arial, sans-serif" font-size="1.6" font-weight="normal" fill="#666666"></tspan></text>
+      <text x="141.17" y="160.00" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="2.0" fill="#555555">Target:</text>
+      <text x="146.17" y="160.70" text-anchor="middle" font-family="Times New Roman, Georgia, serif" font-size="4.2" font-weight="bold" fill="#000000">n</text>
+      <line x1="108.17" y1="166.00" x2="148.67" y2="166.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="108.17" y1="172.00" x2="148.67" y2="172.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="108.17" y1="178.00" x2="148.67" y2="178.00" stroke="#7e7e7e" stroke-width="0.28"/>
+      <line x1="108.17" y1="183.00" x2="148.67" y2="183.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="106.67" y1="178.00" x2="107.67" y2="178.00" stroke="#555555" stroke-width="0.35"/>
+      <line x1="149.17" y1="178.00" x2="150.17" y2="178.00" stroke="#555555" stroke-width="0.35"/>
+    </g>
+    <!-- Cell BASE_006 -->
+    <g id="cell_BASE_006">
+      <rect x="153.50" y="155.50" width="43.50" height="31.00" fill="#ffffff" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <rect x="153.50" y="155.50" width="43.50" height="6.5" fill="#f4f6f8" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <line x1="153.50" y1="162.00" x2="197.00" y2="162.00" stroke="#777777" stroke-width="0.3"/>
+      <text x="155.30" y="160.00" font-family="Courier, monospace" font-size="2.0" font-weight="bold" fill="#222222">BASE_006<tspan font-family="Helvetica, Arial, sans-serif" font-size="1.6" font-weight="normal" fill="#666666"></tspan></text>
+      <text x="188.00" y="160.00" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="2.0" fill="#555555">Target:</text>
+      <text x="193.00" y="160.70" text-anchor="middle" font-family="Times New Roman, Georgia, serif" font-size="4.2" font-weight="bold" fill="#000000">m</text>
+      <line x1="155.00" y1="166.00" x2="195.50" y2="166.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="155.00" y1="172.00" x2="195.50" y2="172.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="155.00" y1="178.00" x2="195.50" y2="178.00" stroke="#7e7e7e" stroke-width="0.28"/>
+      <line x1="155.00" y1="183.00" x2="195.50" y2="183.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="153.50" y1="178.00" x2="154.50" y2="178.00" stroke="#555555" stroke-width="0.35"/>
+      <line x1="196.00" y1="178.00" x2="197.00" y2="178.00" stroke="#555555" stroke-width="0.35"/>
+    </g>
+    <!-- Cell CMP_001 -->
+    <g id="cell_CMP_001">
+      <rect x="13.00" y="189.50" width="43.50" height="31.00" fill="#ffffff" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <rect x="13.00" y="189.50" width="43.50" height="6.5" fill="#f4f6f8" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <line x1="13.00" y1="196.00" x2="56.50" y2="196.00" stroke="#777777" stroke-width="0.3"/>
+      <text x="14.80" y="194.00" font-family="Courier, monospace" font-size="2.0" font-weight="bold" fill="#222222">CMP_001<tspan font-family="Helvetica, Arial, sans-serif" font-size="1.6" font-weight="normal" fill="#666666"></tspan></text>
+      <text x="47.50" y="194.00" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="2.0" fill="#555555">Target:</text>
+      <text x="52.50" y="194.70" text-anchor="middle" font-family="Times New Roman, Georgia, serif" font-size="4.2" font-weight="bold" fill="#000000">ắ</text>
+      <line x1="14.50" y1="200.00" x2="55.00" y2="200.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="14.50" y1="206.00" x2="55.00" y2="206.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="14.50" y1="212.00" x2="55.00" y2="212.00" stroke="#7e7e7e" stroke-width="0.28"/>
+      <line x1="14.50" y1="217.00" x2="55.00" y2="217.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="13.00" y1="212.00" x2="14.00" y2="212.00" stroke="#555555" stroke-width="0.35"/>
+      <line x1="55.50" y1="212.00" x2="56.50" y2="212.00" stroke="#555555" stroke-width="0.35"/>
+    </g>
+    <!-- Cell CMP_002 -->
+    <g id="cell_CMP_002">
+      <rect x="59.83" y="189.50" width="43.50" height="31.00" fill="#ffffff" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <rect x="59.83" y="189.50" width="43.50" height="6.5" fill="#f4f6f8" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <line x1="59.83" y1="196.00" x2="103.33" y2="196.00" stroke="#777777" stroke-width="0.3"/>
+      <text x="61.63" y="194.00" font-family="Courier, monospace" font-size="2.0" font-weight="bold" fill="#222222">CMP_002<tspan font-family="Helvetica, Arial, sans-serif" font-size="1.6" font-weight="normal" fill="#666666"></tspan></text>
+      <text x="94.33" y="194.00" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="2.0" fill="#555555">Target:</text>
+      <text x="99.33" y="194.70" text-anchor="middle" font-family="Times New Roman, Georgia, serif" font-size="4.2" font-weight="bold" fill="#000000">ấ</text>
+      <line x1="61.33" y1="200.00" x2="101.83" y2="200.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="61.33" y1="206.00" x2="101.83" y2="206.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="61.33" y1="212.00" x2="101.83" y2="212.00" stroke="#7e7e7e" stroke-width="0.28"/>
+      <line x1="61.33" y1="217.00" x2="101.83" y2="217.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="59.83" y1="212.00" x2="60.83" y2="212.00" stroke="#555555" stroke-width="0.35"/>
+      <line x1="102.33" y1="212.00" x2="103.33" y2="212.00" stroke="#555555" stroke-width="0.35"/>
+    </g>
+    <!-- Cell CMP_003 -->
+    <g id="cell_CMP_003">
+      <rect x="106.67" y="189.50" width="43.50" height="31.00" fill="#ffffff" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <rect x="106.67" y="189.50" width="43.50" height="6.5" fill="#f4f6f8" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <line x1="106.67" y1="196.00" x2="150.17" y2="196.00" stroke="#777777" stroke-width="0.3"/>
+      <text x="108.47" y="194.00" font-family="Courier, monospace" font-size="2.0" font-weight="bold" fill="#222222">CMP_003<tspan font-family="Helvetica, Arial, sans-serif" font-size="1.6" font-weight="normal" fill="#666666"></tspan></text>
+      <text x="141.17" y="194.00" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="2.0" fill="#555555">Target:</text>
+      <text x="146.17" y="194.70" text-anchor="middle" font-family="Times New Roman, Georgia, serif" font-size="4.2" font-weight="bold" fill="#000000">ố</text>
+      <line x1="108.17" y1="200.00" x2="148.67" y2="200.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="108.17" y1="206.00" x2="148.67" y2="206.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="108.17" y1="212.00" x2="148.67" y2="212.00" stroke="#7e7e7e" stroke-width="0.28"/>
+      <line x1="108.17" y1="217.00" x2="148.67" y2="217.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="106.67" y1="212.00" x2="107.67" y2="212.00" stroke="#555555" stroke-width="0.35"/>
+      <line x1="149.17" y1="212.00" x2="150.17" y2="212.00" stroke="#555555" stroke-width="0.35"/>
+    </g>
+    <!-- Cell CMP_004 -->
+    <g id="cell_CMP_004">
+      <rect x="153.50" y="189.50" width="43.50" height="31.00" fill="#ffffff" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <rect x="153.50" y="189.50" width="43.50" height="6.5" fill="#f4f6f8" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <line x1="153.50" y1="196.00" x2="197.00" y2="196.00" stroke="#777777" stroke-width="0.3"/>
+      <text x="155.30" y="194.00" font-family="Courier, monospace" font-size="2.0" font-weight="bold" fill="#222222">CMP_004<tspan font-family="Helvetica, Arial, sans-serif" font-size="1.6" font-weight="normal" fill="#666666"></tspan></text>
+      <text x="188.00" y="194.00" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="2.0" fill="#555555">Target:</text>
+      <text x="193.00" y="194.70" text-anchor="middle" font-family="Times New Roman, Georgia, serif" font-size="4.2" font-weight="bold" fill="#000000">ở</text>
+      <line x1="155.00" y1="200.00" x2="195.50" y2="200.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="155.00" y1="206.00" x2="195.50" y2="206.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="155.00" y1="212.00" x2="195.50" y2="212.00" stroke="#7e7e7e" stroke-width="0.28"/>
+      <line x1="155.00" y1="217.00" x2="195.50" y2="217.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="153.50" y1="212.00" x2="154.50" y2="212.00" stroke="#555555" stroke-width="0.35"/>
+      <line x1="196.00" y1="212.00" x2="197.00" y2="212.00" stroke="#555555" stroke-width="0.35"/>
+    </g>
+    <!-- Cell REP_001 -->
+    <g id="cell_REP_001">
+      <rect x="13.00" y="223.50" width="43.50" height="31.00" fill="#ffffff" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <rect x="13.00" y="223.50" width="43.50" height="6.5" fill="#f4f6f8" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <line x1="13.00" y1="230.00" x2="56.50" y2="230.00" stroke="#777777" stroke-width="0.3"/>
+      <text x="14.80" y="228.00" font-family="Courier, monospace" font-size="2.0" font-weight="bold" fill="#222222">REP_001<tspan font-family="Helvetica, Arial, sans-serif" font-size="1.6" font-weight="normal" fill="#666666"> (Trial A)</tspan></text>
+      <text x="47.50" y="228.00" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="2.0" fill="#555555">Target:</text>
+      <text x="52.50" y="228.70" text-anchor="middle" font-family="Times New Roman, Georgia, serif" font-size="4.2" font-weight="bold" fill="#000000">ế</text>
+      <line x1="14.50" y1="234.00" x2="55.00" y2="234.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="14.50" y1="240.00" x2="55.00" y2="240.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="14.50" y1="246.00" x2="55.00" y2="246.00" stroke="#7e7e7e" stroke-width="0.28"/>
+      <line x1="14.50" y1="251.00" x2="55.00" y2="251.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="13.00" y1="246.00" x2="14.00" y2="246.00" stroke="#555555" stroke-width="0.35"/>
+      <line x1="55.50" y1="246.00" x2="56.50" y2="246.00" stroke="#555555" stroke-width="0.35"/>
+    </g>
+    <!-- Cell REP_002 -->
+    <g id="cell_REP_002">
+      <rect x="59.83" y="223.50" width="43.50" height="31.00" fill="#ffffff" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <rect x="59.83" y="223.50" width="43.50" height="6.5" fill="#f4f6f8" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <line x1="59.83" y1="230.00" x2="103.33" y2="230.00" stroke="#777777" stroke-width="0.3"/>
+      <text x="61.63" y="228.00" font-family="Courier, monospace" font-size="2.0" font-weight="bold" fill="#222222">REP_002<tspan font-family="Helvetica, Arial, sans-serif" font-size="1.6" font-weight="normal" fill="#666666"> (Trial B)</tspan></text>
+      <text x="94.33" y="228.00" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="2.0" fill="#555555">Target:</text>
+      <text x="99.33" y="228.70" text-anchor="middle" font-family="Times New Roman, Georgia, serif" font-size="4.2" font-weight="bold" fill="#000000">ế</text>
+      <line x1="61.33" y1="234.00" x2="101.83" y2="234.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="61.33" y1="240.00" x2="101.83" y2="240.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="61.33" y1="246.00" x2="101.83" y2="246.00" stroke="#7e7e7e" stroke-width="0.28"/>
+      <line x1="61.33" y1="251.00" x2="101.83" y2="251.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="59.83" y1="246.00" x2="60.83" y2="246.00" stroke="#555555" stroke-width="0.35"/>
+      <line x1="102.33" y1="246.00" x2="103.33" y2="246.00" stroke="#555555" stroke-width="0.35"/>
+    </g>
+    <!-- Cell REP_003 -->
+    <g id="cell_REP_003">
+      <rect x="106.67" y="223.50" width="43.50" height="31.00" fill="#ffffff" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <rect x="106.67" y="223.50" width="43.50" height="6.5" fill="#f4f6f8" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <line x1="106.67" y1="230.00" x2="150.17" y2="230.00" stroke="#777777" stroke-width="0.3"/>
+      <text x="108.47" y="228.00" font-family="Courier, monospace" font-size="2.0" font-weight="bold" fill="#222222">REP_003<tspan font-family="Helvetica, Arial, sans-serif" font-size="1.6" font-weight="normal" fill="#666666"> (Trial A)</tspan></text>
+      <text x="141.17" y="228.00" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="2.0" fill="#555555">Target:</text>
+      <text x="146.17" y="228.70" text-anchor="middle" font-family="Times New Roman, Georgia, serif" font-size="4.2" font-weight="bold" fill="#000000">ử</text>
+      <line x1="108.17" y1="234.00" x2="148.67" y2="234.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="108.17" y1="240.00" x2="148.67" y2="240.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="108.17" y1="246.00" x2="148.67" y2="246.00" stroke="#7e7e7e" stroke-width="0.28"/>
+      <line x1="108.17" y1="251.00" x2="148.67" y2="251.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="106.67" y1="246.00" x2="107.67" y2="246.00" stroke="#555555" stroke-width="0.35"/>
+      <line x1="149.17" y1="246.00" x2="150.17" y2="246.00" stroke="#555555" stroke-width="0.35"/>
+    </g>
+    <!-- Cell REP_004 -->
+    <g id="cell_REP_004">
+      <rect x="153.50" y="223.50" width="43.50" height="31.00" fill="#ffffff" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <rect x="153.50" y="223.50" width="43.50" height="6.5" fill="#f4f6f8" stroke="#888888" stroke-width="0.3" rx="0.5"/>
+      <line x1="153.50" y1="230.00" x2="197.00" y2="230.00" stroke="#777777" stroke-width="0.3"/>
+      <text x="155.30" y="228.00" font-family="Courier, monospace" font-size="2.0" font-weight="bold" fill="#222222">REP_004<tspan font-family="Helvetica, Arial, sans-serif" font-size="1.6" font-weight="normal" fill="#666666"> (Trial B)</tspan></text>
+      <text x="188.00" y="228.00" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="2.0" fill="#555555">Target:</text>
+      <text x="193.00" y="228.70" text-anchor="middle" font-family="Times New Roman, Georgia, serif" font-size="4.2" font-weight="bold" fill="#000000">ử</text>
+      <line x1="155.00" y1="234.00" x2="195.50" y2="234.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="155.00" y1="240.00" x2="195.50" y2="240.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="155.00" y1="246.00" x2="195.50" y2="246.00" stroke="#7e7e7e" stroke-width="0.28"/>
+      <line x1="155.00" y1="251.00" x2="195.50" y2="251.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="153.50" y1="246.00" x2="154.50" y2="246.00" stroke="#555555" stroke-width="0.35"/>
+      <line x1="196.00" y1="246.00" x2="197.00" y2="246.00" stroke="#555555" stroke-width="0.35"/>
+    </g>
+  </g>
+  <!-- Calibration Scale & Aspect Ratio Verification Area -->
+  <g id="calibration_area">
+    <rect x="13.0" y="256.5" width="184.0" height="22.0" fill="#fafafa" stroke="#b0b0b0" stroke-width="0.25" rx="0.8"/>
+    <!-- 50mm Precision Ruler -->
+    <text x="22.0" y="260.5" font-family="Helvetica, Arial, sans-serif" font-size="2.0" font-weight="bold" fill="#222222">OPTICAL SCAN CALIBRATION RULER (50.0 mm TRUE SCALE CHECK)</text>
+    <line x1="22.0" y1="270.0" x2="72.0" y2="270.0" stroke="#000000" stroke-width="0.35"/>
+    <line x1="22.0" y1="266.8" x2="22.0" y2="270.0" stroke="#000000" stroke-width="0.3"/>
+    <text x="22.0" y="266.0" text-anchor="middle" font-family="Courier, monospace" font-size="1.8" font-weight="bold" fill="#111111">0</text>
+    <line x1="32.0" y1="266.8" x2="32.0" y2="270.0" stroke="#000000" stroke-width="0.3"/>
+    <text x="32.0" y="266.0" text-anchor="middle" font-family="Courier, monospace" font-size="1.8" font-weight="bold" fill="#111111">10</text>
+    <line x1="42.0" y1="266.8" x2="42.0" y2="270.0" stroke="#000000" stroke-width="0.3"/>
+    <text x="42.0" y="266.0" text-anchor="middle" font-family="Courier, monospace" font-size="1.8" font-weight="bold" fill="#111111">20</text>
+    <line x1="52.0" y1="266.8" x2="52.0" y2="270.0" stroke="#000000" stroke-width="0.3"/>
+    <text x="52.0" y="266.0" text-anchor="middle" font-family="Courier, monospace" font-size="1.8" font-weight="bold" fill="#111111">30</text>
+    <line x1="62.0" y1="266.8" x2="62.0" y2="270.0" stroke="#000000" stroke-width="0.3"/>
+    <text x="62.0" y="266.0" text-anchor="middle" font-family="Courier, monospace" font-size="1.8" font-weight="bold" fill="#111111">40</text>
+    <line x1="72.0" y1="266.8" x2="72.0" y2="270.0" stroke="#000000" stroke-width="0.3"/>
+    <text x="72.0" y="266.0" text-anchor="middle" font-family="Courier, monospace" font-size="1.8" font-weight="bold" fill="#111111">50</text>
+    <line x1="27.0" y1="268.0" x2="27.0" y2="270.0" stroke="#444444" stroke-width="0.22"/>
+    <line x1="37.0" y1="268.0" x2="37.0" y2="270.0" stroke="#444444" stroke-width="0.22"/>
+    <line x1="47.0" y1="268.0" x2="47.0" y2="270.0" stroke="#444444" stroke-width="0.22"/>
+    <line x1="57.0" y1="268.0" x2="57.0" y2="270.0" stroke="#444444" stroke-width="0.22"/>
+    <line x1="67.0" y1="268.0" x2="67.0" y2="270.0" stroke="#444444" stroke-width="0.22"/>
+    <line x1="23.0" y1="269.0" x2="23.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="24.0" y1="269.0" x2="24.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="25.0" y1="269.0" x2="25.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="26.0" y1="269.0" x2="26.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="28.0" y1="269.0" x2="28.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="29.0" y1="269.0" x2="29.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="30.0" y1="269.0" x2="30.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="31.0" y1="269.0" x2="31.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="33.0" y1="269.0" x2="33.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="34.0" y1="269.0" x2="34.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="35.0" y1="269.0" x2="35.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="36.0" y1="269.0" x2="36.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="38.0" y1="269.0" x2="38.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="39.0" y1="269.0" x2="39.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="40.0" y1="269.0" x2="40.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="41.0" y1="269.0" x2="41.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="43.0" y1="269.0" x2="43.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="44.0" y1="269.0" x2="44.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="45.0" y1="269.0" x2="45.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="46.0" y1="269.0" x2="46.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="48.0" y1="269.0" x2="48.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="49.0" y1="269.0" x2="49.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="50.0" y1="269.0" x2="50.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="51.0" y1="269.0" x2="51.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="53.0" y1="269.0" x2="53.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="54.0" y1="269.0" x2="54.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="55.0" y1="269.0" x2="55.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="56.0" y1="269.0" x2="56.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="58.0" y1="269.0" x2="58.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="59.0" y1="269.0" x2="59.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="60.0" y1="269.0" x2="60.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="61.0" y1="269.0" x2="61.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="63.0" y1="269.0" x2="63.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="64.0" y1="269.0" x2="64.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="65.0" y1="269.0" x2="65.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="66.0" y1="269.0" x2="66.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="68.0" y1="269.0" x2="68.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="69.0" y1="269.0" x2="69.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="70.0" y1="269.0" x2="70.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="71.0" y1="269.0" x2="71.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <text x="22.0" y="274.2" font-family="Helvetica, Arial, sans-serif" font-size="1.6" fill="#555555">Measure with physical vernier caliper / ruler: 0 to 50 mm span must equal exactly 50.0 mm.</text>
+    <!-- 20.0 x 20.0 mm Calibration Square -->
+    <rect x="125.0" y="257.5" width="20.0" height="20.0" fill="#ffffff" stroke="#000000" stroke-width="0.35"/>
+    <line x1="135.0" y1="264.5" x2="135.0" y2="270.5" stroke="#888888" stroke-width="0.2"/>
+    <line x1="132.0" y1="267.5" x2="138.0" y2="267.5" stroke="#888888" stroke-width="0.2"/>
+    <text x="135.0" y="269.0" text-anchor="middle" font-family="Courier, monospace" font-size="1.5" fill="#444444">20×20</text>
+    <text x="147.5" y="262.3" font-family="Helvetica, Arial, sans-serif" font-size="1.9" font-weight="bold" fill="#111111">CALIBRATION SQUARE</text>
+    <text x="147.5" y="266.0" font-family="Helvetica, Arial, sans-serif" font-size="1.6" fill="#333333">Width = Height = 20.0 mm</text>
+    <text x="147.5" y="269.5" font-family="Helvetica, Arial, sans-serif" font-size="1.6" fill="#333333">Aspect Ratio: 1.000 ± 0.005</text>
+    <text x="147.5" y="273.0" font-family="Helvetica, Arial, sans-serif" font-size="1.6" fill="#555555">Supports checking X/Y scale consistency</text>
+    <text x="147.5" y="276.0" font-family="Helvetica, Arial, sans-serif" font-size="1.6" fill="#555555">and scan distortion.</text>
+  </g>
+  <!-- Footer Section (between bottom fiducials) -->
+  <g id="footer">
+    <text x="22.0" y="282.5" font-family="Helvetica, Arial, sans-serif" font-size="1.8" fill="#333333"><tspan font-weight="bold">OmniDraw Research Dataset</tspan> • Form P01 Demo v0.2 (Pilot Candidate — Not Approved for Formal Data Collection)</text>
+    <text x="22.0" y="285.5" font-family="Courier, monospace" font-size="1.6" fill="#666666">SCAN TARGET: Flatbed 600 DPI • 24-bit RGB / 8-bit Grayscale • Lossless PNG • True Scale 1:1 • No Auto-Contrast</text>
+  </g>
+</svg>

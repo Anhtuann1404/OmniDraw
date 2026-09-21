@@ -156,7 +156,7 @@ Mọi giả thuyết kiểm chứng trong tài liệu này đều được phân
   - **PASS (Ưu tiên 2):** $d_{\min} \ge 0.50\text{ mm}$ (đạt biên an toàn nghiên cứu mục tiêu).
   - **INCONCLUSIVE (Ưu tiên 3):** Mọi trường hợp còn lại ($0.20\text{ mm} \le d_{\min} < 0.50\text{ mm}$).
   > [!NOTE]
-  > **Quy chuẩn ngưỡng an toàn:** $0.20\text{ mm}$ là giá trị khởi tạo mặc định kỹ thuật ban đầu trong `DiacriticConfig` để bảo toàn tương thích code hiện hành; $0.50\text{ mm}$ là mục tiêu an toàn nghiên cứu cần TV3 hiệu chuẩn thực nghiệm (calibration) trên máy vẽ vật lý ở Bước C.
+  > **Quy chuẩn ngưỡng an toàn:** $0.20\text{ mm}$ là giá trị khởi tạo mặc định kỹ thuật ban đầu trong `DiacriticConfig` để bảo toàn tương thích code hiện hành; $0.50\text{ mm}$ là mục tiêu an toàn nghiên cứu cần TV3 hiệu chuẩn thực nghiệm (calibration) trên máy vẽ vật lý ở Bước C. Chi tiết quy chuẩn và ma trận nghiệm thu trước PR3 được xác lập tại [`09_pr3_acceptance_criteria.md`](09_pr3_acceptance_criteria.md).
 
 ---
 
@@ -643,12 +643,12 @@ Bảng đối chiếu kỹ thuật dưới đây xác nhận sự đồng thuậ
 - [x] **TV2 technical cross-review PASS:** Rà soát kỹ thuật hoàn tất và thông qua thiết kế kiến trúc Bước B.
 - [x] **Five software decisions resolved:** Khóa 5 quyết định kỹ thuật cho triển khai phần mềm Bước C.
 - [x] **Software Step C authorized by TV4:** Project Lead phê duyệt bắt đầu triển khai phần mềm (`READY FOR STEP C: YES`).
-- [ ] **Public CA-VHC metric API/CSV integration:** Tích hợp contract metric từ trace nội bộ vào API response và CSV runner.
-- [ ] **Automated experiment runner:** Tự động hóa runner qua corpus × font × seed × baseline.
+- [x] **PR1 — CA-VHC internal experiment metrics and CSV integration (Commit `daca566`):** Đã hoàn tất tích hợp metrics evaluator, CSV logger schema 19 cột, automated runner và fixture DEV 160 ca.
+- [x] **Pre-PR3 Acceptance Contract defined (Docs 09):** Khóa tiêu chí nghiệm thu trước PR3 ([`09_pr3_acceptance_criteria.md`](09_pr3_acceptance_criteria.md)) và snapshot ma trận ASCII 48 ca ([`pr3_ascii_baseline_fingerprints.json`](../tests/fixtures/pr3_ascii_baseline_fingerprints.json)).
+- [ ] **PR2 baseline adapters:** Hoàn thành 3 adapter B1, B2, B3 độc lập (TV2 chủ trì, đang triển khai).
+- [ ] **PR3 CompositionState production implementation:** Triển khai mã nguồn cấu trúc trạng thái tổ hợp vào engine sau khi đạt Entry Gate (chờ PR2 của TV2).
 - [ ] **TV1 corpus formal freeze:** TV1 rà soát độ phủ và đóng băng phiên bản benchmark corpus chính thức.
 - [ ] **TV3 physical clearance calibration:** TV3 hiệu chuẩn ngưỡng khoảng cách an toàn $0.20\text{ mm}$ vs $0.50\text{ mm}$ trên máy vẽ thật.
-- [ ] **PR2 baseline adapters:** Hoàn thành 3 adapter B1, B2, B3 độc lập.
-- [ ] **PR3 CompositionState production implementation:** Triển khai mã nguồn cấu trúc trạng thái tổ hợp vào engine.
 - [ ] **PR4 delayed-stroke P0:** Triển khai policy gom nét trễ Nearest Neighbor cơ bản.
 - [ ] **Formal benchmark and ablation:** Chạy thực nghiệm chính thức 50 lượt và phân tích kết quả khoa học.
 
@@ -675,7 +675,7 @@ Năm quyết định kỹ thuật dưới đây đã được thống nhất gi�
 4. **Quyết định 4 — Bộ dữ liệu chuẩn đối chứng (Benchmark Corpus Governance):**
    - Hai tập fixture `BENCHMARK_DEV_CORPUS_20` và `BENCHMARK_HOLDOUT_CORPUS_20` đã tồn tại và vượt qua kiểm thử tính rời nhau ở mức **PROVISIONAL TECHNICAL FIXTURE**.
    - TV1 vẫn có nghĩa vụ rà soát độ phủ ngôn ngữ học/ngữ âm học và chính thức đóng băng (freeze) phiên bản dữ liệu trước khi thực hiện benchmark chính thức.
-   - Việc TV1 chưa đóng băng ngữ liệu không cản trở việc triển khai code phần mềm Step C (PR1), nhưng ngăn chặn mọi tuyên bố về kết quả thực nghiệm học thuật chính thức.
+   - Việc TV1 chưa đóng băng ngữ liệu không cản trở việc triển khai code phần mềm Step C (PR1 và PR3), nhưng ngăn chặn mọi tuyên bố về kết quả thực nghiệm học thuật chính thức. Acceptance suite không lựa chọn, iterate, render hoặc ghi nhận bất kỳ case nào từ `BENCHMARK_HOLDOUT_CORPUS_20`. Mười mẫu nghiệm thu tiếng Việt được lấy hoàn toàn từ `BENCHMARK_DEV_CORPUS_20`; 48 ca ASCII là technical regression fixture độc lập, không thuộc DEV hoặc Holdout corpus tiếng Việt.
 5. **Quyết định 5 — Thẩm quyền cho phép bắt đầu triển khai phần mềm Bước C:**
    - TV2 technical cross-review đạt kết luận: **COMPLETED / PASS**.
    - TV4 (Project Lead & Handwriting / CA-VHC Composition Lead) chính thức cho phép bắt đầu triển khai phần mềm Bước C (`READY FOR STEP C: YES`).
@@ -692,10 +692,12 @@ Năm quyết định kỹ thuật dưới đây đã được thống nhất gi�
 ═══════════════════════════════════════════════════════════════════════════════════════════
 • SPEC STATUS:                 APPROVED AND CLOSED FOR STEP B
 • TV2 TECHNICAL CROSS-REVIEW:  PASS
-• SOFTWARE STEP C:             AUTHORIZED / NOT YET IMPLEMENTED
+• SOFTWARE STEP C:             AUTHORIZED / IN PROGRESS (PR1 & Pre-PR3 Contract DONE)
+• PR3 ACCEPTANCE CONTRACT:     DEFINED (See docs/09_pr3_acceptance_criteria.md)
+• PR3 ENTRY GATE:             WAITING FOR PR2 (TV2 Baseline Adapters B1/B2/B3)
 • READY FOR STEP C:            YES (Software implementation authorized by TV4)
 • FORMAL EXPERIMENT READINESS: NO (Pending TV1 corpus freeze & TV3 hardware calibration)
-• HÀNH ĐỘNG KẾ TIẾP:           Khởi động PR1 (Hoàn thiện CA-VHC Metrics & Experiment Infrastructure)
+• HÀNH ĐỘNG KẾ TIẾP:           TV2 hoàn tất PR2 (Baseline Adapters); TV4 chuẩn bị PR3
 ═══════════════════════════════════════════════════════════════════════════════════════════
 ```
 
@@ -719,3 +721,5 @@ Năm quyết định kỹ thuật dưới đây đã được thống nhất gi�
    - `06_audit_trellis_dag_report.md`: Báo cáo kiểm định toàn diện hiện trạng Trellis DAG (Bước A).
    - `07_diacritic_aware_state_design.md`: Thiết kế kỹ thuật chi tiết không gian trạng thái `CompositionState` (Bước B).
    - `08_handwriting_dataset_spec.md`: Quy chuẩn kỹ thuật bộ dữ liệu chữ viết tay tiếng Việt và Writer Profile (Bước B).
+   - `09_pr3_acceptance_criteria.md`: Bộ tiêu chí nghiệm thu trước PR3 (Hợp đồng nghiệm thu kỹ thuật, ma trận ASCII 48 ca và quy chuẩn clearance).
+   - `10_nckh_research_plan.md`: Research Freeze Pack, methodology blueprint và khung Chương 3–4; trạng thái chờ cross-review toàn nhóm.
