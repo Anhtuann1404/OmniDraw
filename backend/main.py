@@ -1150,10 +1150,10 @@ async def get_svg_content(request_id: str):
 
 
 ASSUMED_PEN_SPEED_MM_PER_SEC = 40.0
-jobs: dict[str, dict] = {}
-DEVICE_CONNECTED = True
-VALID_HARDWARE_ERRORS = {"HARDWARE_NOT_CONNECTED": "Lỗi kết nối", "HARDWARE_PAPER_JAM": "Kẹt giấy",
-                         "HARDWARE_OUT_OF_INK": "Hết mực"}
+from hardware_adapter import get_hardware_adapter, VALID_HARDWARE_ERRORS
+
+hardware = get_hardware_adapter()
+DEVICE_CONNECTED = hardware.is_connected
 
 
 class StartRequest(BaseModel):
@@ -1217,56 +1217,31 @@ def svg_estimate_draw_time(request_id: str) -> int:
     return 15 + seed
 
 
-async def _run_job(request_id: str):
-    job = jobs[request_id]
-    job["status"] = "printing"
-    job["started_at"] = time.monotonic()
-    total = job["total_draw_time_sec"]
-
-    while True:
-        await asyncio.sleep(0.5)
-        job_now = jobs.get(request_id)
-        if job_now is None or job_now["status"] in ("paused", "cancelled", "error"): return
-        elapsed = job_now["elapsed_before_pause"] + (time.monotonic() - job_now["started_at"])
-        job_now["progress_percent"] = min(99, int((elapsed / total) * 100))
-        job_now["estimated_time_remaining_sec"] = max(0, int(total - elapsed))
-
-        if elapsed >= total:
-            job_now.update({"status": "done", "progress_percent": 100, "estimated_time_remaining_sec": 0,
-                            "actual_draw_time_sec": int(elapsed)})
-            return
-
-
 @app.post("/api/print/start")
 async def start_print(body: StartRequest):
-    if not DEVICE_CONNECTED:
+    if not hardware.is_connected:
         return custom_error("HARDWARE_NOT_CONNECTED", "Mất kết nối máy vẽ", 503)
-    if body.request_id in jobs and jobs[body.request_id]["status"] in ("printing", "paused"):
-        return custom_error("JOB_ALREADY_EXISTS", "Bản vẽ này đang chạy", 409)
-
-    total = svg_estimate_draw_time(body.request_id)
-    jobs[body.request_id] = {"status": "queued", "progress_percent": 0, "estimated_time_remaining_sec": total,
-                             "actual_draw_time_sec": None, "error": None, "total_draw_time_sec": total,
-                             "started_at": None, "elapsed_before_pause": 0.0, "task": None}
-    jobs[body.request_id]["task"] = asyncio.create_task(_run_job(body.request_id))
-    return {"request_id": body.request_id, "status": "printing"}
+    svg_path = os.path.join(SVG_OUTPUT_DIR, f"output_{body.request_id}.svg")
+    res = await hardware.start_job(body.request_id, svg_path, body.paper_size)
+    if "error" in res:
+        err = res["error"]
+        return custom_error(err["code"], err["message"], res.get("status_code", 400))
+    return res
 
 
 @app.post("/api/print/pause")
 async def pause_print(body: PauseCancelRequest):
-    job = jobs.get(body.request_id)
-    if not job: return custom_error("JOB_NOT_FOUND", "Không tìm thấy ID", 404)
+    res = await hardware.pause_job(body.request_id)
+    if "error" in res:
+        err = res["error"]
+        return custom_error(err["code"], err["message"], res.get("status_code", 400))
+    return res
 
-    if job["status"] == "printing":
-        job["elapsed_before_pause"] += (time.monotonic() - job["started_at"])
-        job["status"] = "paused"
-        return {"request_id": body.request_id, "status": "paused"}
-    return custom_error("INVALID_STATE", "Chỉ có thể tạm dừng khi đang in", 409)
 
->>>>>>> develop
 
 @app.post("/api/print/resume")
 async def resume_print(body: PauseCancelRequest):
+
     job = jobs.get(body.request_id)
 
     if not job or job["status"] != "paused":
@@ -1284,10 +1259,18 @@ async def resume_print(body: PauseCancelRequest):
         return {"request_id": body.request_id, "status": "printing"}
     return custom_error("INVALID_STATE", "Chỉ có thể tiếp tục khi đang tạm dừng", 409)
 
+    res = await hardware.resume_job(body.request_id)
+    if "error" in res:
+        err = res["error"]
+        return custom_error(err["code"], err["message"], res.get("status_code", 400))
+    return res
+
+
 
 
 @app.post("/api/print/cancel")
 async def cancel_print(body: PauseCancelRequest):
+
     job = jobs.get(body.request_id)
 
     if not job: raise HTTPException(status_code=404, detail="ID không tồn tại")
@@ -1300,9 +1283,15 @@ async def cancel_print(body: PauseCancelRequest):
     job["status"] = "cancelled"
     return {"request_id": body.request_id, "status": "cancelled"}
 
+    res = await hardware.cancel_job(body.request_id)
+    if "error" in res:
+        err = res["error"]
+        return custom_error(err["code"], err["message"], res.get("status_code", 400))
+    return res
 
 @app.get("/api/print/status/{request_id}")
 async def get_status(request_id: str, simulate_error: Optional[str] = None):
+ Updated upstream
     job = jobs.get(request_id)
     if not job: raise HTTPException(status_code=404, detail="ID không tồn tại")
 
@@ -1341,6 +1330,12 @@ async def get_status(request_id: str, simulate_error: Optional[str] = None):
     res = {"request_id": request_id, "status": job["status"], "progress_percent": job["progress_percent"],
            "estimated_time_remaining_sec": job["estimated_time_remaining_sec"], "error": job["error"]}
     if job["status"] == "done": res["actual_draw_time_sec"] = job["actual_draw_time_sec"]
+
+    res = hardware.get_status(request_id, simulate_error=simulate_error)
+    if "error" in res and res.get("status") != "error":
+        err = res["error"]
+        return custom_error(err["code"], err["message"], res.get("status_code", 404))
+
     return res
 
 

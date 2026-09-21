@@ -179,16 +179,33 @@ def _run_self_check():
 
 if __name__ == "__main__":
     import argparse
+    import os
     parser = argparse.ArgumentParser(description="OmniDraw Camera Paper Inspector")
-    parser.add_argument("--self-check", action="store_true", help="Chay kiem tra tu dong")
+    parser.add_argument("--self-check", action="store_true", help="Chay kiem tra tu dong tren anh tong hop")
+    parser.add_argument("--capture", action="store_true", help="Chup anh truc tiep tu webcam va luu vao file")
+    parser.add_argument("--output", type=str, default="logs/camera_test.jpg", help="Duong dan file anh dau ra khi dung --capture")
     parser.add_argument("--device", type=int, default=0, help="Camera device index (mac dinh: 0)")
     args = parser.parse_args()
 
     if args.self_check:
         _run_self_check()
+    elif args.capture:
+        cap = cv2.VideoCapture(args.device)
+        if not cap.isOpened():
+            print(f"[ERROR] Khong the ket noi camera index {args.device} (Blocked by hardware)")
+            exit(1)
+        ret, frame = cap.read()
+        cap.release()
+        if not ret or frame is None:
+            print(f"[ERROR] Khong the doc frame tu camera index {args.device}")
+            exit(1)
+        os.makedirs(os.path.dirname(os.path.abspath(args.output)), exist_ok=True)
+        cv2.imwrite(args.output, frame)
+        print(f"[SUCCESS] Da chup anh thanh cong tu camera {args.device} va luu tai: {args.output}")
     else:
         result = inspect_paper(camera_index=args.device)
         preview = result.pop("preview_base64")
         import json
         print(json.dumps(result, indent=2, ensure_ascii=False))
         print(f"Preview image base64 length: {len(preview) if preview else 0}")
+

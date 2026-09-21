@@ -88,12 +88,13 @@
 - [ ] *Lưu ý phạm vi:* Đây là công việc chuẩn bị P2; chưa tích hợp Writer Profile vào engine, chưa được xem là Writer Profile MVP hoàn thành; không huấn luyện mô hình học sâu (deep learning) phức tạp trong sprint này; ưu tiên hoàn thiện quy trình rule-based rõ ràng và có thể kiểm chứng (chi tiết xem [`08_handwriting_dataset_spec.md`](file:///Users/yingjunn_/Study_/Nckh_2026-2027/OmniDraw/docs/08_handwriting_dataset_spec.md)).
 
 ### TV3 — Hardware, Calibration & Physical Validation Lead
-- [ ] Chuẩn hóa và đồng nhất interface phần mềm chung (`HardwareAdapterInterface`) dùng chung cho cả phần cứng AxiDraw thật và bộ giả lập `mock_grbl`.
-- [ ] Chuẩn bị một file SVG fixture chuẩn (chứa đầy đủ nét thẳng, nét cong Bézier, chữ viết tay và nhấc bút) để phục vụ smoke test tự động.
-- [ ] Soạn thảo Checklist hiệu chuẩn phần cứng máy vẽ: căn góc 0 tọa độ giấy, vận tốc vẽ, gia tốc ngòi bút, độ nảy và độ trễ cơ học nâng/hạ bút.
-- [ ] Xác định danh mục các metrics phần cứng bắt buộc cần đo: thời gian vẽ thực tế (`actual_draw_time_sec`), quãng đường di chuyển đầu bút, sai số tọa độ vật lý. Ghi nhận rõ: `actual_draw_time_sec` chỉ áp dụng khi đo đạc trên máy thật vật lý (Mức 2); việc backend hiện tạm thời ghi thời gian mô phỏng vào trường này là implementation/contract debt cần tách biệt.
-- [ ] *Nếu có máy vẽ và cáp kết nối:* Chạy smoke test trên giấy thật và lưu lại log dữ liệu thực nghiệm đầu tiên.
-- [ ] *Nếu chưa có máy:* Ghi nhận rõ blocker phần cứng, tập trung hoàn thiện simulator để TV4 và TV2 có thể gọi giả lập mà không bị lỗi crash.
+- [x] Chuẩn hóa và đồng nhất interface phần mềm chung (`HardwareAdapterInterface`) dùng chung cho cả phần cứng AxiDraw thật và bộ giả lập simulator/fake driver.
+- [x] Chuẩn bị file SVG fixture chuẩn (`tests/fixtures/smoke_test_specimen.svg` và `tests/fixtures/bezier_length_test.svg`) chứa nét thẳng, Bézier, Arc, handwriting và pen-up.
+- [x] Lập và validate Calibration Profile YAML (`config/calibration_profile.yaml`), nạp tự động thông số vận tốc, gia tốc, nâng hạ bút và offset 5mm.
+- [x] Xác định danh mục metrics phần cứng bắt buộc đo: phân biệt rạch ròi simulator/fake driver (`is_simulated=True`, `actual_hardware_measured=False`) và máy vẽ thật (`is_simulated=False`, `actual_hardware_measured=True`).
+- [ ] *Nếu có máy vẽ và cáp kết nối:* Chạy smoke test trên giấy thật và lưu lại log dữ liệu thực nghiệm đầu tiên. *(Blocked by hardware: chờ máy vẽ & cáp vật lý)*.
+- [x] *Nếu chưa có máy:* Ghi nhận rõ blocker phần cứng, cung cấp fake driver có thể kiểm soát pause/cancel động, simulator và CLI `--smoke-test` để TV4 và TV2 tích hợp không bị lỗi crash.
+
 
 ### Quy định phối hợp toàn nhóm trong Sprint
 - **Họp đồng bộ kỹ thuật (Weekly Sync):** Họp ngắn 30 phút mỗi tuần một lần để rà soát blocker giữa các mảng do TV4 chủ trì.

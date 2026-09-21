@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="100mm" height="50mm" viewBox="0 0 100 50">
+  <!-- TV3 Geometric Test Fixture: Bézier Length Verification -->
+  <!-- Test 1: Đường thẳng 30mm ngang (L command) -->
+  <!-- Expected pen-down length: 30mm -->
+  <path id="line_30mm" d="M 10 10 L 40 10" fill="none" stroke="#000" stroke-width="0.3"/>
+
+  <!-- Test 2: Cubic Bézier thẳng dài 30mm (C command) -->
+  <!-- Control points thẳng hàng => đây là đường thẳng Bézier, chiều dài đúng = 30mm -->
+  <path id="bezier_cubic_straight_30mm" d="M 10 20 C 20 20, 30 20, 40 20" fill="none" stroke="#000" stroke-width="0.3"/>
+
+  <!-- Test 3: Hình chữ nhật đóng kín 20x10mm (Z command) -->
+  <!-- Expected total: 20+10+20+10 = 60mm -->
+  <path id="rect_60mm" d="M 10 30 L 30 30 L 30 40 L 10 40 Z" fill="none" stroke="#000" stroke-width="0.3"/>
+
+  <!-- Test 4: Quadratic Bézier cong -->
+  <path id="quad_bezier" d="M 50 10 Q 65 5 80 10" fill="none" stroke="#000" stroke-width="0.3"/>
+
+  <!-- Test 5: Nhiều subpath (pen-up giữa) -->
+  <path id="multipath" d="M 50 25 L 65 25 M 70 25 L 85 25" fill="none" stroke="#000" stroke-width="0.3"/>
+
+  <!-- Test 6: H/V commands -->
+  <path id="hv_commands" d="M 50 35 H 65 V 45 H 50 Z" fill="none" stroke="#000" stroke-width="0.3"/>
+</svg>
