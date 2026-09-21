@@ -1,6 +1,6 @@
 # OmniDraw — Roadmap
 
-**Cập nhật lần cuối:** 18/09/2026
+**Cập nhật lần cuối:** 21/09/2026
 **Chu kỳ làm việc:** Sprint 2 tuần
 **Deadline cuối cùng (nộp/bảo vệ):** *(điền ngày khi có lịch chính thức của đơn vị)*
 
@@ -244,12 +244,17 @@ Nghiên cứu               Song song                 & Đánh giá             
 **Trạng thái:** 🟡 Đang làm | **Phụ trách:** TV1 | **Mức ưu tiên:** P0 / P1
 - [x] Tích hợp model/API sinh ảnh từ text (`POST /api/ai/generate` với Google Gemini API), nhận kết quả đúng chuẩn [P1]
 - [x] Test với bộ prompt mẫu, đánh giá latency và chất lượng đầu ra [P1]
+- [x] Thiết kế & đặc tả kỹ thuật bộ phiếu thu thập chữ viết tay **OmniDraw Handwriting Collection Sheet Pack v1** gồm 4 trang: P01 (*Isolated Characters & Diacritics*), P02 (*Context & Ligatures*), P03 (*Sentence Flow & Pangram*), P04 (*Natural Paragraph*); trạng thái: **PILOT CANDIDATE** (chờ in/quét thực nghiệm, chưa phê duyệt thu thập chính thức; lưu trữ tại `docs/collection_sheets/P01..P04`) [P0] (TV1 phối hợp TV4)
+- [ ] Xây dựng scan-validation pipeline tối thiểu (fiducial detection, deskew/rectification, scale check, deterministic auto-crop) và thực hiện in/quét bench test P01–P04 [P0] (TV1)
+- [ ] Phân tích độ phủ ký tự & ngữ cảnh (coverage analysis) của P01–P04, chốt collection protocol & error-handling policy (Pending protocol decision) [P0] (TV1 phối hợp TV4)
+- [ ] Triển khai thử nghiệm pilot giới hạn 3–5 người viết và đánh giá dữ liệu pilot [P0] (TV1)
+- [ ] Thu thập dữ liệu chính thức ~40 writers với phân chia writer-disjoint split (28 Train, 6 Val, 6 Test - planned split, chưa thực thi) [P0] (TV1)
 - [ ] Xây dựng benchmark corpus câu/từ chuẩn phục vụ thực nghiệm tự động hóa (tuân thủ quy chuẩn CA-VHC Dataset trong `08_handwriting_dataset_spec.md`) [P0]
 - [ ] Chuẩn bị synthetic fixtures và dữ liệu đầu vào chuẩn cho experiment runner của TV4 [P0]
 
 #### 2.2 AI Cá nhân hóa & Dữ liệu Writer Profile (Đường chạy TV1)
 **Trạng thái:** 🟡 Chuẩn bị nghiên cứu / Chưa tích hợp | **Phụ trách:** TV1 | **Mức ưu tiên:** P2
-*(Lưu ý: Writer Profile là hướng nghiên cứu mở rộng P2. Trong Sprint 1–2 chỉ thực hiện các bước chuẩn bị nhẹ (P2 Preparation): schema, protocol đạo đức/ẩn danh, fixture giả lập và prototype trích xuất đặc trưng độc lập theo đặc tả [`08_handwriting_dataset_spec.md`](file:///Users/yingjunn_/Study_/Nckh_2026-2027/OmniDraw/docs/08_handwriting_dataset_spec.md); chưa tích hợp vào engine, việc tích hợp chỉ xem xét sau Gate 2 hoặc khi P0/P1 ổn định; chưa coi là Writer Profile MVP hoàn thành, không huấn luyện mô hình lớn).*
+*(Lưu ý: Writer Profile là hướng nghiên cứu mở rộng P2. Trong Sprint 1–2 chỉ thực hiện các bước chuẩn bị nhẹ (P2 Preparation): schema, protocol đạo đức/ẩn danh, fixture giả lập và prototype trích xuất đặc trưng độc lập theo đặc tả [`08_handwriting_dataset_spec.md`](08_handwriting_dataset_spec.md); chưa tích hợp vào engine, việc tích hợp chỉ xem xét sau Gate 2 hoặc khi P0/P1 ổn định; chưa coi là Writer Profile MVP hoàn thành, không huấn luyện mô hình lớn).*
 - [ ] Thiết kế cấu trúc dữ liệu mẫu chữ viết tay và protocol ẩn danh hóa thông tin người dùng [P2]
 - [ ] Định nghĩa JSON schema `WriterProfile` chuẩn hóa có version [P2]
 - [ ] Xây dựng prototype trích xuất 4 đặc trưng cơ bản (slant, aspect ratio, spacing, baseline jitter) [P2]
@@ -282,7 +287,9 @@ Nghiên cứu               Song song                 & Đánh giá             
 ##### C. Bố trí dấu tiếng Việt & Thứ tự nét trễ — P0
 **Phụ trách:** TV4 (chủ trì chính tả & mỏ neo dấu) + TV2 (phối hợp tối ưu nét trễ)
 - [x] Xử lý chuẩn hóa Unicode NFD, tự động ghép dấu thanh và dấu phụ theo mỏ neo (anchors) và offset (TV4)
-- [ ] Đưa dấu tiếng Việt theo quy tắc chính tả, cấu trúc âm tiết và vùng cấm va chạm trực tiếp vào bài toán tối ưu DAG (`diacritic obstacle-avoidance`) [P0] (TV4 lead biểu diễn & ràng buộc chính tả, TV2 phối hợp mô hình hóa chi phí chuyển động; *Bước A Audit completed: `docs/06_audit_trellis_dag_report.md`; Bước B State Architecture Design in progress: `docs/07_diacritic_aware_state_design.md`*)
+- [x] **BƯỚC A — Architecture Audit Trellis DAG / CA-VHC hiện tại (COMPLETE):** Audit toàn diện mã nguồn, bóc tách hạn chế ghép dấu post-DAG, phân rã NFD và rủi ro va chạm cầu nối runtime (`06_audit_trellis_dag_report.md`) [P0] (TV4)
+- [ ] **BƯỚC B — Diacritic-Aware State Architecture Design:** Khóa thiết kế kiến trúc trạng thái lai `CompositionState = GlyphVariant × DiacriticCandidate` (`07_diacritic_aware_state_design.md`), phân tách $C_{\text{state}}$ và $J_{\text{transition}}$, loại bỏ double-count, Single Source of Truth `DiacriticConfig`, khống chế $K_{\text{raw}} \le 9$, 12 unit test strategies; trạng thái: Architecture draft: DONE / Internal technical cleanup: DONE / TV2 cross-review: COMPLETED / Final team synchronization & open decisions: PENDING (READY FOR STEP C: NO) [P0] (TV4 chủ trì phối hợp TV2)
+- [ ] **BƯỚC C — Production Implementation:** Chưa bắt đầu phần CompositionState/diacritic-aware production implementation; không được đánh dấu hoàn thành; chỉ bắt đầu sau khi nhóm chốt các quyết định mở; production implementation và regression test vẫn đang chờ Step C (READY FOR STEP C: NO) [P0] (TV4 & TV2)
 - [ ] Nghiên cứu tối ưu hóa thứ tự nét trễ (`delayed-stroke ordering`): quyết định viết dấu ngay sau nguyên âm, sau khi viết xong thân từ, hay theo nhóm nét trễ để cân bằng giữa quãng đường di chuyển quay lại, số lần nhấc bút và độ dễ đọc [P0] (TV4 & TV2)
 - [ ] Xử lý an toàn tổ hợp nhiều dấu tiếng Việt chồng tầng (dấu mũ + thanh, dấu móc + thanh) [P0] (TV4)
 
@@ -338,7 +345,7 @@ Nghiên cứu               Song song                 & Đánh giá             
 **Trạng thái:** 🟡 Đang làm | **Phụ trách:** TV4 | **Mức ưu tiên:** P0 / P1
 - [x] Hoàn thiện các màn hình giao diện hiện có (`CreateScreen`, `PreviewScreen`, `PrintStatusScreen`, `HistoryScreen`, `ConfirmScreen`, `DoneScreen`, `LoginScreen`) [P1]
 - [x] Viết hàm gọi API theo chuẩn trong `frontend/src/api/omnidraw.js`, tích hợp Art Mode và Handwriting Mode [P0]
-- [ ] Khắc phục khoảng lệch triển khai của `style`: validate nghiêm ngặt danh sách `STYLE_CONFIGS`, loại bỏ fallback ngầm về `hand_hocsinh`, trả lỗi có cấu trúc [P1]
+- [x] Strict Validation toàn diện trên API Gateway: loại bỏ triệt để silent fallback cho `style`, `font`, `letter_type`, `seed`, `target_paper_size_mm`; bảo đảm nguyên tắc validation-before-side-effect; 34/34 regression tests pass [P1] (TV4)
 - [ ] Hoàn thiện màn hình cấu hình (`SettingsScreen`) hỗ trợ nhập thông số hiệu chuẩn máy vẽ [P1]
 - [ ] Tích hợp cơ chế hiển thị lỗi chi tiết cho ký tự chưa hỗ trợ (`UNSUPPORTED_CHARACTER`) và tràn trang (`TEXT_OVERFLOW`) [P1]
 
