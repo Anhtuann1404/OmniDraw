@@ -528,52 +528,71 @@ Mọi thực nghiệm phải ghi nhận chi tiết siêu dữ liệu môi trư�
 
 ---
 
-## 7. Kế Hoạch Triển Khai Kỹ Thuật (Lộ Trình Bước C — 5 PR Tuần Tự)
+## 7. Kế Hoạch Triển Khai Kỹ Thuật (Lộ Trình Phụ Thuộc Của Bước C)
 
-Lộ trình kỹ thuật được phân chia thành 5 PR tuần tự, bảo đảm ranh giới trách nhiệm rõ ràng của cả 4 thành viên:
+Lộ trình kỹ thuật của Bước C không phải là chuỗi tuần tự tuyệt đối mà được tổ chức theo đồ thị phụ thuộc (dependency graph), cho phép triển khai song song giữa hạ tầng đo đạc và adapter đối chứng:
 
 ```text
-┌────────┐     ┌────────┐     ┌────────┐     ┌────────┐     ┌────────┐
-│  PR1   │ ──▶ │  PR2   │ ──▶ │  PR3   │ ──▶ │  PR4   │ ──▶ │  PR5   │
-│Trace & │     │ 3 Base-│     │CA-VHC  │     │Delayed │     │Bench-  │
-│Metrics │     │ lines  │     │Trellis │     │Stroke  │     │mark &  │
-│(Shared)│     │(B1,B2, │     │(State &│     │Order P0│     │Ablation│
-│TV1+2+4 │     │  B3)   │     │ Motion)│     │(TV2+4) │     │(All)   │
-└────────┘     └────────┘     └────────┘     └────────┘     └────────┘
+PR1 Metrics/Runner ──┐
+                     ├──> PR3 CompositionState/DAG
+PR2 Baseline Adapters┘
+                              │
+                              v
+                     PR4 Delayed-Stroke P0
+                              │
+                              v
+                     PR5 Benchmark/Ablation
 ```
 
-### PR1: Structured Render Trace, Benchmark Corpus & Metrics Fixtures (TV1 + TV2 + TV4)
-- **Phạm vi kỹ thuật:**
-  - Nạp và xác thực 2 tập ngữ liệu `BENCHMARK_DEV_CORPUS_20` và `BENCHMARK_HOLDOUT_CORPUS_20` do **TV1** cung cấp.
-  - Xây dựng Structured Render Trace: phân biệt rõ từng tag nét (`base_stroke`, `bridge_stroke`, `diacritic_stroke`).
-  - **Bảo toàn tuyệt đối chữ ký API công khai:** `generate_handwriting_svg()` và `text_to_strokes()` giữ nguyên đầu vào, đầu ra và kiểu dữ liệu `List[np.ndarray]`.
-  - Module đo kiểm hình học độc lập `metrics_evaluator.py` và structured render trace nội bộ đã được triển khai và kiểm thử tự động pass (trạng thái: **INTERNAL EVALUATOR IMPLEMENTED AND TESTED — API/CSV INTEGRATION PENDING**); PR1 hoàn thiện việc nạp corpus chính thức do TV1 đóng băng và tích hợp contract metric ra public API/CSV runner.
-- **Phân công:** TV1 cung cấp corpus/fixtures; TV2 đặc tả metric thuật toán; TV4 tích hợp runner/logging.
+**Quy tắc điều phối & Phụ thuộc:**
+- **PR1 & PR2 song song:** PR1 (TV4 chủ trì runner/logging/metric integration, TV1 cung cấp fixtures, TV2 đặc tả motion metrics) và PR2 (TV2 chủ trì baseline adapters) có thể triển khai song song, độc lập.
+- **Điều kiện tiên quyết cho PR3:** Cả PR1 và PR2 phải đạt interface, snapshot và test cần thiết trước khi hợp nhất vào PR3 (`CompositionState` và Diacritic-Aware DAG).
+- **Thứ tự PR3 ➔ PR4 ➔ PR5:** PR3 phải hoàn thành trước PR4 (Delayed-Stroke P0); PR4 phải hoàn thành trước PR5 (Benchmark & Ablation).
+- **Ranh giới dữ liệu thực nghiệm:** Việc TV1 chưa đóng băng formal corpus không chặn việc viết mã nguồn PR1–PR4. PR1–PR4 được phép phát triển và kiểm thử bằng các `provisional technical fixtures`. TV1 review và đóng băng formal corpus là điều kiện tiên quyết để chạy PR5 ở chế độ thực nghiệm chính thức (formal experiment) và đưa số liệu vào báo cáo khoa học.
+
+### PR1: Hoàn Thiện CA-VHC Metrics & Experiment Infrastructure (TV4 chủ trì, TV1 + TV2 phối hợp)
+- **Trạng thái hiện tại:** `PR1: IN PROGRESS`
+  - *Completed foundation (Nền tảng đã hoàn thành & có test bảo vệ):*
+    - `StructuredRenderResult` / structured render trace nội bộ (`TraceStroke`, `text_to_strokes_structured`) đã tồn tại.
+    - `backend/handwriting/metrics_evaluator.py` đã tồn tại và được kiểm thử tự động pass (12/12 tests).
+    - Provisional benchmark fixtures (`BENCHMARK_DEV_CORPUS_20`, `BENCHMARK_HOLDOUT_CORPUS_20`) đã tồn tại và kiểm thử tính rời nhau.
+  - *Remaining (Các hạng mục còn lại đang triển khai):*
+    - Tích hợp các metric thực sự đã triển khai ổn định từ trace nội bộ vào experiment pipeline.
+    - Mở rộng log CSV tương ứng cho các trường đo đạc.
+    - Xây dựng automated experiment runner theo ma trận corpus × font × seed × baseline.
+    - Chụp baseline snapshot trước khi đưa state mới vào engine.
+    - Kiểm thử hồi quy tương thích ngược (backward-compatibility tests) bảo đảm không làm biến đổi hành vi API công khai.
+- **Ranh giới phụ thuộc corpus:** PR1 không bắt buộc phải chờ TV1 đóng băng formal corpus; PR1 được phép vận hành và kiểm thử bằng provisional technical fixtures. TV1 corpus review/freeze là validation gate downstream để khóa dữ liệu thực nghiệm phục vụ PR5.
+- **Phân công:** TV4 chủ trì runner/logging/metric integration; TV1 cung cấp và rà soát corpus/fixtures; TV2 đặc tả motion metrics.
 
 ### PR2: Chuẩn Hóa và Khóa Ba Baseline Đối Chứng B1, B2, B3 (TV2 chủ trì, TV4 phối hợp)
 - **Phạm vi kỹ thuật:**
   - Đóng gói 3 adapter thực nghiệm độc lập: B1 (Static Glyph Renderer), B2 (Greedy Contextual/Connection Heuristic), B3 (Current Trellis DAG without advanced diacritic constraints).
   - Cho phép runner gọi độc lập từng baseline thông qua cờ nội bộ `_algorithm_mode`.
+  - Có thể tiến hành song song với PR1; hoàn thành interface độc lập trước khi PR3 khởi động.
 - **Phân công:** TV2 chủ trì phần motion adapter; TV4 điều phối tích hợp engine.
 
-### PR3: CA-VHC Diacritic-Aware Trellis với `CompositionState` (TV2 + TV4 tích hợp)
+### PR3: CA-VHC Diacritic-Aware Trellis với `CompositionState` (TV4 chủ trì composition, TV2 chủ trì transition cost)
 - **Phạm vi kỹ thuật:**
-  - Tích hợp cấu trúc `CompositionState` (module `backend/handwriting/state.py` dự kiến triển khai ở Bước C do TV4 xây dựng) vào hàm quy hoạch động `optimize_word_dag`.
-  - Triển khai hàm chi phí hai cấp: $C_{\text{state}}(s)$ và $J_{\text{transition}}(u, w)$.
+  - Tích hợp cấu trúc `CompositionState` (module `backend/handwriting/state.py` do TV4 xây dựng) vào hàm quy hoạch động `optimize_word_dag`.
+  - Triển khai hàm chi phí hai cấp: $C_{\text{state}}(s)$ (TV4) và $J_{\text{transition}}(u, w)$ (TV2).
   - Tích hợp `bridge_collision_cost` kiểm tra va chạm trong tọa độ thế giới với toàn bộ nét thân và dấu xung quanh.
   - Thiết lập hard rejection: loại bỏ quyết định `CONNECT` nếu cắt ngang nét dấu.
+  - Gắn metadata tối thiểu (`stroke_order_hint`) để làm tiền đề cho bài toán lập lịch nét trễ ở PR4.
 
 ### PR4: Delayed-Stroke Ordering Optimizer — Tầng P0 (TV2 chủ trì, TV4 phối hợp)
 - **Phạm vi kỹ thuật:**
-  - Triển khai Tầng P0 của Delayed-Stroke: hỗ trợ cấu trúc state/action xuất nét trễ có thứ tự và policy tối thiểu có thể kiểm thử (gom nét phụ/dấu sau thân từ theo Nearest Neighbor cơ bản để giảm thiểu quãng đường pen-up).
-  - Thiết lập khung kiến trúc mở rộng sẵn sàng cho Tầng P1 (Exact Enumeration cho $M \le 6$).
+  - Triển khai chính sách P0 có thể kiểm thử tất định: viết xong thân từ $\rightarrow$ gom toàn bộ nét phụ/dấu trễ của từ $\rightarrow$ sắp xếp thứ tự vẽ dấu bằng thuật toán tất định Nearest Neighbor xuất phát từ điểm kết thúc nét cuối thân từ $\rightarrow$ dùng original stroke index làm tie-break chống bất định.
+  - Khung kiến trúc mở rộng sẵn sàng cho Tầng P1 (Exact Enumeration $M \le 6$) và Tầng P2 (Writer Profile).
 - **Phân công:** TV2 chủ trì thuật toán tối ưu chuyển động; TV4 tích hợp state và kiểm tra chính tả.
 
 ### PR5: Benchmark Runner, Automated Reporting & Ablation Study (Toàn nhóm phối hợp)
 - **Phạm vi kỹ thuật:**
   - CLI runner thực thi toàn bộ ma trận (Proposed CA-VHC vs 3 Baselines × 20 từ Dev + 20 từ Holdout × 2 font × 4 seed × 50 iterations).
   - Tự động xuất log CSV ra thư mục ignore `logs/`, tính toán Median và p95.
-  - Báo cáo riêng kết quả theo từng môi trường thực tế (Windows / Linux).
+  - Phân biệt rõ hai chế độ thực thi:
+    - **Technical dry-run:** Được phép chạy thử nghiệm bằng provisional technical fixtures để kiểm tra luồng runner và định dạng CSV.
+    - **Formal experiment:** Chỉ được phép công bố số liệu chính thức sau khi TV1 đã rà soát và freeze formal benchmark corpus, và TV3 đã hoàn tất hiệu chuẩn phần cứng máy vẽ (hardware calibration) cho các tuyên bố liên quan tới máy vẽ và ngưỡng clearance.
   - Thực hiện Ablation Studies đối với các thành phần trọng số và các phương án đối chứng mở rộng (Pure Motion Trellis, Static Diacritic Layout).
 - **Phân công:** TV4 chủ trì runner/logging; TV2 phân tích chuyển động; TV1 kiểm tra tính toàn vẹn dữ liệu; TV3 hỗ trợ đối chiếu simulator/phần cứng.
 

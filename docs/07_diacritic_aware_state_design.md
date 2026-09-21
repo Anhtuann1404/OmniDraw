@@ -5,16 +5,18 @@
 **Dự án:** OmniDraw — Single-Stroke Vector Centerline Engine  
 **Module:** CA-VHC (Context-Aware Vietnamese Handwriting Composition)  
 **Tác giả:** Nguyễn Tài Anh Tuấn (TV4 — Handwriting Lead & Project Lead) phối hợp cùng TV2 (Stroke Optimization & Path Planning Lead)  
-**Thời điểm cập nhật:** 20/09/2026 (Technical Cleanup & Consistency Correction)  
-**Chế độ tài liệu:** ARCHITECTURE DESIGN DRAFT SPECIFICATION (Chưa sửa mã nguồn)  
-**Trạng thái phê duyệt:** DESIGN DRAFT COMPLETED — PENDING CROSS-REVIEW (Chờ review chéo từ TV2 trước khi sang Bước C)  
-**Trạng thái kiểm thử nền tảng:** 34/34 API regression tests PASS  
+**Thời điểm cập nhật:** 21/09/2026 (Đồng bộ sau TV2 Cross-Review & Ủy quyền bắt đầu triển khai phần mềm Step C)<br>
+**Chế độ tài liệu:** STEP B DESIGN SPECIFICATION — APPROVED AND CLOSED<br>
+**Trạng thái phê duyệt:** TV2 TECHNICAL CROSS-REVIEW: COMPLETED / PASS | READY FOR STEP C: YES | STEP C: AUTHORIZED — NOT YET IMPLEMENTED | FORMAL EXPERIMENT READINESS: NO<br>
+**Cổng kiểm định downstream:** TV1 formal corpus freeze: PENDING | TV3 physical clearance calibration: PENDING<br>
+**Lưu ý hiện trạng:** Việc phê duyệt tài liệu thiết kế Bước B xác nhận kiến trúc kỹ thuật đã khóa và cho phép bắt đầu viết mã phần mềm Bước C (PR1), nhưng không có nghĩa là `CompositionState`, Diacritic-Aware DAG hay delayed-stroke đã được triển khai trong mã nguồn hiện hành.<br>
+**Trạng thái kiểm thử nền tảng:** 34/34 API regression tests PASS | 12/12 CA-VHC metric tests PASS
 
 ---
 
 ## 1. Bối cảnh, Động lực & Kết quả từ Bước A (Audit Grounding)
 
-Trong **BƯỚC A — Architecture Audit Trellis DAG / CA-VHC** (chi tiết tại [`docs/06_audit_trellis_dag_report.md`](file:///Users/yingjunn_/Study_/Nckh_2026-2027/OmniDraw/docs/06_audit_trellis_dag_report.md)), cấu trúc hiện tại của hệ thống đã được xác lập minh bạch dựa trên mã nguồn thực tế:
+Trong **BƯỚC A — Architecture Audit Trellis DAG / CA-VHC** (chi tiết tại [`docs/06_audit_trellis_dag_report.md`](06_audit_trellis_dag_report.md)), cấu trúc hiện tại của hệ thống đã được xác lập minh bạch dựa trên mã nguồn thực tế:
 
 1. **Không gian trạng thái hiện tại:** Trellis DAG trong `backend/handwriting/engine.py:optimize_word_dag()` hoạt động ở cấp độ từ (word-level) dựa trên thuật toán Quy hoạch động Viterbi. Mỗi nút (node) trong đồ thị là một đối tượng `GlyphVariant`, biểu diễn các biến thể kết nối tiếp tuyến của **riêng biệt thân chữ cái gốc (base character)** (gồm các nhãn `std`, `mid_in`, `high_out`, `closed`, `isolated`).
 2. **Dấu tiếng Việt bị tách rời khỏi DAG (Post-DAG Procedural Attachment):** Chuỗi ký tự đầu vào được phân rã qua Unicode NFD (`group_nfd_graphemes()`), nhưng các dấu thanh và dấu phụ (`accents`) hoàn toàn không tham gia vào không gian trạng thái của Trellis DAG. Chỉ sau khi Viterbi DP hoàn tất và chuỗi thân chữ đã được cố định, hàm `generate_accents()` mới được gọi ở pha hậu kỳ (`text_to_strokes()`) để tính toán tọa độ nét dấu theo quy tắc mỏ neo cứng (procedural anchors dựa trên tâm `cx`).
@@ -23,7 +25,7 @@ Trong **BƯỚC A — Architecture Audit Trellis DAG / CA-VHC** (chi tiết tạ
    - **Mất khả năng tối ưu hóa thích ứng ngữ cảnh (Lack of Contextual Adaptation):** Vị trí dấu không thể dịch chuyển linh hoạt để né tránh các nét chữ hoa vươn cao (`ascender`) hoặc nét uốn nghệ thuật (`flourish`).
    - **Khoảng cách lý thuyết vs thực tế:** Các tài liệu định hướng (`docs/01_tech-stack.md`, `docs/02_roadmap.md`) ghi nhận CA-VHC tích hợp ràng buộc dấu tiếng Việt, trong khi mã nguồn hiện hành mới dừng ở mức ghép dấu tĩnh hậu kỳ.
 
-**Mục tiêu của BƯỚC B:** Khóa thiết kế kiến trúc không gian trạng thái mới (**Diacritic-Aware State Representation**) cho CA-VHC, giải quyết triệt để vấn đề va chạm dấu mà vẫn bảo toàn nguyên tắc phân tách trách nhiệm (Separation of Concerns), kiểm soát bùng nổ tổ hợp, xác lập mục tiêu bảo toàn hồi quy cho ký tự không dấu (ASCII), và thiết lập chiến lược kiểm thử vững chắc trước khi triển khai mã nguồn ở Bước C.
+**Mục tiêu của BƯỚC B:** Khóa thiết kế kiến trúc không gian trạng thái mới (**Diacritic-Aware State Representation**) cho CA-VHC, thiết kế kiến trúc nhằm phòng tránh và giảm va chạm dấu mà vẫn bảo toàn nguyên tắc phân tách trách nhiệm (Separation of Concerns), kiểm soát bùng nổ tổ hợp, xác lập mục tiêu bảo toàn hồi quy cho ký tự không dấu (ASCII), và thiết lập chiến lược kiểm thử vững chắc trước khi triển khai mã nguồn ở Bước C (hiệu quả thực tế còn cần production implementation, regression test và benchmark nghiệm thu).
 
 ---
 
@@ -436,7 +438,7 @@ Chi phí nội tại của một node `CompositionState` $s$, độc lập với
 
 $$C_{\text{state}}(s) = w_{4a} \cdot C_{\text{internal\_collision}}(s) + w_5 \cdot C_{\text{legibility}}(s) + w_6 \cdot C_{\text{placement}}(s)$$
 
-Trong đó các thành phần được định nghĩa rạch ròi, **triệt tiêu hoàn toàn nguy cơ tính trùng (Double-Counting)**:
+Trong đó các thành phần được định nghĩa rạch ròi, **phân tách trách nhiệm chi phí ở cấp đặc tả nhằm tránh tính trùng (Double-Counting)** (tính đúng đắn và hiệu quả thực tế sẽ được kiểm chứng qua production implementation và bộ unit test ở Bước C):
 1. **$C_{\text{internal\_collision}}(s)$:** Đo lường xung đột hình học nội tại giữa các nét thành phần trong cùng một ký tự ở tọa độ cục bộ:
    - Giao cắt hoặc khoảng cách vi phạm giữa nét dấu và nét thân chữ (`diacritic ↔ base_variant`).
    - Giao cắt giữa dấu cấu trúc và dấu thanh (`structural_mark ↔ tone_mark`).
@@ -546,16 +548,21 @@ Trellis DAG ──► Chosen CompositionState ──► transform_state_to_world
 
 ---
 
-## 11. Phân định Phạm vi: Delayed-Stroke Ordering là Nhiệm vụ Độc lập
+## 11. Phân định Phạm vi: Phân tầng Kiến trúc "WHERE" và "WHEN" (Delayed-Stroke Roadmap)
 
 > **IMPORTANT — NGUYÊN TẮC PHÂN BIỆT BÀI TOÁN "WHERE" VÀ "WHEN":**  
-> - **Bài toán "WHERE" (Không gian):** Bố trí dấu ở đâu trong không gian 2D để né va chạm với cầu nối và nét chữ lân cận mà vẫn bảo đảm chính tả, tỷ lệ thẩm mỹ. $\rightarrow$ **ĐÂY LÀ PHẠM VI TRỌNG TÂM CỦA BƯỚC B & BƯỚC C.**  
-> - **Bài toán "WHEN" (Thời gian):** Bút vẽ dấu vào thời điểm nào trong chu trình chuyển động của máy vẽ (vẽ ngay sau khi viết xong nguyên âm, hay viết xong toàn bộ thân từ rồi mới quay lại đánh dấu toàn từ). $\rightarrow$ **ĐÂY LÀ BÀI TOÁN LẬP LỊCH NÉT TRỄ (Delayed-Stroke Scheduling).**
+> - **Bài toán "WHERE" (Không gian):** Bố trí dấu ở đâu trong không gian 2D để né va chạm với cầu nối và nét chữ lân cận mà vẫn bảo đảm chính tả, tỷ lệ thẩm mỹ. $\rightarrow$ Được giải quyết trong **PR3** thông qua `CompositionState` và Diacritic-Aware Trellis DAG.
+> - **Bài toán "WHEN" (Thời gian / Thứ tự vẽ):** Bút vẽ dấu vào thời điểm nào trong chu trình chuyển động của máy vẽ (vẽ ngay sau khi viết xong nguyên âm, hay viết xong toàn bộ thân từ rồi mới quay lại đánh dấu toàn từ). $\rightarrow$ Là subproblem độc lập về lập lịch chuyển động (Motion Scheduling), do TV2 chủ trì tối ưu động học phối hợp cùng TV4.
 
-**Quyết định thiết kế cho Bước B/C v1:**
-1. Bước B và Bước C đầu tiên **chỉ tập trung hoàn thiện bài toán "WHERE"** (tích hợp dấu vào không gian trạng thái DAG và né va chạm hình học).
-2. Bài toán "WHEN" (Delayed-Stroke Ordering) được tách riêng thành một mốc nghiên cứu độc lập tiếp nối (**P0-follow-up** do TV2 chủ trì phần tối ưu chuyển động động học phối hợp cùng TV4).
-3. `CompositionState` v1 sẽ **không chứa** các trường phức tạp về lập lịch nét trễ ngoài metadata tối thiểu (`stroke_order_hint`), tránh gây phình to phạm vi và bảo đảm tiến độ kiểm thử chắc chắn.
+**Phân tầng kiến trúc và lộ trình triển khai:**
+1. **Bài toán "WHERE" (PR3):** PR3 được thiết kế để đưa việc lựa chọn biến thể thân chữ và ứng viên dấu trong không gian 2D vào cùng không gian trạng thái của Diacritic-Aware DAG; hiệu quả tránh va chạm và chất lượng lựa chọn còn phải được xác nhận bằng production implementation, regression test và benchmark. `CompositionState` trong PR3 chỉ cần lưu trữ metadata tối thiểu (`stroke_order_hint`) để làm đầu vào hỗ trợ bài toán lập lịch, không chứa logic điều khiển chuyển động phức tạp.
+2. **Delayed-Stroke Tầng P0 (Triển khai trong PR4 của chương trình Step C):** Triển khai chính sách cơ bản có thể kiểm thử tất định:
+   - Viết xong toàn bộ nét của thân từ (base word stems);
+   - Thu thập toàn bộ nét phụ/dấu trễ của từ;
+   - Sắp xếp thứ tự vẽ dấu bằng thuật toán tất định Nearest Neighbor xuất phát từ điểm kết thúc nét cuối của thân từ;
+   - Sử dụng original stroke index làm tie-break để chống bất định.
+3. **Delayed-Stroke Tầng P1 (Nghiên cứu nâng cao):** Kỹ thuật Exact Enumeration cho số lượng nét trễ nhỏ ($M \le 6$) nhằm tối ưu hóa toàn cục quãng đường nhấc bút pen-up.
+4. **Delayed-Stroke Tầng P2 (Cá nhân hóa):** Lập lịch nét trễ thích ứng theo phong cách người viết (Writer-profile-aware scheduling).
 
 ---
 
@@ -574,7 +581,7 @@ Ranh giới kỹ thuật giữa các thành viên được phân định rõ rà
 | Chi phí cầu nối né dấu $C_{\text{bridge\_collision}}$ | **TV4 & TV2 (Shared)** | Cả nhóm | Mở rộng kiểm tra va chạm cầu nối Bézier với nét dấu. |
 | Thuật toán Viterbi DP Runner | **TV4 & TV2 (Shared)** | Cả nhóm | Truy hồi đồ thị Trellis DAG và tối ưu hóa toàn cục. |
 | Trích xuất Render SVG từ State | **TV4** | TV2 | Chuyển đổi trạng thái tối ưu thành SVG polylines. |
-| Tối ưu thứ tự nét trễ (Delayed-Stroke) | **TV2** | TV4 | Bài toán tối ưu hóa đường đi ngòi bút (P0-follow-up). |
+| Tối ưu thứ tự nét trễ (Delayed-Stroke) | **TV2** | TV4 | Lập lịch thứ tự nét trễ: P0 Nearest Neighbor (PR4), P1 Exact Enumeration, P2 Writer Profile. |
 
 *Quy tắc cộng tác:* Mọi thay đổi đối với interface chung (`eval_transition()`, chữ ký hàm `optimize_word_dag()`) trong Bước C bắt buộc phải được review và chấp thuận chéo giữa TV4 và TV2.
 
@@ -669,7 +676,7 @@ Bản đặc tả thiết kế Bước B này được nghiệm thu hoàn thành
 - [x] **12. Renderer lấy nét dấu từ đâu?** $\rightarrow$ Trích xuất trực tiếp từ `state.diacritic_candidate.strokes_local` đã được Viterbi chọn tối ưu và biến đổi sang tọa độ thế giới qua `transform_state_to_world()`.
 - [x] **13. ASCII regression target là gì?** $\rightarrow$ Kỳ vọng bảo toàn hành vi tương đương về mặt logic kết nối, cùng seed cho ra kết quả nhất quán, không đổi API contract.
 - [x] **14. Vietnamese SVG change policy là gì?** $\rightarrow$ Tọa độ nét dấu được phép thay đổi có chủ đích để né va chạm, nhưng bắt buộc bảo toàn bản sắc chữ viết Unicode, kích thước khổ giấy và tính tất định seed.
-- [x] **15. Delayed stroke nằm ngoài scope nào?** $\rightarrow$ Nằm ngoài scope Bước B/C v1 (bài toán "WHEN" được tách riêng cho TV2 tối ưu động học ở mốc tiếp theo; Bước B/C v1 tập trung hoàn thiện bài toán "WHERE").
+- [x] **15. Delayed stroke được phân tầng và triển khai ở đâu?** $\rightarrow$ Bài toán "WHERE" giải quyết ở PR3 bằng `CompositionState`; bài toán "WHEN" là subproblem độc lập về lập lịch: Tầng P0 triển khai trong PR4 (viết xong thân từ $\rightarrow$ gom nét trễ $\rightarrow$ Nearest Neighbor từ nét cuối thân từ $\rightarrow$ original stroke index làm tie-break); Exact Enumeration ($M \le 6$) thuộc P1; Writer-profile scheduling thuộc P2.
 - [x] **16. TV4 và TV2 ownership đã rõ chưa?** $\rightarrow$ Đã phân định rạch ròi qua Ma trận Trách nhiệm Mục 12 (TV4: State & Dấu; TV2: Motion & Transition; Shared: Objective $J$ & Viterbi runner).
 - [x] **17. Tests Bước C đã được định nghĩa chưa?** $\rightarrow$ Đã định nghĩa danh mục các ca kiểm thử tự động cụ thể tại Mục 14.1 (phân tách rạch ròi giữa mm-based geometry metric và scalar cost metric).
 - [x] **18. Metrics nghiên cứu đã có schema design chưa?** $\rightarrow$ Đã thiết kế schema đo đạc nội bộ gồm 7 trường chỉ số non-binding tại Mục 15.
@@ -678,10 +685,26 @@ Bản đặc tả thiết kế Bước B này được nghiệm thu hoàn thành
 
 ## 17. Trạng thái Phê duyệt & Sẵn sàng cho Bước C (Implementation Readiness)
 
-- **Trạng thái hiện tại:** `DESIGN DRAFT COMPLETED — PENDING TV2/TV4 CROSS-REVIEW`.
-- **Điều kiện tiên quyết để sang Bước C (Entry Criteria for Step C):**
-  1. TV2 hoàn thành phiên rà soát chéo (cross-review) đối với giao diện `eval_transition()` và các thành phần chi phí động học trong $J_{\text{transition}}$.
-  2. TV4 và TV2 ký duyệt thống nhất phương trình Bellman Viterbi DP và các tham số mặc định trong `DiacriticConfig`.
-- **Quyết định chuyển bước:**  
-  > **READY FOR STEP C:** **NO (PENDING CROSS-REVIEW)**.  
-  > Sau khi hoàn tất phiên họp review chéo kỹ thuật giữa TV4 và TV2, trạng thái sẽ được cập nhật thành `✅ BƯỚC B COMPLETE — Ready for Step C`.
+- **Trạng thái thiết kế Bước B:** `STEP B DESIGN SPECIFICATION — APPROVED AND CLOSED`.
+- **Rà soát kỹ thuật TV2:** `TV2 TECHNICAL CROSS-REVIEW: COMPLETED / PASS`.
+- **Thẩm quyền triển khai phần mềm:** `SOFTWARE STEP C: AUTHORIZED / NOT YET IMPLEMENTED` (TV4 cho phép bắt đầu code).
+- **Quyết định chuyển bước:** `READY FOR STEP C: YES` (Cấp phần mềm: bắt đầu PR1).
+- **Trạng thái sẵn sàng thực nghiệm:** `FORMAL EXPERIMENT READINESS: NO` (Downstream validation gates: TV1 formal corpus freeze: PENDING; TV3 physical clearance calibration: PENDING).
+- **Hành động kế tiếp:** Khởi động `PR1 — Hoàn thiện CA-VHC Metrics & Experiment Infrastructure`.
+
+### Bảng Ghi Nhận Điều Kiện Tiên Quyết Đã Thỏa Mãn (Completed Entry Criteria Record)
+1. **Giao diện `eval_transition()` & Chi phí động học:** TV2 đã hoàn thành phiên rà soát chéo (cross-review) đối với giao diện `eval_transition()` và các thành phần chi phí động học trong $J_{\text{transition}}$ $\rightarrow$ `COMPLETED / PASS`.
+2. **Phương trình Bellman Viterbi DP & DiacriticConfig:** TV4 và TV2 đã thống nhất phương trình Bellman Viterbi DP 2 cấp ($C_{\text{state}} + J_{\text{transition}}$) và giá trị khởi tạo mặc định ban đầu $0.20\text{ mm}$ trong `DiacriticConfig` $\rightarrow$ `COMPLETED / PASS`.
+
+```text
+═══════════════════════════════════════════════════════════════════════════════════════════
+                    KẾT LUẬN NGHIỆM THU KIẾN TRÚC BƯỚC B (STEP B CLOSURE)
+═══════════════════════════════════════════════════════════════════════════════════════════
+• SPEC STATUS:                 APPROVED AND CLOSED FOR STEP B
+• TV2 TECHNICAL CROSS-REVIEW:  COMPLETED / PASS
+• SOFTWARE STEP C:             AUTHORIZED / NOT YET IMPLEMENTED
+• READY FOR STEP C:            YES (Software implementation authorized by TV4)
+• FORMAL EXPERIMENT READINESS: NO (Pending TV1 corpus freeze & TV3 hardware calibration)
+• NEXT ACTION:                 PR1 Metrics & Experiment Infrastructure
+═══════════════════════════════════════════════════════════════════════════════════════════
+```

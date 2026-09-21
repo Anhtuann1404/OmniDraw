@@ -2,7 +2,7 @@
 
 **Tài liệu mã số:** `DOC-SPEC-08-DATASET`  
 **Phiên bản:** `v1.0.0` (Chuẩn hóa ranh giới CA-VHC Dataset vs. Writer Profile Dataset)  
-**Ngày ban hành:** 19/09/2026  
+**Ngày ban hành:** 19/09/2026 | **Đồng bộ trạng thái:** 21/09/2026 (Đồng bộ sau TV2 Cross-Review & Ủy quyền bắt đầu triển khai phần mềm Step C)<br>
 **Chủ trì soạn thảo & Quản trị dữ liệu:** TV1 (AI Data & Writer Personalization Lead)  
 **Chủ trì kiến trúc giải thuật & Phê duyệt:** TV4 (Project Lead & Handwriting / CA-VHC Composition Lead)  
 **Đồng thẩm định:** TV2 (Stroke Optimization & Path Planning Lead), TV3 (Hardware, Calibration & Physical Validation Lead)  
@@ -707,10 +707,10 @@ Nhằm duy trì tính trung thực khoa học tuyệt đối trong toàn bộ h�
 | **Phân tích độ phủ & Quyết định Protocol** | TV1 | **PENDING** | Chờ kiểm chứng ma trận độ phủ thực tế và chốt phương án xử lý lỗi nét lem/tràn viền (`PENDING PROTOCOL DECISION`). |
 | **Thu thập thử nghiệm quy mô nhỏ (Pilot 3–5 writers)** | TV1 | **PENDING** | Chờ hoàn tất scan-validation pipeline và protocol chốt; chưa triển khai pilot. |
 | **Thu thập chính thức (~40 writers)** | TV1 | **NOT STARTED** | Kế hoạch dự kiến ~40 người viết (28 Train, 6 Val, 6 Test); chưa triển khai. |
-| **Đưa dấu tiếng Việt & Vùng cấm va chạm vào DAG (CA-VHC)** | TV4 & TV2 | **DESIGN DRAFT COMPLETED / WAITING TV2 REVIEW** | Hoàn thành Bước A Audit (`docs/06`), hoàn thành bản thảo thiết kế Bước B (`docs/07`); chờ TV2 cross-review; chưa triển khai mã nguồn Bước C (`READY FOR STEP C: NO`). |
-| **Tối ưu hóa thứ tự nét trễ (Delayed Strokes)** | TV2 & TV4 | **IN PROGRESS** | Đang thiết kế hàm chi phí động học và thuật toán gom nét trễ. |
-| **Tập ngữ liệu Benchmark tiếng Việt (Corpus)** | TV1 | **IN PROGRESS** | Đang chuẩn bị tập 15 prompt tranh và bộ câu test chữ viết tay chuẩn. |
-| **Framework ghi log thực nghiệm CSV** | TV4 | **IN PROGRESS** | Đang chuẩn hóa cấu trúc trường log phục vụ phân tích RQ1–RQ3. |
+| **Đưa dấu tiếng Việt & Vùng cấm va chạm vào DAG (CA-VHC)** | TV4 & TV2 | **STEP B APPROVED AND CLOSED / STEP C AUTHORIZED — NOT YET IMPLEMENTED** | Step A complete; TV2 cross-review completed/pass; READY FOR STEP C: YES; PR1 đang được khởi động; formal experiment readiness vẫn NO. |
+| **Tối ưu hóa thứ tự nét trễ (Delayed Strokes)** | TV2 & TV4 | **DESIGN POLICY RESOLVED / PRODUCTION IMPLEMENTATION NOT STARTED** | Khóa chính sách thiết kế P0 (gom nét trễ sau thân từ + Nearest Neighbor có tie-break bằng stroke index gốc); PR4 trong Step C chưa triển khai; P1 Exact Enumeration và P2 Writer Profile thuộc nghiên cứu tiếp nối. |
+| **Tập ngữ liệu Benchmark tiếng Việt (Corpus)** | TV1 | **PROVISIONAL TECHNICAL FIXTURE** | `BENCHMARK_DEV_CORPUS_20` và `BENCHMARK_HOLDOUT_CORPUS_20` (20 từ Dev, 20 từ Holdout) đã tồn tại trong code và vượt qua kiểm thử tính rời nhau ở mức provisional technical fixture; TV1 vẫn phải review coverage ngữ âm/ngôn ngữ học và đóng băng version trước thực nghiệm chính thức (không phải formal corpus; không trộn với 15 prompt tranh Art Mode). |
+| **Framework ghi log thực nghiệm CSV & Runner** | TV4 | **INTERNAL EVALUATOR AND STRUCTURED TRACE IMPLEMENTED AND TESTED / EXPERIMENT PIPELINE–CSV INTEGRATION AND AUTOMATED RUNNER IN PROGRESS / PUBLIC API EXPOSURE PENDING** | Bộ đánh giá nội bộ `metrics_evaluator.py` và structured render trace đã hoạt động và có test; PR1 đang tích hợp các metric thực sự đã tồn tại vào experiment pipeline và CSV; public API chỉ mở rộng sau khi backend metric ổn định; API Spec sẽ được cập nhật bằng PR tài liệu riêng; không thay đổi API contract trong đợt này. |
 | **Schema Annotation CA-VHC** | TV1 & TV4 | **PROPOSED / NON-BINDING** | Schema mẫu đề xuất trong mục 7 tài liệu này, chưa binding vào core engine. |
 | **Schema Writer Profile cá nhân hóa** | TV1 | **PROPOSED / P2 RESEARCH** | Thuộc nhánh nghiên cứu mở rộng P2, chưa tích hợp vào engine lõi. |
 | **Bộ trích xuất đặc trưng Writer Profile độc lập** | TV1 | **PROPOSED / P2 RESEARCH** | Đang chuẩn bị kịch bản trích xuất 4 đặc trưng hình học độc lập. |
