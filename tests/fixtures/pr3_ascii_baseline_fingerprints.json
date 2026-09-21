@@ -1,0 +1,343 @@
+{
+  "schema_version": 1,
+  "method_tag": "b3_current_trellis",
+  "case_count": 48,
+  "cases": [
+    {
+      "text": "OmniDraw",
+      "font": "oly",
+      "style": "hand_hocsinh",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "03313e4e7c001109206a689d9ef5309757b6ce471d6c788b48292eac54565513"
+    },
+    {
+      "text": "OmniDraw",
+      "font": "oly",
+      "style": "hand_hocsinh",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "d27f39bca2ee0e0c9c37cf48eb0ec78f7c7ea2d2f970ed79eedb680f55bf4692"
+    },
+    {
+      "text": "OmniDraw",
+      "font": "oly",
+      "style": "hand_hocsinh",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "90d91764c1f4a3470c956e45df29957d143dbc33f85984f6a5e5d75ae9480bd5"
+    },
+    {
+      "text": "OmniDraw",
+      "font": "oly",
+      "style": "hand_hocsinh",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "00d2781ccd518b75d1f85c2a65a456a9b25a346cb22caa6c254b245f4f192ea7"
+    },
+    {
+      "text": "OmniDraw",
+      "font": "omni_casual",
+      "style": "hand_hocsinh",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "66681b0b1ff88721fdf13813a648bfb2e70784e5330505eb7c04fafc203746d9"
+    },
+    {
+      "text": "OmniDraw",
+      "font": "omni_casual",
+      "style": "hand_hocsinh",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "9bedc222b2a65f52412bcc86100827606f8664502e592109b3a173eb3f143e7f"
+    },
+    {
+      "text": "OmniDraw",
+      "font": "omni_casual",
+      "style": "hand_hocsinh",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "a85e7cb5459e7330322f4944b8a9f74d8d52acd84b05e3449acb8e884127ebee"
+    },
+    {
+      "text": "OmniDraw",
+      "font": "omni_casual",
+      "style": "hand_hocsinh",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "3ffc1d865741ef6f1e5cae9b42e4e87c282b7f418303e1fa271d53d3d4f7aa97"
+    },
+    {
+      "text": "connection",
+      "font": "oly",
+      "style": "hand_hocsinh",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "a8b5c7a941ca80e0d1ea377d271789b89449273542b03f4f0f6c861f729185b7"
+    },
+    {
+      "text": "connection",
+      "font": "oly",
+      "style": "hand_hocsinh",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "26fe59f574c90d252009de3399858ab4a0736f0d5f17d361669e0cd8479dfb71"
+    },
+    {
+      "text": "connection",
+      "font": "oly",
+      "style": "hand_hocsinh",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "a6264e78573f96e082bda3308d7c88bcee65b66ba0b3917876b0f28b70b4326e"
+    },
+    {
+      "text": "connection",
+      "font": "oly",
+      "style": "hand_hocsinh",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "362a03918bcf626ab5d7169f3fabc1247f60fbdf533ea95c33ff7562ef03c518"
+    },
+    {
+      "text": "connection",
+      "font": "omni_casual",
+      "style": "hand_hocsinh",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "e415fe5ab6d15e8c964577f7452caf14e2bc4a0df9ee949d75bdd94ef3824d94"
+    },
+    {
+      "text": "connection",
+      "font": "omni_casual",
+      "style": "hand_hocsinh",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "8af06fd14e21d1a56ad0dfe29d814164d5313c1272ce41033b34770f62d11e1e"
+    },
+    {
+      "text": "connection",
+      "font": "omni_casual",
+      "style": "hand_hocsinh",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "057621ab8e552149de085dc84ea0e351910cc638c14e43a8d86bfd7b8f3c19ff"
+    },
+    {
+      "text": "connection",
+      "font": "omni_casual",
+      "style": "hand_hocsinh",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "8725d4cea665cfecc79d51a5f75a550221dd3f4266b5062420552aa643b46700"
+    },
+    {
+      "text": "handwriting",
+      "font": "oly",
+      "style": "hand_hocsinh",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "45b41c21cfb5e9d036a04f6f1575cdb686060786648d2d3ace897d3f0fb91d57"
+    },
+    {
+      "text": "handwriting",
+      "font": "oly",
+      "style": "hand_hocsinh",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "1a8c388e5cceccccaf06396caab00bc19c48fa66d48730d7d800316cb23523f9"
+    },
+    {
+      "text": "handwriting",
+      "font": "oly",
+      "style": "hand_hocsinh",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "1f5585756e75b3b3ad4f98d3f5ef4dfd96540eaa005d3449401e0069cddcc421"
+    },
+    {
+      "text": "handwriting",
+      "font": "oly",
+      "style": "hand_hocsinh",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "5151b9149cec8eb9ff89e536f94d60fca3970f59ef891c104023f6b08cdfee29"
+    },
+    {
+      "text": "handwriting",
+      "font": "omni_casual",
+      "style": "hand_hocsinh",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "7dcef653e7a5606d323080e324149407a826695eacb40d9fc73a6e8980d5451a"
+    },
+    {
+      "text": "handwriting",
+      "font": "omni_casual",
+      "style": "hand_hocsinh",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "4d8f482d55962980f39adf66fbe73a54e1229084031694936064c4de471eab6d"
+    },
+    {
+      "text": "handwriting",
+      "font": "omni_casual",
+      "style": "hand_hocsinh",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "5ca7f54702c68d5a2bac2d361a73d3255b73c4510859b1c20e0ca49edb9827ed"
+    },
+    {
+      "text": "handwriting",
+      "font": "omni_casual",
+      "style": "hand_hocsinh",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "dd0de9c9e3544e02bb113c4f99092f798d98cac2b806c5625ef5e94fabc8f713"
+    },
+    {
+      "text": "minimum",
+      "font": "oly",
+      "style": "hand_hocsinh",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "f9fc909c47f3f5b786cdb63d61ee93b00c53d017be0d5fdde948f24e9f2482e5"
+    },
+    {
+      "text": "minimum",
+      "font": "oly",
+      "style": "hand_hocsinh",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "03bf6e35071fd976f2dfcb12572201ba1020aa408ac5e980d7ad01567ee4c9fc"
+    },
+    {
+      "text": "minimum",
+      "font": "oly",
+      "style": "hand_hocsinh",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "6398e2c7a8608393030a03b5ace275485a8df366b4f98fe5c0cf3cc330dc6780"
+    },
+    {
+      "text": "minimum",
+      "font": "oly",
+      "style": "hand_hocsinh",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "4cfdd708c505461b1bf978ecbf2a030de9f2914074594759c3db8f1b38a363ac"
+    },
+    {
+      "text": "minimum",
+      "font": "omni_casual",
+      "style": "hand_hocsinh",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "a3a1972952d7b7d027f42acb0c16d04ddff284a2c3526530ccef89e31197f607"
+    },
+    {
+      "text": "minimum",
+      "font": "omni_casual",
+      "style": "hand_hocsinh",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "accc080ec9f07e482ba8bedfc607859eac9425e50fa2c4f71bc57a782cd30755"
+    },
+    {
+      "text": "minimum",
+      "font": "omni_casual",
+      "style": "hand_hocsinh",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "8a4de6ae4057ab0d6fac0259f8d0ceaf6488e5fe5ca4796005b71039c417f032"
+    },
+    {
+      "text": "minimum",
+      "font": "omni_casual",
+      "style": "hand_hocsinh",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "219712fd0b4c2588bfdbd7d23581e4b6fd288392079f6aa13a9104043a694213"
+    },
+    {
+      "text": "plotter",
+      "font": "oly",
+      "style": "hand_hocsinh",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "6f343ce2e64f4f4eae522ae4360b6a30584d55ba12f1305b7e331d32a8f282df"
+    },
+    {
+      "text": "plotter",
+      "font": "oly",
+      "style": "hand_hocsinh",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "c852f4bfb58577e998f042751239c2d0c0c3a98e4cd57bd09a34a5bbdf26ebf9"
+    },
+    {
+      "text": "plotter",
+      "font": "oly",
+      "style": "hand_hocsinh",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "1a03b4440191abeae75237fc364d85f1a52430710501bfca51f3678c423f7ffc"
+    },
+    {
+      "text": "plotter",
+      "font": "oly",
+      "style": "hand_hocsinh",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "ed27090163cb819b64967c28c313234dcdde74bc9df346ed2f736bad53bb21c3"
+    },
+    {
+      "text": "plotter",
+      "font": "omni_casual",
+      "style": "hand_hocsinh",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "c20173880da781341e6b3004e33a97fb17add3ddfbebaffc5d4556a0ff2f8367"
+    },
+    {
+      "text": "plotter",
+      "font": "omni_casual",
+      "style": "hand_hocsinh",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "d20fee29e75e6a61251f32ff3295dd62b4251dc203cb17e79cf9fd397d26097d"
+    },
+    {
+      "text": "plotter",
+      "font": "omni_casual",
+      "style": "hand_hocsinh",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "5b2b4f396ecd2e5892419434db528ed558bbd0c16bc7785449c721bf0714f4ce"
+    },
+    {
+      "text": "plotter",
+      "font": "omni_casual",
+      "style": "hand_hocsinh",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "309071d690aa55e978e3989a91c270704303a1920758cf4cfa5d73ca598770d8"
+    },
+    {
+      "text": "vector",
+      "font": "oly",
+      "style": "hand_hocsinh",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "3b89bba7325902315568fe87a1637f45bb4bef3ffd979f5d97a4dedbcf64063e"
+    },
+    {
+      "text": "vector",
+      "font": "oly",
+      "style": "hand_hocsinh",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "29a00ab8c786148dd57906562cb0486ec1cc6dd6d1dd83644a486f680a2c6137"
+    },
+    {
+      "text": "vector",
+      "font": "oly",
+      "style": "hand_hocsinh",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "b451b3e97a056b75f126263291776f961a2f9da087d987c6bb9a16e2e37e1eb2"
+    },
+    {
+      "text": "vector",
+      "font": "oly",
+      "style": "hand_hocsinh",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "9e0b6a78d1ef7ab2e012670eb0ff73ed896094a6255c55ea568dec36f783c20d"
+    },
+    {
+      "text": "vector",
+      "font": "omni_casual",
+      "style": "hand_hocsinh",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "ec5e98a9015e069c1b1d7d4ed6c55e7fff31eb1aa33f56d1cb66e2c4bdcc4adc"
+    },
+    {
+      "text": "vector",
+      "font": "omni_casual",
+      "style": "hand_hocsinh",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "648aa8029496f6acc727b4baa82aee7c8d81151f6a0a09bb741a3ccf2e5b364a"
+    },
+    {
+      "text": "vector",
+      "font": "omni_casual",
+      "style": "hand_hocsinh",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "ebd824ab1cd6c3b7b3dd6069773537d9631d0fd6986c2f55fdf20ebb8fd77559"
+    },
+    {
+      "text": "vector",
+      "font": "omni_casual",
+      "style": "hand_hocsinh",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "178a64b7c199f1da70724135f40b83d78060b63ca7dedad4e2d5cdcdb971fdc7"
+    }
+  ]
+}
