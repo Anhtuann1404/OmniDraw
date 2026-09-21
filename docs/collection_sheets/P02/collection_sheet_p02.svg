@@ -1,0 +1,380 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 210 297" width="210mm" height="297mm">
+  <!-- Paper Surface -->
+  <rect x="0" y="0" width="210" height="297" fill="#ffffff"/>
+  <!-- 4 Corner Fiducial Markers (5.0 x 5.0 mm) -->
+  <g id="fiducials">
+    <rect id="fiducial_tl" x="12.0" y="12.0" width="5.0" height="5.0" fill="#000000"/>
+    <rect id="fiducial_tr" x="193.0" y="12.0" width="5.0" height="5.0" fill="#000000"/>
+    <rect id="fiducial_bl" x="12.0" y="280.0" width="5.0" height="5.0" fill="#000000"/>
+    <rect id="fiducial_br" x="193.0" y="280.0" width="5.0" height="5.0" fill="#000000"/>
+  </g>
+  <!-- Header -->
+  <g id="header">
+    <text x="21.0" y="16.0" font-family="Helvetica, Arial, sans-serif" font-size="4.0" font-weight="bold" fill="#111111" letter-spacing="0.2">OMNIDRAW RESEARCH DATASET</text>
+    <text x="21.0" y="20.2" font-family="Helvetica, Arial, sans-serif" font-size="2.7" font-weight="bold" fill="#333333">P02 — Context &amp; Ligature Collection Sheet</text>
+    <text x="21.0" y="23.8" font-family="Courier, monospace" font-size="1.9" fill="#555555">FORM VERSION: ODW-HW-P02-DEMO-v0.1 • PROTOCOL: DOC-SPEC-08-DATASET</text>
+    <text x="189.0" y="16.0" text-anchor="end" font-family="Courier, monospace" font-size="1.9" font-weight="bold" fill="#444444">RESEARCH USE ONLY</text>
+    <text x="189.0" y="19.8" text-anchor="end" font-family="Courier, monospace" font-size="1.9" fill="#666666">ANONYMIZED PROTOCOL • NO PII COLLECTED</text>
+    <text x="189.0" y="23.8" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="1.9" font-weight="bold" fill="#c93b2b">PILOT CANDIDATE — NOT APPROVED FOR FORMAL DATA COLLECTION</text>
+    <line x1="21.0" y1="25.5" x2="189.0" y2="25.5" stroke="#cccccc" stroke-width="0.25"/>
+    <rect x="13.0" y="27.0" width="184.0" height="6.5" fill="#f8f9fa" stroke="#cccccc" stroke-width="0.25" rx="0.6"/>
+    <text x="16.0" y="31.5" font-family="Helvetica, Arial, sans-serif" font-size="2.2" font-weight="bold" fill="#222222">Writer ID: <tspan font-family="Courier, monospace" font-weight="normal" fill="#555555">W_________</tspan></text>
+    <text x="64.0" y="31.5" font-family="Helvetica, Arial, sans-serif" font-size="2.2" font-weight="bold" fill="#222222">Session: <tspan font-family="Courier, monospace" font-weight="normal" fill="#555555">S______</tspan></text>
+    <text x="105.0" y="31.5" font-family="Helvetica, Arial, sans-serif" font-size="2.2" font-weight="bold" fill="#222222">Page: <tspan font-family="Courier, monospace" font-weight="bold" fill="#111111">P02</tspan></text>
+    <text x="145.0" y="31.5" font-family="Helvetica, Arial, sans-serif" font-size="2.2" font-weight="bold" fill="#222222">Date: <tspan font-family="Courier, monospace" font-weight="normal" fill="#555555">_____ / _____ / 202___</tspan></text>
+  </g>
+  <!-- Instructions -->
+  <g id="instructions">
+    <rect x="13.0" y="35.0" width="184.0" height="9.5" fill="#ffffff" stroke="#b0b0b0" stroke-width="0.28" rx="0.6"/>
+    <rect x="13.0" y="35.0" width="184.0" height="3.0" fill="#eceff1" stroke="#b0b0b0" stroke-width="0.28" rx="0.6"/>
+    <text x="16.0" y="37.2" font-family="Helvetica, Arial, sans-serif" font-size="1.9" font-weight="bold" fill="#111111">HƯỚNG DẪN VIẾT MẪU / WRITING INSTRUCTIONS</text>
+    <text x="194.0" y="37.2" text-anchor="end" font-family="Courier, monospace" font-size="1.6" fill="#555555">SPECIFICATION: 0.5MM BLACK GEL PEN</text>
+    <text x="16.0" y="40.5" font-family="Helvetica, Arial, sans-serif" font-size="1.75" fill="#333333">• Viết bằng nét chữ tự nhiên; tuyệt đối KHÔNG cố tình nắn nót đẹp hơn bình thường.</text>
+    <text x="16.0" y="43.2" font-family="Helvetica, Arial, sans-serif" font-size="1.75" fill="#333333">• Dùng bút gel đen 0.5 mm do nhóm cung cấp (hoặc tương thích); không dùng bút khác.</text>
+    <text x="106.0" y="40.5" font-family="Helvetica, Arial, sans-serif" font-size="1.75" fill="#333333">• Viết đúng từ/cụm từ yêu cầu, liền mạch tự nhiên trong vùng kẻ; KHÔNG chạm dải nhãn.</text>
+    <text x="106.0" y="43.2" font-family="Helvetica, Arial, sans-serif" font-size="1.75" fill="#333333">• Không viết đè, không tô lại nét lỗi, không dùng bút xóa; không ký tên hay ghi thông tin cá nhân.</text>
+  </g>
+  <!-- Contextual Writing Rows (16 Rows across 3 Sections) -->
+  <g id="writing_sections">
+    <!-- Section A Banner -->
+    <g id="sec_banner_A">
+      <rect x="13.00" y="46.00" width="184.00" height="3.50" fill="#eeeeee" stroke="#aaaaaa" stroke-width="0.25" rx="0.5"/>
+      <text x="15.50" y="48.40" font-family="Helvetica, Arial, sans-serif" font-size="1.9" font-weight="bold" fill="#222222">SECTION A — WORD INITIAL / PHRASE INITIAL</text>
+      <text x="194.50" y="48.40" text-anchor="end" font-family="Courier, monospace" font-size="1.4" fill="#666666">ENTRY STROKE • INITIAL ALLOGRAPHS • WORD SPACING</text>
+    </g>
+    <!-- Row CTX_INIT_001 -->
+    <g id="row_CTX_INIT_001">
+      <rect x="13.00" y="50.30" width="184.00" height="11.60" fill="#ffffff" stroke="#888888" stroke-width="0.28" rx="0.5"/>
+      <rect x="13.00" y="50.30" width="184.00" height="3.50" fill="#f4f6f8" stroke="#888888" stroke-width="0.28" rx="0.5"/>
+      <line x1="13.00" y1="53.80" x2="197.00" y2="53.80" stroke="#777777" stroke-width="0.25"/>
+      <text x="15.00" y="52.80" font-family="Courier, monospace" font-size="1.8" font-weight="bold" fill="#222222">CTX_INIT_001<tspan font-family="Helvetica, Arial, sans-serif" font-size="1.4" font-weight="normal" fill="#666666">  •  WORD_INITIAL</tspan></text>
+      <text x="162.00" y="52.80" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="1.6" fill="#555555">Prompt:</text>
+      <text x="195.00" y="52.90" text-anchor="end" font-family="Times New Roman, Georgia, serif" font-size="3.2" font-weight="bold" fill="#000000">Kính gửi</text>
+      <line x1="14.50" y1="55.00" x2="195.50" y2="55.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="14.50" y1="57.20" x2="195.50" y2="57.20" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="14.50" y1="60.10" x2="195.50" y2="60.10" stroke="#7e7e7e" stroke-width="0.26"/>
+      <line x1="14.50" y1="61.30" x2="195.50" y2="61.30" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="13.00" y1="60.10" x2="14.20" y2="60.10" stroke="#555555" stroke-width="0.35"/>
+      <line x1="195.80" y1="60.10" x2="197.00" y2="60.10" stroke="#555555" stroke-width="0.35"/>
+    </g>
+    <!-- Row CTX_INIT_002 -->
+    <g id="row_CTX_INIT_002">
+      <rect x="13.00" y="62.40" width="184.00" height="11.60" fill="#ffffff" stroke="#888888" stroke-width="0.28" rx="0.5"/>
+      <rect x="13.00" y="62.40" width="184.00" height="3.50" fill="#f4f6f8" stroke="#888888" stroke-width="0.28" rx="0.5"/>
+      <line x1="13.00" y1="65.90" x2="197.00" y2="65.90" stroke="#777777" stroke-width="0.25"/>
+      <text x="15.00" y="64.90" font-family="Courier, monospace" font-size="1.8" font-weight="bold" fill="#222222">CTX_INIT_002<tspan font-family="Helvetica, Arial, sans-serif" font-size="1.4" font-weight="normal" fill="#666666">  •  WORD_INITIAL</tspan></text>
+      <text x="162.00" y="64.90" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="1.6" fill="#555555">Prompt:</text>
+      <text x="195.00" y="65.00" text-anchor="end" font-family="Times New Roman, Georgia, serif" font-size="3.2" font-weight="bold" fill="#000000">Thân gửi</text>
+      <line x1="14.50" y1="67.10" x2="195.50" y2="67.10" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="14.50" y1="69.30" x2="195.50" y2="69.30" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="14.50" y1="72.20" x2="195.50" y2="72.20" stroke="#7e7e7e" stroke-width="0.26"/>
+      <line x1="14.50" y1="73.40" x2="195.50" y2="73.40" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="13.00" y1="72.20" x2="14.20" y2="72.20" stroke="#555555" stroke-width="0.35"/>
+      <line x1="195.80" y1="72.20" x2="197.00" y2="72.20" stroke="#555555" stroke-width="0.35"/>
+    </g>
+    <!-- Row CTX_INIT_003 -->
+    <g id="row_CTX_INIT_003">
+      <rect x="13.00" y="74.50" width="184.00" height="11.60" fill="#ffffff" stroke="#888888" stroke-width="0.28" rx="0.5"/>
+      <rect x="13.00" y="74.50" width="184.00" height="3.50" fill="#f4f6f8" stroke="#888888" stroke-width="0.28" rx="0.5"/>
+      <line x1="13.00" y1="78.00" x2="197.00" y2="78.00" stroke="#777777" stroke-width="0.25"/>
+      <text x="15.00" y="77.00" font-family="Courier, monospace" font-size="1.8" font-weight="bold" fill="#222222">CTX_INIT_003<tspan font-family="Helvetica, Arial, sans-serif" font-size="1.4" font-weight="normal" fill="#666666">  •  WORD_INITIAL</tspan></text>
+      <text x="162.00" y="77.00" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="1.6" fill="#555555">Prompt:</text>
+      <text x="195.00" y="77.10" text-anchor="end" font-family="Times New Roman, Georgia, serif" font-size="3.2" font-weight="bold" fill="#000000">Cảm ơn</text>
+      <line x1="14.50" y1="79.20" x2="195.50" y2="79.20" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="14.50" y1="81.40" x2="195.50" y2="81.40" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="14.50" y1="84.30" x2="195.50" y2="84.30" stroke="#7e7e7e" stroke-width="0.26"/>
+      <line x1="14.50" y1="85.50" x2="195.50" y2="85.50" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="13.00" y1="84.30" x2="14.20" y2="84.30" stroke="#555555" stroke-width="0.35"/>
+      <line x1="195.80" y1="84.30" x2="197.00" y2="84.30" stroke="#555555" stroke-width="0.35"/>
+    </g>
+    <!-- Row CTX_INIT_004 -->
+    <g id="row_CTX_INIT_004">
+      <rect x="13.00" y="86.60" width="184.00" height="11.60" fill="#ffffff" stroke="#888888" stroke-width="0.28" rx="0.5"/>
+      <rect x="13.00" y="86.60" width="184.00" height="3.50" fill="#f4f6f8" stroke="#888888" stroke-width="0.28" rx="0.5"/>
+      <line x1="13.00" y1="90.10" x2="197.00" y2="90.10" stroke="#777777" stroke-width="0.25"/>
+      <text x="15.00" y="89.10" font-family="Courier, monospace" font-size="1.8" font-weight="bold" fill="#222222">CTX_INIT_004<tspan font-family="Helvetica, Arial, sans-serif" font-size="1.4" font-weight="normal" fill="#666666">  •  WORD_INITIAL</tspan></text>
+      <text x="162.00" y="89.10" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="1.6" fill="#555555">Prompt:</text>
+      <text x="195.00" y="89.20" text-anchor="end" font-family="Times New Roman, Georgia, serif" font-size="3.2" font-weight="bold" fill="#000000">Chào mừng</text>
+      <line x1="14.50" y1="91.30" x2="195.50" y2="91.30" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="14.50" y1="93.50" x2="195.50" y2="93.50" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="14.50" y1="96.40" x2="195.50" y2="96.40" stroke="#7e7e7e" stroke-width="0.26"/>
+      <line x1="14.50" y1="97.60" x2="195.50" y2="97.60" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="13.00" y1="96.40" x2="14.20" y2="96.40" stroke="#555555" stroke-width="0.35"/>
+      <line x1="195.80" y1="96.40" x2="197.00" y2="96.40" stroke="#555555" stroke-width="0.35"/>
+    </g>
+    <!-- Section B Banner -->
+    <g id="sec_banner_B">
+      <rect x="13.00" y="100.00" width="184.00" height="3.50" fill="#eeeeee" stroke="#aaaaaa" stroke-width="0.25" rx="0.5"/>
+      <text x="15.50" y="102.40" font-family="Helvetica, Arial, sans-serif" font-size="1.9" font-weight="bold" fill="#222222">SECTION B — WORD MEDIAL &amp; LIGATURE CHALLENGE</text>
+      <text x="194.50" y="102.40" text-anchor="end" font-family="Courier, monospace" font-size="1.4" fill="#666666">MEDIAL CONNECTORS • DIACRITIC INTERACTION • INTRA-WRITER VARIATION</text>
+    </g>
+    <!-- Row CTX_MED_001 -->
+    <g id="row_CTX_MED_001">
+      <rect x="13.00" y="104.30" width="184.00" height="11.60" fill="#ffffff" stroke="#888888" stroke-width="0.28" rx="0.5"/>
+      <rect x="13.00" y="104.30" width="184.00" height="3.50" fill="#f4f6f8" stroke="#888888" stroke-width="0.28" rx="0.5"/>
+      <line x1="13.00" y1="107.80" x2="197.00" y2="107.80" stroke="#777777" stroke-width="0.25"/>
+      <text x="15.00" y="106.80" font-family="Courier, monospace" font-size="1.8" font-weight="bold" fill="#222222">CTX_MED_001<tspan font-family="Helvetica, Arial, sans-serif" font-size="1.4" font-weight="normal" fill="#666666">  •  WORD_MEDIAL / LIGATURE</tspan></text>
+      <text x="162.00" y="106.80" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="1.6" fill="#555555">Prompt:</text>
+      <text x="195.00" y="106.90" text-anchor="end" font-family="Times New Roman, Georgia, serif" font-size="3.2" font-weight="bold" fill="#000000">thuyền</text>
+      <line x1="14.50" y1="109.00" x2="195.50" y2="109.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="14.50" y1="111.20" x2="195.50" y2="111.20" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="14.50" y1="114.10" x2="195.50" y2="114.10" stroke="#7e7e7e" stroke-width="0.26"/>
+      <line x1="14.50" y1="115.30" x2="195.50" y2="115.30" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="13.00" y1="114.10" x2="14.20" y2="114.10" stroke="#555555" stroke-width="0.35"/>
+      <line x1="195.80" y1="114.10" x2="197.00" y2="114.10" stroke="#555555" stroke-width="0.35"/>
+    </g>
+    <!-- Row CTX_MED_002 -->
+    <g id="row_CTX_MED_002">
+      <rect x="13.00" y="116.40" width="184.00" height="11.60" fill="#ffffff" stroke="#888888" stroke-width="0.28" rx="0.5"/>
+      <rect x="13.00" y="116.40" width="184.00" height="3.50" fill="#f4f6f8" stroke="#888888" stroke-width="0.28" rx="0.5"/>
+      <line x1="13.00" y1="119.90" x2="197.00" y2="119.90" stroke="#777777" stroke-width="0.25"/>
+      <text x="15.00" y="118.90" font-family="Courier, monospace" font-size="1.8" font-weight="bold" fill="#222222">CTX_MED_002<tspan font-family="Helvetica, Arial, sans-serif" font-size="1.4" font-weight="normal" fill="#666666">  •  WORD_MEDIAL / LIGATURE</tspan></text>
+      <text x="162.00" y="118.90" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="1.6" fill="#555555">Prompt:</text>
+      <text x="195.00" y="119.00" text-anchor="end" font-family="Times New Roman, Georgia, serif" font-size="3.2" font-weight="bold" fill="#000000">nghiêng</text>
+      <line x1="14.50" y1="121.10" x2="195.50" y2="121.10" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="14.50" y1="123.30" x2="195.50" y2="123.30" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="14.50" y1="126.20" x2="195.50" y2="126.20" stroke="#7e7e7e" stroke-width="0.26"/>
+      <line x1="14.50" y1="127.40" x2="195.50" y2="127.40" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="13.00" y1="126.20" x2="14.20" y2="126.20" stroke="#555555" stroke-width="0.35"/>
+      <line x1="195.80" y1="126.20" x2="197.00" y2="126.20" stroke="#555555" stroke-width="0.35"/>
+    </g>
+    <!-- Row CTX_MED_003_A -->
+    <g id="row_CTX_MED_003_A">
+      <rect x="13.00" y="128.50" width="184.00" height="11.60" fill="#ffffff" stroke="#888888" stroke-width="0.28" rx="0.5"/>
+      <rect x="13.00" y="128.50" width="184.00" height="3.50" fill="#f4f6f8" stroke="#888888" stroke-width="0.28" rx="0.5"/>
+      <line x1="13.00" y1="132.00" x2="197.00" y2="132.00" stroke="#777777" stroke-width="0.25"/>
+      <text x="15.00" y="131.00" font-family="Courier, monospace" font-size="1.8" font-weight="bold" fill="#222222">CTX_MED_003_A<tspan font-family="Helvetica, Arial, sans-serif" font-size="1.4" font-weight="normal" fill="#666666">  •  LIGATURE CHALLENGE</tspan></text>
+      <text x="162.00" y="131.00" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="1.6" fill="#555555">Prompt:</text>
+      <text x="195.00" y="131.10" text-anchor="end" font-family="Times New Roman, Georgia, serif" font-size="3.2" font-weight="bold" fill="#000000">trường</text>
+      <line x1="14.50" y1="133.20" x2="195.50" y2="133.20" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="14.50" y1="135.40" x2="195.50" y2="135.40" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="14.50" y1="138.30" x2="195.50" y2="138.30" stroke="#7e7e7e" stroke-width="0.26"/>
+      <line x1="14.50" y1="139.50" x2="195.50" y2="139.50" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="13.00" y1="138.30" x2="14.20" y2="138.30" stroke="#555555" stroke-width="0.35"/>
+      <line x1="195.80" y1="138.30" x2="197.00" y2="138.30" stroke="#555555" stroke-width="0.35"/>
+    </g>
+    <!-- Row CTX_MED_003_B -->
+    <g id="row_CTX_MED_003_B">
+      <rect x="13.00" y="140.60" width="184.00" height="11.60" fill="#ffffff" stroke="#888888" stroke-width="0.28" rx="0.5"/>
+      <rect x="13.00" y="140.60" width="184.00" height="3.50" fill="#f4f6f8" stroke="#888888" stroke-width="0.28" rx="0.5"/>
+      <line x1="13.00" y1="144.10" x2="197.00" y2="144.10" stroke="#777777" stroke-width="0.25"/>
+      <text x="15.00" y="143.10" font-family="Courier, monospace" font-size="1.8" font-weight="bold" fill="#222222">CTX_MED_003_B<tspan font-family="Helvetica, Arial, sans-serif" font-size="1.4" font-weight="normal" fill="#666666">  •  LIGATURE CHALLENGE</tspan></text>
+      <text x="162.00" y="143.10" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="1.6" fill="#555555">Prompt:</text>
+      <text x="195.00" y="143.20" text-anchor="end" font-family="Times New Roman, Georgia, serif" font-size="3.2" font-weight="bold" fill="#000000">trường</text>
+      <line x1="14.50" y1="145.30" x2="195.50" y2="145.30" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="14.50" y1="147.50" x2="195.50" y2="147.50" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="14.50" y1="150.40" x2="195.50" y2="150.40" stroke="#7e7e7e" stroke-width="0.26"/>
+      <line x1="14.50" y1="151.60" x2="195.50" y2="151.60" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="13.00" y1="150.40" x2="14.20" y2="150.40" stroke="#555555" stroke-width="0.35"/>
+      <line x1="195.80" y1="150.40" x2="197.00" y2="150.40" stroke="#555555" stroke-width="0.35"/>
+    </g>
+    <!-- Row CTX_MED_004_A -->
+    <g id="row_CTX_MED_004_A">
+      <rect x="13.00" y="152.70" width="184.00" height="11.60" fill="#ffffff" stroke="#888888" stroke-width="0.28" rx="0.5"/>
+      <rect x="13.00" y="152.70" width="184.00" height="3.50" fill="#f4f6f8" stroke="#888888" stroke-width="0.28" rx="0.5"/>
+      <line x1="13.00" y1="156.20" x2="197.00" y2="156.20" stroke="#777777" stroke-width="0.25"/>
+      <text x="15.00" y="155.20" font-family="Courier, monospace" font-size="1.8" font-weight="bold" fill="#222222">CTX_MED_004_A<tspan font-family="Helvetica, Arial, sans-serif" font-size="1.4" font-weight="normal" fill="#666666">  •  LIGATURE CHALLENGE</tspan></text>
+      <text x="162.00" y="155.20" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="1.6" fill="#555555">Prompt:</text>
+      <text x="195.00" y="155.30" text-anchor="end" font-family="Times New Roman, Georgia, serif" font-size="3.2" font-weight="bold" fill="#000000">nguyễn</text>
+      <line x1="14.50" y1="157.40" x2="195.50" y2="157.40" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="14.50" y1="159.60" x2="195.50" y2="159.60" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="14.50" y1="162.50" x2="195.50" y2="162.50" stroke="#7e7e7e" stroke-width="0.26"/>
+      <line x1="14.50" y1="163.70" x2="195.50" y2="163.70" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="13.00" y1="162.50" x2="14.20" y2="162.50" stroke="#555555" stroke-width="0.35"/>
+      <line x1="195.80" y1="162.50" x2="197.00" y2="162.50" stroke="#555555" stroke-width="0.35"/>
+    </g>
+    <!-- Row CTX_MED_004_B -->
+    <g id="row_CTX_MED_004_B">
+      <rect x="13.00" y="164.80" width="184.00" height="11.60" fill="#ffffff" stroke="#888888" stroke-width="0.28" rx="0.5"/>
+      <rect x="13.00" y="164.80" width="184.00" height="3.50" fill="#f4f6f8" stroke="#888888" stroke-width="0.28" rx="0.5"/>
+      <line x1="13.00" y1="168.30" x2="197.00" y2="168.30" stroke="#777777" stroke-width="0.25"/>
+      <text x="15.00" y="167.30" font-family="Courier, monospace" font-size="1.8" font-weight="bold" fill="#222222">CTX_MED_004_B<tspan font-family="Helvetica, Arial, sans-serif" font-size="1.4" font-weight="normal" fill="#666666">  •  LIGATURE CHALLENGE</tspan></text>
+      <text x="162.00" y="167.30" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="1.6" fill="#555555">Prompt:</text>
+      <text x="195.00" y="167.40" text-anchor="end" font-family="Times New Roman, Georgia, serif" font-size="3.2" font-weight="bold" fill="#000000">nguyễn</text>
+      <line x1="14.50" y1="169.50" x2="195.50" y2="169.50" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="14.50" y1="171.70" x2="195.50" y2="171.70" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="14.50" y1="174.60" x2="195.50" y2="174.60" stroke="#7e7e7e" stroke-width="0.26"/>
+      <line x1="14.50" y1="175.80" x2="195.50" y2="175.80" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="13.00" y1="174.60" x2="14.20" y2="174.60" stroke="#555555" stroke-width="0.35"/>
+      <line x1="195.80" y1="174.60" x2="197.00" y2="174.60" stroke="#555555" stroke-width="0.35"/>
+    </g>
+    <!-- Section C Banner -->
+    <g id="sec_banner_C">
+      <rect x="13.00" y="178.20" width="184.00" height="3.50" fill="#eeeeee" stroke="#aaaaaa" stroke-width="0.25" rx="0.5"/>
+      <text x="15.50" y="180.60" font-family="Helvetica, Arial, sans-serif" font-size="1.9" font-weight="bold" fill="#222222">SECTION C — WORD FINAL VARIANTS</text>
+      <text x="194.50" y="180.60" text-anchor="end" font-family="Courier, monospace" font-size="1.4" fill="#666666">TERMINAL ALLOGRAPHS • EXIT STROKES • BOUNDARY SPACING</text>
+    </g>
+    <!-- Row CTX_FINAL_001 -->
+    <g id="row_CTX_FINAL_001">
+      <rect x="13.00" y="182.50" width="184.00" height="11.60" fill="#ffffff" stroke="#888888" stroke-width="0.28" rx="0.5"/>
+      <rect x="13.00" y="182.50" width="184.00" height="3.50" fill="#f4f6f8" stroke="#888888" stroke-width="0.28" rx="0.5"/>
+      <line x1="13.00" y1="186.00" x2="197.00" y2="186.00" stroke="#777777" stroke-width="0.25"/>
+      <text x="15.00" y="185.00" font-family="Courier, monospace" font-size="1.8" font-weight="bold" fill="#222222">CTX_FINAL_001<tspan font-family="Helvetica, Arial, sans-serif" font-size="1.4" font-weight="normal" fill="#666666">  •  WORD_FINAL</tspan></text>
+      <text x="162.00" y="185.00" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="1.6" fill="#555555">Prompt:</text>
+      <text x="195.00" y="185.10" text-anchor="end" font-family="Times New Roman, Georgia, serif" font-size="3.2" font-weight="bold" fill="#000000">bạn</text>
+      <line x1="14.50" y1="187.20" x2="195.50" y2="187.20" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="14.50" y1="189.40" x2="195.50" y2="189.40" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="14.50" y1="192.30" x2="195.50" y2="192.30" stroke="#7e7e7e" stroke-width="0.26"/>
+      <line x1="14.50" y1="193.50" x2="195.50" y2="193.50" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="13.00" y1="192.30" x2="14.20" y2="192.30" stroke="#555555" stroke-width="0.35"/>
+      <line x1="195.80" y1="192.30" x2="197.00" y2="192.30" stroke="#555555" stroke-width="0.35"/>
+    </g>
+    <!-- Row CTX_FINAL_002 -->
+    <g id="row_CTX_FINAL_002">
+      <rect x="13.00" y="194.60" width="184.00" height="11.60" fill="#ffffff" stroke="#888888" stroke-width="0.28" rx="0.5"/>
+      <rect x="13.00" y="194.60" width="184.00" height="3.50" fill="#f4f6f8" stroke="#888888" stroke-width="0.28" rx="0.5"/>
+      <line x1="13.00" y1="198.10" x2="197.00" y2="198.10" stroke="#777777" stroke-width="0.25"/>
+      <text x="15.00" y="197.10" font-family="Courier, monospace" font-size="1.8" font-weight="bold" fill="#222222">CTX_FINAL_002<tspan font-family="Helvetica, Arial, sans-serif" font-size="1.4" font-weight="normal" fill="#666666">  •  WORD_FINAL</tspan></text>
+      <text x="162.00" y="197.10" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="1.6" fill="#555555">Prompt:</text>
+      <text x="195.00" y="197.20" text-anchor="end" font-family="Times New Roman, Georgia, serif" font-size="3.2" font-weight="bold" fill="#000000">nam</text>
+      <line x1="14.50" y1="199.30" x2="195.50" y2="199.30" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="14.50" y1="201.50" x2="195.50" y2="201.50" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="14.50" y1="204.40" x2="195.50" y2="204.40" stroke="#7e7e7e" stroke-width="0.26"/>
+      <line x1="14.50" y1="205.60" x2="195.50" y2="205.60" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="13.00" y1="204.40" x2="14.20" y2="204.40" stroke="#555555" stroke-width="0.35"/>
+      <line x1="195.80" y1="204.40" x2="197.00" y2="204.40" stroke="#555555" stroke-width="0.35"/>
+    </g>
+    <!-- Row CTX_FINAL_003 -->
+    <g id="row_CTX_FINAL_003">
+      <rect x="13.00" y="206.70" width="184.00" height="11.60" fill="#ffffff" stroke="#888888" stroke-width="0.28" rx="0.5"/>
+      <rect x="13.00" y="206.70" width="184.00" height="3.50" fill="#f4f6f8" stroke="#888888" stroke-width="0.28" rx="0.5"/>
+      <line x1="13.00" y1="210.20" x2="197.00" y2="210.20" stroke="#777777" stroke-width="0.25"/>
+      <text x="15.00" y="209.20" font-family="Courier, monospace" font-size="1.8" font-weight="bold" fill="#222222">CTX_FINAL_003<tspan font-family="Helvetica, Arial, sans-serif" font-size="1.4" font-weight="normal" fill="#666666">  •  WORD_FINAL</tspan></text>
+      <text x="162.00" y="209.20" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="1.6" fill="#555555">Prompt:</text>
+      <text x="195.00" y="209.30" text-anchor="end" font-family="Times New Roman, Georgia, serif" font-size="3.2" font-weight="bold" fill="#000000">nhìn</text>
+      <line x1="14.50" y1="211.40" x2="195.50" y2="211.40" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="14.50" y1="213.60" x2="195.50" y2="213.60" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="14.50" y1="216.50" x2="195.50" y2="216.50" stroke="#7e7e7e" stroke-width="0.26"/>
+      <line x1="14.50" y1="217.70" x2="195.50" y2="217.70" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="13.00" y1="216.50" x2="14.20" y2="216.50" stroke="#555555" stroke-width="0.35"/>
+      <line x1="195.80" y1="216.50" x2="197.00" y2="216.50" stroke="#555555" stroke-width="0.35"/>
+    </g>
+    <!-- Row CTX_FINAL_004 -->
+    <g id="row_CTX_FINAL_004">
+      <rect x="13.00" y="218.80" width="184.00" height="11.60" fill="#ffffff" stroke="#888888" stroke-width="0.28" rx="0.5"/>
+      <rect x="13.00" y="218.80" width="184.00" height="3.50" fill="#f4f6f8" stroke="#888888" stroke-width="0.28" rx="0.5"/>
+      <line x1="13.00" y1="222.30" x2="197.00" y2="222.30" stroke="#777777" stroke-width="0.25"/>
+      <text x="15.00" y="221.30" font-family="Courier, monospace" font-size="1.8" font-weight="bold" fill="#222222">CTX_FINAL_004<tspan font-family="Helvetica, Arial, sans-serif" font-size="1.4" font-weight="normal" fill="#666666">  •  WORD_FINAL</tspan></text>
+      <text x="162.00" y="221.30" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="1.6" fill="#555555">Prompt:</text>
+      <text x="195.00" y="221.40" text-anchor="end" font-family="Times New Roman, Georgia, serif" font-size="3.2" font-weight="bold" fill="#000000">tình</text>
+      <line x1="14.50" y1="223.50" x2="195.50" y2="223.50" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="14.50" y1="225.70" x2="195.50" y2="225.70" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="14.50" y1="228.60" x2="195.50" y2="228.60" stroke="#7e7e7e" stroke-width="0.26"/>
+      <line x1="14.50" y1="229.80" x2="195.50" y2="229.80" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="13.00" y1="228.60" x2="14.20" y2="228.60" stroke="#555555" stroke-width="0.35"/>
+      <line x1="195.80" y1="228.60" x2="197.00" y2="228.60" stroke="#555555" stroke-width="0.35"/>
+    </g>
+    <!-- Row CTX_FINAL_005 -->
+    <g id="row_CTX_FINAL_005">
+      <rect x="13.00" y="230.90" width="184.00" height="11.60" fill="#ffffff" stroke="#888888" stroke-width="0.28" rx="0.5"/>
+      <rect x="13.00" y="230.90" width="184.00" height="3.50" fill="#f4f6f8" stroke="#888888" stroke-width="0.28" rx="0.5"/>
+      <line x1="13.00" y1="234.40" x2="197.00" y2="234.40" stroke="#777777" stroke-width="0.25"/>
+      <text x="15.00" y="233.40" font-family="Courier, monospace" font-size="1.8" font-weight="bold" fill="#222222">CTX_FINAL_005<tspan font-family="Helvetica, Arial, sans-serif" font-size="1.4" font-weight="normal" fill="#666666">  •  WORD_FINAL</tspan></text>
+      <text x="162.00" y="233.40" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="1.6" fill="#555555">Prompt:</text>
+      <text x="195.00" y="233.50" text-anchor="end" font-family="Times New Roman, Georgia, serif" font-size="3.2" font-weight="bold" fill="#000000">mộc</text>
+      <line x1="14.50" y1="235.60" x2="195.50" y2="235.60" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="14.50" y1="237.80" x2="195.50" y2="237.80" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="14.50" y1="240.70" x2="195.50" y2="240.70" stroke="#7e7e7e" stroke-width="0.26"/>
+      <line x1="14.50" y1="241.90" x2="195.50" y2="241.90" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="13.00" y1="240.70" x2="14.20" y2="240.70" stroke="#555555" stroke-width="0.35"/>
+      <line x1="195.80" y1="240.70" x2="197.00" y2="240.70" stroke="#555555" stroke-width="0.35"/>
+    </g>
+    <!-- Row CTX_FINAL_006 -->
+    <g id="row_CTX_FINAL_006">
+      <rect x="13.00" y="243.00" width="184.00" height="11.60" fill="#ffffff" stroke="#888888" stroke-width="0.28" rx="0.5"/>
+      <rect x="13.00" y="243.00" width="184.00" height="3.50" fill="#f4f6f8" stroke="#888888" stroke-width="0.28" rx="0.5"/>
+      <line x1="13.00" y1="246.50" x2="197.00" y2="246.50" stroke="#777777" stroke-width="0.25"/>
+      <text x="15.00" y="245.50" font-family="Courier, monospace" font-size="1.8" font-weight="bold" fill="#222222">CTX_FINAL_006<tspan font-family="Helvetica, Arial, sans-serif" font-size="1.4" font-weight="normal" fill="#666666">  •  WORD_FINAL</tspan></text>
+      <text x="162.00" y="245.50" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="1.6" fill="#555555">Prompt:</text>
+      <text x="195.00" y="245.60" text-anchor="end" font-family="Times New Roman, Georgia, serif" font-size="3.2" font-weight="bold" fill="#000000">hoa</text>
+      <line x1="14.50" y1="247.70" x2="195.50" y2="247.70" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="14.50" y1="249.90" x2="195.50" y2="249.90" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="14.50" y1="252.80" x2="195.50" y2="252.80" stroke="#7e7e7e" stroke-width="0.26"/>
+      <line x1="14.50" y1="254.00" x2="195.50" y2="254.00" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="13.00" y1="252.80" x2="14.20" y2="252.80" stroke="#555555" stroke-width="0.35"/>
+      <line x1="195.80" y1="252.80" x2="197.00" y2="252.80" stroke="#555555" stroke-width="0.35"/>
+    </g>
+  </g>
+  <!-- Calibration Scale & Aspect Ratio Verification Area -->
+  <g id="calibration_area">
+    <rect x="13.0" y="256.5" width="184.0" height="22.0" fill="#fafafa" stroke="#b0b0b0" stroke-width="0.25" rx="0.8"/>
+    <!-- 50mm Precision Ruler -->
+    <text x="22.0" y="260.5" font-family="Helvetica, Arial, sans-serif" font-size="2.0" font-weight="bold" fill="#222222">OPTICAL SCAN CALIBRATION RULER (50.0 mm TRUE SCALE CHECK)</text>
+    <line x1="22.0" y1="270.0" x2="72.0" y2="270.0" stroke="#000000" stroke-width="0.35"/>
+    <line x1="22.0" y1="266.8" x2="22.0" y2="270.0" stroke="#000000" stroke-width="0.3"/>
+    <text x="22.0" y="266.0" text-anchor="middle" font-family="Courier, monospace" font-size="1.8" font-weight="bold" fill="#111111">0</text>
+    <line x1="32.0" y1="266.8" x2="32.0" y2="270.0" stroke="#000000" stroke-width="0.3"/>
+    <text x="32.0" y="266.0" text-anchor="middle" font-family="Courier, monospace" font-size="1.8" font-weight="bold" fill="#111111">10</text>
+    <line x1="42.0" y1="266.8" x2="42.0" y2="270.0" stroke="#000000" stroke-width="0.3"/>
+    <text x="42.0" y="266.0" text-anchor="middle" font-family="Courier, monospace" font-size="1.8" font-weight="bold" fill="#111111">20</text>
+    <line x1="52.0" y1="266.8" x2="52.0" y2="270.0" stroke="#000000" stroke-width="0.3"/>
+    <text x="52.0" y="266.0" text-anchor="middle" font-family="Courier, monospace" font-size="1.8" font-weight="bold" fill="#111111">30</text>
+    <line x1="62.0" y1="266.8" x2="62.0" y2="270.0" stroke="#000000" stroke-width="0.3"/>
+    <text x="62.0" y="266.0" text-anchor="middle" font-family="Courier, monospace" font-size="1.8" font-weight="bold" fill="#111111">40</text>
+    <line x1="72.0" y1="266.8" x2="72.0" y2="270.0" stroke="#000000" stroke-width="0.3"/>
+    <text x="72.0" y="266.0" text-anchor="middle" font-family="Courier, monospace" font-size="1.8" font-weight="bold" fill="#111111">50</text>
+    <line x1="27.0" y1="268.0" x2="27.0" y2="270.0" stroke="#444444" stroke-width="0.22"/>
+    <line x1="37.0" y1="268.0" x2="37.0" y2="270.0" stroke="#444444" stroke-width="0.22"/>
+    <line x1="47.0" y1="268.0" x2="47.0" y2="270.0" stroke="#444444" stroke-width="0.22"/>
+    <line x1="57.0" y1="268.0" x2="57.0" y2="270.0" stroke="#444444" stroke-width="0.22"/>
+    <line x1="67.0" y1="268.0" x2="67.0" y2="270.0" stroke="#444444" stroke-width="0.22"/>
+    <line x1="23.0" y1="269.0" x2="23.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="24.0" y1="269.0" x2="24.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="25.0" y1="269.0" x2="25.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="26.0" y1="269.0" x2="26.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="28.0" y1="269.0" x2="28.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="29.0" y1="269.0" x2="29.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="30.0" y1="269.0" x2="30.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="31.0" y1="269.0" x2="31.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="33.0" y1="269.0" x2="33.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="34.0" y1="269.0" x2="34.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="35.0" y1="269.0" x2="35.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="36.0" y1="269.0" x2="36.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="38.0" y1="269.0" x2="38.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="39.0" y1="269.0" x2="39.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="40.0" y1="269.0" x2="40.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="41.0" y1="269.0" x2="41.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="43.0" y1="269.0" x2="43.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="44.0" y1="269.0" x2="44.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="45.0" y1="269.0" x2="45.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="46.0" y1="269.0" x2="46.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="48.0" y1="269.0" x2="48.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="49.0" y1="269.0" x2="49.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="50.0" y1="269.0" x2="50.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="51.0" y1="269.0" x2="51.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="53.0" y1="269.0" x2="53.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="54.0" y1="269.0" x2="54.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="55.0" y1="269.0" x2="55.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="56.0" y1="269.0" x2="56.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="58.0" y1="269.0" x2="58.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="59.0" y1="269.0" x2="59.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="60.0" y1="269.0" x2="60.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="61.0" y1="269.0" x2="61.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="63.0" y1="269.0" x2="63.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="64.0" y1="269.0" x2="64.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="65.0" y1="269.0" x2="65.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="66.0" y1="269.0" x2="66.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="68.0" y1="269.0" x2="68.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="69.0" y1="269.0" x2="69.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="70.0" y1="269.0" x2="70.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="71.0" y1="269.0" x2="71.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <text x="22.0" y="274.2" font-family="Helvetica, Arial, sans-serif" font-size="1.5" fill="#555555">Pilot check: 50.0 ± 0.2 mm span • PILOT ENGINEERING THRESHOLD — TO BE VALIDATED</text>
+    <!-- 20.0 x 20.0 mm Calibration Square -->
+    <rect x="125.0" y="257.5" width="20.0" height="20.0" fill="#ffffff" stroke="#000000" stroke-width="0.35"/>
+    <line x1="135.0" y1="264.5" x2="135.0" y2="270.5" stroke="#888888" stroke-width="0.2"/>
+    <line x1="132.0" y1="267.5" x2="138.0" y2="267.5" stroke="#888888" stroke-width="0.2"/>
+    <text x="135.0" y="269.0" text-anchor="middle" font-family="Courier, monospace" font-size="1.5" fill="#444444">20×20</text>
+    <text x="147.5" y="261.7" font-family="Helvetica, Arial, sans-serif" font-size="1.9" font-weight="bold" fill="#111111">CALIBRATION SQUARE</text>
+    <text x="147.5" y="265.3" font-family="Helvetica, Arial, sans-serif" font-size="1.6" fill="#333333">Width = Height = 20.0 mm</text>
+    <text x="147.5" y="268.7" font-family="Helvetica, Arial, sans-serif" font-size="1.6" fill="#333333">Aspect Ratio: 1.000 ± 0.005</text>
+    <text x="147.5" y="271.7" font-family="Courier, monospace" font-size="1.35" font-weight="bold" fill="#777777">PILOT ENG THRESHOLD — TO BE VALIDATED</text>
+    <text x="147.5" y="275.0" font-family="Helvetica, Arial, sans-serif" font-size="1.5" fill="#555555">Supports checking X/Y scale consistency</text>
+    <text x="147.5" y="277.5" font-family="Helvetica, Arial, sans-serif" font-size="1.5" fill="#555555">and scan distortion.</text>
+  </g>
+  <!-- Footer Section (between bottom fiducials) -->
+  <g id="footer">
+    <text x="22.0" y="282.5" font-family="Helvetica, Arial, sans-serif" font-size="1.8" fill="#333333"><tspan font-weight="bold">OmniDraw Research Dataset</tspan> • Form P02 Demo v0.1 (Pilot Candidate — Not Approved for Formal Data Collection)</text>
+    <text x="22.0" y="285.5" font-family="Courier, monospace" font-size="1.6" fill="#666666">SCAN TARGET: Flatbed 600 DPI • 24-bit RGB / 8-bit Grayscale • Lossless PNG • True Scale 1:1 • No Auto-Contrast</text>
+  </g>
+</svg>

@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 210 297" width="210mm" height="297mm">
+  <!-- Paper Surface -->
+  <rect x="0" y="0" width="210" height="297" fill="#ffffff"/>
+  <!-- 4 Corner Fiducial Markers (5.0 x 5.0 mm) -->
+  <g id="fiducials">
+    <rect id="fiducial_tl" x="12.0" y="12.0" width="5.0" height="5.0" fill="#000000"/>
+    <rect id="fiducial_tr" x="193.0" y="12.0" width="5.0" height="5.0" fill="#000000"/>
+    <rect id="fiducial_bl" x="12.0" y="280.0" width="5.0" height="5.0" fill="#000000"/>
+    <rect id="fiducial_br" x="193.0" y="280.0" width="5.0" height="5.0" fill="#000000"/>
+  </g>
+  <!-- Header -->
+  <g id="header">
+    <text x="21.0" y="16.0" font-family="Helvetica, Arial, sans-serif" font-size="4.0" font-weight="bold" fill="#111111" letter-spacing="0.2">OMNIDRAW RESEARCH DATASET</text>
+    <text x="21.0" y="20.2" font-family="Helvetica, Arial, sans-serif" font-size="2.7" font-weight="bold" fill="#333333">P03 — Sentence Flow &amp; Pangram Collection Sheet</text>
+    <text x="21.0" y="23.8" font-family="Courier, monospace" font-size="1.9" fill="#555555">FORM VERSION: ODW-HW-P03-DEMO-v0.1 • PROTOCOL: DOC-SPEC-08-DATASET</text>
+    <text x="189.0" y="16.0" text-anchor="end" font-family="Courier, monospace" font-size="1.9" font-weight="bold" fill="#444444">RESEARCH USE ONLY</text>
+    <text x="189.0" y="19.8" text-anchor="end" font-family="Courier, monospace" font-size="1.9" fill="#666666">ANONYMIZED PROTOCOL • NO PII COLLECTED</text>
+    <text x="189.0" y="23.8" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="1.9" font-weight="bold" fill="#c93b2b">PILOT CANDIDATE — NOT APPROVED FOR FORMAL DATA COLLECTION</text>
+    <line x1="21.0" y1="25.5" x2="189.0" y2="25.5" stroke="#cccccc" stroke-width="0.25"/>
+    <rect x="13.0" y="27.0" width="184.0" height="6.5" fill="#f8f9fa" stroke="#cccccc" stroke-width="0.25" rx="0.6"/>
+    <text x="16.0" y="31.5" font-family="Helvetica, Arial, sans-serif" font-size="2.2" font-weight="bold" fill="#222222">Writer ID: <tspan font-family="Courier, monospace" font-weight="normal" fill="#555555">W_________</tspan></text>
+    <text x="64.0" y="31.5" font-family="Helvetica, Arial, sans-serif" font-size="2.2" font-weight="bold" fill="#222222">Session: <tspan font-family="Courier, monospace" font-weight="normal" fill="#555555">S______</tspan></text>
+    <text x="105.0" y="31.5" font-family="Helvetica, Arial, sans-serif" font-size="2.2" font-weight="bold" fill="#222222">Page: <tspan font-family="Courier, monospace" font-weight="bold" fill="#111111">P03</tspan></text>
+    <text x="145.0" y="31.5" font-family="Helvetica, Arial, sans-serif" font-size="2.2" font-weight="bold" fill="#222222">Date: <tspan font-family="Courier, monospace" font-weight="normal" fill="#555555">_____ / _____ / 202___</tspan></text>
+  </g>
+  <!-- Instructions -->
+  <g id="instructions">
+    <rect x="13.0" y="35.0" width="184.0" height="10.0" fill="#ffffff" stroke="#b0b0b0" stroke-width="0.28" rx="0.6"/>
+    <rect x="13.0" y="35.0" width="184.0" height="3.0" fill="#eceff1" stroke="#b0b0b0" stroke-width="0.28" rx="0.6"/>
+    <text x="16.0" y="37.2" font-family="Helvetica, Arial, sans-serif" font-size="1.9" font-weight="bold" fill="#111111">HƯỚNG DẪN VIẾT MẪU / WRITING INSTRUCTIONS</text>
+    <text x="194.0" y="37.2" text-anchor="end" font-family="Courier, monospace" font-size="1.6" fill="#555555">SPECIFICATION: 0.5MM BLACK GEL PEN</text>
+    <text x="16.0" y="40.3" font-family="Helvetica, Arial, sans-serif" font-size="1.7" fill="#333333">• Viết bằng nét chữ tự nhiên; không cố tình nắn nót đẹp hơn bình thường.</text>
+    <text x="16.0" y="43.2" font-family="Helvetica, Arial, sans-serif" font-size="1.7" fill="#333333">• Dùng bút gel đen 0.5 mm do nhóm cung cấp (hoặc tương thích); viết lại đầy đủ câu.</text>
+    <text x="106.0" y="40.3" font-family="Helvetica, Arial, sans-serif" font-size="1.7" fill="#333333">• Viết theo nhịp tự nhiên; khi hết dòng 1, tự nhiên xuống dòng 2 (natural wrap).</text>
+    <text x="106.0" y="43.2" font-family="Helvetica, Arial, sans-serif" font-size="1.7" fill="#333333">• Không cố nối nét, không cố giữ khoảng cách đều, không tô lại nét; không ghi thông tin cá nhân.</text>
+  </g>
+  <!-- Sentence Flow Blocks (3 Blocks: SENT_001, SENT_002, SENT_003) -->
+  <g id="sentence_blocks">
+    <!-- Sentence Block SENT_001 -->
+    <g id="block_SENT_001">
+      <rect x="13.00" y="48.00" width="184.00" height="58.00" fill="#ffffff" stroke="#888888" stroke-width="0.3" rx="0.6"/>
+      <rect x="13.00" y="48.00" width="184.00" height="12.00" fill="#f4f6f8" stroke="#888888" stroke-width="0.3" rx="0.6"/>
+      <line x1="13.00" y1="60.00" x2="197.00" y2="60.00" stroke="#777777" stroke-width="0.28"/>
+      <text x="16.00" y="52.20" font-family="Courier, monospace" font-size="2.2" font-weight="bold" fill="#222222">SENT_001<tspan font-size="1.5" font-weight="normal" fill="#666666">  •  SENTENCE_FLOW / PANGRAM_SET</tspan></text>
+      <text x="194.00" y="52.20" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="1.9" font-weight="bold" fill="#333333">SECTION A — SENTENCE 01</text>
+      <line x1="15.00" y1="53.60" x2="195.00" y2="53.60" stroke="#d8d8d8" stroke-width="0.2"/>
+      <text x="16.00" y="57.80" font-family="Helvetica, Arial, sans-serif" font-size="1.7" font-weight="bold" fill="#555555">Prompt:</text>
+      <text x="30.00" y="57.90" font-family="Times New Roman, Georgia, serif" font-size="2.7" font-weight="bold" fill="#111111">"Do bạch kim rất quý nên qua thời gian phong thổ vẫn giữ màu sáng rực rỡ."</text>
+      <line x1="15.00" y1="64.50" x2="195.00" y2="64.50" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="15.00" y1="68.50" x2="195.00" y2="68.50" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="15.00" y1="73.50" x2="195.00" y2="73.50" stroke="#7e7e7e" stroke-width="0.28"/>
+      <line x1="15.00" y1="77.50" x2="195.00" y2="77.50" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="13.00" y1="73.50" x2="14.20" y2="73.50" stroke="#555555" stroke-width="0.35"/>
+      <line x1="195.80" y1="73.50" x2="197.00" y2="73.50" stroke="#555555" stroke-width="0.35"/>
+      <line x1="15.00" y1="87.50" x2="195.00" y2="87.50" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="15.00" y1="91.50" x2="195.00" y2="91.50" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="15.00" y1="96.50" x2="195.00" y2="96.50" stroke="#7e7e7e" stroke-width="0.28"/>
+      <line x1="15.00" y1="100.50" x2="195.00" y2="100.50" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="13.00" y1="96.50" x2="14.20" y2="96.50" stroke="#555555" stroke-width="0.35"/>
+      <line x1="195.80" y1="96.50" x2="197.00" y2="96.50" stroke="#555555" stroke-width="0.35"/>
+    </g>
+    <!-- Sentence Block SENT_002 -->
+    <g id="block_SENT_002">
+      <rect x="13.00" y="114.00" width="184.00" height="58.00" fill="#ffffff" stroke="#888888" stroke-width="0.3" rx="0.6"/>
+      <rect x="13.00" y="114.00" width="184.00" height="12.00" fill="#f4f6f8" stroke="#888888" stroke-width="0.3" rx="0.6"/>
+      <line x1="13.00" y1="126.00" x2="197.00" y2="126.00" stroke="#777777" stroke-width="0.28"/>
+      <text x="16.00" y="118.20" font-family="Courier, monospace" font-size="2.2" font-weight="bold" fill="#222222">SENT_002<tspan font-size="1.5" font-weight="normal" fill="#666666">  •  SENTENCE_FLOW / PANGRAM_SET</tspan></text>
+      <text x="194.00" y="118.20" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="1.9" font-weight="bold" fill="#333333">SECTION B — SENTENCE 02</text>
+      <line x1="15.00" y1="119.60" x2="195.00" y2="119.60" stroke="#d8d8d8" stroke-width="0.2"/>
+      <text x="16.00" y="123.80" font-family="Helvetica, Arial, sans-serif" font-size="1.7" font-weight="bold" fill="#555555">Prompt:</text>
+      <text x="30.00" y="123.90" font-family="Times New Roman, Georgia, serif" font-size="2.7" font-weight="bold" fill="#111111">"Cậu bé xinh đẹp này phóng vèo qua dãy phố cổ mù sương."</text>
+      <line x1="15.00" y1="130.50" x2="195.00" y2="130.50" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="15.00" y1="134.50" x2="195.00" y2="134.50" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="15.00" y1="139.50" x2="195.00" y2="139.50" stroke="#7e7e7e" stroke-width="0.28"/>
+      <line x1="15.00" y1="143.50" x2="195.00" y2="143.50" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="13.00" y1="139.50" x2="14.20" y2="139.50" stroke="#555555" stroke-width="0.35"/>
+      <line x1="195.80" y1="139.50" x2="197.00" y2="139.50" stroke="#555555" stroke-width="0.35"/>
+      <line x1="15.00" y1="153.50" x2="195.00" y2="153.50" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="15.00" y1="157.50" x2="195.00" y2="157.50" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="15.00" y1="162.50" x2="195.00" y2="162.50" stroke="#7e7e7e" stroke-width="0.28"/>
+      <line x1="15.00" y1="166.50" x2="195.00" y2="166.50" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="13.00" y1="162.50" x2="14.20" y2="162.50" stroke="#555555" stroke-width="0.35"/>
+      <line x1="195.80" y1="162.50" x2="197.00" y2="162.50" stroke="#555555" stroke-width="0.35"/>
+    </g>
+    <!-- Sentence Block SENT_003 -->
+    <g id="block_SENT_003">
+      <rect x="13.00" y="180.00" width="184.00" height="58.00" fill="#ffffff" stroke="#888888" stroke-width="0.3" rx="0.6"/>
+      <rect x="13.00" y="180.00" width="184.00" height="12.00" fill="#f4f6f8" stroke="#888888" stroke-width="0.3" rx="0.6"/>
+      <line x1="13.00" y1="192.00" x2="197.00" y2="192.00" stroke="#777777" stroke-width="0.28"/>
+      <text x="16.00" y="184.20" font-family="Courier, monospace" font-size="2.2" font-weight="bold" fill="#222222">SENT_003<tspan font-size="1.5" font-weight="normal" fill="#666666">  •  SENTENCE_FLOW / PANGRAM_SET</tspan></text>
+      <text x="194.00" y="184.20" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="1.9" font-weight="bold" fill="#333333">SECTION C — SENTENCE 03</text>
+      <line x1="15.00" y1="185.60" x2="195.00" y2="185.60" stroke="#d8d8d8" stroke-width="0.2"/>
+      <text x="16.00" y="189.80" font-family="Helvetica, Arial, sans-serif" font-size="1.7" font-weight="bold" fill="#555555">Prompt:</text>
+      <text x="30.00" y="189.90" font-family="Times New Roman, Georgia, serif" font-size="2.7" font-weight="bold" fill="#111111">"Hoàng tử nhảy múa cùng các cô gái vùng biển xanh biếc."</text>
+      <line x1="15.00" y1="196.50" x2="195.00" y2="196.50" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="15.00" y1="200.50" x2="195.00" y2="200.50" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="15.00" y1="205.50" x2="195.00" y2="205.50" stroke="#7e7e7e" stroke-width="0.28"/>
+      <line x1="15.00" y1="209.50" x2="195.00" y2="209.50" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="13.00" y1="205.50" x2="14.20" y2="205.50" stroke="#555555" stroke-width="0.35"/>
+      <line x1="195.80" y1="205.50" x2="197.00" y2="205.50" stroke="#555555" stroke-width="0.35"/>
+      <line x1="15.00" y1="219.50" x2="195.00" y2="219.50" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="15.00" y1="223.50" x2="195.00" y2="223.50" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="15.00" y1="228.50" x2="195.00" y2="228.50" stroke="#7e7e7e" stroke-width="0.28"/>
+      <line x1="15.00" y1="232.50" x2="195.00" y2="232.50" stroke="#d0d0d0" stroke-width="0.18" stroke-dasharray="1.2, 1.2"/>
+      <line x1="13.00" y1="228.50" x2="14.20" y2="228.50" stroke="#555555" stroke-width="0.35"/>
+      <line x1="195.80" y1="228.50" x2="197.00" y2="228.50" stroke="#555555" stroke-width="0.35"/>
+    </g>
+  </g>
+  <!-- Calibration Scale & Aspect Ratio Verification Area -->
+  <g id="calibration_area">
+    <rect x="13.0" y="256.5" width="184.0" height="22.0" fill="#fafafa" stroke="#b0b0b0" stroke-width="0.25" rx="0.8"/>
+    <!-- 50mm Precision Ruler -->
+    <text x="22.0" y="260.5" font-family="Helvetica, Arial, sans-serif" font-size="2.0" font-weight="bold" fill="#222222">OPTICAL SCAN CALIBRATION RULER (50.0 mm TRUE SCALE CHECK)</text>
+    <line x1="22.0" y1="270.0" x2="72.0" y2="270.0" stroke="#000000" stroke-width="0.35"/>
+    <line x1="22.0" y1="266.8" x2="22.0" y2="270.0" stroke="#000000" stroke-width="0.3"/>
+    <text x="22.0" y="266.0" text-anchor="middle" font-family="Courier, monospace" font-size="1.8" font-weight="bold" fill="#111111">0</text>
+    <line x1="32.0" y1="266.8" x2="32.0" y2="270.0" stroke="#000000" stroke-width="0.3"/>
+    <text x="32.0" y="266.0" text-anchor="middle" font-family="Courier, monospace" font-size="1.8" font-weight="bold" fill="#111111">10</text>
+    <line x1="42.0" y1="266.8" x2="42.0" y2="270.0" stroke="#000000" stroke-width="0.3"/>
+    <text x="42.0" y="266.0" text-anchor="middle" font-family="Courier, monospace" font-size="1.8" font-weight="bold" fill="#111111">20</text>
+    <line x1="52.0" y1="266.8" x2="52.0" y2="270.0" stroke="#000000" stroke-width="0.3"/>
+    <text x="52.0" y="266.0" text-anchor="middle" font-family="Courier, monospace" font-size="1.8" font-weight="bold" fill="#111111">30</text>
+    <line x1="62.0" y1="266.8" x2="62.0" y2="270.0" stroke="#000000" stroke-width="0.3"/>
+    <text x="62.0" y="266.0" text-anchor="middle" font-family="Courier, monospace" font-size="1.8" font-weight="bold" fill="#111111">40</text>
+    <line x1="72.0" y1="266.8" x2="72.0" y2="270.0" stroke="#000000" stroke-width="0.3"/>
+    <text x="72.0" y="266.0" text-anchor="middle" font-family="Courier, monospace" font-size="1.8" font-weight="bold" fill="#111111">50</text>
+    <line x1="27.0" y1="268.0" x2="27.0" y2="270.0" stroke="#444444" stroke-width="0.22"/>
+    <line x1="37.0" y1="268.0" x2="37.0" y2="270.0" stroke="#444444" stroke-width="0.22"/>
+    <line x1="47.0" y1="268.0" x2="47.0" y2="270.0" stroke="#444444" stroke-width="0.22"/>
+    <line x1="57.0" y1="268.0" x2="57.0" y2="270.0" stroke="#444444" stroke-width="0.22"/>
+    <line x1="67.0" y1="268.0" x2="67.0" y2="270.0" stroke="#444444" stroke-width="0.22"/>
+    <line x1="23.0" y1="269.0" x2="23.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="24.0" y1="269.0" x2="24.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="25.0" y1="269.0" x2="25.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="26.0" y1="269.0" x2="26.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="28.0" y1="269.0" x2="28.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="29.0" y1="269.0" x2="29.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="30.0" y1="269.0" x2="30.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="31.0" y1="269.0" x2="31.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="33.0" y1="269.0" x2="33.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="34.0" y1="269.0" x2="34.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="35.0" y1="269.0" x2="35.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="36.0" y1="269.0" x2="36.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="38.0" y1="269.0" x2="38.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="39.0" y1="269.0" x2="39.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="40.0" y1="269.0" x2="40.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="41.0" y1="269.0" x2="41.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="43.0" y1="269.0" x2="43.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="44.0" y1="269.0" x2="44.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="45.0" y1="269.0" x2="45.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="46.0" y1="269.0" x2="46.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="48.0" y1="269.0" x2="48.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="49.0" y1="269.0" x2="49.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="50.0" y1="269.0" x2="50.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="51.0" y1="269.0" x2="51.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="53.0" y1="269.0" x2="53.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="54.0" y1="269.0" x2="54.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="55.0" y1="269.0" x2="55.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="56.0" y1="269.0" x2="56.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="58.0" y1="269.0" x2="58.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="59.0" y1="269.0" x2="59.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="60.0" y1="269.0" x2="60.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="61.0" y1="269.0" x2="61.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="63.0" y1="269.0" x2="63.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="64.0" y1="269.0" x2="64.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="65.0" y1="269.0" x2="65.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="66.0" y1="269.0" x2="66.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="68.0" y1="269.0" x2="68.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="69.0" y1="269.0" x2="69.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="70.0" y1="269.0" x2="70.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <line x1="71.0" y1="269.0" x2="71.0" y2="270.0" stroke="#777777" stroke-width="0.14"/>
+    <text x="22.0" y="274.2" font-family="Helvetica, Arial, sans-serif" font-size="1.5" fill="#555555">Pilot check: 50.0 ± 0.2 mm span • PILOT ENGINEERING THRESHOLD — TO BE VALIDATED</text>
+    <!-- 20.0 x 20.0 mm Calibration Square -->
+    <rect x="125.0" y="257.5" width="20.0" height="20.0" fill="#ffffff" stroke="#000000" stroke-width="0.35"/>
+    <line x1="135.0" y1="264.5" x2="135.0" y2="270.5" stroke="#888888" stroke-width="0.2"/>
+    <line x1="132.0" y1="267.5" x2="138.0" y2="267.5" stroke="#888888" stroke-width="0.2"/>
+    <text x="135.0" y="269.0" text-anchor="middle" font-family="Courier, monospace" font-size="1.5" fill="#444444">20×20</text>
+    <text x="147.5" y="261.7" font-family="Helvetica, Arial, sans-serif" font-size="1.9" font-weight="bold" fill="#111111">CALIBRATION SQUARE</text>
+    <text x="147.5" y="265.3" font-family="Helvetica, Arial, sans-serif" font-size="1.6" fill="#333333">Width = Height = 20.0 mm</text>
+    <text x="147.5" y="268.7" font-family="Helvetica, Arial, sans-serif" font-size="1.6" fill="#333333">Aspect Ratio: 1.000 ± 0.005</text>
+    <text x="147.5" y="271.7" font-family="Courier, monospace" font-size="1.35" font-weight="bold" fill="#777777">PILOT ENG THRESHOLD — TO BE VALIDATED</text>
+    <text x="147.5" y="275.0" font-family="Helvetica, Arial, sans-serif" font-size="1.5" fill="#555555">Supports checking X/Y scale consistency</text>
+    <text x="147.5" y="277.5" font-family="Helvetica, Arial, sans-serif" font-size="1.5" fill="#555555">and scan distortion.</text>
+  </g>
+  <!-- Footer Section (between bottom fiducials) -->
+  <g id="footer">
+    <text x="22.0" y="282.5" font-family="Helvetica, Arial, sans-serif" font-size="1.8" fill="#333333"><tspan font-weight="bold">OmniDraw Research Dataset</tspan> • Form P03 Demo v0.1 (Pilot Candidate — Not Approved for Formal Data Collection)</text>
+    <text x="22.0" y="285.5" font-family="Courier, monospace" font-size="1.6" fill="#666666">SCAN TARGET: Flatbed 600 DPI • 24-bit RGB / 8-bit Grayscale • Lossless PNG • True Scale 1:1 • No Auto-Contrast</text>
+  </g>
+</svg>

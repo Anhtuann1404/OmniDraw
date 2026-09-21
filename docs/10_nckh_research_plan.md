@@ -21,6 +21,7 @@ Research Freeze Pack này hợp nhất các quyết định đã có thành mộ
 | Thiết kế `CompositionState`, hàm mục tiêu và Viterbi DP | [`07_diacritic_aware_state_design.md`](07_diacritic_aware_state_design.md) |
 | Corpus, split và quản trị dữ liệu | [`08_handwriting_dataset_spec.md`](08_handwriting_dataset_spec.md) |
 | Entry/Exit Gate phần mềm PR3 | [`09_pr3_acceptance_criteria.md`](09_pr3_acceptance_criteria.md) |
+| Protocol, evidence matrix và bản thảo Chương 1–2 | [`11_literature_review_protocol.md`](11_literature_review_protocol.md), [`12_literature_evidence_matrix.md`](12_literature_evidence_matrix.md), [`13_chapter_2_literature_review.md`](13_chapter_2_literature_review.md), [`14_chapter_1_introduction.md`](14_chapter_1_introduction.md) |
 | Roadmap, ưu tiên và phân công | [`02_roadmap.md`](02_roadmap.md), [`03_current-task.md`](03_current-task.md) |
 | Public contract hiện hành | [`OmniDraw_API_Spec-4.md`](OmniDraw_API_Spec-4.md) |
 
@@ -297,4 +298,3 @@ CHAPTER 3 OUTLINE:             READY
 CHAPTER 4 OUTLINE:             READY, RESULTS EMPTY
 FORMAL EXPERIMENT READINESS:   NO
 ```
-
