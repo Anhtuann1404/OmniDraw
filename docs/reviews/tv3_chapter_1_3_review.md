@@ -2,7 +2,7 @@
 
 ```text
 REVIEWER_ROLE: TV3 — Hardware, Calibration & Physical Validation Lead
-REVIEW_TARGET_COMMIT: PENDING_CHECKPOINT_COMMIT
+REVIEW_TARGET_COMMIT: 5e9c857e42021f8a48d45b1fdaefcfdb87e82ff3
 WORKFLOW_STATUS: NOT_STARTED
 AI_DRAFT_VERDICT: PENDING
 HUMAN_VERDICT: PENDING
@@ -52,5 +52,5 @@ Hãy làm reviewer TV3. Đọc docs/reviews/README.md và phiếu này, sau đó
 - `HUMAN_VERDICT`: `PENDING`
 - Reviewer xác nhận (họ/tên hoặc mã thành viên): `PENDING`
 - Ngày xác nhận: `PENDING`
-- Commit đã review: `PENDING_CHECKPOINT_COMMIT`
+- Commit đã review: `5e9c857e42021f8a48d45b1fdaefcfdb87e82ff3`
 - [ ] Tôi đã tự kiểm tra findings và xác nhận verdict trên; đây không phải kết luận tự động của AI.

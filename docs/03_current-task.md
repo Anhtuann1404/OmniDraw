@@ -173,7 +173,7 @@
 - [x] Automated experiment runner
 - [x] Pre-PR3 acceptance contract & ASCII baseline lock
 - [x] Tạo gói phiếu cross-review có contract ngữ cảnh AI tại [`reviews/README.md`](reviews/README.md)
-- [ ] TV4 tạo checkpoint commit ổn định và thay `PENDING_CHECKPOINT_COMMIT` bằng cùng một hash trong toàn bộ gói review
+- [x] TV4 đã tạo checkpoint commit `5e9c857e42021f8a48d45b1fdaefcfdb87e82ff3` và gắn cùng hash vào toàn bộ gói review
 - [ ] TV1 hoàn tất phiếu [`reviews/tv1_chapter_1_3_review.md`](reviews/tv1_chapter_1_3_review.md), có human verdict và sign-off
 - [ ] TV2 hoàn tất phiếu [`reviews/tv2_chapter_1_3_review.md`](reviews/tv2_chapter_1_3_review.md), có human verdict và sign-off
 - [ ] TV3 hoàn tất phiếu [`reviews/tv3_chapter_1_3_review.md`](reviews/tv3_chapter_1_3_review.md), có human verdict và sign-off

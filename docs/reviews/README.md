@@ -6,13 +6,13 @@ Mọi thành viên và mọi AI hỗ trợ review phải bắt đầu từ file 
 
 ```text
 REVIEW_PACKAGE_VERSION: v0.1
-REVIEW_TARGET_COMMIT: PENDING_CHECKPOINT_COMMIT
-PACKAGE_STATUS: NOT_READY_FOR_FORMAL_REVIEW
+REVIEW_TARGET_COMMIT: 5e9c857e42021f8a48d45b1fdaefcfdb87e82ff3
+PACKAGE_STATUS: READY_FOR_FORMAL_REVIEW
 INTEGRATION_OWNER: TV4
 ```
 
 > [!IMPORTANT]
-> Khi `REVIEW_TARGET_COMMIT` còn là `PENDING_CHECKPOINT_COMMIT`, chỉ được đọc thử quy trình; chưa được phát hành verdict chính thức. TV4 phải tạo checkpoint ổn định rồi cập nhật cùng một commit vào README, ba phiếu reviewer và bảng disposition.
+> Mọi verdict trong vòng review này phải đối chiếu commit `5e9c857e42021f8a48d45b1fdaefcfdb87e82ff3`. Nếu nội dung khoa học thay đổi sau commit này, TV4 phải mở vòng review mới hoặc yêu cầu reviewer recheck phần bị ảnh hưởng.
 
 ## 2. Chọn đúng phiếu theo vai trò
 
