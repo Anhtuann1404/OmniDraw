@@ -1,6 +1,6 @@
 # OmniDraw — Current Task & Sprint Backlog
 
-**Cập nhật lần cuối:** 21/09/2026
+**Cập nhật lần cuối:** 22/09/2026
 **Chu kỳ hiện tại:** Sprint 1–2 (2 tuần tới: Khóa nền nghiên cứu CA-VHC & Thiết lập framework thực nghiệm)
 **Nguyên tắc:** Mỗi người làm chủ một đường chạy độc lập, tuân thủ Definition of Done và review chéo định kỳ.
 
@@ -23,6 +23,7 @@
 - [ ] **Điều phối kỹ thuật & Khóa Research Questions (Project Lead):** TV4 đã hoàn tất bản hợp nhất RQ1–RQ3, giả thuyết, methodology blueprint và cross-review gate tại [`10_nckh_research_plan.md`](10_nckh_research_plan.md) (`READY FOR CROSS-REVIEW`). Chưa đánh dấu khóa hoàn toàn trước khi TV1/TV2/TV3 duyệt đúng phạm vi sở hữu.
 - [x] **✅ Khởi tạo Chương 2 theo quy trình nghiên cứu có kiểm soát:** Đã tạo protocol tổng quan có cấu trúc, evidence matrix 11 nguồn hạt giống đã kiểm chứng và bản thảo Chương 2 tại [`11_literature_review_protocol.md`](11_literature_review_protocol.md), [`12_literature_evidence_matrix.md`](12_literature_evidence_matrix.md), [`13_chapter_2_literature_review.md`](13_chapter_2_literature_review.md). Trạng thái vẫn là `TEAM REVIEW PENDING`; chưa tuyên bố systematic review hoặc novelty cuối cùng trước citation chaining và cross-review.
 - [x] **✅ Khởi tạo Chương 1 — Mở đầu:** Đã lập bản thảo tại [`14_chapter_1_introduction.md`](14_chapter_1_introduction.md) theo cấu trúc bối cảnh → khoảng trống provisional → vấn đề → mục tiêu → RQ1–RQ3 → phạm vi → phương pháp → đóng góp dự kiến. Bản thảo giữ trạng thái `TEAM REVIEW PENDING`, đồng bộ với Research Freeze Pack và không trình bày giả thuyết hoặc tiêu chí nghiệm thu như kết quả.
+- [x] **✅ Khởi tạo Chương 3 — Phương pháp nghiên cứu và thiết kế thuật toán:** Đã lập bản thảo tại [`15_chapter_3_methodology.md`](15_chapter_3_methodology.md), tách rõ hệ thống hiện hành khỏi Proposed CA-VHC và gắn trạng thái `IMPLEMENTED_AND_TESTED`, `DESIGN_LOCKED`, `PENDING_PR2`, `PENDING_PR3`, `PENDING_PR4`, `PENDING_PR5`, `PENDING_TV3_CALIBRATION`. Bản thảo chưa trình bày kết quả và phải cập nhật sau khi PR2/PR3 thay đổi code hoặc contract.
 - [x] **✅ Strict Validation completed (34/34 automated tests PASS):** Đã loại bỏ triệt để silent fallback, khóa chặt chẽ mode-aware validation theo từng `input_type`, bảo đảm validation diễn ra trước mọi side effect, và bảo đảm an toàn toàn diện cho pipeline backend; toàn bộ 34 automated tests trong `backend/test_handwriting_validation.py` đạt 34/34 passed:
   - *Handwriting Mode (`input_type in {"handwriting", "letter"}`):* Bắt buộc có `style` trong `STYLE_CONFIGS`, khuyết/null/sai kiểu trả `INPUT_INVALID_FORMAT`; text rỗng trả `EMPTY_TEXT`; `options.font` không truyền default `"oly"`, sai/null trả `UNSUPPORTED_FONT`; `options.letter_type` không truyền default `"general"`, sai/null/không tương thích trả `UNSUPPORTED_LETTER_TYPE`; `options.seed` sai kiểu/biên trả `INVALID_SEED`; `options.target_paper_size_mm` khuyết nhận default A4 `[210, 297]`, explicit `null`/sai kiểu/len $\neq 2$/không dương/NaN/Inf trả `INPUT_INVALID_FORMAT`.
   - *Art Mode (`input_type in {"text", "image"}`):* Phong cách hợp lệ thuộc `ART_MODE_STYLES` (`sketch`, `line_art`, `stipple`, `hatching`). Khi `style` khuyết hoặc `null`, tự động giải quyết an toàn thành `effective_style = "sketch"` trước pipeline; khi truyền `style` không hợp lệ (`""`, số, mảng, bool, hoặc chuỗi ngoài enum kể cả style handwriting) $\rightarrow$ từ chối ngay với `INPUT_INVALID_FORMAT` không gọi pipeline; `text` bắt buộc có `prompt` không rỗng; `image` bắt buộc có `image_base64` không rỗng; toàn bộ downstream (`call_openai_image_api`, `svg_process`, metadata logging) được assert kiểm chứng luôn nhận `effective_style`, không bao giờ nhận `None`.
@@ -104,6 +105,22 @@
   - **TV2 review TV1 & TV4:** Đánh giá tính khả thi khi ánh xạ tham số động học và mô hình chuyển động vào cấu trúc nét chữ / Writer Profile.
   - **TV3 review TV2 & TV4:** Đánh giá tính thực tế của các giả định về vận tốc, gia tốc và mô hình thời gian thi công trên máy vẽ thật.
   - **TV4 review cả nhóm:** Kiểm tra tính tuân thủ contract API Spec, tính toàn vẹn của handwriting subsystem, cấu trúc log CSV và điều phối tích hợp toàn hệ thống.
+- **Gói Cross-review Báo cáo NCKH Chương 1–3:**
+
+  **Điểm vào vận hành cho người và AI:** bắt đầu tại [`reviews/README.md`](reviews/README.md). Mỗi reviewer chỉ cập nhật phiếu riêng ([TV1](reviews/tv1_chapter_1_3_review.md), [TV2](reviews/tv2_chapter_1_3_review.md), [TV3](reviews/tv3_chapter_1_3_review.md)); TV4 xử lý finding tại [`reviews/review_disposition.md`](reviews/review_disposition.md). AI chỉ được lập bản nháp finding; verdict cuối phải do reviewer con người xác nhận. Không bắt đầu formal review khi `REVIEW_TARGET_COMMIT` còn là `PENDING_CHECKPOINT_COMMIT`.
+
+  | Reviewer | Tài liệu/phần bắt buộc | Trọng tâm phải xác nhận | Đầu ra bắt buộc | Gate |
+  | :--- | :--- | :--- | :--- | :--- |
+  | **TV1 — Data & Writer Profile** | [`10_nckh_research_plan.md`](10_nckh_research_plan.md); [`11_literature_review_protocol.md`](11_literature_review_protocol.md); [`12_literature_evidence_matrix.md`](12_literature_evidence_matrix.md); [Chương 1](14_chapter_1_introduction.md) mục 1.5 và 1.9; [Chương 2](13_chapter_2_literature_review.md) mục 2.2–2.3; [Chương 3](15_chapter_3_methodology.md) mục 3.1, 3.7 và 3.8 | Corpus coverage; DEV/Holdout governance; seed và reproducibility; ranh giới CA-VHC/Writer Profile; không mô tả dữ liệu planned như dữ liệu đã thu | Một verdict và danh sách finding có vị trí file/mục; xác nhận riêng corpus/leakage scope | Trước `RQ FREEZE: APPROVED` và trước formal PR5 |
+  | **TV2 — Path Planning & Transition Cost** | [`10_nckh_research_plan.md`](10_nckh_research_plan.md); [Chương 1](14_chapter_1_introduction.md) mục 1.4; [Chương 2](13_chapter_2_literature_review.md) mục 2.4–2.6; [Chương 3](15_chapter_3_methodology.md) mục 3.3–3.5 và 3.8 | Định nghĩa B1/B2/B3; công thức $J_{transition}$; Viterbi recurrence; curvature/motion metrics; độ phức tạp; ranh giới giữa PR2 và Proposed | Một verdict và danh sách finding có vị trí file/mục; xác nhận baseline/transition interface hoặc nêu blocker PR2 | Trước `RQ FREEZE: APPROVED`; E3–E4 phải đạt trước khi mở PR3 |
+  | **TV3 — Hardware & Physical Validation** | [`10_nckh_research_plan.md`](10_nckh_research_plan.md); [Chương 1](14_chapter_1_introduction.md) mục 1.4.3, 1.8–1.9; [Chương 2](13_chapter_2_literature_review.md) mục 2.5–2.6; [Chương 3](15_chapter_3_methodology.md) mục 3.1, 3.7–3.8 | Wording về khả năng thi công; simulator/máy thật; clearance; calibration; `actual_draw_time_sec`; không biến metric hình học thành claim an toàn vật lý | Một verdict và danh sách finding có vị trí file/mục; xác nhận wording vật lý hoặc ghi `BLOCKED_CALIBRATION` | Trước `RQ FREEZE: APPROVED`; calibration vẫn là downstream gate |
+  | **TV4 — Integration Owner** | Toàn bộ [`10_nckh_research_plan.md`](10_nckh_research_plan.md) và [Chương 1](14_chapter_1_introduction.md), [Chương 2](13_chapter_2_literature_review.md), [Chương 3](15_chapter_3_methodology.md) | Tính nhất quán code–docs–RQ; citation boundary; trạng thái `IMPLEMENTED/DESIGN/PENDING`; xử lý mọi finding và cập nhật traceability | Bảng disposition từng finding (`ACCEPTED`, `REJECTED_WITH_REASON`, `DEFERRED_WITH_OWNER`) và bản tổng hợp sau sửa | Chỉ đóng gói review sau khi nhận đủ verdict TV1–TV3 |
+
+- **Trạng thái quy trình:** `NOT_STARTED`, `IN_REVIEW`, `CHANGES_REQUESTED`, `READY_FOR_RECHECK`, `BLOCKED`, `CLOSED`; không dùng verdict thay cho trạng thái xử lý.
+- **Verdict hợp lệ:** `PENDING`, `PASS`, `PASS_WITH_CHANGES`, hoặc `BLOCKED`. `PASS_WITH_CHANGES` chỉ được đóng sau khi TV4 ghi disposition và reviewer xác nhận thay đổi; `BLOCKED` phải nêu đúng dependency/owner, không được tự đổi thành PASS.
+- **Mẫu finding tối thiểu:** `ID | Reviewer | File:mục | Mức độ CRITICAL/MAJOR/MINOR | Nhận xét | Đề xuất | Trạng thái xử lý`.
+- **Ràng buộc phiên bản:** Mỗi verdict phải ghi commit hash hoặc ngày/bản thảo đã review. Review trên bản cũ không tự động áp dụng cho bản đã thay đổi nội dung khoa học.
+- **Ranh giới phê duyệt:** TV4 là người tổng hợp, không thay thế cho review độc lập của TV1–TV3. Review tài liệu không đồng nghĩa PR2/PR3, formal experiment hoặc hardware validation đã hoàn thành.
 - **Kỷ luật Contract:** Bất kỳ thay đổi nào liên quan đến tên trường, kiểu dữ liệu, mã lỗi hoặc cấu trúc SVG bắt buộc phải được ghi nhận và thống nhất trước khi cập nhật code.
 
 ---
@@ -155,6 +172,12 @@
 - [x] PR1 internal metrics/CSV experiment integration
 - [x] Automated experiment runner
 - [x] Pre-PR3 acceptance contract & ASCII baseline lock
+- [x] Tạo gói phiếu cross-review có contract ngữ cảnh AI tại [`reviews/README.md`](reviews/README.md)
+- [ ] TV4 tạo checkpoint commit ổn định và thay `PENDING_CHECKPOINT_COMMIT` bằng cùng một hash trong toàn bộ gói review
+- [ ] TV1 hoàn tất phiếu [`reviews/tv1_chapter_1_3_review.md`](reviews/tv1_chapter_1_3_review.md), có human verdict và sign-off
+- [ ] TV2 hoàn tất phiếu [`reviews/tv2_chapter_1_3_review.md`](reviews/tv2_chapter_1_3_review.md), có human verdict và sign-off
+- [ ] TV3 hoàn tất phiếu [`reviews/tv3_chapter_1_3_review.md`](reviews/tv3_chapter_1_3_review.md), có human verdict và sign-off
+- [ ] TV4 xử lý toàn bộ finding trong [`reviews/review_disposition.md`](reviews/review_disposition.md) và phát hành bản hợp nhất sau review
 - [ ] TV1 formal corpus review/freeze
 - [ ] TV3 clearance calibration
 - [ ] PR2 baseline adapters

@@ -21,8 +21,9 @@ Research Freeze Pack này hợp nhất các quyết định đã có thành mộ
 | Thiết kế `CompositionState`, hàm mục tiêu và Viterbi DP | [`07_diacritic_aware_state_design.md`](07_diacritic_aware_state_design.md) |
 | Corpus, split và quản trị dữ liệu | [`08_handwriting_dataset_spec.md`](08_handwriting_dataset_spec.md) |
 | Entry/Exit Gate phần mềm PR3 | [`09_pr3_acceptance_criteria.md`](09_pr3_acceptance_criteria.md) |
-| Protocol, evidence matrix và bản thảo Chương 1–2 | [`11_literature_review_protocol.md`](11_literature_review_protocol.md), [`12_literature_evidence_matrix.md`](12_literature_evidence_matrix.md), [`13_chapter_2_literature_review.md`](13_chapter_2_literature_review.md), [`14_chapter_1_introduction.md`](14_chapter_1_introduction.md) |
+| Protocol, evidence matrix và bản thảo Chương 1–3 | [`11_literature_review_protocol.md`](11_literature_review_protocol.md), [`12_literature_evidence_matrix.md`](12_literature_evidence_matrix.md), [`13_chapter_2_literature_review.md`](13_chapter_2_literature_review.md), [`14_chapter_1_introduction.md`](14_chapter_1_introduction.md), [`15_chapter_3_methodology.md`](15_chapter_3_methodology.md) |
 | Roadmap, ưu tiên và phân công | [`02_roadmap.md`](02_roadmap.md), [`03_current-task.md`](03_current-task.md) |
+| Quy trình cross-review, phiếu reviewer và disposition | [`reviews/README.md`](reviews/README.md), [`reviews/review_disposition.md`](reviews/review_disposition.md) |
 | Public contract hiện hành | [`OmniDraw_API_Spec-4.md`](OmniDraw_API_Spec-4.md) |
 
 ### 1.1. Phân loại trạng thái bằng chứng
@@ -272,19 +273,25 @@ $$DP[i,j]=C_{state}(s_{i,j})+\min_p\left(DP[i-1,p]+J_{transition}(s_{i-1,p},s_{i
 
 ## 7. Cross-review và Freeze Gate
 
-| Reviewer | Phạm vi phải duyệt | Trạng thái |
-| :--- | :--- | :--- |
-| TV1 | Corpus coverage, DEV/Holdout governance, Writer Profile nằm ngoài RQ P0 | `PENDING` |
-| TV2 | RQ1, B1/B2/B3, transition cost, curvature và motion metrics | `PENDING` |
-| TV3 | RQ3 physical feasibility, calibration, actual draw time và physical clearance | `PENDING` |
-| TV4 | RQ2, composition geometry, metric/runner integrity và tính nhất quán tài liệu | `DRAFT COMPLETE` |
+Cross-review được thực hiện theo gói tài liệu Chương 1–3 và Research Freeze Pack. Điểm vào vận hành duy nhất cho thành viên và AI là [`reviews/README.md`](reviews/README.md); phân công cấp sprint vẫn được theo dõi tại [`03_current-task.md`](03_current-task.md), phần **Gói Cross-review Báo cáo NCKH Chương 1–3**.
+
+| Reviewer | Phạm vi phải duyệt | Artifact trọng tâm | Trạng thái |
+| :--- | :--- | :--- | :--- |
+| TV1 | Corpus coverage, DEV/Holdout governance, reproducibility và Writer Profile nằm ngoài RQ P0 | Docs 10–12; Chương 1 mục 1.5/1.9; Chương 3 mục 3.1/3.7/3.8 | `PENDING` |
+| TV2 | RQ1, B1/B2/B3, transition cost, Viterbi, curvature và motion metrics | Chương 1 mục 1.4; Chương 2 mục 2.4–2.6; Chương 3 mục 3.3–3.5/3.8 | `PENDING` |
+| TV3 | RQ3 physical feasibility, calibration, actual draw time và physical clearance | Chương 1 mục 1.4.3/1.8/1.9; Chương 2 mục 2.5–2.6; Chương 3 mục 3.1/3.7/3.8 | `PENDING` |
+| TV4 | RQ2, composition geometry, metric/runner integrity, citation boundary và code–docs consistency | Toàn bộ Freeze Pack và Chương 1–3; disposition toàn bộ finding | `INTEGRATION DRAFT COMPLETE — TEAM VERDICTS PENDING` |
+
+Verdict hợp lệ gồm `PENDING`, `PASS`, `PASS_WITH_CHANGES` và `BLOCKED`. Mỗi verdict phải gắn với phiên bản/commit đã review và được reviewer con người xác nhận; AI chỉ được soạn finding và đề xuất `AI_DRAFT_VERDICT`. `PASS_WITH_CHANGES` chưa được tính là hoàn tất cho đến khi finding đã có disposition và reviewer xác nhận lại; review tài liệu không thay thế software, corpus hoặc hardware gate.
 
 ### 7.1. Điều kiện chuyển sang `RQ FREEZE: APPROVED`
 
 - [ ] TV2 xác nhận baseline và các giả thuyết chuyển động.
 - [ ] TV1 xác nhận phạm vi corpus và quy tắc leakage.
 - [ ] TV3 xác nhận wording cho các tuyên bố vật lý.
-- [ ] TV4 xử lý toàn bộ nhận xét và kiểm tra chéo Docs 02/03/05/07/08/09/10.
+- [ ] `REVIEW_TARGET_COMMIT` đã được khóa và đồng nhất trong toàn bộ gói review.
+- [ ] TV1, TV2 và TV3 nộp verdict có version binding cho đúng phạm vi Chương 1–3.
+- [ ] TV4 xử lý toàn bộ finding tại [`reviews/review_disposition.md`](reviews/review_disposition.md) và kiểm tra chéo Docs 02/03/05/07/08/09/10–15.
 - [ ] Không có metric chưa triển khai nào bị mô tả là measured result.
 - [ ] Không có bảng PENDING nào bị dùng làm kết quả báo cáo.
 
@@ -294,7 +301,9 @@ $$DP[i,j]=C_{state}(s_{i,j})+\min_p\left(DP[i-1,p]+J_{transition}(s_{i-1,p},s_{i
 RESEARCH FREEZE PACK:          READY FOR CROSS-REVIEW
 RQ1–RQ3 STRUCTURE:             CONSOLIDATED
 RQ FREEZE:                     PENDING TEAM APPROVAL
-CHAPTER 3 OUTLINE:             READY
+CHAPTER 1 DRAFT:               READY FOR TEAM CROSS-REVIEW
+CHAPTER 2 DRAFT:               CITATION CHAINING + TEAM REVIEW PENDING
+CHAPTER 3 DRAFT:               READY FOR TEAM CROSS-REVIEW; PR2/PR3 UPDATE PENDING
 CHAPTER 4 OUTLINE:             READY, RESULTS EMPTY
 FORMAL EXPERIMENT READINESS:   NO
 ```
