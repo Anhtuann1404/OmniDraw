@@ -10,8 +10,8 @@
 
 | Thành viên / Đường chạy | Nhiệm vụ trọng tâm Sprint 1–2 | Điểm nghẽn (Blocker) | Trạng thái |
 | :--- | :--- | :--- | :--- |
-| **TV4 — Project Lead & Handwriting / CA-VHC Composition Lead** | Hoàn tất Strict Validation (34/34 PASS); hoàn tất BƯỚC A — Trellis DAG / CA-VHC Architecture Audit (`06_audit_trellis_dag_report.md`); hoàn tất bản dự thảo BƯỚC B — Thiết kế kiến trúc Diacritic-Aware State Representation (`07_diacritic_aware_state_design.md`) (Architecture draft: DONE, Internal technical cleanup: DONE, TV2 cross-review: COMPLETED, Final team synchronization: PENDING, READY FOR STEP C: NO); chuẩn bị song song lập kế hoạch Step C, unit test spec, experiment runner CSV schema; tổng hợp và khóa Research Questions (RQ1–RQ3); dựng khung báo cáo Chương 3 & 4 | TV2 cross-review: COMPLETED; chờ final team synchronization và chốt các quyết định mở; READY FOR STEP C: NO | 🟡 Đang làm |
-| **TV2 — Stroke Optimization & Path Planning Lead** | TV2 đã hoàn tất review Bước B (`07_diacritic_aware_state_design.md`); baseline và ownership đã được thống nhất; verdict tài liệu: SPEC SYNCHRONIZED — READY FOR FINAL TEAM REVIEW; quyết định Step C: NO (chờ nhóm chốt các quyết định mở); tiếp tục chuẩn hóa ký hiệu toán học hàm mục tiêu $J$ (phần transition cost & kinematics) và 2 bộ baseline đối chứng (Art Mode & CA-VHC motion) | Không | 🟡 Đang làm |
+| **TV4 — Project Lead & Handwriting / CA-VHC Composition Lead** | Hoàn tất Strict Validation (34/34 PASS); hoàn tất BƯỚC A (`06_audit_trellis_dag_report.md`); hoàn tất và đóng BƯỚC B (`07_diacritic_aware_state_design.md`) (APPROVED AND CLOSED); chính thức cho phép bắt đầu software implementation Bước C (READY FOR STEP C: YES); khởi động PR1 (Hoàn thiện CA-VHC Metrics & Experiment Infrastructure); chuẩn bị automated experiment runner, CSV schema; tổng hợp và khóa Research Questions (RQ1–RQ3); dựng khung báo cáo Chương 3 & 4 | Không còn blocker thiết kế cho software Step C. Bắt đầu PR1 Metrics & Experiment Infrastructure. TV1 corpus freeze và TV3 hardware calibration vẫn là downstream validation gates. | 🟡 Đang làm |
+| **TV2 — Stroke Optimization & Path Planning Lead** | Step B technical cross-review (`07_diacritic_aware_state_design.md`) đã hoàn thành và PASS; baseline và ownership đã được thống nhất; nhiệm vụ tiếp theo: triển khai PR2 — Chuẩn hóa ba baseline adapters B1/B2/B3 và phối hợp transition-cost interface cho PR3; tiếp tục chuẩn hóa ký hiệu toán học hàm mục tiêu $J$ (phần transition cost & kinematics) và 2 bộ baseline đối chứng (Art Mode & CA-VHC motion) | Không | 🟡 Đang làm |
 | **TV1 — AI Data & Writer Profile Lead** | Hoàn thành thiết kế & đặc tả kỹ thuật bộ phiếu thu thập mẫu **OmniDraw Handwriting Collection Sheet Pack v1** (P01–P04 Pilot Candidate tại `docs/collection_sheets/`); nhiệm vụ tiếp theo: (1) scan-validation pipeline tối thiểu (fiducial detection, deskew, scale check, deterministic auto-crop), (2) bench print/scan P01–P04 ở 600 DPI, (3) coverage analysis P01–P04, (4) chốt collection protocol & error-handling rule (pending protocol decision), (5) chuẩn bị limited pilot 3–5 writers | Không | 🟡 Đang làm |
 | **TV3 — Hardware, Calibration & Physical Validation Lead** | Chuẩn hóa interface chung giữa simulator và máy vẽ thật; chuẩn bị SVG smoke test fixture; lập checklist hiệu chuẩn phần cứng; xác định metrics phần cứng bắt buộc (phân biệt simulator time và `actual_draw_time_sec` thật) | *Blocked by hardware:* chờ setup cáp & máy vẽ thực tế (tập trung hoàn thiện simulator & test protocol) | 🟡 Đang làm |
 
@@ -34,23 +34,26 @@
   - Runtime bridge collision (`bridge_collision_cost`) chưa xét va chạm với dấu tiếng Việt.
   - Delayed-stroke optimization chưa được triển khai trong engine.
   - Current DAG recurrence vẫn là Viterbi chuẩn: $DP[i, j] = \min_p (DP[i-1, p] + \text{transition\_cost})$.
-- [ ] **🟡 BƯỚC B — Diacritic-Aware State Architecture Design (Design specification completed, TV2 cross-review completed, pending final team synchronization & open decisions before Step C):** Khóa kiến trúc state mới cho CA-VHC: `GlyphVariant` giữ nguyên semantic biến thể hình học thân chữ gốc (base-glyph), `DiacriticCandidate` biểu diễn cấu hình dấu ở tọa độ cục bộ (local coordinates: marks, placement, clearance zone, offsets), `CompositionState` trở thành node logic chính thức của Trellis DAG. Phân tách rõ State Cost $C_{\text{state}}$ (TV4) và Transition Cost $J_{\text{transition}}$ (TV2/TV4), kiểm soát cắt tỉa cứng các ứng viên bất hợp lệ ($K_{\text{raw}} \le 9$), xác lập mục tiêu bảo toàn hành vi cho ký tự không dấu (ASCII), và xây dựng chiến lược 12 unit tests trước khi triển khai mã nguồn (Đặc tả thiết kế: [`07_diacritic_aware_state_design.md`](07_diacritic_aware_state_design.md)).
+- [x] **✅ BƯỚC B — Diacritic-Aware State Architecture Design (Design approved and closed):** Khóa kiến trúc state mới cho CA-VHC: `GlyphVariant` giữ nguyên semantic biến thể hình học thân chữ gốc (base-glyph), `DiacriticCandidate` biểu diễn cấu hình dấu ở tọa độ cục bộ (local coordinates: marks, placement, clearance zone, offsets), `CompositionState` trở thành node logic chính thức của Trellis DAG. Phân tách rõ State Cost $C_{\text{state}}$ (TV4) và Transition Cost $J_{\text{transition}}$ (TV2/TV4), kiểm soát cắt tỉa cứng các ứng viên bất hợp lệ ($K_{\text{raw}} \le 9$), xác lập mục tiêu bảo toàn hành vi cho ký tự không dấu (ASCII), và xây dựng chiến lược 12 unit tests trước khi triển khai mã nguồn (Đặc tả thiết kế: [`07_diacritic_aware_state_design.md`](07_diacritic_aware_state_design.md)).
   - *Sub-status:*
     - Architecture draft: DONE
     - Internal design review & technical cleanup: DONE
-    - TV2 cross-review: COMPLETED
-    - Final team synchronization & open decisions: PENDING
-    - Source implementation: NOT STARTED
-    - Step C readiness: NO (Pending final team review & open decisions)
-  - *Lưu ý phạm vi:* TV4 có thể làm việc song song chuẩn bị (lập kế hoạch triển khai Step C, đặc tả 12 unit tests, thiết kế experiment runner và CSV schema). TUYỆT ĐỐI KHÔNG triển khai mã nguồn các phần dùng chung của Step C (`eval_transition()`, `J_transition`, tích hợp Bellman chung, bridge collision tích hợp, delayed-stroke integration) trước khi nhóm chốt các quyết định mở và phê duyệt Step C.
+    - TV2 cross-review: COMPLETED / PASS
+    - Software Step C authorization: AUTHORIZED by TV4
+    - Source implementation: READY TO START (PR1)
+    - Step C readiness: YES (Software implementation authorized; formal experiment readiness: NO)
+  - *Lưu ý phạm vi:* TV4 bắt đầu triển khai PR1 (Metrics & Experiment Infrastructure). Không bắt đầu PR3 (CompositionState) trước khi PR1 có test và metric baseline ổn định. TV1 corpus freeze và TV3 hardware calibration là downstream validation gates.
+- [ ] **BƯỚC C / PR1 — Hoàn thiện CA-VHC Metrics & Experiment Infrastructure:** Tích hợp internal CA-VHC metrics vào experiment pipeline và CSV (`backend/handwriting/metrics_evaluator.py`, `backend/logs/csv_logger.py`).
+- [ ] **Automated Experiment Runner:** Xây dựng automated runner theo corpus × font × seed × baseline (chuẩn bị hạ tầng chạy tự động ma trận thực nghiệm).
+- [ ] **Public Metric Schema:** Định nghĩa public metric schema chỉ cho các trường backend thực sự xuất ổn định; giữ API Spec cập nhật qua PR riêng.
+- [ ] **Backward Compatibility:** Bảo toàn tuyệt đối public API hiện tại (`generate_handwriting_svg`, `text_to_strokes`) và deterministic behavior.
 - [ ] **Tiêu chuẩn kiểm thử dấu:** Xây dựng tiêu chuẩn định lượng pass/fail cho kiểm tra va chạm dấu tiếng Việt (`diacritic collision clearance threshold`) và mở rộng kịch bản kiểm thử trong `backend/handwriting/qa_specimens.py`.
-- [ ] **Chuẩn hóa CSV Logging:** CSV logger cơ bản đã tồn tại và đã tích hợp Gateway (`backend/logs/csv_logger.py:log_experiment_csv` qua `backend/main.py`); việc còn thiếu là mở rộng schema cho metric CA-VHC mới, kết nối internal evaluator vào API/CSV và xây dựng automated experiment runner.
-- [ ] **Experiment Runner & CSV Logging:** Lập kế hoạch và viết script experiment runner chạy tự động một loạt câu văn tiếng Việt chuẩn qua nhiều phương pháp (`method_tag`) và các `seed` khác nhau, ghi nhận log CSV đầy đủ metrics (nhận benchmark corpus và data fixtures từ TV1).
 - [ ] **Khung Báo cáo NCKH:** Dựng khung cấu trúc chi tiết cho Chương 3 (Phương pháp & Thiết kế Thuật toán) và Chương 4 (Thực nghiệm & Đánh giá) trong Báo cáo NCKH 5 chương.
 - [ ] *Lưu ý phạm vi:* Chưa cần thiết kế thêm Font Pack mới trong sprint này; tập trung tối ưu trên 2 pack hiện có (`omnidraw_legacy` và `omni_casual`).
 
 ### TV2 — Stroke Optimization & Path Planning Lead
-- [x] **Cross-review Kiến trúc Bước B (Diacritic-Aware State Architecture):** TV2 đã hoàn tất review; baseline và ownership đã được thống nhất; verdict tài liệu: SPEC SYNCHRONIZED — READY FOR FINAL TEAM REVIEW; quyết định Step C: NO (chờ nhóm chốt các quyết định mở theo đặc tả [`07_diacritic_aware_state_design.md`](07_diacritic_aware_state_design.md)).
+- [x] **Cross-review Kiến trúc Bước B (Diacritic-Aware State Architecture):** TV2 đã hoàn tất review với kết luận PASS; baseline và ownership đã được thống nhất; verdict tài liệu: SPEC STATUS: APPROVED AND CLOSED FOR STEP B; quyết định Step C: AUTHORIZED / READY FOR STEP C: YES (cấp phần mềm); nhiệm vụ tiếp theo là PR2 baseline adapters (B1, B2, B3) và phối hợp transition-cost interface cho PR3.
+- [ ] **PR2 — Chuẩn Hóa và Khóa Ba Baseline Đối Chứng B1, B2, B3 (TV2 chủ trì, TV4 phối hợp):** Đóng gói 3 adapter thực nghiệm độc lập (B1: Static Glyph Renderer, B2: Greedy Contextual Heuristic, B3: Current Trellis DAG without advanced diacritic constraints); cho phép runner gọi độc lập từng baseline.
 - [ ] **Đặc tả học thuật tối ưu chuyển động:** Xây dựng và soạn thảo câu hỏi nghiên cứu / giả thuyết chuyên sâu về tối ưu đường nét, quãng đường nhấc bút (pen-up distance minimization), chi phí động học và thời gian thi công trên máy vẽ vật lý (đóng góp vào khung RQ chung do TV4 tổng hợp).
 - [ ] **Toán học hóa chi phí chuyển động:** Chuẩn hóa ký hiệu toán học hình thức: Phương trình Bellman Viterbi DP cho transition cost, biểu thức chi phí động học Kinematic Turn Penalty $\text{dist} + \lambda(1 - \cos\theta)$, và pen-up distance.
 - [ ] **Chuẩn hóa 2 bộ baseline đối chứng:**
@@ -141,10 +144,18 @@
 
 > [!IMPORTANT]
 > Toàn bộ các mục dưới đây **CHƯA ĐƯỢC PHÉP ĐÁNH DẤU HOÀN THÀNH** cho đến khi có bằng chứng và tài liệu kiểm chứng thực tế trong repository:
-- [x] TV2 cross-review Step B (COMPLETED; verdict: SPEC SYNCHRONIZED — READY FOR FINAL TEAM REVIEW; READY FOR STEP C: NO)
-- [ ] Final reconciliation of 05_ca_vhc_research_spec.md and 07_diacritic_aware_state_design.md
-- [ ] Step B approval
-- [ ] Step C production implementation
+- [x] TV2 cross-review Step B
+- [x] Final reconciliation docs 02/03/05
+- [x] Step B software-design approval
+- [x] Software Step C authorization
+- [ ] PR1 metrics/API/CSV integration
+- [ ] Automated experiment runner
+- [ ] TV1 formal corpus review/freeze
+- [ ] TV3 clearance calibration
+- [ ] PR2 baseline adapters
+- [ ] PR3 CompositionState production implementation
+- [ ] PR4 delayed-stroke P0
+- [ ] Formal CA-VHC experiment
 - [ ] TV1 scan-validation pipeline
 - [ ] fiducial detection test
 - [ ] deskew / rectify validation
@@ -179,7 +190,7 @@ Một task trong backlog chỉ được tích `[x]` khi:
 
 | Thành viên | Nội dung thực hiện | Bị nghẽn ở đâu | Trạng thái |
 |---|---|---|---|
-| TV2 & TV4 | TV2 hoàn tất cross-review Step B. Ownership, baseline và delayed-stroke priority đã được thống nhất về mặt đặc tả. Step C vẫn chưa được phê duyệt (READY FOR STEP C: NO), cần final team review và chốt các quyết định mở. | Không | Đã xong |
+| TV2 & TV4 | (1) TV2 hoàn tất technical cross-review Bước B với kết luận PASS; TV4 chính thức đóng Bước B (APPROVED AND CLOSED).<br>(2) TV4 với vai trò Project Lead chính thức cho phép bắt đầu triển khai phần mềm Bước C (READY FOR STEP C: YES; STEP C: AUTHORIZED / NOT YET IMPLEMENTED).<br>(3) Khóa năm quyết định kỹ thuật phần mềm (Clearance 0.20mm default / 0.50mm research target; Metric/API contract phân tầng; Delayed-stroke P0 deterministic Nearest Neighbor; Benchmark corpus là provisional technical fixture; TV1 corpus freeze và TV3 hardware calibration là downstream validation gates).<br>(4) Xác lập PR1 (Hoàn thiện CA-VHC Metrics & Experiment Infrastructure) là nhiệm vụ ưu tiên đầu tiên của TV4; TV2 triển khai song song PR2 (Baseline Adapters); TV1/TV3 validation gates vẫn mở; FORMAL EXPERIMENT READINESS: NO. | Không | Đã xong |
 
 **Ngày 20/9**
 

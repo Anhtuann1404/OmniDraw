@@ -6,7 +6,7 @@
 **Chủ trì đề tài & Handwriting:** Thành viên 4 — Project Lead & Handwriting / CA-VHC Composition Lead
 **Phối hợp dữ liệu & Phần cứng:** Thành viên 1 (Data/Corpus) & Thành viên 3 (Hardware/Validation)
 **Cập nhật lần cuối:** 21/09/2026 (Đồng bộ theo Roadmap, Current Task, Tech Stack & Dataset Spec)
-**Trạng thái:** TV2 CROSS-REVIEW COMPLETED — PENDING FINAL SYNCHRONIZATION (READY FOR STEP C: NO)
+**Trạng thái:** STEP B: APPROVED AND CLOSED | TV2 CROSS-REVIEW: COMPLETED / PASS | READY FOR STEP C: YES | STEP C: AUTHORIZED — NOT YET IMPLEMENTED
 
 ---
 
@@ -156,7 +156,7 @@ Mọi giả thuyết kiểm chứng trong tài liệu này đều được phân
   - **PASS (Ưu tiên 2):** $d_{\min} \ge 0.50\text{ mm}$ (đạt biên an toàn nghiên cứu mục tiêu).
   - **INCONCLUSIVE (Ưu tiên 3):** Mọi trường hợp còn lại ($0.20\text{ mm} \le d_{\min} < 0.50\text{ mm}$).
   > [!NOTE]
-  > **Quyết định mở về ngưỡng an toàn:** Hiện tại mã nguồn nguyên mẫu sử dụng giá trị mặc định kỹ thuật $0.20\text{ mm}$, trong khi nghiên cứu đề xuất biên an toàn $0.50\text{ mm}$ cho các ngòi bút máy vẽ vật lý ($0.3\text{ mm} - 0.5\text{ mm}$). Hạng mục này được định danh là `[OPEN REVIEW DECISION: 0.20mm vs 0.50mm]` để tiến hành hiệu chuẩn thực nghiệm (calibration) trên máy vẽ thật ở Bước C.
+  > **Quy chuẩn ngưỡng an toàn:** $0.20\text{ mm}$ là giá trị khởi tạo mặc định kỹ thuật ban đầu trong `DiacriticConfig` để bảo toàn tương thích code hiện hành; $0.50\text{ mm}$ là mục tiêu an toàn nghiên cứu cần TV3 hiệu chuẩn thực nghiệm (calibration) trên máy vẽ vật lý ở Bước C.
 
 ---
 
@@ -413,7 +413,7 @@ Tuân thủ nghiêm ngặt chuẩn quy định trong Roadmap (`02_roadmap.md`) v
   - Ngưỡng an toàn mục tiêu nghiên cứu: $\delta_{\text{clearance}} = 0.50\text{ mm}$ (với $font\_size\_mm = 7.0\text{ mm}$).
   - Ngưỡng mặc định kỹ thuật nguyên mẫu: $\delta_{\text{clearance\_default}} = 0.20\text{ mm}$ (dùng trong code hiện hành).
   - Vùng mỏ neo an toàn: $\delta_{\text{anchor}} = 0.35\text{ mm}$ quanh $\mathbf{P}_{\text{entry}}$ và $\mathbf{P}_{\text{exit}}$ của chính glyph để tránh tự phạt điểm tiếp giáp.
-  > `[OPEN REVIEW DECISION: 0.20mm vs 0.50mm]` — Ngưỡng khoảng cách an toàn đang là quyết định mở; cần được hiệu chuẩn thực tế (calibration) trên máy vẽ vật lý thay vì áp đặt tùy ý.
+  > **Quy chuẩn ngưỡng an toàn:** $0.20\text{ mm}$ là mặc định kỹ thuật ban đầu trong `DiacriticConfig`; $0.50\text{ mm}$ là mục tiêu nghiên cứu chờ TV3 hiệu chuẩn thực nghiệm trên máy vẽ vật lý.
 
 ### 4.2. Cơ Chế Đưa Dấu Vào Trellis DAG Qua `CompositionState`
 
@@ -607,7 +607,7 @@ Bảng đối chiếu kỹ thuật dưới đây xác nhận sự đồng thuậ
 | **6** | **Hệ thống Baseline đối chứng** | Dùng Pure Motion Trellis và Static Diacritic Layout làm baseline chính. | Roadmap quy định chuẩn: B1 (Static), B2 (Greedy Heuristic), B3 (Current Trellis DAG). | Đồng bộ chuẩn 3 baseline B1, B2, B3; chuyển Pure Motion và Static Diacritic sang mục Optional Ablation Studies. | ✅ SYNCHRONIZED |
 | **7** | **Phân tầng Delayed-Stroke** | Đưa ra ngoài phạm vi Step C v1. | Roadmap quy định Delayed-Stroke là P0 design requirement. | Phân tầng rõ rệt: Tầng P0 (Step C v1 — policy tối thiểu có thể kiểm thử), Tầng P1 (Exact Enumeration $M \le 6$), Tầng P2 (Personalization). | ✅ SYNCHRONIZED |
 | **8** | **Quy ước hệ tọa độ** | Không phân định rõ cục bộ vs thế giới. | Local (0..14 đơn vị) cho state; World ($mm$) cho chuyển động. | Quy định rõ: Local cho state biểu diễn; World cho transition và va chạm cầu nối. | ✅ SYNCHRONIZED |
-| **9** | **Ngưỡng an toàn va chạm (Clearance)** | Đặt cứng $0.50\text{ mm}$ là chuẩn duy nhất. | Code đang dùng $0.20\text{ mm}$, đề xuất nghiên cứu là $0.50\text{ mm}$. | Ghi nhận rõ sự khác biệt và đánh dấu `[OPEN REVIEW DECISION: 0.20mm vs 0.50mm]` chờ calibration máy thật. | ⚠️ OPEN DECISION |
+| **9** | **Ngưỡng an toàn va chạm (Clearance)** | Đặt cứng $0.50\text{ mm}$ là chuẩn duy nhất. | Code đang dùng $0.20\text{ mm}$, đề xuất nghiên cứu là $0.50\text{ mm}$. | Ghi nhận rõ: $0.20\text{ mm}$ là mặc định kỹ thuật ban đầu trong `DiacriticConfig`; $0.50\text{ mm}$ là mục tiêu nghiên cứu chờ TV3 hiệu chuẩn máy thật. | ✅ RESOLVED FOR SOFTWARE STEP C |
 | **10**| **Metric Contract & Tuyên bố hiệu năng** | Tuyên bố real-time guaranteed / instant và gộp chung metric. | Roadmap/Task yêu cầu tách biệt contract mục tiêu vs code thực tế. | Thiết lập bảng ánh xạ duy nhất RQ–Metric; phân biệt rõ Target vs Measured; ghi rõ API Spec sẽ cập nhật trong PR riêng. | ✅ SYNCHRONIZED |
 
 ---
@@ -616,40 +616,52 @@ Bảng đối chiếu kỹ thuật dưới đây xác nhận sự đồng thuậ
 
 ### 10.1 Bảng Kiểm Tra Điều Kiện Chuyển Giao (Readiness Checklist)
 
-- [x] **CompositionState thống nhất:** Cấu trúc `(base_variant, diacritic_candidate)` được xác lập làm node Trellis chính thức.
-- [x] **Local/World coordinate separation thống nhất:** Local cho glyph/state, World cho transition, bridge và SVG.
-- [x] **Two-level objective thống nhất:** Phân rã $C_{\text{state}}$ và $J_{\text{transition}}$, tách biệt double-counting ở cấp đặc tả; production implementation và regression test vẫn đang chờ Step C.
-- [x] **Vai trò typography và kinematics được phân tách:** TV4 sở hữu ngôn ngữ/state, TV2 sở hữu động học/path.
-- [x] **Baseline đã đồng bộ với Roadmap:** Khóa chuẩn B1 (Static), B2 (Greedy Heuristic), B3 (Current Trellis DAG); chuyển các biến thể khác sang Ablation Studies.
-- [x] **Ownership đã đồng bộ:** Ranh giới 4 thành viên (TV1: Data, TV2: Motion/DP, TV3: Hardware, TV4: Composition/Lead) được phản ánh chuẩn xác.
-- [x] **RQ–metric mapping đã được mô tả:** Bảng ánh xạ mục tiêu cho RQ1, RQ2, RQ3 được chuẩn hóa minh bạch.
-- [x] **Structured render trace nội bộ đã triển khai và test.**
-- [x] **Internal CA-VHC metrics evaluator đã triển khai và test.**
-- [x] **Benchmark fixtures Dev/Holdout đã tồn tại và test rời nhau.**
-- [x] **optimize_word_dag internal timing đã triển khai.**
-- [ ] **API/CSV metric contract mở rộng đã tích hợp.**
-- [ ] **TV1 đã formal-review và freeze benchmark corpus.**
-- [ ] **Baseline adapters độc lập đã hoàn thành.**
-- [ ] **Delayed-stroke P0 đã triển khai.**
-- [ ] **Experiment runner chính thức đã hoàn thành.**
-- [ ] **Nhóm đã phê duyệt chuyển sang Step C.**
+- [x] **CompositionState design thống nhất:** Cấu trúc `(base_variant, diacritic_candidate)` được xác lập làm node Trellis chính thức.
+- [x] **Local/World coordinate design thống nhất:** Local cho glyph/state, World cho transition, bridge và SVG.
+- [x] **Two-level objective design thống nhất:** Phân rã $C_{\text{state}}$ và $J_{\text{transition}}$, tách biệt double-counting ở cấp đặc tả.
+- [x] **Ownership thống nhất:** Ranh giới 4 thành viên (TV1: Data, TV2: Motion/DP, TV3: Hardware, TV4: Composition/Lead) được phản ánh chuẩn xác.
+- [x] **Baseline specification thống nhất:** Khóa chuẩn B1 (Static), B2 (Greedy Heuristic), B3 (Current Trellis DAG); chuyển các biến thể khác sang Ablation Studies.
+- [x] **TV2 technical cross-review PASS:** Rà soát kỹ thuật hoàn tất và thông qua thiết kế kiến trúc Bước B.
+- [x] **Five software decisions resolved:** Khóa 5 quyết định kỹ thuật cho triển khai phần mềm Bước C.
+- [x] **Software Step C authorized by TV4:** Project Lead phê duyệt bắt đầu triển khai phần mềm (`READY FOR STEP C: YES`).
+- [ ] **Public CA-VHC metric API/CSV integration:** Tích hợp contract metric từ trace nội bộ vào API response và CSV runner.
+- [ ] **Automated experiment runner:** Tự động hóa runner qua corpus × font × seed × baseline.
+- [ ] **TV1 corpus formal freeze:** TV1 rà soát độ phủ và đóng băng phiên bản benchmark corpus chính thức.
+- [ ] **TV3 physical clearance calibration:** TV3 hiệu chuẩn ngưỡng khoảng cách an toàn $0.20\text{ mm}$ vs $0.50\text{ mm}$ trên máy vẽ thật.
+- [ ] **PR2 baseline adapters:** Hoàn thành 3 adapter B1, B2, B3 độc lập.
+- [ ] **PR3 CompositionState production implementation:** Triển khai mã nguồn cấu trúc trạng thái tổ hợp vào engine.
+- [ ] **PR4 delayed-stroke P0:** Triển khai policy gom nét trễ Nearest Neighbor cơ bản.
+- [ ] **Formal benchmark and ablation:** Chạy thực nghiệm chính thức 50 lượt và phân tích kết quả khoa học.
 
 ---
 
-### 10.2 Danh Mục Các Quyết Định Mở Cần Thống Nhất Trước Khi Bắt Đầu Step C
+### 10.2 Danh Mục Năm Quyết Định Kỹ Thuật Phần Mềm Đã Khóa (Resolved for Software Step C)
 
-Trước khi toàn nhóm cập nhật trạng thái Step C thành `YES` trong Roadmap và Current Task, 5 quyết định mở dưới đây bắt buộc phải được thảo luận và chốt phương án:
+Năm quyết định kỹ thuật dưới đây đã được thống nhất giữa TV4 (Project Lead) và TV2 (Stroke Optimization Lead) sau khi TV2 hoàn tất cross-review (verdict: **PASS**), chính thức đóng Bước B và cho phép bắt đầu triển khai phần mềm Bước C:
 
-1. **Chốt giá trị dung sai an toàn (`[OPEN REVIEW DECISION: 0.20mm vs 0.50mm]`):**
-   Thống nhất giá trị khởi tạo trong `DiacriticConfig` cho PR3 và kế hoạch hiệu chuẩn thực tế với ngòi bút máy vẽ của TV3.
-2. **Kế hoạch cập nhật API Spec cho Metric Contract mới:**
-   Thống nhất thời điểm mở PR riêng cập nhật `OmniDraw_API_Spec-4.md` sau khi backend đã xuất metric đo đạc ổn định.
-3. **Tiêu chuẩn nghiệm thu cho Delayed-Stroke P0:**
-   Thống nhất chính sách tối thiểu (heuristic Nearest Neighbor) để đưa vào PR4 mà không làm vỡ tiến độ của Step C v1.
-4. **Nghiệm thu tập dữ liệu benchmark do TV1 bàn giao:**
-   Xác nhận tính đầy đủ của 20 từ Dev Corpus và 20 từ Holdout Corpus trước khi kích hoạt PR1.
-5. **Ký duyệt biên bản họp kỹ thuật toàn nhóm:**
-   Xác nhận chính thức đóng Bước B và cho phép bắt đầu code Bước C.
+1. **Quyết định 1 — Ngưỡng khoảng cách an toàn (Clearance Tolerance):**
+   - $0.20\text{ mm}$ là giá trị mặc định kỹ thuật ban đầu trong `DiacriticConfig` nhằm bảo toàn tương thích với mã nguồn hiện hành.
+   - $0.50\text{ mm}$ là mục tiêu an toàn nghiên cứu cần TV3 hiệu chuẩn thực tế trên máy vẽ vật lý.
+   - Toàn bộ giá trị clearance phải được quản lý tập trung qua `DiacriticConfig` khi triển khai Bước C (tuyệt đối không hard-code rải rác).
+   - Không tuyên bố $0.50\text{ mm}$ đã được xác nhận thực nghiệm trước khi TV3 hoàn thành đo đạc phần cứng.
+2. **Quyết định 2 — Đồng bộ Metric Contract & API Spec:**
+   - Internal evaluator (`metrics_evaluator.py`) và structured trace đã hoàn thành và có test bảo vệ.
+   - Metric CA-VHC mới chỉ được tích hợp vào public API và log CSV sau khi backend thực sự xuất dữ liệu ổn định và tin cậy.
+   - `OmniDraw_API_Spec-4.md` sẽ được cập nhật đồng bộ trong một PR tài liệu riêng sau khi tích hợp phần mềm hoàn tất.
+   - Việc API Spec hiện tại còn mô tả cũ về `optimize_time_ms` được ghi nhận là technical/documentation debt đã biết; không sửa API Spec trong đợt này.
+3. **Quyết định 3 — Chính sách xử lý nét trễ P0 (Delayed-Stroke Policy):**
+   - Step C v1 policy: Viết xong thân từ $\rightarrow$ gom toàn bộ nét phụ/dấu trễ của từ $\rightarrow$ sắp xếp thứ tự vẽ bằng deterministic Nearest Neighbor bắt đầu từ điểm kết thúc nét cuối của thân từ $\rightarrow$ sử dụng original stroke index làm tie-break để chống bất định.
+   - Kỹ thuật Exact Enumeration cho $M \le 6$ thuộc phạm vi P1; mô hình cá nhân hóa theo phong cách người viết (Writer Profile) thuộc phạm vi P2.
+   - Đây là quyết định thiết kế kiến trúc đã khóa cho Bước C, chưa phải là mã nguồn đã triển khai trong engine hiện tại.
+4. **Quyết định 4 — Bộ dữ liệu chuẩn đối chứng (Benchmark Corpus Governance):**
+   - Hai tập fixture `BENCHMARK_DEV_CORPUS_20` và `BENCHMARK_HOLDOUT_CORPUS_20` đã tồn tại và vượt qua kiểm thử tính rời nhau ở mức **PROVISIONAL TECHNICAL FIXTURE**.
+   - TV1 vẫn có nghĩa vụ rà soát độ phủ ngôn ngữ học/ngữ âm học và chính thức đóng băng (freeze) phiên bản dữ liệu trước khi thực hiện benchmark chính thức.
+   - Việc TV1 chưa đóng băng ngữ liệu không cản trở việc triển khai code phần mềm Step C (PR1), nhưng ngăn chặn mọi tuyên bố về kết quả thực nghiệm học thuật chính thức.
+5. **Quyết định 5 — Thẩm quyền cho phép bắt đầu triển khai phần mềm Bước C:**
+   - TV2 technical cross-review đạt kết luận: **COMPLETED / PASS**.
+   - TV4 (Project Lead & Handwriting / CA-VHC Composition Lead) chính thức cho phép bắt đầu triển khai phần mềm Bước C (`READY FOR STEP C: YES`).
+   - Việc TV1 đóng băng corpus và TV3 hiệu chuẩn phần cứng máy vẽ được phân định là các cổng kiểm định downstream (validation gates), không phải là blocker cho việc viết mã nguồn phần mềm.
+   - Ranh giới thẩm quyền được phân định rõ ràng, không tuyên bố mập mờ "toàn nhóm đã ký duyệt nghiệm thu".
 
 ---
 
@@ -657,18 +669,20 @@ Trước khi toàn nhóm cập nhật trạng thái Step C thành `YES` trong Ro
 
 ```text
 ═══════════════════════════════════════════════════════════════════════════════════════════
-                    KẾT LUẬN RÀ SOÁT ĐỒNG BỘ ĐẶC TẢ CA-VHC (TV2 CROSS-REVIEW)
+                    KẾT LUẬN RÀ SOÁT ĐỒNG BỘ ĐẶC TẢ CA-VHC (BƯỚC B ➔ BƯỚC C)
 ═══════════════════════════════════════════════════════════════════════════════════════════
-• Trạng thái văn bản:      SPEC SYNCHRONIZED — READY FOR FINAL TEAM REVIEW
-• Quyết định chuyển bước:  READY FOR STEP C: NO (Chờ toàn nhóm chốt các quyết định mở)
-• Điểm nghẽn tài liệu:     Đã giải quyết toàn diện mâu thuẫn về baseline, ownership và scope
-• Hành động kế tiếp:       Họp kỹ thuật toàn nhóm để chốt 5 quyết định mở và phê duyệt Step C
+• SPEC STATUS:                 APPROVED AND CLOSED FOR STEP B
+• TV2 TECHNICAL CROSS-REVIEW:  PASS
+• SOFTWARE STEP C:             AUTHORIZED / NOT YET IMPLEMENTED
+• READY FOR STEP C:            YES (Software implementation authorized by TV4)
+• FORMAL EXPERIMENT READINESS: NO (Pending TV1 corpus freeze & TV3 hardware calibration)
+• HÀNH ĐỘNG KẾ TIẾP:           Khởi động PR1 (Hoàn thiện CA-VHC Metrics & Experiment Infrastructure)
 ═══════════════════════════════════════════════════════════════════════════════════════════
 ```
 
-**Đại diện ký duyệt rà soát:**
-- **Thành viên 2** — *Stroke Optimization & Path Planning Lead; owner phần motion/DP của CA-VHC*
-- **Thành viên 4** — *Project Lead & Handwriting / CA-VHC Composition Lead*
+**Đại diện ký duyệt & Phê duyệt:**
+- **Thành viên 2** — *Stroke Optimization & Path Planning Lead; owner phần motion/DP của CA-VHC* (Technical Reviewer: PASS)
+- **Thành viên 4** — *Project Lead & Handwriting / CA-VHC Composition Lead* (Software Step C Authorized)
 
 ---
 
