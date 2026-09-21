@@ -52,7 +52,8 @@
 - [ ] **Automated Experiment Matrix Execution:** Chạy tự động ma trận thực nghiệm sau khi PR2 và PR3 hoàn thành (không chạy holdout trước khi TV1 freeze corpus).
 - [ ] **Public Metric Schema:** Định nghĩa public metric schema chỉ cho các trường backend thực sự xuất ổn định; giữ API Spec cập nhật qua PR riêng.
 - [ ] **Backward Compatibility:** Bảo toàn tuyệt đối public API hiện tại (`generate_handwriting_svg`, `text_to_strokes`) và deterministic behavior.
-- [ ] **Tiêu chuẩn kiểm thử dấu:** Xây dựng tiêu chuẩn định lượng pass/fail cho kiểm tra va chạm dấu tiếng Việt (`diacritic collision clearance threshold`) và mở rộng kịch bản kiểm thử trong `backend/handwriting/qa_specimens.py`.
+- [x] **✅ Tiêu chuẩn định lượng kiểm thử dấu:** Đã khóa quy tắc phán quyết thực thi cho va chạm bridge–diacritic trong `classify_diacritic_clearance_acceptance`: `FAIL` khi có va chạm hoặc $d_{min}<0.20\,mm$; `INCONCLUSIVE` trong $[0.20,0.50)\,mm$; `PASS_PROVISIONAL_TARGET` khi $d_{min}\ge0.50\,mm$; `NOT_APPLICABLE` khi không có cặp bridge–diacritic hợp lệ. Đã khóa unit test tại đúng các điểm biên và fail closed với metric không hợp lệ. Ngưỡng $0.50\,mm$ vẫn chờ TV3 hiệu chuẩn, không phải tuyên bố an toàn vật lý.
+- [ ] **Visual QA cho PR3:** Sau khi có mã nguồn PR3, mở rộng `backend/handwriting/qa_specimens.py` bằng tập DEV acceptance và nhóm chẩn đoán `lụy/thụy/quỹ/nguyễn/nghiễm`; nhóm chẩn đoán không được trộn vào corpus nghiệm thu hoặc dùng để tuyên bố kết quả chính thức.
 - [x] **✅ Khung Báo cáo NCKH Chương 3–4:** Đã dựng outline chi tiết, bảng kết quả rỗng, threats to validity và quy tắc không công bố kết quả chưa đo tại [`10_nckh_research_plan.md`](10_nckh_research_plan.md). Trạng thái viết nội dung hoàn chỉnh và kết quả thực nghiệm vẫn `PENDING`.
 - [ ] *Lưu ý phạm vi:* Chưa cần thiết kế thêm Font Pack mới trong sprint này; tập trung tối ưu trên 2 pack hiện có (`omnidraw_legacy` và `omni_casual`).
 

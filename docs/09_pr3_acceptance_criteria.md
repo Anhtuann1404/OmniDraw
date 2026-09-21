@@ -12,6 +12,15 @@
 ═══════════════════════════════════════════════════════════════════════════════════════════
 ```
 
+## Material Passport
+
+- **Origin Skill:** `academic-research-suite / experiment-agent`
+- **Origin Mode:** `plan`
+- **Origin Date:** `2026-09-22`
+- **Verification Status:** `VERIFIED` *(chỉ đối với logic nghiệm thu phần mềm; hiệu chuẩn vật lý vẫn pending)*
+- **Version Label:** `pr3_acceptance_contract_v2`
+- **Evidence Boundary:** Chỉ xác nhận quy tắc phân loại hình học và unit test phần mềm; không xác nhận độ an toàn cơ học hoặc chất lượng nét trên máy vẽ thật.
+
 ---
 
 ## 1. Giới thiệu & Mục tiêu (Purpose & Scope)
@@ -139,6 +148,19 @@ Khoảng cách an toàn giữa nét nối (bridge) và nét dấu (diacritic) đ
 └───────────────────────────────┴──────────────────────┴─────────────────────────────────┘
 ```
 
+### 6.1. Quy tắc thực thi và nguồn sự thật
+
+- Hàm phân loại thực thi: `backend/handwriting/metrics_evaluator.py::classify_diacritic_clearance_acceptance`.
+- Ngưỡng phần mềm được đặt tên tập trung trong evaluator:
+  - `DIACRITIC_CLEARANCE_TECHNICAL_MIN_MM = 0.20`.
+  - `DIACRITIC_CLEARANCE_PROVISIONAL_TARGET_MM = 0.50`.
+- Các ngưỡng trên là **ranh giới phán quyết đo lường**, không phải tham số sinh hình học. Khi PR3 triển khai, `DiacriticConfig` vẫn là nguồn sở hữu tham số render.
+- `evaluate_ca_vhc_metrics` phải giữ full precision cho `minimum_diacritic_clearance_mm`; chỉ lớp xuất CSV/UI được làm tròn để trình bày. Không được phân loại lại từ một giá trị đã làm tròn.
+- Mã phán quyết máy đọc được gồm `FAIL`, `INCONCLUSIVE`, `PASS_PROVISIONAL_TARGET`, `NOT_APPLICABLE`.
+- `PASS_PROVISIONAL_TARGET` chỉ khẳng định hình học phần mềm đạt mục tiêu tạm thời; không được diễn giải thành an toàn vật lý trước khi TV3 hiệu chuẩn.
+- Dữ liệu metric sai (`NaN`, khoảng cách âm, boolean, chuỗi số, collision count âm/sai kiểu hoặc ngưỡng cấu hình mâu thuẫn) phải fail closed bằng `ValueError`, không được tự động biến thành `PASS` hay `NOT_APPLICABLE`.
+- Unit test khóa đúng các điểm biên `0.199`, `0.20`, `0.499`, `0.50`, hai ca sát biên `0.1996`/`0.4996`, trường hợp có va chạm và trường hợp không có cặp bridge–diacritic hợp lệ.
+
 ---
 
 ## 7. Danh Mục Ngữ Liệu Kiểm Chuẩn & Mẫu Nghiệm Thu (Specimen Sets)
@@ -175,7 +197,7 @@ $$\mathcal{S}_{\text{PR3}} = \{\text{"tiếng"}, \text{"nước"}, \text{"đư�
 | **D1** | `test_pr3_ascii_seed_determinism` | `tests/test_pr3_acceptance_baseline.py` | `PASS` |
 | **D2** | `test_pr3_ascii_batch_order_does_not_change_fingerprint` | `tests/test_pr3_acceptance_baseline.py` | `PASS` |
 | **G1** | `test_pr3_acceptance_specimens_are_dev_only` | `tests/test_pr3_acceptance_baseline.py` | `PASS` |
-| **C2, C3** | `test_metrics_evaluator_calculates_all_required_keys`<br>`test_bridge_diacritic_clearance_computation` | `tests/test_ca_vhc_metrics.py` | `PASS` (Metric engine) |
+| **C2, C3** | `test_metrics_evaluator_calculates_all_required_keys`<br>`test_bridge_diacritic_clearance_computation`<br>`test_diacritic_clearance_acceptance_boundaries`<br>`test_diacritic_clearance_acceptance_rejects_invalid_metrics` | `tests/test_ca_vhc_metrics.py` | `PASS` (Metric engine + executable verdict boundaries) |
 | **E1** | `test_runner_builds_reproducible_geometry_row`<br>`test_pr1_dev_geometry_matches_frozen_baseline` | `tests/test_ca_vhc_experiment_runner.py` | `PASS` (Runner infra)<br>`PR2_DEPENDENT` (So sánh B1/B2/B3) |
 | **B1, B2, B3** | *(Dự kiến PR3)* `test_composition_state_generation`<br>`test_trellis_dag_candidate_pruning` | `tests/test_ca_vhc_composition_state.py` | `PENDING PR3` |
 | **C1** | *(Dự kiến PR3)* `test_pr3_vietnamese_unicode_nfd_mark_preservation` | `tests/test_pr3_vietnamese_acceptance.py` | `PENDING PR3` |

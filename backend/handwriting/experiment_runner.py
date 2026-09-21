@@ -89,7 +89,11 @@ def build_benchmark_rows(
                     "pen_lift_distance_mm": metrics["pen_lift_distance_mm"],
                     "pen_lift_count": metrics["pen_lift_count"],
                     "collision_count": metrics["collision_count"],
-                    "minimum_diacritic_clearance_mm": metrics["minimum_diacritic_clearance_mm"],
+                    "minimum_diacritic_clearance_mm": (
+                        round(metrics["minimum_diacritic_clearance_mm"], 3)
+                        if metrics["minimum_diacritic_clearance_mm"] != float("inf")
+                        else float("inf")
+                    ),
                     "curvature_cost": metrics["curvature_cost"],
                     "optimize_time_ms": metrics["optimize_time_ms"],
                     "base_stroke_count": counts["base_stroke"],

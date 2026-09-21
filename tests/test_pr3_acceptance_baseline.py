@@ -7,6 +7,7 @@ import xml.etree.ElementTree as ET
 
 from backend.handwriting.benchmark_fixtures import (
     BENCHMARK_DEV_CORPUS_20,
+    PR3_VIETNAMESE_ACCEPTANCE_SPECIMENS,
     STANDARD_SEEDS,
 )
 from backend.handwriting.engine import (
@@ -23,19 +24,6 @@ ASCII_WORDS = ["OmniDraw", "plotter", "vector", "minimum", "connection", "handwr
 ASCII_FONTS = ["oly", "omni_casual"]
 ASCII_SEEDS = list(STANDARD_SEEDS)
 ASCII_STYLE = "hand_hocsinh"
-
-PR3_VIETNAMESE_ACCEPTANCE_SPECIMENS = [
-    "tiếng",
-    "nước",
-    "đường",
-    "khuấy",
-    "thuở",
-    "nghỉ",
-    "trường",
-    "phượng",
-    "mượt",
-    "vẫy",
-]
 
 HEX_64_PATTERN = re.compile(r"^[0-9a-f]{64}$")
 
