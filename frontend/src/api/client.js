@@ -21,8 +21,10 @@ export class ApiError extends Error {
  */
 export async function apiRequest(path, { method = "GET", body, signal } = {}) {
   let response;
+  const baseUrl = (API_BASE_URL || "").replace(/\/+$/, "");
+  const cleanPath = path.startsWith("/") ? path : `/${path}`;
   try {
-    response = await fetch(`${API_BASE_URL}${path}`, {
+    response = await fetch(`${baseUrl}${cleanPath}`, {
       method,
       headers: { "Content-Type": "application/json" },
       body: body ? JSON.stringify(body) : undefined,

@@ -7,34 +7,41 @@ import { MOCK_MODE } from "./config";
 
 /**
  * Mục 2 của API Spec — Giao diện → AI (sinh ảnh / style transfer)
- * @param {Object} params
- * @param {"image"|"text"} params.inputType
- * @param {string} [params.imageBase64] - bắt buộc nếu inputType = "image"
- * @param {string} [params.prompt] - bắt buộc nếu inputType = "text"
- * @param {"sketch"|"line_art"|"stipple"|"hatching"} params.style
- * @param {{datasetItemId?: string, methodTag?: string}} [params.experiment] - chỉ điền khi chạy thí nghiệm RQ (mục 6 API Spec)
- * @returns {Promise<{requestId: string, resultImageBase64: string, meta: object}>}
  */
-export async function generateArt({ inputType, imageBase64, prompt, style, experiment }) {
+export async function generateArt({ inputType, imageBase64, prompt, style, paperSize = "a4", font = "oly", letterType = "general", seed, experiment }) {
   const requestId = generateRequestId();
+
+  const PAPER_SIZES_MM = {
+    "a3": [297, 420],
+    "a4": [210, 297],
+    "a5": [148, 210]
+  };
+  const target_paper_size_mm = PAPER_SIZES_MM[paperSize] || [210, 297];
 
   if (MOCK_MODE) {
     await delay(1200);
     return {
       requestId,
-      // Mượn ảnh gốc (imageBase64) truyền vào để hiển thị luôn
       resultImageBase64: inputType === "image" ? imageBase64 : "https://via.placeholder.com/400x300.png?text=Mock+Text+Result", 
       meta: { modelUsed: "style-transfer-v1 (mock)", processingTimeMs: 1200 },
     };
   }
 
+  const options = { target_paper_size_mm, auto_deskew: true, font, letter_type: letterType };
+  if (inputType === "handwriting" && seed !== undefined && seed !== null) {
+    const numSeed = Number(seed);
+    if (Number.isInteger(numSeed) && numSeed >= 0 && numSeed <= 4294967295) {
+      options.seed = numSeed;
+    }
+  }
+
   const payload = {
     request_id: requestId,
     input_type: inputType,
-    image_base64: inputType === "image" ? imageBase64 : null,
-    prompt: inputType === "text" ? prompt : null,
+    image_base64: imageBase64 || null,
+    prompt: prompt || null,
     style,
-    options: { target_paper_size_mm: [210, 297] },
+    options,
     experiment: experiment
       ? { dataset_item_id: experiment.datasetItemId ?? null, method_tag: experiment.methodTag ?? null }
       : { dataset_item_id: null, method_tag: null },
@@ -46,14 +53,37 @@ export async function generateArt({ inputType, imageBase64, prompt, style, exper
     requestId: data.request_id,
     resultImageBase64: data.result_image_base64,
     meta: { modelUsed: data.meta?.model_used, processingTimeMs: data.meta?.processing_time_ms },
+    svgReady: data.svg_ready || false,
+    svgMetrics: data.svg_metrics || null,
+  };
+}
+
+/**
+ * Lấy nội dung SVG sau khi backend đã xử lý xong
+ * Gọi API: GET /api/print/svg/{request_id}
+ */
+export async function getSvgContent(requestId) {
+  if (MOCK_MODE) {
+    await delay(300);
+    // Trả về SVG mẫu đơn giản cho mock mode
+    return {
+      svgText: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 210 297">
+        <rect width="210" height="297" fill="white"/>
+        <circle cx="105" cy="148" r="60" fill="none" stroke="black" stroke-width="1.5"/>
+        <text x="105" y="220" text-anchor="middle" font-size="12" fill="#666">[Mock SVG]</text>
+      </svg>`,
+    };
+  }
+
+  const data = await apiRequest(`/api/print/svg/${requestId}`, { method: "GET" });
+  return {
+    svgText: data.svg_content,
+    svgMetrics: data.svg_metrics,
   };
 }
 
 /**
  * Mục 5 của API Spec — Máy vẽ → Giao diện (trạng thái/tiến độ)
- * Gọi 1 lần; nếu cần polling liên tục, dùng hook usePrintStatusPolling ở src/hooks/.
- * @param {string} requestId
- * @returns {Promise<{status: string, progressPercent: number, etaSec: number, actualDrawTimeSec: number|null, error: {code:string,message:string}|null}>}
  */
 export async function getPrintStatus(requestId) {
   if (MOCK_MODE) {
@@ -73,16 +103,9 @@ export async function getPrintStatus(requestId) {
 }
 
 // ============================================================================
-// ĐỀ XUẤT ENDPOINT MỚI — CHƯA CÓ TRONG API SPEC, CẦN NHÓM THỐNG NHẤT RỒI
-// BỔ SUNG VÀO OmniDraw_API_Spec.md TRƯỚC KHI BACKEND CODE THEO ĐÂY.
-// Quy ước request/response bên dưới là đề xuất hợp lý dựa trên các mục đã có
-// (cùng dùng request_id, cùng cấu trúc lỗi {code, message} như mục 8), không phải chuẩn chính thức.
+// ĐỀ XUẤT ENDPOINT MỚI
 // ============================================================================
 
-/**
- * [ĐỀ XUẤT] Bắt đầu vẽ sau khi người dùng xác nhận ở màn Confirm.
- * Endpoint gợi ý: POST /api/print/start
- */
 export async function startPrint({ requestId, paperSize = "a4" }) {
   if (MOCK_MODE) {
     await delay(400);
@@ -95,7 +118,6 @@ export async function startPrint({ requestId, paperSize = "a4" }) {
   return { requestId: data.request_id, status: data.status };
 }
 
-/** [ĐỀ XUẤT] Tạm dừng máy đang vẽ. Endpoint gợi ý: POST /api/print/pause */
 export async function pausePrint(requestId) {
   if (MOCK_MODE) {
     await delay(200);
@@ -105,7 +127,16 @@ export async function pausePrint(requestId) {
   return { requestId: data.request_id, status: data.status };
 }
 
-/** [ĐỀ XUẤT] Huỷ lệnh vẽ đang chạy. Endpoint gợi ý: POST /api/print/cancel */
+// BỔ SUNG: Hàm tiếp tục vẽ
+export async function resumePrint(requestId) {
+  if (MOCK_MODE) {
+    await delay(200);
+    return { requestId, status: "printing" };
+  }
+  const data = await apiRequest("/api/print/resume", { method: "POST", body: { request_id: requestId } });
+  return { requestId: data.request_id, status: data.status };
+}
+
 export async function cancelPrint(requestId) {
   if (MOCK_MODE) {
     await delay(200);
@@ -115,25 +146,47 @@ export async function cancelPrint(requestId) {
   return { requestId: data.request_id, status: data.status };
 }
 
-/** [ĐỀ XUẤT] Lấy danh sách tranh đã vẽ cho màn Thư viện. Endpoint gợi ý: GET /api/history */
 export async function getHistory() {
   if (MOCK_MODE) {
     await delay(300);
     return [
-      { id: "1", title: "Mèo ngủ", style: "Ký hoạ", timeAgo: "2 ngày trước", minutes: 12, thumbnailUrl: null },
-      { id: "2", title: "Phong cảnh núi", style: "Line art", timeAgo: "5 ngày trước", minutes: 10, thumbnailUrl: null },
-      { id: "3", title: "Chân dung", style: "Chấm bi", timeAgo: "1 tuần trước", minutes: 12, thumbnailUrl: null },
+      { id: "1", title: "Mèo ngủ", style: "Ký hoạ", timeAgo: "2 ngày trước", minutes: 12, strokeCount: 154, estimatedMinutes: 12, paperSize: "a4", thumbnailUrl: null },
+      { id: "2", title: "Phong cảnh núi", style: "Line art", timeAgo: "5 ngày trước", minutes: 10, strokeCount: 230, estimatedMinutes: 10, paperSize: "a4", thumbnailUrl: null },
+      { id: "3", title: "Chân dung", style: "Chấm bi", timeAgo: "1 tuần trước", minutes: 12, strokeCount: 420, estimatedMinutes: 12, paperSize: "a4", thumbnailUrl: null },
     ];
   }
   const data = await apiRequest("/api/history", { method: "GET" });
-  return data.items.map((it) => ({
+  return (data.items || []).map((it) => ({
     id: it.id,
     title: it.title,
     style: it.style,
+    inputType: it.input_type,
     timeAgo: it.time_ago,
-    minutes: it.minutes,
+    minutes: it.minutes || it.estimated_minutes,
+    estimatedMinutes: it.estimated_minutes || it.minutes,
+    actualDrawTimeSec: it.actual_draw_time_sec,
+    strokeCount: it.stroke_count,
+    paperSize: it.paper_size || "a4",
+    modelUsed: it.model_used,
+    svgMetrics: it.svg_metrics,
     thumbnailUrl: it.thumbnail_url,
   }));
+}
+
+export async function deleteHistoryItem(requestId) {
+  if (MOCK_MODE) {
+    await delay(300);
+    return { status: "success" };
+  }
+  return await apiRequest(`/api/history/${requestId}`, { method: "DELETE" });
+}
+
+export async function logExperimentData(logPayload) {
+  const data = await apiRequest("/api/log/experiment", { 
+    method: "POST", 
+    body: logPayload 
+  });
+  return data;
 }
 
 // ============================================================================
@@ -144,14 +197,12 @@ function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// Mô phỏng tiến độ tăng dần theo thời gian kể từ lúc requestId được tạo,
-// để test màn PrintStatusScreen mà không cần backend thật.
 const mockStartTimes = new Map();
 
 function mockProgressStatus(requestId) {
   if (!mockStartTimes.has(requestId)) mockStartTimes.set(requestId, Date.now());
   const elapsedSec = (Date.now() - mockStartTimes.get(requestId)) / 1000;
-  const totalMockSec = 20; // giả lập vẽ xong sau 20s cho dễ test
+  const totalMockSec = 20; 
   const percent = Math.min(100, Math.round((elapsedSec / totalMockSec) * 100));
 
   if (percent >= 100) {
@@ -164,22 +215,4 @@ function mockProgressStatus(requestId) {
     actualDrawTimeSec: null,
     error: null,
   };
-}
-/** 
- * [ĐỀ XUẤT] Ghi log thông số khi hoàn thành/lỗi để phục vụ NCKH.
- * Endpoint gợi ý: POST /api/log/experiment 
- */
-export async function logExperimentData(logPayload) {
-  /*if (MOCK_MODE) {
-    console.log("🧪 [MOCK LOG] Dữ liệu thí nghiệm sẽ được ghi vào CSV:", logPayload);
-    await delay(200);
-    return { success: true };
-  }
-    */
-  
-  const data = await apiRequest("/api/log/experiment", { 
-    method: "POST", 
-    body: logPayload 
-  });
-  return data;
 }
