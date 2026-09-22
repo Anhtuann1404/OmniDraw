@@ -9,8 +9,10 @@ __pycache__/
 # Bỏ qua file môi trường chứa thông tin nhạy cảm
 .env
 
-# Bỏ qua thư mục log (để các máy không bị ghi đè file CSV của nhau)
-logs/
+# Bỏ qua dữ liệu log sinh lúc chạy, nhưng giữ source code của logger.
+logs/*
+!logs/__init__.py
+!logs/csv_logger.py
 data/
 backend/svg_output/
 backend/logs/

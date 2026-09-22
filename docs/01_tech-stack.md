@@ -15,47 +15,7 @@
 | Thư viện chính       | `google-genai`, `requests`                         | Giao tiếp API Google Gemini hiện hành; `openai` là thư viện từng dùng trong prototype ban đầu |
 | Quản trị dữ liệu & Schema | JSON Schema (versioned), Pandas/Numpy           | Định nghĩa cấu trúc `WriterProfile`, protocol thu thập mẫu chữ viết tay và bộ trích xuất đặc trưng hình học |
 
-
-
-## 2. AI Ứng dụng — Thị giác máy tính & Tối ưu vẽ (Thành viên 2)
-
-
-| Hạng mục                   | Lựa chọn | Lý do    |
-| -------------------------- | -------- | -------- |
-| Ngôn ngữ                   | Python   | *(điền)* |
-| Thư viện CV                | OpenCV   | *(điền)* |
-| Thuật toán tối ưu đường vẽ | *(điền)* | *(điền)* |
-| Thư viện vector hoá ảnh    | *(điền)* | *(điền)* |
-
-
-
-
-## 3. Phần cứng, Cơ khí & Cảm biến (Thành viên 3)
-
-| Hạng mục                    | Lựa chọn                                                | Lý do                                                                                   |
-| --------------------------- | ------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| Thiết bị máy vẽ             | AxiDraw V3 / SE (Khổ vẽ tiêu chuẩn A4/A3)              | Máy vẽ ngòi bút chính xác cao, chuyển động Cartesian XY đai curoa êm ái                  |
-| Vi điều khiển               | EiBotBoard (EBB) v2.8 (Microchip PIC18F46J50)           | Board điều khiển chuyên dụng cho AxiDraw, giao tiếp USB CDC Virtual COM                 |
-| Ngôn ngữ firmware           | EBB Firmware Command Protocol / Python (qua pyaxidraw)  | Đồng bộ ngôn ngữ với backend Python và tương thích trực tiếp với tập lệnh máy vẽ        |
-| Camera / Cảm biến sử dụng   | USB Webcam (UVC standard, cảm biến OV5640 hoặc tương đương) | Giám sát giấy, phát hiện góc nghiêng và độ sạch (Closed-Loop Vision) qua OpenCV        |
-| Thư viện điều khiển AxiDraw | `pyaxidraw` + `backend/hardware_adapter.py`             | Thư viện Python chính thức đọc file SVG và gửi lệnh, có lớp trừu tượng HAL an toàn      |
-
-
-
-
-
-## 4. Phần mềm điều khiển, Giao diện & Tích hợp (Thành viên 4)
-
-
-| Hạng mục           | Lựa chọn          | Lý do                                                |
-| ------------------ | ----------------- | ---------------------------------------------------- |
-| Frontend framework | *React.js*        | *Render SPA mượt mà, quản lý component tốt*          |
-| Backend framework  | *python(FastApi)* | *Tốc độ cao, đồng bộ ngôn ngữ vói team AI*           |
-| Giao tiếp realtime | REST polling      | Theo quyết định đã chốt trong `OmniDraw_API_Spec.md` |
-| Database (nếu cần) | *sqlite*          | *gọn nhẹ lưu file cục bộ khời tạo nhanh chóng*       |
-> *(Chi tiết quy chuẩn phân tách giữa CA-VHC Structural Dataset và Writer Profile Dataset, quy trình thu thập, schema và ranh giới ownership: xem [`08_handwriting_dataset_spec.md`](file:///Users/yingjunn_/Study_/Nckh_2026-2027/OmniDraw/docs/08_handwriting_dataset_spec.md)).*
-
-
+> *(Chi tiết quy chuẩn phân tách giữa CA-VHC Structural Dataset và Writer Profile Dataset, quy trình thu thập, schema và ranh giới ownership: xem [`08_handwriting_dataset_spec.md`](08_handwriting_dataset_spec.md)).*
 
 ---
 
@@ -73,12 +33,13 @@
 
 ## 3. Phần cứng, Hiệu chuẩn & Thực nghiệm Vật lý (TV3 — Hardware, Calibration & Physical Validation Lead)
 
-| Hạng mục                    | Lựa chọn                 | Lý do    |
-| --------------------------- | ------------------------ | -------- |
-| Vi điều khiển               | *(vd: Arduino/ESP32...)* | *(điền)* |
-| Ngôn ngữ firmware           | Python (qua pyaxidraw)   | Đồng bộ ngôn ngữ với backend Python và tương thích trực tiếp với tập lệnh máy vẽ |
-| Camera/cảm biến sử dụng     | *(điền)*                 | *(điền)* |
-| Thư viện điều khiển AxiDraw | pyaxidraw                | Thư viện Python chính thức để đọc file SVG và gửi lệnh trực tiếp xuống phần cứng (hiện backend đang chạy mô phỏng phần mềm) |
+| Hạng mục                    | Lựa chọn                                                | Lý do                                                                                   |
+| --------------------------- | ------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Thiết bị máy vẽ             | AxiDraw V3 / SE (Khổ vẽ tiêu chuẩn A4/A3)              | Máy vẽ ngòi bút chính xác cao, chuyển động Cartesian XY đai curoa êm ái                  |
+| Vi điều khiển               | EiBotBoard (EBB) v2.8 (Microchip PIC18F46J50)           | Board điều khiển chuyên dụng cho AxiDraw, giao tiếp USB CDC Virtual COM                 |
+| Ngôn ngữ firmware           | EBB Firmware Command Protocol / Python (qua pyaxidraw)  | Đồng bộ ngôn ngữ với backend Python và tương thích trực tiếp với tập lệnh máy vẽ        |
+| Camera / Cảm biến sử dụng   | USB Webcam (UVC standard, cảm biến OV5640 hoặc tương đương) | Giám sát giấy, phát hiện góc nghiêng và độ sạch (Closed-Loop Vision) qua OpenCV        |
+| Thư viện điều khiển AxiDraw | `pyaxidraw` + `backend/hardware_adapter.py`             | Thư viện Python chính thức đọc file SVG và gửi lệnh, có lớp trừu tượng HAL an toàn      |
 
 ### Phân định 3 mức điều khiển phần cứng, thời gian & telemetry
 1. **Mức 1 — Hiện tại (Mô phỏng phần mềm):** Preview/animation trên giao diện và tính toán thời gian vẽ mô phỏng/ước tính (`estimated_draw_time_sec` theo công thức xấp xỉ `total_path_length_mm / 40.0`). Giao tiếp REST polling hiện tại chỉ là truy vấn tiến trình mô phỏng từ backend, chưa phải điều khiển phản hồi từng nét từ máy vẽ thật. *(Lưu ý về implementation/contract debt: Backend hiện vẫn tạm thời lưu giá trị mô phỏng này vào trường `actual_draw_time_sec` khi `status="done"` theo contract API v1.4; đây là khoản nợ kỹ thuật và trường này chỉ được xem là số đo thực tế khi kết nối phần cứng vật lý ở Mức 2).*
@@ -161,7 +122,7 @@
 3. **Letter Type:** Ngữ cảnh văn bản quy định quy tắc lựa chọn biến thể glyph và bố cục (hiện tại: `general`, `formal`; tương lai: thân mật, tình cảm, thiệp mời, học sinh...).
 4. **Writer Profile:** Hồ sơ đặc trưng thói quen và phong cách cá nhân hóa của một người viết cụ thể (độ nghiêng, jitter baseline, spacing, thiên hướng chọn allograph) phục vụ few-shot personalization (thuộc nhánh nghiên cứu mở rộng P2 do TV1 chủ trì; chưa tích hợp vào engine lõi).
 5. **CA-VHC Structural Dataset:** Tập dữ liệu mẫu chữ viết tay tiếng Việt tập trung vào CẤU TRÚC và CHÍNH TẢ (tọa độ mỏ neo anchor, độ lệch diacritic offset, vùng cấm va chạm, biến thể allograph theo vị trí từ và tổ hợp dấu thanh). Do TV1 thu thập và chuẩn bị dữ liệu, nhưng toàn bộ quy tắc sử dụng và logic chính tả do TV4 sở hữu phục vụ calibrate và đánh giá CA-VHC engine.
-*(Xem phân định chi tiết tại [`08_handwriting_dataset_spec.md`](file:///Users/yingjunn_/Study_/Nckh_2026-2027/OmniDraw/docs/08_handwriting_dataset_spec.md)).*
+*(Xem phân định chi tiết tại [`08_handwriting_dataset_spec.md`](08_handwriting_dataset_spec.md)).*
 
 #### E. Phân biệt lõi nghiên cứu và tính năng trình diễn
 - **Lõi nghiên cứu (Core Contributions):**

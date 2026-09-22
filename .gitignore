@@ -62,7 +62,9 @@ build/
 # OmniDraw - Dữ liệu sinh ra lúc chạy (Không push lên Git)
 # =========================
 backend/svg_output/
-backend/logs/
+backend/logs/*
+!backend/logs/__init__.py
+!backend/logs/csv_logger.py
 backend/data/
 frontend/.vite/
 

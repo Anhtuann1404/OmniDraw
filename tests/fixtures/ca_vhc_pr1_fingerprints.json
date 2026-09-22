@@ -1,0 +1,1127 @@
+{
+  "schema_version": 1,
+  "method_tag": "b3_current_trellis",
+  "case_count": 160,
+  "cases": [
+    {
+      "dataset_item_id": "dev_001",
+      "text": "tiếng",
+      "font": "oly",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "40a2ec8e17845b019a44470fe0722dd73c29ea190f912ba9e0dbd1bbe4a0330f"
+    },
+    {
+      "dataset_item_id": "dev_001",
+      "text": "tiếng",
+      "font": "oly",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "3067cf7b942128168acfa72043520a05b6d89447535c9fb859a3016e81c11d8b"
+    },
+    {
+      "dataset_item_id": "dev_001",
+      "text": "tiếng",
+      "font": "oly",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "169161cdd4b1b86b7946200f795d1db2801f5cc6a294a3f832b6eb55ea6b094b"
+    },
+    {
+      "dataset_item_id": "dev_001",
+      "text": "tiếng",
+      "font": "oly",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "8b535582f832b6bb6f4b736de8a92218b8d65fdae786af451ad3cb127301a7e2"
+    },
+    {
+      "dataset_item_id": "dev_001",
+      "text": "tiếng",
+      "font": "omni_casual",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "f99c3ce4bbbb05592842941b40bb53c1db2173bdc98f5153e637c15727f53874"
+    },
+    {
+      "dataset_item_id": "dev_001",
+      "text": "tiếng",
+      "font": "omni_casual",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "4e5a5efc678d95ba061a552e30579125b0986537287a52dc006356cdb335c4a8"
+    },
+    {
+      "dataset_item_id": "dev_001",
+      "text": "tiếng",
+      "font": "omni_casual",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "1af19cc7aa6b433ad97196593b9d4c50d986251782d9681fe0e7809cbd67e7a3"
+    },
+    {
+      "dataset_item_id": "dev_001",
+      "text": "tiếng",
+      "font": "omni_casual",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "b53fb3521b4403f315ab498eae1372608aaca304b3a97bec4e4ea15405bc5812"
+    },
+    {
+      "dataset_item_id": "dev_002",
+      "text": "việt",
+      "font": "oly",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "eb3b02a3c40724e6d9d743827ba429d456f7815c6aa34712700be5be55be5f7f"
+    },
+    {
+      "dataset_item_id": "dev_002",
+      "text": "việt",
+      "font": "oly",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "d0f84372b5faf5aa493ac9bbded3e840979557fd18ad2044f0aedab0770b6d2e"
+    },
+    {
+      "dataset_item_id": "dev_002",
+      "text": "việt",
+      "font": "oly",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "0f62b7f522f4b773f8de909949fb2298e9299af32143283d917dab2febf20747"
+    },
+    {
+      "dataset_item_id": "dev_002",
+      "text": "việt",
+      "font": "oly",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "1841070eab24e5f1fce870df7bd3ddfe27729ed4ff0d9235618a427446f2ba2a"
+    },
+    {
+      "dataset_item_id": "dev_002",
+      "text": "việt",
+      "font": "omni_casual",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "7a7f75a45e2b90e23d1eaef9b70f478a6657bbe599377e1f687efe8794f23da9"
+    },
+    {
+      "dataset_item_id": "dev_002",
+      "text": "việt",
+      "font": "omni_casual",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "92bfc1e6c2ec5825c92234887321befdc9485af9ac4cfcc33bb49a7f0454f48d"
+    },
+    {
+      "dataset_item_id": "dev_002",
+      "text": "việt",
+      "font": "omni_casual",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "63062df4d671a52f5b573dff9b0e33b704bf60a79a9a0a57728e3f78103556d7"
+    },
+    {
+      "dataset_item_id": "dev_002",
+      "text": "việt",
+      "font": "omni_casual",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "3d37ad7ff773be1f2cfcd784a94feffca05e4663005b07024a60fc9077b82b86"
+    },
+    {
+      "dataset_item_id": "dev_003",
+      "text": "nguyễn",
+      "font": "oly",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "c44ffbee54289d4c5881bf6061bfe90d6b1a58bd78186c4c335a77d9444c5389"
+    },
+    {
+      "dataset_item_id": "dev_003",
+      "text": "nguyễn",
+      "font": "oly",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "e21fbcf85cc9b70c3031f2ab439f9e25972181cbc394f23560a354fd9a472763"
+    },
+    {
+      "dataset_item_id": "dev_003",
+      "text": "nguyễn",
+      "font": "oly",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "f47f13e0a02492d942774935b8f4a66922c0709cccc2f9668fdf0498f0f27bb0"
+    },
+    {
+      "dataset_item_id": "dev_003",
+      "text": "nguyễn",
+      "font": "oly",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "f465e4d1cab7c0020a27e734db7473a5145acb19f94c752d15dbc45b18204f0c"
+    },
+    {
+      "dataset_item_id": "dev_003",
+      "text": "nguyễn",
+      "font": "omni_casual",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "7b0d0e73759a8b0a2d523a3116bfd01e218b40716a12fa3732402d87fa38885d"
+    },
+    {
+      "dataset_item_id": "dev_003",
+      "text": "nguyễn",
+      "font": "omni_casual",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "03526e9d6b3b090eb25b7536bab48c72ccc52cccbe2acde96d75f15690ce1925"
+    },
+    {
+      "dataset_item_id": "dev_003",
+      "text": "nguyễn",
+      "font": "omni_casual",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "2c96a8d1417171ff00a8b049c85009aaf299ccbc29b4065584ef1276f8272664"
+    },
+    {
+      "dataset_item_id": "dev_003",
+      "text": "nguyễn",
+      "font": "omni_casual",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "0bf77df44f94ba9840f4eaadb9cf9a3b225e1cd27fe2b4a5d6f0b62d9e0540bb"
+    },
+    {
+      "dataset_item_id": "dev_004",
+      "text": "nước",
+      "font": "oly",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "881a02e6ba8b5655374cfba7bfde7ed73d6175521347a93d9da808f57a8da28a"
+    },
+    {
+      "dataset_item_id": "dev_004",
+      "text": "nước",
+      "font": "oly",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "e24c151072627bd854175e02816ca707ad2fa53c9c7cd35512d9db0402fc8b71"
+    },
+    {
+      "dataset_item_id": "dev_004",
+      "text": "nước",
+      "font": "oly",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "86e249f8289412e4f03851cc413997062e17c577adcea9adc663c7954d1c86fb"
+    },
+    {
+      "dataset_item_id": "dev_004",
+      "text": "nước",
+      "font": "oly",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "e6aa32ef07d51c4522fa871386c960d01b2088bcc393c256dfa8552bdde259bf"
+    },
+    {
+      "dataset_item_id": "dev_004",
+      "text": "nước",
+      "font": "omni_casual",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "fa800157f88d8b285a29dbf1b47f99a85e694a122724d0c98a9ccc3e92cd606c"
+    },
+    {
+      "dataset_item_id": "dev_004",
+      "text": "nước",
+      "font": "omni_casual",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "6151e0607d7186706992b118222cad7d5a21eb8260405ffc1581c3b75c608682"
+    },
+    {
+      "dataset_item_id": "dev_004",
+      "text": "nước",
+      "font": "omni_casual",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "473f4a1f1906434b8faf8e0f5923c31c469237289ddeb3a231bdb0471678109a"
+    },
+    {
+      "dataset_item_id": "dev_004",
+      "text": "nước",
+      "font": "omni_casual",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "0d2727333382467417df89c36385f559769f72fa8f118248e08f12107feb6020"
+    },
+    {
+      "dataset_item_id": "dev_005",
+      "text": "đường",
+      "font": "oly",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "5e4d7801057cbbc622107217f3a63fab0231535dbb5b6dc1f7249d7ab2c00316"
+    },
+    {
+      "dataset_item_id": "dev_005",
+      "text": "đường",
+      "font": "oly",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "3fc3655b7db464889946e09d38d5f28272f9586f08d61a5f3919fc313dbf39c3"
+    },
+    {
+      "dataset_item_id": "dev_005",
+      "text": "đường",
+      "font": "oly",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "3870d5613b881be9420d29997f6bf33b4564c8e648131016922885745c5e7473"
+    },
+    {
+      "dataset_item_id": "dev_005",
+      "text": "đường",
+      "font": "oly",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "e69eebe3a6a125849c6c1d5947b20cc0f27e69dd0e94185c9527bfd75bf71ae8"
+    },
+    {
+      "dataset_item_id": "dev_005",
+      "text": "đường",
+      "font": "omni_casual",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "b80c0cee73f988fe44a02678c53b985f05bf6ef154e74bf2bcaad1fcaa56a42a"
+    },
+    {
+      "dataset_item_id": "dev_005",
+      "text": "đường",
+      "font": "omni_casual",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "d814d5bf15526ab32f1ead4b74cd8ccd30da0c262ee9433b18dec7130d649874"
+    },
+    {
+      "dataset_item_id": "dev_005",
+      "text": "đường",
+      "font": "omni_casual",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "f57edd7957040fb7b59e4de4a7afa11059a8153f19e020689be85302b0f76f41"
+    },
+    {
+      "dataset_item_id": "dev_005",
+      "text": "đường",
+      "font": "omni_casual",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "edf69e2aaef83b38e89a584f7e65c4848dbbaa1827c84639c1796c9514ee7a30"
+    },
+    {
+      "dataset_item_id": "dev_006",
+      "text": "khuấy",
+      "font": "oly",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "24602b37236a1391f115cc3e5392bd9672519cac17193539191398157667c103"
+    },
+    {
+      "dataset_item_id": "dev_006",
+      "text": "khuấy",
+      "font": "oly",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "e56f8fd5a6c005edc3bbe2a80cabb661605c790aba0fbf0d70be6c8a8047b519"
+    },
+    {
+      "dataset_item_id": "dev_006",
+      "text": "khuấy",
+      "font": "oly",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "a34c4296e3d78f56f64073187cc386707c30035ebf992b14a1566f98f3009804"
+    },
+    {
+      "dataset_item_id": "dev_006",
+      "text": "khuấy",
+      "font": "oly",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "d5556b61a20e8b1fa74a5eb5e304ddd7416005360187ba06d5bae86c62af4df9"
+    },
+    {
+      "dataset_item_id": "dev_006",
+      "text": "khuấy",
+      "font": "omni_casual",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "530a2114f5bfc3068c72f57e1b07159f7476fb942b61f260db2ecfd1b205bedf"
+    },
+    {
+      "dataset_item_id": "dev_006",
+      "text": "khuấy",
+      "font": "omni_casual",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "88ab97fd0dbdbad2b27b3064b38610c7e497ce9b4834c73248ff512b55ec71c7"
+    },
+    {
+      "dataset_item_id": "dev_006",
+      "text": "khuấy",
+      "font": "omni_casual",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "30fd5b11c0eab0c953d7edb642a2360e07fc1f6527042e61d929c24f94832fc7"
+    },
+    {
+      "dataset_item_id": "dev_006",
+      "text": "khuấy",
+      "font": "omni_casual",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "5f717e67166c8e0420e3bf8448d8d429e267949a53af710bee5b0b4ee3549499"
+    },
+    {
+      "dataset_item_id": "dev_007",
+      "text": "thuở",
+      "font": "oly",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "89f951aee6c1696ea66a29fe47d6588a5bd3475b55ef913d398465d5fb4ec1b1"
+    },
+    {
+      "dataset_item_id": "dev_007",
+      "text": "thuở",
+      "font": "oly",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "064750822b3feb9ec03b63ef107c01b82a438fd0492bce8204c0e6c81b7ac6c8"
+    },
+    {
+      "dataset_item_id": "dev_007",
+      "text": "thuở",
+      "font": "oly",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "4d9a7a5f9e5783e7052e3e4ff027b6c6f6f3d18a1976ed45806ed4f7462bc11f"
+    },
+    {
+      "dataset_item_id": "dev_007",
+      "text": "thuở",
+      "font": "oly",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "7b57f2408fefe672db46d08e30d9eda1e0cd947076d3f9efba2b4975fff66591"
+    },
+    {
+      "dataset_item_id": "dev_007",
+      "text": "thuở",
+      "font": "omni_casual",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "40a2b5c8d3c689e61e227aacb5ff5d1eb7828516a153eaabb6e414c123c902ef"
+    },
+    {
+      "dataset_item_id": "dev_007",
+      "text": "thuở",
+      "font": "omni_casual",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "f4cd65618c88cdbc93c183687b8e4a34830351b3651707123bbc6be76c8051cb"
+    },
+    {
+      "dataset_item_id": "dev_007",
+      "text": "thuở",
+      "font": "omni_casual",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "abb0fd4a1759f08bfd30da37915fe016d41098174b196009ecd1d41a7a2806ea"
+    },
+    {
+      "dataset_item_id": "dev_007",
+      "text": "thuở",
+      "font": "omni_casual",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "3698e326fb0a2c7d384e2e2c66f94190dcd6c1c7a5af9acd027991dfe78283c1"
+    },
+    {
+      "dataset_item_id": "dev_008",
+      "text": "nghỉ",
+      "font": "oly",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "aef759fc39232f07aa581bd910dcdbe83e84a6cfaaa2376b2c55b64b7bef587c"
+    },
+    {
+      "dataset_item_id": "dev_008",
+      "text": "nghỉ",
+      "font": "oly",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "e183a0082fe34fd6dc3c34bcba569fedca9b95dd843025574ade0171b93be1dc"
+    },
+    {
+      "dataset_item_id": "dev_008",
+      "text": "nghỉ",
+      "font": "oly",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "47104aeb7d731572f7a7bbc3b7e019205361518a5c7a91ad92a74f5e7d570047"
+    },
+    {
+      "dataset_item_id": "dev_008",
+      "text": "nghỉ",
+      "font": "oly",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "8beff3ec957627a4bba984e388541ae8344166c31a83481c2391d58321271958"
+    },
+    {
+      "dataset_item_id": "dev_008",
+      "text": "nghỉ",
+      "font": "omni_casual",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "f676ebbae487fab29ef249c3bebfca85a1295fa9cae854869eb3d722172ac4aa"
+    },
+    {
+      "dataset_item_id": "dev_008",
+      "text": "nghỉ",
+      "font": "omni_casual",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "0acc0b837167c3d7eaad255c50842fd20ddb8051ff2ea0a2055a26ff2bd040bf"
+    },
+    {
+      "dataset_item_id": "dev_008",
+      "text": "nghỉ",
+      "font": "omni_casual",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "05984a5c81bffd10d1a07b2feb072ffca85e6f7d9c5d2d6518593d66e74303dd"
+    },
+    {
+      "dataset_item_id": "dev_008",
+      "text": "nghỉ",
+      "font": "omni_casual",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "bb7c1b1cd14c34f5caa5d56416728cf7f145a81b57a32addc0443a86155adf9e"
+    },
+    {
+      "dataset_item_id": "dev_009",
+      "text": "hoặc",
+      "font": "oly",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "6102779048d81edf3ecc366b50828355040971dee2934538f3d83e71be4f7e15"
+    },
+    {
+      "dataset_item_id": "dev_009",
+      "text": "hoặc",
+      "font": "oly",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "8c47ce9929e1b71ad2192a38627e6924d4bc0fbded908ffbbb1bf0a181684a8a"
+    },
+    {
+      "dataset_item_id": "dev_009",
+      "text": "hoặc",
+      "font": "oly",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "980c00e016d19f48fb0154119b4dccff012b08bfd5b268a8c421b724030167bf"
+    },
+    {
+      "dataset_item_id": "dev_009",
+      "text": "hoặc",
+      "font": "oly",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "21e3b72363a6ed412bbc1089922b7adb3a19dd214a40ab502c98e7dd9e9423e4"
+    },
+    {
+      "dataset_item_id": "dev_009",
+      "text": "hoặc",
+      "font": "omni_casual",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "58514a7e5d86ac851515882324ffc2df14e9b553fad20066e275c3010d330d1e"
+    },
+    {
+      "dataset_item_id": "dev_009",
+      "text": "hoặc",
+      "font": "omni_casual",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "b3014b31d4d35ee2ae3421fb2bb49b3c78c110dd65aeb4c7e7d64819e0c52f85"
+    },
+    {
+      "dataset_item_id": "dev_009",
+      "text": "hoặc",
+      "font": "omni_casual",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "49d4364d8c3b3a69bbb7467981f7ac406c51943292a9e6316a926df7459ca92e"
+    },
+    {
+      "dataset_item_id": "dev_009",
+      "text": "hoặc",
+      "font": "omni_casual",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "c85d461d53653ed0a3fc80642af2dd3cb79f71542a8559bd62f039b516008b13"
+    },
+    {
+      "dataset_item_id": "dev_010",
+      "text": "chuẩn",
+      "font": "oly",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "9c46d3ff26cb684bd8e13eed4048f69f97be3d43b15e0d9f551b3490a27a4516"
+    },
+    {
+      "dataset_item_id": "dev_010",
+      "text": "chuẩn",
+      "font": "oly",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "9cc8115068ec0ee06767f3f72ad3bb3d49f3fb24ddb867a9b6a9d9cd31d048cf"
+    },
+    {
+      "dataset_item_id": "dev_010",
+      "text": "chuẩn",
+      "font": "oly",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "275494b02406fce96512dadf2fae8be1405733da91f353bb3d5a388c43ef7b35"
+    },
+    {
+      "dataset_item_id": "dev_010",
+      "text": "chuẩn",
+      "font": "oly",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "a65d8c64599f70436296702a7682d21636812f99d1db085a8c0c2a9826a75d2b"
+    },
+    {
+      "dataset_item_id": "dev_010",
+      "text": "chuẩn",
+      "font": "omni_casual",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "7904ddd203518c0e917d99d958f1459fadf2cb4477d8373e67b6e90e89639d42"
+    },
+    {
+      "dataset_item_id": "dev_010",
+      "text": "chuẩn",
+      "font": "omni_casual",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "887fdf1d9f3b9005015b62c3271ee5a05534f987ac7cfc5de5640c76a4575d84"
+    },
+    {
+      "dataset_item_id": "dev_010",
+      "text": "chuẩn",
+      "font": "omni_casual",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "95d19f8869c98a65ef1654e685f30c34cc15097cac1899819e2732de9777ba12"
+    },
+    {
+      "dataset_item_id": "dev_010",
+      "text": "chuẩn",
+      "font": "omni_casual",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "78263e6b4bb262404148ae6823b823b1fdb7722da0628b35a5add925da0dab30"
+    },
+    {
+      "dataset_item_id": "dev_011",
+      "text": "trường",
+      "font": "oly",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "bb88d2ff6a2020272cdc9aae4ffb9bdc529a048d9b862836d3579c58bc03387d"
+    },
+    {
+      "dataset_item_id": "dev_011",
+      "text": "trường",
+      "font": "oly",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "1a971e3c13610badc1dc46d7351c35d296680db9d774b1786c08de7af92d2a75"
+    },
+    {
+      "dataset_item_id": "dev_011",
+      "text": "trường",
+      "font": "oly",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "8730b3a156b7db49ddc6e5464e41a3d3efaeabcd9ff3fc19c1e96e3630445787"
+    },
+    {
+      "dataset_item_id": "dev_011",
+      "text": "trường",
+      "font": "oly",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "1ca4bca6ac28a02af11f5734d5afdb66db54ded3c1dde6d9eb150213138f0057"
+    },
+    {
+      "dataset_item_id": "dev_011",
+      "text": "trường",
+      "font": "omni_casual",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "8fae2b55e3f0a6db90d724cd6513aaf71a24c0f2b14fa7ef2dd1bb4a79dfb707"
+    },
+    {
+      "dataset_item_id": "dev_011",
+      "text": "trường",
+      "font": "omni_casual",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "9e280f92565b8d416a82440cdf818064d9e07916cee2c117dcb3fac19b53e140"
+    },
+    {
+      "dataset_item_id": "dev_011",
+      "text": "trường",
+      "font": "omni_casual",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "31e9d4a7c8da38f3045f71383fe8d62b5b2965baea5cbc9ce5ada78b4b519c22"
+    },
+    {
+      "dataset_item_id": "dev_011",
+      "text": "trường",
+      "font": "omni_casual",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "af4160d357b333236064143fb0b87ed3b3deaffe7613f4a9669da53318e8d59b"
+    },
+    {
+      "dataset_item_id": "dev_012",
+      "text": "quyện",
+      "font": "oly",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "27d0a77e65334a0d185ca828db76a76292be87e2fb5dcdb3593e3fe4765db05d"
+    },
+    {
+      "dataset_item_id": "dev_012",
+      "text": "quyện",
+      "font": "oly",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "bb5f4c4b7bba5f25e44218a845184daf70da8beccd634c7f7c8fe32b65de2124"
+    },
+    {
+      "dataset_item_id": "dev_012",
+      "text": "quyện",
+      "font": "oly",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "a35e2ae7a322227f44decc32dd8feb5a85403d54696205db00559abfa1631339"
+    },
+    {
+      "dataset_item_id": "dev_012",
+      "text": "quyện",
+      "font": "oly",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "b9df8e37d568b27efc656ecac3b9c6fead24c455d5dcebe8a64bebf4e822d23b"
+    },
+    {
+      "dataset_item_id": "dev_012",
+      "text": "quyện",
+      "font": "omni_casual",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "eec618b49ee4d5fd8fb6019d53db5dee0697fb494b5b2fa715bd50c6759e171e"
+    },
+    {
+      "dataset_item_id": "dev_012",
+      "text": "quyện",
+      "font": "omni_casual",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "198d853c7e18ebf0e856bbe5aa5c5aed40d784da4c1e041f1021e15effbba3f4"
+    },
+    {
+      "dataset_item_id": "dev_012",
+      "text": "quyện",
+      "font": "omni_casual",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "8ad2ea715373c6a75540132d298b5018013e5fb2b4c3818c6f842aa632f2a840"
+    },
+    {
+      "dataset_item_id": "dev_012",
+      "text": "quyện",
+      "font": "omni_casual",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "5f60fbc77a53e457996c90ed2d067f149babb2fa9f6561dac8a8048037579c24"
+    },
+    {
+      "dataset_item_id": "dev_013",
+      "text": "nghĩ",
+      "font": "oly",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "caf1726576de461c03be6c61c8b0798aec86f39fbaa1dc044357457668c20d22"
+    },
+    {
+      "dataset_item_id": "dev_013",
+      "text": "nghĩ",
+      "font": "oly",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "34976d32af0e9172dbbf84e5b6616de06318c6329b173bcc04cecddad5b99eae"
+    },
+    {
+      "dataset_item_id": "dev_013",
+      "text": "nghĩ",
+      "font": "oly",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "d381ea246a2d6a935cdc00bfb5c3a0c328795a6bb3d8a463d2a1516029670b4d"
+    },
+    {
+      "dataset_item_id": "dev_013",
+      "text": "nghĩ",
+      "font": "oly",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "c7cf1601a3d4fe3f69de5b78b7c0c71fb8f6071bad60cc66f401269dcca9ce51"
+    },
+    {
+      "dataset_item_id": "dev_013",
+      "text": "nghĩ",
+      "font": "omni_casual",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "d277fea35e74755514d8cbc4055e2edc77d7ce9d551b52e8a0d1f762322c9b53"
+    },
+    {
+      "dataset_item_id": "dev_013",
+      "text": "nghĩ",
+      "font": "omni_casual",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "72db05e355fb75601fd1980db2e718290b939a2510bc1a22dac04a6b4cdf3644"
+    },
+    {
+      "dataset_item_id": "dev_013",
+      "text": "nghĩ",
+      "font": "omni_casual",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "ca91667b9c5312bf1216023b7bc653b74f197a60b79a567624eb623e5d2960cd"
+    },
+    {
+      "dataset_item_id": "dev_013",
+      "text": "nghĩ",
+      "font": "omni_casual",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "8316ede9cac7e8c8d29346e3a5ecded91044e29878538405b469196531802c22"
+    },
+    {
+      "dataset_item_id": "dev_014",
+      "text": "phượng",
+      "font": "oly",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "276266a3cd80f4a0e1395fff0c8398359dc2aafa4825fb4162d97bd2e8be57b2"
+    },
+    {
+      "dataset_item_id": "dev_014",
+      "text": "phượng",
+      "font": "oly",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "e29771067c02e930f6cadddec793b71eb307091593fc2c7324f9a262019e6531"
+    },
+    {
+      "dataset_item_id": "dev_014",
+      "text": "phượng",
+      "font": "oly",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "001cf327acb733c20cc0b05c19706fc7264b044b2ed56e77a4f49db2f84937a0"
+    },
+    {
+      "dataset_item_id": "dev_014",
+      "text": "phượng",
+      "font": "oly",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "dfb6206488ffa988b08d5084fa2d00485fdb2cd7f1d450d593995bc88f5b964b"
+    },
+    {
+      "dataset_item_id": "dev_014",
+      "text": "phượng",
+      "font": "omni_casual",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "7d08f33b6f5d0d22e1e86b6c7f6d2943b8a207942ca001a3ade8992bbc15a5b1"
+    },
+    {
+      "dataset_item_id": "dev_014",
+      "text": "phượng",
+      "font": "omni_casual",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "3431863bb7ef522662eb1d01ab3bdf12f7ca101570698978733b9d42582984f3"
+    },
+    {
+      "dataset_item_id": "dev_014",
+      "text": "phượng",
+      "font": "omni_casual",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "6e1f77ef31f8c12e3cc3e3fe06b5d40b236077bc18689a388931b82353c4ce23"
+    },
+    {
+      "dataset_item_id": "dev_014",
+      "text": "phượng",
+      "font": "omni_casual",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "77773e37d03a3d909f496267a41926c6f884cbf4ac3bc6638a5d22bbd8d1a97c"
+    },
+    {
+      "dataset_item_id": "dev_015",
+      "text": "kiều",
+      "font": "oly",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "a0ec2131aed1eed4697b47fcad5f0f6ca50c455b1d2ee82ff0afba01034290c0"
+    },
+    {
+      "dataset_item_id": "dev_015",
+      "text": "kiều",
+      "font": "oly",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "9afb7b85d46b42c1052dbc397a02a6bd047f05c15fbab4d528110e85bdd5e315"
+    },
+    {
+      "dataset_item_id": "dev_015",
+      "text": "kiều",
+      "font": "oly",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "a944afcc2123bff70fcb464418c2f630f321a1f6207a2fd3e9d4278e1be118ed"
+    },
+    {
+      "dataset_item_id": "dev_015",
+      "text": "kiều",
+      "font": "oly",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "3a36d63b0559c9ba95799563a1b004b2c87b3cd0ceb7716126b640245f02055c"
+    },
+    {
+      "dataset_item_id": "dev_015",
+      "text": "kiều",
+      "font": "omni_casual",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "428138f07b1b5cfd5e25f0fa77b96e4bc467aa2aa2f419f350845e3e6aef6add"
+    },
+    {
+      "dataset_item_id": "dev_015",
+      "text": "kiều",
+      "font": "omni_casual",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "1083283648b0a73e06769cac4db0e0de21156e9470d5ee677ff4567c6647e5a3"
+    },
+    {
+      "dataset_item_id": "dev_015",
+      "text": "kiều",
+      "font": "omni_casual",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "aedfdb774a5cde13c0df1233a03bf0a7fb6a76a4de83f03b2e1afe1d38cdeb54"
+    },
+    {
+      "dataset_item_id": "dev_015",
+      "text": "kiều",
+      "font": "omni_casual",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "5df0bca6f16026d91f93fbc197e1e1cd073685de103e1f1a98b34f8c1c62a3ec"
+    },
+    {
+      "dataset_item_id": "dev_016",
+      "text": "hướng",
+      "font": "oly",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "260233123c458633c0564c77baae8b56030740297df2066f06a5b21097cbcbc6"
+    },
+    {
+      "dataset_item_id": "dev_016",
+      "text": "hướng",
+      "font": "oly",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "62a5063a956bcfa6754f2c4c9b4f3041e4a755026520d2de56938272108d669b"
+    },
+    {
+      "dataset_item_id": "dev_016",
+      "text": "hướng",
+      "font": "oly",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "9ecdc2103dfeb9ee576c8f6a27eb25540bc90afed960f94b6347054a4920d621"
+    },
+    {
+      "dataset_item_id": "dev_016",
+      "text": "hướng",
+      "font": "oly",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "18f4686260659d694d025ee392c5e29761eaf4ba6f9e11fd13c3b4a1519f6c19"
+    },
+    {
+      "dataset_item_id": "dev_016",
+      "text": "hướng",
+      "font": "omni_casual",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "16b2f6a7654b3e1ea1bdfb5db9c6afb306cf8355a2685d314df117241877d7b2"
+    },
+    {
+      "dataset_item_id": "dev_016",
+      "text": "hướng",
+      "font": "omni_casual",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "ec74c63cd1fea2b14bc73975aefabb61a1ca56ca424d995682825118e6462b68"
+    },
+    {
+      "dataset_item_id": "dev_016",
+      "text": "hướng",
+      "font": "omni_casual",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "6184bd39e830c0bd8487eb4da915a3efeb3e4edc0960d7425116e5ee3a61b23a"
+    },
+    {
+      "dataset_item_id": "dev_016",
+      "text": "hướng",
+      "font": "omni_casual",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "fab856807b4fcdb7850aeaa41c82c6ec5592cd44011afb9f8edb3a433ddc4da3"
+    },
+    {
+      "dataset_item_id": "dev_017",
+      "text": "mượt",
+      "font": "oly",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "d9642f3a0fb2c5f738eb814384fad9dcaa481b2daff809e4440aa9151fb2b90f"
+    },
+    {
+      "dataset_item_id": "dev_017",
+      "text": "mượt",
+      "font": "oly",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "1097f9aac3c290acbce77f8d1c0ed623ffbb28d415f8ac24aa145103fab844b3"
+    },
+    {
+      "dataset_item_id": "dev_017",
+      "text": "mượt",
+      "font": "oly",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "f393ff350ba81444e18193ffef54ee0a1df05d9009e0cf12e5b7f19a42573cae"
+    },
+    {
+      "dataset_item_id": "dev_017",
+      "text": "mượt",
+      "font": "oly",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "26916ea97c458536c33adabcadf7bc72b2ebeb5fd81ab1d0bc07135ffcd3ab5e"
+    },
+    {
+      "dataset_item_id": "dev_017",
+      "text": "mượt",
+      "font": "omni_casual",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "e8ebe98796ff6c4b0e49c5eb8a44652bdabad7ddd0e060202c05b5daa8ab1159"
+    },
+    {
+      "dataset_item_id": "dev_017",
+      "text": "mượt",
+      "font": "omni_casual",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "319e0f6e63203de426391fc96ff3d8e39c958eb948e367a9f9f7d05c08d1ebfe"
+    },
+    {
+      "dataset_item_id": "dev_017",
+      "text": "mượt",
+      "font": "omni_casual",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "dc5f5c903edffee781c16e17ae15851628caa0c5f8369e7d75ec108774f525c1"
+    },
+    {
+      "dataset_item_id": "dev_017",
+      "text": "mượt",
+      "font": "omni_casual",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "eb2bf9695c1abc9d7011a31f3518c97e9b088b593d73e2460036127dd5fbd5a7"
+    },
+    {
+      "dataset_item_id": "dev_018",
+      "text": "bước",
+      "font": "oly",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "221f1f432917891608878cd0afbc89383e30baa84647a70f9b4d6f354dcfa18c"
+    },
+    {
+      "dataset_item_id": "dev_018",
+      "text": "bước",
+      "font": "oly",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "4d918fe6135313891298dac3ec2c38ffb236c6fc51460fb1ebe79d2242007bc7"
+    },
+    {
+      "dataset_item_id": "dev_018",
+      "text": "bước",
+      "font": "oly",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "a87f65a8724107e1868be6d319d05548090f010c71737f5ab9f524b4514ddc5d"
+    },
+    {
+      "dataset_item_id": "dev_018",
+      "text": "bước",
+      "font": "oly",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "2e8998bab30943056120c6d75b0f144102f2e89b20e266c463c138abdb0877dd"
+    },
+    {
+      "dataset_item_id": "dev_018",
+      "text": "bước",
+      "font": "omni_casual",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "6f7582c8f4b53bea5eaff07c7e4b733e24463b29a4f66eb0d234b935d9512307"
+    },
+    {
+      "dataset_item_id": "dev_018",
+      "text": "bước",
+      "font": "omni_casual",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "3ff96ad48d0da5c90c26bbc8f9af15d9dc408fff0c4388cd7761d5889b2c624d"
+    },
+    {
+      "dataset_item_id": "dev_018",
+      "text": "bước",
+      "font": "omni_casual",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "e6c958c0997af023bacbcc435400e9d21edc2fda4a89eb7acacf3b3e2f5f9bed"
+    },
+    {
+      "dataset_item_id": "dev_018",
+      "text": "bước",
+      "font": "omni_casual",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "c3d06224ca9d2f15bef9d890e7f95e6287ce4b754f5b6876fc613a08fd81ae62"
+    },
+    {
+      "dataset_item_id": "dev_019",
+      "text": "vẫy",
+      "font": "oly",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "14edef1a511c0c206f35f27c289d5c14d3d7140b0aed6dd2f4d5fef61653408c"
+    },
+    {
+      "dataset_item_id": "dev_019",
+      "text": "vẫy",
+      "font": "oly",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "b9fe4625f42b37f664dba73fdddf85f96d40073c43f44dea4e02969e3d75e98b"
+    },
+    {
+      "dataset_item_id": "dev_019",
+      "text": "vẫy",
+      "font": "oly",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "6e45aa581f12a14ce22c01107b68483858de892fd4d1d143085adc1bbe648709"
+    },
+    {
+      "dataset_item_id": "dev_019",
+      "text": "vẫy",
+      "font": "oly",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "f56f2657d62fdd4407895d58d5de3be88b31e7ca1b73456b211a2f7e8e9a2e19"
+    },
+    {
+      "dataset_item_id": "dev_019",
+      "text": "vẫy",
+      "font": "omni_casual",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "4f7182305fcdc4777af8344c9b84046f2f98fb2aa2dd9aa06e4b041e6aceb5fb"
+    },
+    {
+      "dataset_item_id": "dev_019",
+      "text": "vẫy",
+      "font": "omni_casual",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "485fa065a77a316ad9de796c146b2830130b0f4497ec1868bd0427148ea095b3"
+    },
+    {
+      "dataset_item_id": "dev_019",
+      "text": "vẫy",
+      "font": "omni_casual",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "8d81e8219d7a148fd717bae7cf7b93b672ddffa1b0f7e47a18e317dfdb0cd674"
+    },
+    {
+      "dataset_item_id": "dev_019",
+      "text": "vẫy",
+      "font": "omni_casual",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "6a147f94e79e39ad530309dd9440063c996e5bcae8dc1de54894f4a4f3159052"
+    },
+    {
+      "dataset_item_id": "dev_020",
+      "text": "nhánh",
+      "font": "oly",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "d6442de93cb10d6d37ae10351bc6789f44ccc2b18d409aeca4cc3057080f7435"
+    },
+    {
+      "dataset_item_id": "dev_020",
+      "text": "nhánh",
+      "font": "oly",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "d7a493b21494f601899331249c43bda3000212e17a405d0f0f2f166136e0eac3"
+    },
+    {
+      "dataset_item_id": "dev_020",
+      "text": "nhánh",
+      "font": "oly",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "94b41bd24f065e73fbbb5f9e83b2d933c298ba5f4885a3444cf47ed76a15ef4f"
+    },
+    {
+      "dataset_item_id": "dev_020",
+      "text": "nhánh",
+      "font": "oly",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "f6f9bc5897d734b959b7324d00ad8d7e856d46a4f72d36193a02051f4805e68c"
+    },
+    {
+      "dataset_item_id": "dev_020",
+      "text": "nhánh",
+      "font": "omni_casual",
+      "seed": 42,
+      "stroke_fingerprint_sha256": "c3408a05dfc9941fdb065ffecff46876b77b49f86e8620503ef821de836c9b23"
+    },
+    {
+      "dataset_item_id": "dev_020",
+      "text": "nhánh",
+      "font": "omni_casual",
+      "seed": 100,
+      "stroke_fingerprint_sha256": "7fff94274155d60bda7a9956e57967ab88cf1755d8d93a1debb2e1a3d6b956fc"
+    },
+    {
+      "dataset_item_id": "dev_020",
+      "text": "nhánh",
+      "font": "omni_casual",
+      "seed": 2026,
+      "stroke_fingerprint_sha256": "fd044781c33f9e639986b013b9a8ea4898ac5811fdc9c0db310457b6237e2b8a"
+    },
+    {
+      "dataset_item_id": "dev_020",
+      "text": "nhánh",
+      "font": "omni_casual",
+      "seed": 999999,
+      "stroke_fingerprint_sha256": "7a786a5fc3a660e8eeb1e05b41fe0f962179582a35232c91246d8e6401352169"
+    }
+  ]
+}

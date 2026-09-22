@@ -2,7 +2,7 @@
 
 **Tài liệu mã số:** `DOC-SPEC-08-DATASET`  
 **Phiên bản:** `v1.0.0` (Chuẩn hóa ranh giới CA-VHC Dataset vs. Writer Profile Dataset)  
-**Ngày ban hành:** 19/09/2026  
+**Ngày ban hành:** 19/09/2026 | **Đồng bộ trạng thái:** 21/09/2026 (Đồng bộ sau TV2 Cross-Review & Ủy quyền bắt đầu triển khai phần mềm Step C)<br>
 **Chủ trì soạn thảo & Quản trị dữ liệu:** TV1 (AI Data & Writer Personalization Lead)  
 **Chủ trì kiến trúc giải thuật & Phê duyệt:** TV4 (Project Lead & Handwriting / CA-VHC Composition Lead)  
 **Đồng thẩm định:** TV2 (Stroke Optimization & Path Planning Lead), TV3 (Hardware, Calibration & Physical Validation Lead)  
@@ -162,36 +162,54 @@ Quy trình thu thập được thiết kế theo 7 giai đoạn khép kín nhằ
 
 ## 4. Bộ mẫu thu thập chuẩn (Standard Prompt Set)
 
-Để một trang quét phục vụ tối ưu cho cả hai bài toán (CA-VHC và Writer Profile), nội dung thu thập được thiết kế theo 4 nhóm mẫu phủ kín toàn bộ đặc tính ngữ âm và hình học chữ Việt:
+Để một bộ phiếu thu thập phục vụ tối ưu cho cả hai bài toán (CA-VHC và Writer Profile), nội dung thu thập được thiết kế theo 4 nhóm mẫu phân bổ tương ứng vào 4 trang của bộ **OmniDraw Handwriting Collection Sheet Pack v1** (`docs/collection_sheets/P01..P04/`):
 
 ```text
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
-│                          CẤU TRÚC PHIẾU THU THẬP CHỮ VIẾT TAY                          │
+│               CẤU TRÚC BỘ PHIẾU THU THẬP CHỮ VIẾT TAY (COLLECTION SHEET PACK)           │
 ├────────────────────────────────────────────────────────────────────────────────────────┤
-│ Phần 1: Bảng ký tự rời & Tổ hợp dấu (Single Characters & Diacritic Coverage)           │
-│ - 29 chữ cái thường, 29 chữ cái hoa, 10 chữ số, 10 dấu câu                             │
-│ - 67 nguyên âm mang dấu thanh và dấu phụ tiếng Việt                                    │
-│ - Ma trận các nguyên âm kép mang tổ hợp 2 tầng dấu (á, ắ, ấ, é, ế, ó, ố, ớ, ú, ứ, ý...) │
+│ Trang P01 — Bảng ký tự rời & Tổ hợp dấu (Single Characters & Diacritic Coverage)       │
+│ • Mã phiếu: P01 — Isolated Characters & Diacritics Collection Sheet                    │
+│ • Phạm vi prototype hiện tại: Tập mẫu đại diện tiêu biểu (representative subset) gồm   │
+│   26 chữ cái thường, 26 chữ cái hoa, 10 chữ số, và 18 nguyên âm có dấu tiêu biểu đại   │
+│   diện cho các thanh điệu (sắc, huyền, hỏi, ngã, nặng) và dấu mũ/móc (â, ă, ê, ô, ơ, ư)│
+│   trong các ô viết định chuẩn 14 × 14 mm với clearance an toàn quang học.              │
+│ • Mục tiêu dài hạn: Ma trận 67 dạng nguyên âm có dấu (Mục 4.1) được mở rộng qua các    │
+│   phiên bổ sung hoặc bộ phiếu nâng cao.                                                │
 ├────────────────────────────────────────────────────────────────────────────────────────┤
-│ Phần 2: Từ ngữ cảnh & Cặp ký tự nối nét (Contextual Ligatures & Word Positions)        │
-│ - Từ kiểm tra chữ hoa đầu từ: Kính gửi, Thân gửi, Cảm ơn, Chào mừng                    │
-│ - Từ kiểm tra ký tự kết thúc từ (word-final variants): bạn, nam, nhìn, tình, mộc, hoa  │
-│ - Các cặp ký tự thử thách độ va chạm dấu: "thuyền", "nghiêng", "trường", "nguyễn"      │
+│ Trang P02 — Từ ngữ cảnh & Cặp ký tự nối nét (Contextual Words & Ligatures)             │
+│ • Mã phiếu: P02 — Contextual Words & Ligatures Collection Sheet                         │
+│ • Phạm vi: 12 từ ngữ cảnh tiêu biểu đại diện cho 3 nhóm vị trí:                        │
+│   - Word-Initial Uppercase: "Kính gửi", "Thân gửi", "Cảm ơn", "Chào mừng"              │
+│   - Medial Ligatures & Diacritic Clearance: "thuyền", "nghiêng", "trường", "nguyễn"    │
+│   - Word-Final Terminals: "bạn", "nam", "nhìn", "tình"                                 │
+│ • Mục tiêu: Khảo sát nối nét thực tế, biến thể đầu/cuối từ và khoảng hở tránh đè dấu.  │
 ├────────────────────────────────────────────────────────────────────────────────────────┤
-│ Phần 3: Câu Pangram tiếng Việt chuẩn mực (Vietnamese Pangrams)                         │
-│ - Câu 1: "Do bạch kim rất quý nên qua thời gian phong thổ vẫn giữ màu sáng rực rỡ."    │
-│ - Câu 2: "Cậu bé xinh đẹp này phóng vèo qua dãy phố cổ mù sương."                     │
-│ - Câu 3: "Hoàng tử nhảy múa cùng các cô gái vùng biển xanh biếc."                      │
+│ Trang P03 — Câu Pangram tiếng Việt chuẩn mực (Sentence Flow & Vietnamese Pangrams)     │
+│ • Mã phiếu: P03 — Sentence Flow & Pangram Collection Sheet                             │
+│ • Phạm vi: 3 câu văn chuẩn mực (mỗi câu gồm 2 dòng kẻ viết có guiding lines):          │
+│   - SENT_001 (16 từ, 69 ký tự không dấu cách):                                         │
+│     "Do bạch kim rất quý nên qua thời gian phong thổ vẫn giữ màu sáng rực rỡ."         │
+│   - SENT_002 (12 từ, 54 ký tự không dấu cách):                                         │
+│     "Cậu bé xinh đẹp này phóng vèo qua dãy phố cổ mù sương."                           │
+│   - SENT_003 (13 từ, 53 ký tự không dấu cách):                                         │
+│     "Hoàng tử nhảy múa cùng các cô gái vùng biển xanh biếc."                            │
+│ • Mục tiêu: Khảo sát dòng chảy câu liên tục, độ ổn định baseline và nhịp viết tự nhiên.│
 ├────────────────────────────────────────────────────────────────────────────────────────┤
-│ Phần 4: Đoạn văn xuôi liền mạch (Continuous Flow & Paragraph Baseline)                 │
-│ - "Mỗi dòng chữ nắn nót trên trang giấy trắng là nhịp cầu nối liền những tấm lòng      │
-│    thân thương, gửi gắm trọn vẹn niềm tin cùng bao ước vọng tốt đẹp nhất."            │
+│ Trang P04 — Đoạn văn xuôi liền mạch (Natural Paragraph Writing)                        │
+│ • Mã phiếu: P04 — Natural Paragraph Writing Collection Sheet                           │
+│ • Phạm vi: 1 đoạn văn xuôi liên tục 5 dòng kẻ (`PARA_001`: 35 từ, 172 ký tự không cách):│
+│   "Mỗi dòng chữ nắn nót trên trang giấy trắng là nhịp cầu nối liền những tấm lòng      │
+│    thân thương, gửi gắm trọn vẹn niềm tin cùng bao ước vọng tốt đẹp nhất về một tương │
+│    lai tươi sáng phía trước."                                                          │
+│ • Mục tiêu: Khảo sát độ trôi baseline dài hạn, mật độ chữ, khoảng cách dòng và phong  │
+│   cách người viết ở cấp đoạn văn trên bản quét tĩnh.                                   │
 └────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### 4.1. Độ phủ ký tự có dấu tiếng Việt (Chi tiết 67 dạng nguyên âm)
 
-Hệ thống ghi nhận và kiểm tra đầy đủ 12 nguyên âm cơ sở và các dạng kết hợp dấu:
+Hệ thống ghi nhận và kiểm tra đầy đủ 12 nguyên âm cơ sở và các dạng kết hợp dấu (ma trận mục tiêu toàn diện):
 - **Nguyên âm A:** `a, á, à, ả, ã, ạ`
 - **Nguyên âm Ă:** `ă, ắ, ằ, ẳ, ẵ, ặ`
 - **Nguyên âm Â:** `â, ấ, ầ, ẩn, ẫ, ậ`
@@ -205,13 +223,16 @@ Hệ thống ghi nhận và kiểm tra đầy đủ 12 nguyên âm cơ sở và 
 - **Nguyên âm Ư:** `ư, ứ, ừ, sử, ữ, ự`
 - **Nguyên âm Y:** `y, ý, ỳ, ỷ, ỹ, ỵ`
 
+> [!NOTE]
+> Trong phiếu P01 prototype hiện hành, do giới hạn diện tích trang A4 để bảo đảm ô viết đủ lớn ($14 \times 14\,\text{mm}$), một tập con đại diện gồm 18 nguyên âm có dấu tiêu biểu được sử dụng. Ma trận 67 dạng nguyên âm đầy đủ nêu trên là mục tiêu độ phủ ngữ âm tổng thể của dự án.
+
 ### 4.2. Độ phủ ngữ cảnh (Contextual Positions)
 
 Mỗi ký tự mục tiêu cần được xuất hiện ở tối thiểu 4 trạng thái ngữ cảnh:
-1. `isolated`: Viết riêng lẻ trong ô định chuẩn.
-2. `word_initial`: Nằm ở vị trí ký tự đầu tiên của từ.
-3. `word_medial`: Nằm kẹp giữa hai ký tự khác trong một âm tiết.
-4. `word_final`: Nằm ở vị trí kết thúc của từ (ví dụ: chữ *n*, *m*, *c*, *t*, *ch*, *nh*, *ng*).
+1. `isolated`: Viết riêng lẻ trong ô định chuẩn (thu thập tại P01).
+2. `word_initial`: Nằm ở vị trí ký tự đầu tiên của từ (thu thập tại P02).
+3. `word_medial`: Nằm kẹp giữa hai ký tự khác trong một âm tiết (thu thập tại P02, P03).
+4. `word_final`: Nằm ở vị trí kết thúc của từ (thu thập tại P02, P03).
 
 ---
 
@@ -228,14 +249,16 @@ Mỗi ký tự mục tiêu cần được xuất hiện ở tối thiểu 4 tr�
 
 ### 5.2. Quy tắc đặt tên file thô (Raw Image Naming Convention)
 
-Mọi tệp quét gốc được lưu trữ tại `dataset/raw/images/` theo cấu trúc:
+Mọi tệp quét gốc được lưu trữ tại `dataset/raw/images/` theo cấu trúc danh định:
 
 $$\text{\{writer\_id\}\_\{session\_id\}\_\{page\_number\}.png}$$
 
-- `writer_id`: Mã người viết gồm chữ `W` và 3 chữ số (ví dụ: `W001`, `W012`).
-- `session_id`: Mã phiên thu thập gồm chữ `S` và 2 chữ số (ví dụ: `S01`, `S02`).
-- `page_number`: Số thứ tự trang của phiếu thu thập gồm chữ `P` và 2 chữ số (ví dụ: `P01`, `P02`).
-- *Ví dụ mẫu:* `W001_S01_P01.png`, `W001_S01_P02.png`.
+**Phân định rạch ròi các thành phần định danh:**
+- `writer_id`: Mã định danh người viết ẩn danh gồm chữ `W` và 3 chữ số (ví dụ: `W001`, `W012`). Mỗi tình nguyện viên tham gia chỉ được cấp duy nhất một `writer_id`.
+- `session_id`: Mã phiên thu thập gồm chữ `S` và 2 chữ số (ví dụ: `S01`, `S02`). Phản ánh thời điểm hoặc đợt viết cụ thể của người đó (cho phép theo dõi sự ổn định chữ viết qua các buổi khác nhau).
+- `page_number`: Mã trang trong bộ phiếu gồm chữ `P` và 2 chữ số (`P01`, `P02`, `P03`, `P04`).
+- **Form Version (`vX.Y`):** Phiên bản kỹ thuật của mẫu thiết kế phiếu (ví dụ `v0.1` pilot prototype, `v1.0` formal release). Phiên bản phiếu được quản lý chặt chẽ trong metadata manifest (`collection_manifest.jsonl`) và technical notes, **TUYỆT ĐỐI KHÔNG gộp cứng vào tên file ảnh thô** nhằm bảo đảm cấu trúc tên file bất biến, ngắn gọn và tương thích tự nhiên với các pipeline xử lý tự động.
+- *Ví dụ mẫu:* `W001_S01_P01.png`, `W001_S01_P02.png`, `W001_S01_P03.png`, `W001_S01_P04.png`.
 
 ### 5.3. Tính bất biến của dữ liệu thô (Immutability Principle)
 
@@ -605,7 +628,7 @@ Tệp định nghĩa: `dataset/schemas/writer_profile.schema.json`
 │ TẬP HUẤN LUYỆN (TRAIN SET)    │ TẬP HIỆU CHUẨN (VAL SET)      │ TẬP ĐÁNH GIÁ (TEST SET)│
 │ Tỷ lệ: ~70% số lượng Writer   │ Tỷ lệ: ~15% số lượng Writer   │ Tỷ lệ: ~15% số lượng W │
 ├───────────────────────────────┼───────────────────────────────┼────────────────────────┤
-│ Ví dụ: W001 – W028            │ Ví dụ: W029 – W034            │ Ví dụ: W035 – W040     │
+│ Kế hoạch: W001 – W028 (28)    │ Kế hoạch: W029 – W034 (6)     │ Kế hoạch: W035 – W040 (6)│
 ├───────────────────────────────┴───────────────────────────────┴────────────────────────┤
 │ RÀNG BUỘC SẮT:                                                                         │
 │ 1. Toàn bộ mẫu của một Writer chỉ xuất hiện DUY NHẤT trong một tập (Disjoint).          │
@@ -613,6 +636,10 @@ Tệp định nghĩa: `dataset/schemas/writer_profile.schema.json`
 │ 3. Đánh giá tính tổng quát hóa (Generalization) trên người viết hoàn toàn mới.         │
 └────────────────────────────────────────────────────────────────────────────────────────┘
 ```
+
+> [!IMPORTANT]
+> **Trạng thái thực tế:** Quy mô ~40 người viết và tỷ lệ phân chia 28 Train / 6 Val / 6 Test là **KẾ HOẠCH MỤC TIÊU DỰ KIẾN (PLANNED TARGET PROTOCOL)** cho giai đoạn thu thập chính thức.
+> Dự án hiện **CHƯA** thực hiện thu thập quy mô lớn này và **CHƯA** có dữ liệu của 40 người viết. Toàn bộ công việc dữ liệu hiện tại mới dừng ở mức hoàn thiện thiết kế bộ phiếu thu thập mẫu v1 (P01–P04 Pilot Candidate) và chuẩn bị công cụ scan-validation.
 
 ### 9.1. Quy tắc phân chia
 
@@ -675,11 +702,15 @@ Nhằm duy trì tính trung thực khoa học tuyệt đối trong toàn bộ h�
 | **Kiến trúc Font Pack nét đơn độc lập** | TV4 | **IMPLEMENTED** | Đã tách thành package `backend/handwriting/font_packs/` (`legacy`, `omni_casual`). |
 | **Auditor kiểm tra hình học polyline** | TV4 | **IMPLEMENTED** | Đã có `audit_font_pack_geometry()` và `qa_specimens.py`. |
 | **Strict Validation trên API Gateway** | TV4 | **IMPLEMENTED** | 34/34 tests pass trong `backend/test_handwriting_validation.py`. |
-| **Phiếu thu thập mẫu & Protocol chuẩn hóa** | TV1 | **IN PROGRESS** | Đang hoàn thiện mẫu thiết kế lưới thu thập và quy trình quét. |
-| **Đưa dấu tiếng Việt & Vùng cấm va chạm vào DAG** | TV4 & TV2 | **IN PROGRESS** | Đang nghiên cứu mô hình hóa trạng thái dấu trong Trellis DAG. |
-| **Tối ưu hóa thứ tự nét trễ (Delayed Strokes)** | TV2 & TV4 | **IN PROGRESS** | Đang thiết kế hàm chi phí động học và thuật toán gom nét trễ. |
-| **Tập ngữ liệu Benchmark tiếng Việt (Corpus)** | TV1 | **IN PROGRESS** | Đang chuẩn bị tập 15 prompt tranh và bộ câu test chữ viết tay chuẩn. |
-| **Framework ghi log thực nghiệm CSV** | TV4 | **IN PROGRESS** | Đang chuẩn hóa cấu trúc trường log phục vụ phân tích RQ1–RQ3. |
+| **Thiết kế bộ phiếu thu thập mẫu (P01–P04 Design)** | TV1 | **DESIGN COMPLETE / PILOT CANDIDATE** | Hoàn tất thiết kế hình học, fiducial markers, calibration bar, bounding boxes cho P01–P04 (`docs/collection_sheets/P01..P04/`). Chưa được phê duyệt cho đợt thu thập chính thức. |
+| **Scan-Validation Pipeline & Bench Test** | TV1 | **IN PROGRESS / NOT VALIDATED** | Pipeline tự động phát hiện fiducial, deskew, kiểm tra thang đo và bóc tách ô viết đang triển khai; chưa bench-test trên bản in/quét thực tế. |
+| **Phân tích độ phủ & Quyết định Protocol** | TV1 | **PENDING** | Chờ kiểm chứng ma trận độ phủ thực tế và chốt phương án xử lý lỗi nét lem/tràn viền (`PENDING PROTOCOL DECISION`). |
+| **Thu thập thử nghiệm quy mô nhỏ (Pilot 3–5 writers)** | TV1 | **PENDING** | Chờ hoàn tất scan-validation pipeline và protocol chốt; chưa triển khai pilot. |
+| **Thu thập chính thức (~40 writers)** | TV1 | **NOT STARTED** | Kế hoạch dự kiến ~40 người viết (28 Train, 6 Val, 6 Test); chưa triển khai. |
+| **Đưa dấu tiếng Việt & Vùng cấm va chạm vào DAG (CA-VHC)** | TV4 & TV2 | **STEP B APPROVED AND CLOSED / STEP C AUTHORIZED — NOT YET IMPLEMENTED** | Step A complete; TV2 cross-review completed/pass; READY FOR STEP C: YES; PR1 đang được khởi động; formal experiment readiness vẫn NO. |
+| **Tối ưu hóa thứ tự nét trễ (Delayed Strokes)** | TV2 & TV4 | **DESIGN POLICY RESOLVED / PRODUCTION IMPLEMENTATION NOT STARTED** | Khóa chính sách thiết kế P0 (gom nét trễ sau thân từ + Nearest Neighbor có tie-break bằng stroke index gốc); PR4 trong Step C chưa triển khai; P1 Exact Enumeration và P2 Writer Profile thuộc nghiên cứu tiếp nối. |
+| **Tập ngữ liệu Benchmark tiếng Việt (Corpus)** | TV1 | **PROVISIONAL TECHNICAL FIXTURE** | `BENCHMARK_DEV_CORPUS_20` và `BENCHMARK_HOLDOUT_CORPUS_20` (20 từ Dev, 20 từ Holdout) đã tồn tại trong code và vượt qua kiểm thử tính rời nhau ở mức provisional technical fixture; TV1 vẫn phải review coverage ngữ âm/ngôn ngữ học và đóng băng version trước thực nghiệm chính thức (không phải formal corpus; không trộn với 15 prompt tranh Art Mode). |
+| **Framework ghi log thực nghiệm CSV & Runner** | TV4 | **INTERNAL EVALUATOR AND STRUCTURED TRACE IMPLEMENTED AND TESTED / EXPERIMENT PIPELINE–CSV INTEGRATION AND AUTOMATED RUNNER IN PROGRESS / PUBLIC API EXPOSURE PENDING** | Bộ đánh giá nội bộ `metrics_evaluator.py` và structured render trace đã hoạt động và có test; PR1 đang tích hợp các metric thực sự đã tồn tại vào experiment pipeline và CSV; public API chỉ mở rộng sau khi backend metric ổn định; API Spec sẽ được cập nhật bằng PR tài liệu riêng; không thay đổi API contract trong đợt này. |
 | **Schema Annotation CA-VHC** | TV1 & TV4 | **PROPOSED / NON-BINDING** | Schema mẫu đề xuất trong mục 7 tài liệu này, chưa binding vào core engine. |
 | **Schema Writer Profile cá nhân hóa** | TV1 | **PROPOSED / P2 RESEARCH** | Thuộc nhánh nghiên cứu mở rộng P2, chưa tích hợp vào engine lõi. |
 | **Bộ trích xuất đặc trưng Writer Profile độc lập** | TV1 | **PROPOSED / P2 RESEARCH** | Đang chuẩn bị kịch bản trích xuất 4 đặc trưng hình học độc lập. |
