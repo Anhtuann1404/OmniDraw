@@ -1,8 +1,15 @@
 # OmniDraw — Literature Evidence Matrix
 
-**Phiên bản:** 0.1  
-**Trạng thái:** `VERIFIED_SEED — TEAM REVIEW PENDING`  
+**Phiên bản:** 0.2
+**Trạng thái:** `CITATION_CHAINING_R1 VERIFIED — TEAM REVIEW PENDING`
 **Protocol:** [`11_literature_review_protocol.md`](11_literature_review_protocol.md)
+
+**Material Passport**
+
+- **Origin Skill:** `academic-research-suite/deep-research`
+- **Origin Mode:** Literature review — Phase 2 Investigation
+- **Origin Date:** 2026-09-22
+- **Verification Status:** `METADATA VERIFIED — FULL-TEXT REVIEW PARTIAL`
 
 ## 1. Ma trận bằng chứng
 
@@ -19,29 +26,64 @@
 | S09 | Y. Lu, J. H. M. Lam, and Y. Yam, “Preliminary study on vision-based pen-and-ink drawing by a robotic manipulator,” AIM 2009, pp. 578–583. [doi:10.1109/AIM.2009.5229949](https://doi.org/10.1109/AIM.2009.5229949) | **WHY:** tự động hóa pen-and-ink drawing bằng thị giác. **HOW:** chuyển outline thành stroke trajectory, iterative hatching và visual feedback. **WHAT:** chứng minh pipeline từ hình ảnh đến quỹ đạo và thi công robot cần cả planning lẫn feedback. | LRQ2; RQ3 | Tập trung sketch/hatching, không phải dấu tiếng Việt hay contextual glyph variants. | `VERIFIED_SEED` |
 | S10 | A. Mohammed, L. Wang, and R. X. Gao, “Integrated Image Processing and Path Planning for Robotic Sketching,” *Procedia CIRP*, vol. 12, pp. 199–204, 2013. [doi:10.1016/j.procir.2013.09.035](https://doi.org/10.1016/j.procir.2013.09.035) | **WHY:** nối image processing với path planning không cần lập trình tay. **HOW:** trích contour, giảm số điểm, sắp thứ tự path gần tối ưu và điều khiển robot. **WHAT:** cho thấy chất lượng hình học và thứ tự quỹ đạo phải được đánh giá cùng nhau. | LRQ2; RQ1; RQ3 | Bài toán contour sketch khác single-stroke handwriting; “near-optimal” không đồng nghĩa tối ưu CA-VHC. | `VERIFIED_SEED` |
 | S11 | A. Kotani and S. Tellex, “Teaching Robots to Draw,” ICRA 2019, pp. 4797–4803. [doi:10.1109/ICRA.2019.8793484](https://doi.org/10.1109/ICRA.2019.8793484) | **WHY:** robot cần tái tạo ký tự/nét vẽ từ quan sát. **HOW:** học kế hoạch hành động từ demonstrations và thi công mỗi target stroke liên tục. **WHAT:** nêu tầm quan trọng của continuity và stroke-level plan khi chuyển ảnh/nét sang hành động robot. | LRQ1; LRQ2; RQ3 | Mục tiêu sao chép từ ảnh khác với text-to-stroke deterministic rendering và chưa xử lý cấu trúc dấu tiếng Việt. | `VERIFIED_SEED` |
+| S12 | E. F. Bilgin Taşdemir and B. Yanıkoğlu, “A comparative study of delayed stroke handling approaches in online handwriting,” *International Journal on Document Analysis and Recognition*, vol. 22, no. 1, pp. 15–28, 2019. [doi:10.1007/s10032-018-0313-2](https://doi.org/10.1007/s10032-018-0313-2) | **WHY:** delayed strokes làm sai thứ tự không gian–thời gian của chuỗi viết. **HOW:** so sánh chiến lược loại bỏ và nhúng lại delayed strokes trên UNIPEN và dữ liệu tiếng Thổ Nhĩ Kỳ với HMM/BLSTM. **WHAT:** hiệu quả phụ thuộc dữ liệu và recognizer; không có một chiến lược xử lý duy nhất luôn tốt nhất. | LRQ3; RQ2 | Là nghiên cứu recognition, không xác định vị trí hình học tối ưu hay thứ tự robot phải vẽ dấu tiếng Việt. | `VERIFIED_CHAIN_R1` |
+| S13 | U. Bhattacharya, R. Plamondon, S. Dutta Chowdhury, P. Goyal, and S. K. Parui, “A sigma-lognormal model-based approach to generating large synthetic online handwriting sample databases,” *International Journal on Document Analysis and Recognition*, vol. 20, no. 3, pp. 155–171, 2017. [doi:10.1007/s10032-017-0287-5](https://doi.org/10.1007/s10032-017-0287-5) | **WHY:** dữ liệu online handwriting gán nhãn khó thu thập ở quy mô lớn. **HOW:** dùng mô hình sigma-lognormal để sinh các mẫu quỹ đạo tổng hợp mang biến thiên động học. **WHAT:** cung cấp đối chứng cho hướng mô phỏng vận động người viết và tạo dữ liệu tổng hợp. | LRQ1; P2; RQ3 | Không giải quyết ngữ âm/chính tả tiếng Việt, anchor dấu hay giới hạn cơ khí của plotter; không thể thay cho dữ liệu người dùng thật. | `VERIFIED_CHAIN_R1` |
+| S14 | Q. Li, Z. Guo, F. Chao, X. Chang, L. Yang, C.-M. Lin, C. Shang, and Q. Shen, “Solving Robotic Trajectory Sequential Writing Problem via Learning Character’s Structural and Sequential Information,” *IEEE Transactions on Cybernetics*, vol. 54, no. 2, pp. 1096–1108, 2024. [doi:10.1109/TCYB.2022.3194700](https://doi.org/10.1109/TCYB.2022.3194700) | **WHY:** robot cần sinh thứ tự quỹ đạo hợp lý khi thông tin tuần tự huấn luyện hạn chế. **HOW:** GRU kết hợp trajectory-sequence vector có nhãn để học cấu trúc và trình tự ký tự. **WHAT:** chứng minh structural/sequential information có thể được đánh giá riêng trong robotic writing. | LRQ1; LRQ2; RQ1; RQ3 | Hệ học dữ liệu cho robot calligraphy, không phải finite-state deterministic composition; chưa xử lý Latin/Vietnamese combining marks hay two-axis pen plotter. | `VERIFIED_CHAIN_R1` |
+| S15 | S. Wang, J. Chen, X. Deng, S. Hutchinson, and F. Dellaert, “Robot Calligraphy using Pseudospectral Optimal Control in Conjunction with a Novel Dynamic Brush Model,” IROS 2020, pp. 6696–6703. [doi:10.1109/IROS45743.2020.9341787](https://doi.org/10.1109/IROS45743.2020.9341787) | **WHY:** quỹ đạo robot và biến dạng công cụ viết phải được tối ưu cùng nhau để tái tạo thư pháp. **HOW:** tham số hóa trajectory bằng đa thức Chebyshev, tối ưu pseudospectral và dùng dynamic brush model trong hàm mục tiêu. **WHAT:** củng cố cách xem robotic writing là trajectory optimization có ràng buộc công cụ. | LRQ2; RQ3 | Bút lông, chữ Hán và manipulator khác đáng kể với bút bi/plotter hai trục; không chuyển trực tiếp mô hình brush hoặc số liệu thời gian. | `VERIFIED_CHAIN_R1` |
+| S16 | J. Shin, S. Hong, and J. Bak, “CASHG: Context-Aware Stylized Online Handwriting Generation,” arXiv:2604.02103, 2026. [arXiv:2604.02103](https://arxiv.org/abs/2604.02103) | **WHY:** sinh câu viết tay cần ký tự phụ thuộc ngữ cảnh, continuity và spacing ổn định. **HOW:** Character Context Encoder, bigram-aware sliding-window Transformer, curriculum ba giai đoạn và Connectivity/Spacing Metrics. **WHAT:** báo cáo cải thiện metric biên ký tự và human evaluation, cho thấy context-aware connectivity đã là hướng nghiên cứu trực tiếp. | LRQ1; LRQ5; P2 | **Preprint, chưa peer-reviewed.** Không xử lý chính tả/dấu tiếng Việt, collision với bridge, finite-state Viterbi hay chi phí thi công plotter. Đây là phản chứng đối với tuyên bố novelty rộng, không phải bằng chứng rằng OmniDraw đã đạt kết quả tương đương. | `VERIFIED_METADATA_PREPRINT` |
 
-## 2. Tổng hợp theo câu hỏi nghiên cứu
+## 2. Kiểm chứng nguồn và chất lượng bằng chứng
+
+`Level` mô tả thiết kế bằng chứng, không phải thứ hạng venue. `Grade` đánh giá khả năng dùng nguồn cho đúng luận điểm trong tổng quan này: A = trực tiếp/metadata mạnh; B = phù hợp nhưng có giới hạn chuyển giao; C = chỉ dùng thận trọng. COI chưa đọc đủ toàn văn được ghi `PENDING`, không được hiểu là “không có COI”.
+
+| ID | Trạng thái xuất bản | Level / Grade | Kiểm chứng và cảnh báo |
+| :--- | :--- | :--- | :--- |
+| S01 | Preprint | Algorithmic study / B | Metadata arXiv xác minh; chưa peer-reviewed; COI `PENDING`. |
+| S02 | Peer-reviewed conference | System/generative-model study / B | DOI và ACM venue xác minh; bằng chứng gần P2 nhưng không đặc thù tiếng Việt; COI `PENDING`. |
+| S03 | Peer-reviewed journal | Dataset + recognition experiments / A | DOI/venue xác minh; trực tiếp cho Vietnamese online handwriting và delayed strokes; không suy sang synthesis; COI `PENDING`. |
+| S04 | Normative standard | Standard / A | Nguồn Unicode chính thức; có thẩm quyền cho normalization, không phải bằng chứng hình học. |
+| S05 | Normative specification | Standard / A | Nguồn Microsoft OpenType chính thức; có thẩm quyền cho GPOS, không phải plotter execution. |
+| S06 | Peer-reviewed journal | Foundational algorithm / A | DOI/IEEE metadata xác minh; chuyển giao phương pháp sang composition phải ghi là suy luận. |
+| S07 | Peer-reviewed journal | Controlled movement experiment / A | DOI/venue xác minh; cơ sở động học mạnh nhưng không hiệu chuẩn thiết bị OmniDraw; COI `PENDING`. |
+| S08 | Peer-reviewed conference | Robotic drawing system / B | DOI/AAAI venue xác minh; khác morphology thiết bị và loại nét; COI `PENDING`. |
+| S09 | Peer-reviewed conference | Robotic drawing proof-of-concept / B | DOI/IEEE venue xác minh; bằng chứng pipeline, không phải handwriting synthesis; COI `PENDING`. |
+| S10 | Peer-reviewed proceedings | Integrated system study / B | DOI/venue xác minh; contour sketch khác single-stroke text; COI `PENDING`. |
+| S11 | Peer-reviewed conference | Learning-from-demonstration robot study / B | DOI/IEEE venue xác minh; phù hợp continuity/stroke plan; COI `PENDING`. |
+| S12 | Peer-reviewed journal | Comparative recognition experiment / A | DOI và kho Sabancı xác minh; so sánh delayed-stroke handling trực tiếp; không suy sang vị trí dấu; COI `PENDING`. |
+| S13 | Peer-reviewed journal | Generative algorithm + empirical evaluation / B | DOI và kho Polytechnique Montréal xác minh; phù hợp mô hình động học/synthetic data; COI `PENDING`. |
+| S14 | Peer-reviewed journal | Learned robotic writing system / B | DOI và institutional repository xác minh; published issue 2024, online-first 2022; COI `PENDING`. |
+| S15 | Peer-reviewed conference | Optimal-control robotic system / B | DOI/IEEE metadata và proceedings xác minh; khác brush/robot; COI `PENDING`. |
+| S16 | Preprint | Generative-model study / C | arXiv v2 ngày 2026-04-06 xác minh; chưa peer-reviewed, gắn cờ `PREPRINT`; COI `PENDING`. |
+
+Không phát hiện dấu hiệu venue săn mồi trong metadata đã kiểm tra. Nhận định này không thay cho kiểm tra toàn văn, funding và competing-interest statement.
+
+## 3. Tổng hợp theo câu hỏi nghiên cứu
 
 | RQ | Bằng chứng hỗ trợ | Điều nguồn chưa giải quyết | Vai trò dự kiến của OmniDraw |
 | :--- | :--- | :--- | :--- |
-| RQ1 | S06 cung cấp nền tảng trellis/DP; S08–S10 cho thấy path ordering ảnh hưởng hiệu quả thi công; S01–S02 cho thấy ngữ cảnh và phong cách có thể được mô hình hóa ở cấp chuỗi. | Chưa có nguồn hạt giống nào đồng tối ưu allograph, quyết định nối/nhấc bút và dấu tiếng Việt trong cùng trạng thái hữu hạn cho single-stroke plotter. | Kiểm chứng `CompositionState` + Viterbi bằng pen-up distance, pen-lift count và total path length với ba baseline. |
-| RQ2 | S03 chứng minh delayed strokes là đặc trưng đáng kể của chữ viết tay tiếng Việt; S04 chuẩn hóa base/combining mark; S05 cung cấp tư duy anchor và mark-to-mark. | Unicode/OpenType không mô hình hóa vùng cản bridge; nghiên cứu recognition không quyết định vị trí dấu sinh ra. | Đưa ứng viên dấu và vùng cản vào state/transition, đo collision và clearance thay vì chỉ render hậu kỳ. |
-| RQ3 | S07 hỗ trợ mục tiêu trơn chuyển động; S08–S11 cho thấy planning và physical execution phải được kiểm chứng; S06 hỗ trợ thuật toán chuỗi có cấu trúc. | Không nguồn nào cung cấp ngưỡng latency/clearance dùng trực tiếp cho thiết bị OmniDraw. | Báo cáo độ phức tạp, median/p95 và tách simulator khỏi số đo máy thật; ngưỡng vật lý phải do TV3 hiệu chuẩn. |
+| RQ1 | S06 cung cấp nền tảng trellis/DP; S08–S10 cho thấy path ordering ảnh hưởng hiệu quả thi công; S01–S02 và S16 cho thấy ngữ cảnh, phong cách, continuity và spacing có thể được mô hình hóa ở cấp chuỗi; S14 là đối chứng robotic sequential writing. | Context-aware generation và sequence learning đã tồn tại. Chưa có bằng chứng trong matrix về hệ kết hợp chúng với chính tả/dấu tiếng Việt, collision/clearance và trạng thái hữu hạn cho single-stroke plotter. | Kiểm chứng `CompositionState` + Viterbi bằng pen-up distance, pen-lift count và total path length với ba baseline; không tuyên bố novelty rộng về contextual handwriting. |
+| RQ2 | S03 chứng minh delayed strokes trong Vietnamese handwriting; S12 cho thấy chiến lược xử lý nét trễ phụ thuộc dữ liệu/mô hình; S04 chuẩn hóa base/combining mark; S05 cung cấp tư duy anchor và mark-to-mark. | Unicode/OpenType không mô hình hóa vùng cản bridge; nghiên cứu recognition không quyết định vị trí dấu sinh ra hoặc thứ tự robot thi công. | Đưa ứng viên dấu và vùng cản vào state/transition, đo collision và clearance thay vì chỉ render hậu kỳ; đánh giá placement tách khỏi ordering. |
+| RQ3 | S07 và S13 hỗ trợ mô hình độ trơn/động học; S08–S11, S14–S15 cho thấy planning, sequence và physical execution phải được kiểm chứng; S06 hỗ trợ thuật toán chuỗi có cấu trúc. | Không nguồn nào cung cấp ngưỡng latency/clearance dùng trực tiếp cho thiết bị OmniDraw; mô hình brush/robot arm không chuyển nguyên trạng sang plotter hai trục. | Báo cáo độ phức tạp, median/p95 và tách simulator khỏi số đo máy thật; ngưỡng vật lý phải do TV3 hiệu chuẩn. |
 
-## 3. Khoảng trống tạm thời
+## 4. Khoảng trống tạm thời đã thu hẹp
 
 Từ **bộ nguồn hạt giống hiện tại**, có thể phát biểu thận trọng rằng các hướng liên quan thường tách thành ba lớp:
 
-1. mô hình sinh digital ink và phong cách người viết;
+1. mô hình sinh digital ink, phong cách người viết và liên kết theo ngữ cảnh;
 2. typography/encoding dùng normalization và mark attachment;
 3. robot drawing dùng stroke/path planning để giảm thời gian hoặc bảo đảm thi công.
 
-Chưa tìm thấy trong vòng hạt giống một công trình đồng thời mô hình hóa **allograph theo ngữ cảnh + vị trí dấu tiếng Việt + bridge collision + chi phí pen-up/curvature** trong một trellis hữu hạn dành cho máy vẽ nét đơn. Đây là **provisional gap**, chưa phải tuyên bố novelty cuối cùng. Phải hoàn tất citation chaining và team screening trước khi dùng trong phần “tính mới”.
+S16 cho thấy không còn hợp lệ nếu phát biểu chung rằng “chưa có context-aware handwriting generation”; S14 cũng cho thấy robotic sequential writing đã được nghiên cứu bằng mô hình học. Sau citation chaining vòng 1, khoảng trống có thể giữ ở dạng hẹp hơn:
 
-## 4. Các nguồn cần tìm thêm
+> Chưa tìm thấy trong 16 nguồn đã sàng lọc một hệ thống đồng thời mô hình hóa **ràng buộc chính tả và ứng viên vị trí dấu tiếng Việt + bridge collision/clearance + quyết định allograph/nối–nhấc bút trong finite-state trellis + chi phí thi công single-stroke plotter**.
+
+Đây vẫn là **provisional gap**, không phải tuyên bố “đầu tiên trên thế giới”. Phải hoàn tất team screening, citation chaining vòng 2 và tra cứu prior art gần nhất trước khi đưa vào phần “tính mới”.
+
+## 5. Các nguồn cần tìm thêm
 
 - Công trình chuyên biệt về Vietnamese handwriting synthesis, không chỉ recognition.
-- Nghiên cứu định lượng về thứ tự delayed strokes trong chữ viết tay tiếng Việt.
+- Nghiên cứu định lượng về thứ tự delayed strokes riêng cho chữ viết tay tiếng Việt; S12 mới chỉ bổ sung bằng chứng đa ngôn ngữ cho bài toán xử lý nét trễ.
 - Tối ưu toolpath cho pen plotter hai trục có metric pen-up/turning cost.
 - Đánh giá legibility/naturalness của chữ viết tay sinh tự động.
-- Phương pháp contextual allograph cho Latin cursive hoặc type design có anchor/entry/exit.
+- Nguồn peer-reviewed về contextual allograph cho Latin cursive hoặc type design có anchor/entry/exit; S16 mới là preprint và tập trung connectivity/spacing.
+- Nghiên cứu human factors để định nghĩa protocol đánh giá tự nhiên, dễ đọc và mức giống phong cách người viết.

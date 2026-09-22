@@ -8,13 +8,13 @@
 | Loại tài liệu | Working traceability artifact / experiment-readiness map |
 | Ngày đối chiếu | 22/09/2026 |
 | Code snapshot đã kiểm tra | `cda92eb` |
-| Review target đang được TV1–TV3 duyệt | `5e9c857e42021f8a48d45b1fdaefcfdb87e82ff3` |
+| Review target hiện hành | Xem `REVIEW_TARGET_COMMIT` tại [`reviews/README.md`](reviews/README.md) |
 | Verification status | `ANALYZED_WITH_TARGETED_TESTS` |
 | Phạm vi | CA-VHC P0: RQ1–RQ3, giả thuyết H1.1–H3.2, hạ tầng metric và các gate phần mềm/phần cứng |
 | Ngoài phạm vi | Không công bố kết quả; không mở Holdout; không sửa Chương 1–3 đang review; không xác nhận hiệu quả thuật toán chưa triển khai |
 
 > [!IMPORTANT]
-> Đây là tài liệu làm việc mới, **không thuộc review target `5e9c857`** và không làm thay đổi nội dung Chương 1–3 đang được cross-review. Các trạng thái dưới đây mô tả khả năng kiểm chứng hiện tại, không phải kết quả nghiên cứu.
+> Đây là tài liệu truy vết hỗ trợ review; chỉ thuộc vòng review khi được liệt kê trong phạm vi của gói hiện hành. Các trạng thái dưới đây mô tả khả năng kiểm chứng hiện tại, không phải kết quả nghiên cứu.
 
 ---
 

@@ -1,9 +1,17 @@
 # OmniDraw — Giao thức Tổng quan Tài liệu Chương 2
 
-**Phiên bản:** 0.1  
-**Ngày tìm kiếm khởi tạo:** 2026-09-21  
-**Loại tổng quan:** Structured scoping review  
-**Trạng thái:** `SEED SEARCH COMPLETE — TEAM SCREENING PENDING`
+**Phiên bản:** 0.2
+**Ngày tìm kiếm khởi tạo:** 2026-09-21
+**Cập nhật citation chaining vòng 1:** 2026-09-22
+**Loại tổng quan:** Structured scoping review
+**Trạng thái:** `CITATION CHAINING ROUND 1 COMPLETE — TEAM SCREENING PENDING`
+
+**Material Passport**
+
+- **Origin Skill:** `academic-research-suite/deep-research`
+- **Origin Mode:** Literature review — Phase 2 Investigation
+- **Origin Date:** 2026-09-22
+- **Verification Status:** `METADATA VERIFIED — FULL-TEXT REVIEW PARTIAL`
 
 > [!IMPORTANT]
 > Tài liệu này là nhật ký phương pháp tìm và chọn tài liệu, không phải kết quả thực nghiệm của OmniDraw. Chưa được gọi là systematic review hoặc PRISMA review cho đến khi có ít nhất hai người sàng lọc độc lập, lưu đầy đủ bản ghi loại trùng và lý do loại từng tài liệu.
@@ -52,7 +60,19 @@ Mục tiêu của vòng tìm kiếm đầu tiên là xây dựng **bộ nguồn 
 ("minimum jerk" AND movement trajectory)
 ```
 
-Các truy vấn được thực hiện bằng tiếng Anh để tăng độ phủ. Vòng mở rộng sau cross-review sẽ bổ sung truy vấn tiếng Việt và backward/forward citation chaining.
+Các truy vấn được thực hiện bằng tiếng Anh để tăng độ phủ. Citation chaining vòng 1 dùng các nguồn S03, S08 và S11 làm điểm xuất phát, kết hợp tìm theo tiêu đề, DOI, tài liệu tham khảo lùi và công trình liên quan tiến. Vòng sau team review sẽ bổ sung truy vấn tiếng Việt và citation chaining vòng 2 cho các khoảng trống còn lại.
+
+### 3.3. Nhật ký citation chaining vòng 1 (2026-09-22)
+
+| Nhóm | Kết quả giữ lại | Lý do |
+| :--- | :--- | :--- |
+| Delayed strokes | S12 | So sánh trực tiếp các chiến lược xử lý nét viết trễ trên nhiều bộ dữ liệu online handwriting. |
+| Kinematic synthesis | S13 | Sinh dữ liệu handwriting trực tuyến bằng mô hình sigma-lognormal, bổ sung cơ sở động học ngoài minimum-jerk. |
+| Robotic sequence writing | S14 | Học thứ tự quỹ đạo và cấu trúc ký tự cho robot viết, là đối chứng gần với bài toán sequence composition. |
+| Trajectory optimization | S15 | Mô hình hóa viết thư pháp robot như bài toán tối ưu quỹ đạo có mô hình công cụ viết. |
+| Context-aware generation | S16 | Mô hình hóa rõ liên kết và khoảng cách giữa ký tự ở mức câu; là nguồn phản biện trực tiếp buộc thu hẹp tuyên bố novelty. |
+
+Các ứng viên chỉ liên quan recognition chung, chữ Nôm lịch sử, chữ ký trên không hoặc không xác minh được trạng thái xuất bản được loại/defer khỏi matrix. Đây là targeted citation chaining, không phải thống kê exhaustive và không được trình bày như PRISMA flow.
 
 ## 4. Tiêu chí chọn và loại
 
@@ -79,9 +99,10 @@ Các truy vấn được thực hiện bằng tiếng Anh để tăng độ ph�
 4. Trích xuất theo mẫu WHY–HOW–WHAT và ánh xạ sang RQ1–RQ3.
 5. Ghi giới hạn chuyển giao: bằng chứng recognition không tự động chứng minh synthesis; typography màn hình không tự động chứng minh an toàn máy vẽ.
 6. TV2 cross-review nhóm motion/path; TV3 cross-review nhóm robot/hardware; TV4 cross-review nhóm dấu và composition.
-7. Chỉ sau khi hoàn tất bước 6 mới đổi trạng thái nguồn từ `VERIFIED_SEED` sang `TEAM_VERIFIED`.
+7. Thực hiện citation chaining, ghi rõ nguồn mới là peer-reviewed hay preprint và cập nhật phản chứng đối với tuyên bố novelty.
+8. Chỉ sau khi hoàn tất cross-review mới đổi trạng thái nguồn từ `VERIFIED_SEED`/`VERIFIED_CHAIN_R1` sang `TEAM_VERIFIED`.
 
-Không dùng tổng số kết quả do công cụ tìm kiếm ước lượng làm số liệu sàng lọc. Ở vòng hạt giống hiện tại, 11 nguồn được giữ lại; sơ đồ PRISMA và số bản ghi bị loại chi tiết là `PENDING`.
+Không dùng tổng số kết quả do công cụ tìm kiếm ước lượng làm số liệu sàng lọc. Sau vòng chaining thứ nhất, matrix có 16 nguồn: 11 nguồn hạt giống, 4 nguồn peer-reviewed/kỷ yếu chính thức mới và 1 preprint 2026. Sơ đồ PRISMA và số bản ghi bị loại chi tiết vẫn là `PENDING`.
 
 ## 6. Trường trích xuất bắt buộc
 
@@ -96,6 +117,9 @@ Không dùng tổng số kết quả do công cụ tìm kiếm ước lượng l
 | `rq_mapping` | RQ1, RQ2, RQ3 hoặc P2 |
 | `transfer_limit` | Điều không được suy ra cho OmniDraw |
 | `verification` | Trạng thái kiểm chứng nguồn |
+| `evidence_grade` | Mức thiết kế nghiên cứu và grade chất lượng, không đồng nhất với độ phù hợp cho OmniDraw |
+| `publication_status` | Peer-reviewed / standard / preprint |
+| `coi_note` | Xung đột lợi ích được công bố hoặc trạng thái chưa đánh giá đủ |
 
 ## 7. Kiểm soát chất lượng và tính liêm chính
 
@@ -103,7 +127,15 @@ Không dùng tổng số kết quả do công cụ tìm kiếm ước lượng l
 - Không dùng số liệu của công trình khác làm target cho OmniDraw nếu khác thiết bị, corpus hoặc điều kiện đo.
 - Tách rõ ba lớp: **bằng chứng từ nguồn**, **suy luận của nhóm**, và **quyết định thiết kế OmniDraw**.
 - “Khoảng trống nghiên cứu” trong bản nháp chỉ được gọi là **khoảng trống tạm thời** cho đến khi citation chaining hoàn tất.
+- S16 là preprint và chỉ được dùng làm bằng chứng có nghiên cứu gần chủ đề; không được dùng như xác nhận peer-reviewed.
+- CASHG đã bao phủ context-aware character generation và inter-character connectivity. Vì vậy OmniDraw không được tuyên bố rộng là hệ đầu tiên xử lý chữ viết tay theo ngữ cảnh; novelty tạm thời phải giới hạn ở tổ hợp **chính tả/dấu tiếng Việt + collision/clearance + finite-state composition + chi phí thi công plotter**.
 - Mọi kết quả của OmniDraw trong Chương 4 tiếp tục mang nhãn `PENDING FORMAL EXPERIMENT — DO NOT REPORT AS RESULT`.
+
+### 7.1. Cảnh báo độ phủ
+
+- Bộ nguồn nghiêng về thuật toán, hệ thống và robotics, phù hợp với LRQ kỹ thuật nhưng chưa đủ mạnh cho đánh giá cảm nhận người dùng.
+- Nguồn kinh điển cũ được giữ vì là nền tảng phương pháp; tính cập nhật được bổ sung bằng S14 và S16, không thay thế yêu cầu tìm thêm nghiên cứu đánh giá legibility/naturalness.
+- Chưa hoàn tất đọc toàn văn và đánh giá COI cho tất cả 16 nguồn; mọi ô chưa đủ thông tin phải mang nhãn `PENDING`, không được suy đoán.
 
 ## 8. Gate hoàn tất Chương 2
 
@@ -114,6 +146,6 @@ Không dùng tổng số kết quả do công cụ tìm kiếm ước lượng l
 - [ ] TV2 review nguồn motion/path optimization.
 - [ ] TV3 review nguồn physical execution/robotics.
 - [ ] TV1 kiểm tra phạm vi corpus và thuật ngữ dữ liệu.
-- [ ] Thực hiện backward/forward citation chaining.
+- [x] Thực hiện backward/forward citation chaining vòng 1 và ghi nhận phản chứng novelty.
+- [ ] Thực hiện citation chaining vòng 2 sau team review cho các khoảng trống còn lại.
 - [ ] Khóa danh mục tài liệu tham khảo theo định dạng của cuộc thi/trường.
-
