@@ -7,7 +7,7 @@
 ═══════════════════════════════════════════════════════════════════════════════════════════
 • PR3 ACCEPTANCE CONTRACT:     DEFINED
 • PR3 IMPLEMENTATION:         NOT STARTED
-• PR3 ENTRY GATE:             WAITING FOR PR2 (TV2 Baseline Adapters & Interface Agreement)
+• PR3 ENTRY GATE:             WAITING FOR E4 (TV2+TV4 Shared Interface Agreement)
 • FORMAL EXPERIMENT READINESS: NO (Acceptance suite uses DEV only; pending TV1 & TV3 gates)
 ═══════════════════════════════════════════════════════════════════════════════════════════
 ```
@@ -46,7 +46,7 @@ Mọi tiêu chí trong hợp đồng nghiệm thu đều được gán nhãn duy
 
 - [x] **E1 — PR1 Hoàn tất & Đóng gói:** Commit `daca566` đã tích hợp đầy đủ hạ tầng thực nghiệm PR1 (`backend/handwriting/experiment_runner.py`, `backend/logs/csv_logger.py`, schema CSV chuẩn 19 cột, kiểm định tính bất biến fixture 160 ca DEV). Toàn bộ automated tests trong hệ thống đạt PASS (`Full automated suite: 67 passed tại lần verification này`).
 - [x] **E2 — Khóa Snapshot Hình học ASCII:** Đã sinh và khóa toàn bộ 48 ca kiểm thử hình học cho văn bản ASCII không dấu tại `tests/fixtures/pr3_ascii_baseline_fingerprints.json`, được bảo vệ bởi test tự động `tests/test_pr3_acceptance_baseline.py`.
-- [ ] **E3 — PR2 Baseline Adapters B1, B2, B3 (TV2 chủ trì):** TV2 hoàn tất việc đóng gói độc lập 3 adapter thực nghiệm:
+- [x] **E3 — PR2 Baseline Adapters B1, B2, B3 (TV2 chủ trì) — PASS:** Đã đóng gói độc lập 3 adapter trong `backend/handwriting/baselines.py`, tích hợp runner qua `--method` và khóa bằng `tests/test_ca_vhc_baselines.py`:
   - B1: *Static Glyph Renderer* (dựng chữ tĩnh theo anchor rời).
   - B2: *Greedy Contextual Heuristic* (chọn biến thể tham lam cục bộ).
   - B3: *Current Trellis DAG* (bộ giải Viterbi hiện hành chưa xét ràng buộc dấu nâng cao).
@@ -72,7 +72,7 @@ Dưới đây là ma trận tiêu chí chi tiết để nghiệm thu và sáp nh
 | **C3** | C. Xử lý Dấu tiếng Việt | Khoảng cách an toàn ngòi bút đạt ngưỡng kỹ thuật tối thiểu | `minimum_diacritic_clearance_mm` | $d_{\min} \ge 0.20\,\text{mm}$ (với mọi ca có bridge & dấu) | `PR3_REQUIRED` | TV4 |
 | **D1** | D. Tính Tất Định | Tính tất định tuyệt đối theo seed ngẫu nhiên | SHA-256 fingerprint qua 5 lần chạy liên tiếp cùng seed | Khớp 100% fingerprint giữa các lần chạy | `PASS_CURRENT` | TV4 |
 | **D2** | D. Tính Tất Định | Không rò rỉ trạng thái nội bộ giữa batch và isolated run | So sánh SHA-256 fingerprint của `"OmniDraw"` giữa render độc lập và render batch (thứ tự xuôi/đảo) | Khớp chính xác fingerprint trên cả 3 trường hợp (`test_pr3_ascii_batch_order_does_not_change_fingerprint`) | `PASS_CURRENT` | TV4 |
-| **E1** | E. Tối ưu Chuyển động | Giảm quãng đường nhấc bút ($D_{\text{penup}}$) so với baseline B1 và B2 | Tỷ lệ giảm quãng đường nhấc bút trên tập DEV | Đo đạc định lượng rõ ràng qua runner | `PR2_DEPENDENT` | TV2 |
+| **E1** | E. Tối ưu Chuyển động | Giảm quãng đường nhấc bút ($D_{\text{penup}}$) so với baseline B1 và B2 | Tỷ lệ giảm quãng đường nhấc bút trên tập DEV | Đo đạc định lượng rõ ràng qua runner | `PASS_CURRENT` (PR2 adapters available) | TV2 |
 | **E2** | E. Tối ưu Chuyển động | Tích hợp chi phí chuyển tiếp $J_{\text{transition}}$ vào Viterbi DP | Mọi transition cost phải hữu hạn và không âm; trên synthetic trellis nhỏ có nghiệm biết trước, Viterbi phải chọn đường đi có tổng $C_{\text{state}} + J_{\text{transition}}$ nhỏ nhất (PR2 cung cấp interface/components, PR3 tích hợp Trellis) | Viterbi chọn đường đi tối ưu chính xác | `PR3_REQUIRED` | TV2 & TV4 |
 | **E3** | E. Tối ưu Chuyển động | Chạy Trellis DAG hoàn tất và an toàn cho toàn bộ tập mẫu nghiệm thu | PR3 chạy hoàn tất trên toàn bộ DEV acceptance specimens, không crash, không sinh giá trị metric NaN, và số `CompositionState` mỗi layer không vượt giới hạn thiết kế $K_{\text{valid}} \le 9$ | Hoàn tất 10/10 mẫu DEV, 0 crash, không NaN metric, $K_{\text{valid}} \le 9$ | `PR3_REQUIRED` | TV4 & TV2 |
 | **G1** | G. Kỷ luật Ngữ liệu | Độc lập ngữ liệu: chỉ sử dụng DEV corpus cho nghiệm thu | Kiểm thử `test_pr3_acceptance_specimens_are_dev_only` | Toàn bộ 10 mẫu nghiệm thu $\in \text{DEV}$; không lựa chọn/chạy Holdout | `PASS_CURRENT` | TV4 & TV1 |
@@ -176,7 +176,7 @@ $$\mathcal{S}_{\text{PR3}} = \{\text{"tiếng"}, \text{"nước"}, \text{"đư�
 | **D2** | `test_pr3_ascii_batch_order_does_not_change_fingerprint` | `tests/test_pr3_acceptance_baseline.py` | `PASS` |
 | **G1** | `test_pr3_acceptance_specimens_are_dev_only` | `tests/test_pr3_acceptance_baseline.py` | `PASS` |
 | **C2, C3** | `test_metrics_evaluator_calculates_all_required_keys`<br>`test_bridge_diacritic_clearance_computation` | `tests/test_ca_vhc_metrics.py` | `PASS` (Metric engine) |
-| **E1** | `test_runner_builds_reproducible_geometry_row`<br>`test_pr1_dev_geometry_matches_frozen_baseline` | `tests/test_ca_vhc_experiment_runner.py` | `PASS` (Runner infra)<br>`PR2_DEPENDENT` (So sánh B1/B2/B3) |
+| **E1** | `test_runner_builds_reproducible_geometry_row`<br>`test_pr1_dev_geometry_matches_frozen_baseline`<br>`test_runner_executes_and_labels_each_baseline` | `tests/test_ca_vhc_experiment_runner.py`<br>`tests/test_ca_vhc_baselines.py` | `PASS_CURRENT` (Runner + B1/B2/B3 adapters) |
 | **B1, B2, B3** | *(Dự kiến PR3)* `test_composition_state_generation`<br>`test_trellis_dag_candidate_pruning` | `tests/test_ca_vhc_composition_state.py` | `PENDING PR3` |
 | **C1** | *(Dự kiến PR3)* `test_pr3_vietnamese_unicode_nfd_mark_preservation` | `tests/test_pr3_vietnamese_acceptance.py` | `PENDING PR3` |
 | **C2, C3** | *(Dự kiến PR3)* `test_pr3_vietnamese_zero_collision`<br>`test_pr3_vietnamese_clearance_threshold` | `tests/test_pr3_vietnamese_acceptance.py` | `PENDING PR3` |
