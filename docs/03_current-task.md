@@ -8,6 +8,25 @@
 
 ## 1. Trạng thái hiện tại theo 4 đường chạy (Current Sprint Status)
 
+
+| Thành viên                 | Đang làm gì                            | Bị nghẽ ở đâu (nếu có)                  | Dự kiến xong |
+| -------------------------- |----------------------------------------| --------------------------------------- | ----------- |
+| TV1 — AI Core              | Đã chốt và up 15 prompt test lên Drive | *(điền, hoặc để trống nếu không nghẽn)* | Đã xong     |
+| TV2 — AI Ứng dụng/CV       | *(điền)*                               | *(điền)*                                | *(điền)*    |
+| TV3 — Phần cứng            | xong phần code main.py                 | đợi lead xem rồi thêm bớt để nâng cấp                                  | today     |
+| TV4 — Giao diện & Tích hợp | (điền)                                 | *(điền)*                                | *(điền)*    |
+
+
+**Ngày 26/8**
+
+
+|                            |                                |         |           |
+| -------------------------- | ------------------------------ | ------- | --------- |
+| TV4 — Giao diện & Tích hợp | *Dựng khung UI UX( mock data)* | *Không* | *Đã Xong* |
+
+
+---
+
 | Thành viên / Đường chạy | Nhiệm vụ trọng tâm Sprint 1–2 | Điểm nghẽn (Blocker) | Trạng thái |
 | :--- | :--- | :--- | :--- |
 | **TV4 — Project Lead & Handwriting / CA-VHC Composition Lead** | Hoàn tất Strict Validation, BƯỚC A/B, PR1 và Pre-PR3 Acceptance Contract; PR2 baseline adapters của TV2 đã hoàn tất; nhiệm vụ kế tiếp là cùng TV2 ký duyệt shared transition interface E4 để mở PR3, đồng thời tổng hợp Research Questions và Chương 3–4 | PR3 chỉ còn chờ Entry Gate E4. TV1 corpus freeze và TV3 hardware calibration là downstream validation gates. | 🟡 Đang làm |
@@ -91,12 +110,13 @@
 - [ ] *Lưu ý phạm vi:* Đây là công việc chuẩn bị P2; chưa tích hợp Writer Profile vào engine, chưa được xem là Writer Profile MVP hoàn thành; không huấn luyện mô hình học sâu (deep learning) phức tạp trong sprint này; ưu tiên hoàn thiện quy trình rule-based rõ ràng và có thể kiểm chứng (chi tiết xem [`08_handwriting_dataset_spec.md`](08_handwriting_dataset_spec.md)).
 
 ### TV3 — Hardware, Calibration & Physical Validation Lead
-- [ ] Chuẩn hóa và đồng nhất interface phần mềm chung (`HardwareAdapterInterface`) dùng chung cho cả phần cứng AxiDraw thật và bộ giả lập `mock_grbl`.
-- [ ] Chuẩn bị một file SVG fixture chuẩn (chứa đầy đủ nét thẳng, nét cong Bézier, chữ viết tay và nhấc bút) để phục vụ smoke test tự động.
-- [ ] Soạn thảo Checklist hiệu chuẩn phần cứng máy vẽ: căn góc 0 tọa độ giấy, vận tốc vẽ, gia tốc ngòi bút, độ nảy và độ trễ cơ học nâng/hạ bút.
-- [ ] Xác định danh mục các metrics phần cứng bắt buộc cần đo: thời gian vẽ thực tế (`actual_draw_time_sec`), quãng đường di chuyển đầu bút, sai số tọa độ vật lý. Ghi nhận rõ: `actual_draw_time_sec` chỉ áp dụng khi đo đạc trên máy thật vật lý (Mức 2); việc backend hiện tạm thời ghi thời gian mô phỏng vào trường này là implementation/contract debt cần tách biệt.
-- [ ] *Nếu có máy vẽ và cáp kết nối:* Chạy smoke test trên giấy thật và lưu lại log dữ liệu thực nghiệm đầu tiên.
-- [ ] *Nếu chưa có máy:* Ghi nhận rõ blocker phần cứng, tập trung hoàn thiện simulator để TV4 và TV2 có thể gọi giả lập mà không bị lỗi crash.
+- [x] Chuẩn hóa và đồng nhất interface phần mềm chung (`HardwareAdapterInterface`) dùng chung cho cả phần cứng AxiDraw thật và bộ giả lập simulator/fake driver.
+- [x] Chuẩn bị file SVG fixture chuẩn (`tests/fixtures/smoke_test_specimen.svg` và `tests/fixtures/bezier_length_test.svg`) chứa nét thẳng, Bézier, Arc, handwriting và pen-up.
+- [x] Lập và validate Calibration Profile YAML (`config/calibration_profile.yaml`), nạp tự động thông số vận tốc, gia tốc, nâng hạ bút và offset 5mm.
+- [x] Xác định danh mục metrics phần cứng bắt buộc đo: phân biệt rạch ròi simulator/fake driver (`is_simulated=True`, `actual_hardware_measured=False`) và máy vẽ thật (`is_simulated=False`, `actual_hardware_measured=True`).
+- [ ] *Nếu có máy vẽ và cáp kết nối:* Chạy smoke test trên giấy thật và lưu lại log dữ liệu thực nghiệm đầu tiên. *(Blocked by hardware: chờ máy vẽ & cáp vật lý)*.
+- [x] *Nếu chưa có máy:* Ghi nhận rõ blocker phần cứng, cung cấp fake driver có thể kiểm soát pause/cancel động, simulator và CLI `--smoke-test` để TV4 và TV2 tích hợp không bị lỗi crash.
+
 
 ### Quy định phối hợp toàn nhóm trong Sprint
 - **Họp đồng bộ kỹ thuật (Weekly Sync):** Họp ngắn 30 phút mỗi tuần một lần để rà soát blocker giữa các mảng do TV4 chủ trì.
@@ -272,3 +292,4 @@ Một task trong backlog chỉ được tích `[x]` khi:
 |---|---|---|---|
 | TV1 & TV4 | Tích hợp thành công code gọi AI sinh ảnh (TV1) vào API Gateway (TV4), fix lỗi cấu trúc JSON, chuẩn bị chuyển sang dùng Gemini API. | Không | Đã xong |
 | TV2 & TV4 | Đưa code thuật toán tối ưu nét vẽ tranh (TV2) vào Gateway (TV4). Tạo luồng: AI Sinh ảnh -> Chuyển SVG (lưu cache metrics) -> Ghi log CSV. | Không | Đã xong |
+

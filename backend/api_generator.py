@@ -25,7 +25,7 @@ from dataclasses import dataclass, asdict
 import requests
 from docx import Document
 from openai import OpenAI, APITimeoutError
-from logs.csv_logger import log_experiment_csv  # Thay đổi 1: Import hàm ghi CSV
+from csv_logger import log_experiment_csv  # Thay đổi 1: Import hàm ghi CSV
 
 # ============================================================================
 # CONFIG

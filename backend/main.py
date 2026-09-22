@@ -1,3 +1,8 @@
+
+import asyncio
+import csv
+import math
+import os
 import sys
 import os
 
@@ -14,6 +19,7 @@ if not _in_venv and os.path.isfile(_venv_python) and sys.executable != _venv_pyt
 
 import asyncio
 import math
+
 import re
 import time
 from typing import Any, Dict, Optional, Tuple
@@ -53,15 +59,22 @@ def _load_env():
 
 _load_env()
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, HTMLResponse
+
+from pydantic import BaseModel
+
+# ==========================================
+# 1. KHỞI TẠO ỨNG DỤNG & CẤU HÌNH
+# ==========================================
 from contextlib import asynccontextmanager
+
 from pydantic import BaseModel
 
 from database import init_db, save_history_record, get_all_history
 
-from logs.csv_logger import log_experiment_csv
+from csv_logger import log_experiment_csv
 from api_generator import (
     call_openai_image_api,
     APIResponse,
@@ -114,6 +127,7 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -130,6 +144,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+ASSUMED_PEN_SPEED_MM_PER_SEC = 40.0
+SVG_OUTPUT_DIR = os.environ.get("OMNIDRAW_SVG_DIR", "./svg_output")
 
 
 class DoubleSlashMiddleware:
@@ -196,12 +214,15 @@ def _clear_cached_svg_for_request(request_id: str):
         print(f"[warn] Failed to clear SVG for request_id '{request_id}': {e}")
 
 
+
+# ==========================================
+# 2. ĐỊNH NGHĨA DỮ LIỆU (PYDANTIC MODELS)
+# ==========================================
 class SvgMetrics(BaseModel):
     total_path_length_mm: Optional[float] = None
     pen_lift_distance_mm: Optional[float] = None
     pen_lift_count: Optional[int] = None
     optimize_time_ms: Optional[float] = None
-
 
 class LogPayload(BaseModel):
     request_id: str
@@ -216,6 +237,7 @@ class LogPayload(BaseModel):
     actual_draw_time_sec: float = 0.0
     final_status: str
     error_code: Optional[str] = None
+
 
 
 @app.post("/api/log/experiment")
@@ -282,6 +304,7 @@ def log_experiment(payload: LogPayload):
         )
         
     return {"success": True}
+
 
 
 class GenerateRequest(BaseModel):
@@ -953,16 +976,17 @@ async def get_svg_content(request_id: str):
         )
 
 
-ASSUMED_PEN_SPEED_MM_PER_SEC = 40.0
-jobs: dict[str, dict] = {}
-DEVICE_CONNECTED = True
-VALID_HARDWARE_ERRORS = {"HARDWARE_NOT_CONNECTED": "Lỗi kết nối", "HARDWARE_PAPER_JAM": "Kẹt giấy",
-                         "HARDWARE_OUT_OF_INK": "Hết mực"}
+from hardware_adapter import get_hardware_adapter, VALID_HARDWARE_ERRORS
+
+hardware = get_hardware_adapter()
 
 
-class StartRequest(BaseModel):
+class StartPrintRequest(BaseModel):
     request_id: str
     paper_size: str = "a4"
+
+
+StartRequest = StartPrintRequest
 
 
 class PauseCancelRequest(BaseModel):
@@ -1021,89 +1045,73 @@ def svg_estimate_draw_time(request_id: str) -> int:
     return 15 + seed
 
 
-async def _run_job(request_id: str):
-    job = jobs[request_id]
-    job["status"] = "printing"
-    job["started_at"] = time.monotonic()
-    total = job["total_draw_time_sec"]
-
-    while True:
-        await asyncio.sleep(0.5)
-        job_now = jobs.get(request_id)
-        if job_now is None or job_now["status"] in ("paused", "cancelled", "error"): return
-        elapsed = job_now["elapsed_before_pause"] + (time.monotonic() - job_now["started_at"])
-        job_now["progress_percent"] = min(99, int((elapsed / total) * 100))
-        job_now["estimated_time_remaining_sec"] = max(0, int(total - elapsed))
-
-        if elapsed >= total:
-            job_now.update({"status": "done", "progress_percent": 100, "estimated_time_remaining_sec": 0,
-                            "actual_draw_time_sec": int(elapsed)})
-            return
-
-
 @app.post("/api/print/start")
-async def start_print(body: StartRequest):
-    if not DEVICE_CONNECTED:
+async def start_print(body: StartPrintRequest):
+    if not hardware.is_connected:
         return custom_error("HARDWARE_NOT_CONNECTED", "Mất kết nối máy vẽ", 503)
-    if body.request_id in jobs and jobs[body.request_id]["status"] in ("printing", "paused"):
-        return custom_error("JOB_ALREADY_EXISTS", "Bản vẽ này đang chạy", 409)
-
-    total = svg_estimate_draw_time(body.request_id)
-    jobs[body.request_id] = {"status": "queued", "progress_percent": 0, "estimated_time_remaining_sec": total,
-                             "actual_draw_time_sec": None, "error": None, "total_draw_time_sec": total,
-                             "started_at": None, "elapsed_before_pause": 0.0, "task": None}
-    jobs[body.request_id]["task"] = asyncio.create_task(_run_job(body.request_id))
-    return {"request_id": body.request_id, "status": "printing"}
+    svg_path = os.path.join(SVG_OUTPUT_DIR, f"output_{body.request_id}.svg")
+    res = await hardware.start_job(body.request_id, svg_path, body.paper_size)
+    if "error" in res:
+        err = res["error"]
+        return custom_error(err["code"], err["message"], res.get("status_code", 400))
+    return res
 
 
 @app.post("/api/print/pause")
 async def pause_print(body: PauseCancelRequest):
-    job = jobs.get(body.request_id)
-    if not job: return custom_error("JOB_NOT_FOUND", "Không tìm thấy ID", 404)
+    res = await hardware.pause_job(body.request_id)
+    if "error" in res:
+        err = res["error"]
+        return custom_error(err["code"], err["message"], res.get("status_code", 400))
+    return res
 
-    if job["status"] == "printing":
-        job["elapsed_before_pause"] += (time.monotonic() - job["started_at"])
-        job["status"] = "paused"
-        return {"request_id": body.request_id, "status": "paused"}
-    return custom_error("INVALID_STATE", "Chỉ có thể tạm dừng khi đang in", 409)
 
 
 @app.post("/api/print/resume")
 async def resume_print(body: PauseCancelRequest):
-    job = jobs.get(body.request_id)
-    if not job: return custom_error("JOB_NOT_FOUND", "Không tìm thấy ID", 404)
-
-    if job["status"] == "paused":
-        job["started_at"] = time.monotonic()
-        job["status"] = "printing"
-        job["task"] = asyncio.create_task(_run_job(body.request_id))
-        return {"request_id": body.request_id, "status": "printing"}
-    return custom_error("INVALID_STATE", "Chỉ có thể tiếp tục khi đang tạm dừng", 409)
+    res = await hardware.resume_job(body.request_id)
+    if "error" in res:
+        err = res["error"]
+        return custom_error(err["code"], err["message"], res.get("status_code", 400))
+    return res
 
 
 @app.post("/api/print/cancel")
 async def cancel_print(body: PauseCancelRequest):
-    job = jobs.get(body.request_id)
-    if not job: return custom_error("JOB_NOT_FOUND", "Không tìm thấy ID", 404)
-
-    if job.get("task") and not job["task"].done(): job["task"].cancel()
-    job["status"] = "cancelled"
-    return {"request_id": body.request_id, "status": "cancelled"}
+    res = await hardware.cancel_job(body.request_id)
+    if "error" in res:
+        err = res["error"]
+        return custom_error(
+            err["code"],
+            err["message"],
+            res.get("status_code", 400),
+        )
+    return res
 
 
 @app.get("/api/print/status/{request_id}")
 async def get_status(request_id: str, simulate_error: Optional[str] = None):
-    job = jobs.get(request_id)
-    if not job: return custom_error("JOB_NOT_FOUND", "Không tìm thấy ID", 404)
-
-    if simulate_error:
-        job.update({"status": "error", "error": {"code": simulate_error,
-                                                 "message": VALID_HARDWARE_ERRORS.get(simulate_error, "Lỗi giả lập")}})
-
-    res = {"request_id": request_id, "status": job["status"], "progress_percent": job["progress_percent"],
-           "estimated_time_remaining_sec": job["estimated_time_remaining_sec"], "error": job["error"]}
-    if job["status"] == "done": res["actual_draw_time_sec"] = job["actual_draw_time_sec"]
+    res = hardware.get_status(request_id, simulate_error=simulate_error)
+    if "error" in res and res.get("status") != "error":
+        err = res["error"]
+        return custom_error(err["code"], err["message"], res.get("status_code", 404))
     return res
+
+
+# ==========================================
+# 6. GIAO DIỆN TEST HTML
+# ==========================================
+@app.get("/tester", response_class=HTMLResponse)
+async def html_tester():
+    # Trang giao diện HTML tĩnh nằm gọn trong 1 chuỗi để test 
+    return """
+    <!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><title>OmniDraw Mock Printer</title>
+    <style>body{font-family:sans-serif;max-width:600px;margin:40px auto;}</style></head>
+    <body><h2>🖨️ OmniDraw Mock Tester</h2>
+    <p>Truy cập <a href="/docs">/docs</a> để dùng Swagger UI đầy đủ.</p>
+    </body></html>
+    """
+
 
 
 @app.get("/api/camera/inspect-paper")
@@ -1128,3 +1136,4 @@ if __name__ == "__main__":
         print("\n❌ Lỗi: Chưa tìm thấy thư viện uvicorn. Hãy chạy trong môi trường ảo:")
         print(f"   source {os.path.join(_backend_dir, 'venv', 'bin', 'activate')}")
         print("   uvicorn main:app --reload --port 8000")
+
