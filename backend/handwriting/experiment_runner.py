@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Iterable, Sequence
 
 try:
+    from backend.handwriting.baselines import BASELINE_METHOD_TAGS, B3_CURRENT_TRELLIS
     from backend.handwriting.benchmark_fixtures import (
         BENCHMARK_DEV_CORPUS_20,
         BENCHMARK_HOLDOUT_CORPUS_20,
@@ -19,6 +20,7 @@ try:
     )
     from backend.logs.csv_logger import log_experiment_csv
 except ImportError:  # Direct execution from backend/.
+    from handwriting.baselines import BASELINE_METHOD_TAGS, B3_CURRENT_TRELLIS
     from handwriting.benchmark_fixtures import (
         BENCHMARK_DEV_CORPUS_20,
         BENCHMARK_HOLDOUT_CORPUS_20,
@@ -32,7 +34,7 @@ except ImportError:  # Direct execution from backend/.
     from logs.csv_logger import log_experiment_csv
 
 
-METHOD_TAG = "b3_current_trellis"
+METHOD_TAG = B3_CURRENT_TRELLIS
 DEFAULT_FONTS = ("oly", "omni_casual")
 CA_VHC_CSV_COLUMNS = [
     "dataset_item_id",
@@ -63,6 +65,7 @@ def build_benchmark_rows(
     fonts: Sequence[str] = DEFAULT_FONTS,
     seeds: Sequence[int] = STANDARD_SEEDS,
     style: str = "hand_hocsinh",
+    method_tag: str = METHOD_TAG,
 ) -> list[dict]:
     """Render a deterministic matrix and return one flat metrics row per case."""
     rows = []
@@ -74,6 +77,7 @@ def build_benchmark_rows(
                     font=font,
                     style=style,
                     seed=seed,
+                    _algorithm_mode=method_tag,
                 )
                 metrics = evaluate_ca_vhc_metrics(result)
                 counts = metrics["stroke_counts_by_type"]
@@ -81,7 +85,7 @@ def build_benchmark_rows(
                     "dataset_item_id": f"{corpus_split}_{item_index:03d}",
                     "corpus_split": corpus_split,
                     "text": text,
-                    "method_tag": METHOD_TAG,
+                    "method_tag": method_tag,
                     "font": font,
                     "style": style,
                     "seed": seed,
@@ -133,6 +137,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--fonts", nargs="+", default=list(DEFAULT_FONTS))
     parser.add_argument("--seeds", nargs="+", type=int, default=list(STANDARD_SEEDS))
     parser.add_argument("--style", default="hand_hocsinh")
+    parser.add_argument("--method", choices=BASELINE_METHOD_TAGS, default=METHOD_TAG)
     parser.add_argument(
         "--allow-holdout",
         action="store_true",
@@ -150,7 +155,9 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     rows = []
     for split, words in _selected_corpora(args.corpus):
-        rows.extend(build_benchmark_rows(words, split, args.fonts, args.seeds, args.style))
+        rows.extend(build_benchmark_rows(
+            words, split, args.fonts, args.seeds, args.style, args.method
+        ))
     written = write_benchmark_csv(rows, args.output, overwrite=args.overwrite)
     print(f"Wrote {written} rows to {args.output}")
     return 0

@@ -4,7 +4,7 @@
 
 **Ngày đối chiếu code và tài liệu:** 22/09/2026
 
-**Trạng thái:** `DRAFT — PR2/PR3 IMPLEMENTATION AND TEAM REVIEW PENDING`
+**Trạng thái:** `DRAFT — PR2 IMPLEMENTED; PR3 IMPLEMENTATION AND TEAM REVIEW PENDING`
 
 **Phạm vi:** Handwriting Mode / CA-VHC; không trình bày kết quả thực nghiệm
 
@@ -73,7 +73,8 @@ Gateway kiểm tra kiểu đầu vào, style, font, `letter_type`, seed và kh�
 | Structured render trace, metric evaluator, runner và CSV schema | `IMPLEMENTED_AND_TESTED` | PR1, commit `daca566`; các test PR1 hiện hành |
 | Snapshot ASCII 48 cấu hình, seed determinism và DEV-only guard | `IMPLEMENTED_AND_TESTED` | [`09_pr3_acceptance_criteria.md`](09_pr3_acceptance_criteria.md) |
 | `DiacriticCandidate`, `CompositionState` và hàm mục tiêu hai cấp | `DESIGN_LOCKED` | Bước B đã được TV2 cross-review và PASS |
-| Baseline adapters B1/B2/B3 và interface chuyển tiếp dùng chung | `PENDING_PR2` | TV2 chủ trì; là Entry Gate E3–E4 của PR3 |
+| Baseline adapters B1/B2/B3 | `IMPLEMENTED_AND_TESTED` | TV2 hoàn tất Entry Gate E3; adapter và runner method tags có test bảo vệ |
+| Interface chuyển tiếp dùng chung | `PENDING_PR2_E4` | Chờ TV2+TV4 ký duyệt `CompositionState`, `world_bbox`, `DiacriticConfig` |
 | Diacritic-Aware Trellis production | `PENDING_PR3` | Chưa có trong engine hiện hành |
 | Delayed-stroke scheduler | `PENDING_PR4` | Chỉ có thiết kế phân tầng WHERE/WHEN |
 | Formal benchmark và ablation | `PENDING_PR5` | Chờ PR2–PR4 và corpus freeze |
@@ -132,11 +133,11 @@ Ba baseline được định nghĩa trước khi triển khai Proposed nhằm tr
 
 | Phương pháp | Quy tắc | Vai trò | Trạng thái adapter |
 | :--- | :--- | :--- | :--- |
-| B1 — Static Glyph Renderer | Dùng hình học chuẩn, không tối ưu chuỗi biến thể nâng cao | Mốc cơ sở về path và số lần nhấc bút | `PENDING_PR2` |
-| B2 — Greedy Contextual Heuristic | Chọn quyết định tốt nhất tại từng vị trí theo thông tin cục bộ | Đối chứng giữa tham lam và tối ưu chuỗi | `PENDING_PR2` |
-| B3 — Current Trellis DAG | Viterbi trên `GlyphVariant`, dấu được gắn post-DAG | Đối chứng trực tiếp để đo tác động của state nhận thức dấu | Logic hiện hành có sẵn; adapter độc lập `PENDING_PR2` |
+| B1 — Static Glyph Renderer | Dùng canonical glyph và luôn nhấc bút giữa ký tự | Mốc cơ sở về path và số lần nhấc bút | `IMPLEMENTED_AND_TESTED` (`b1_static`) |
+| B2 — Greedy Contextual Heuristic | Chọn quyết định tốt nhất tại từng vị trí theo trạng thái đã chọn trước đó | Đối chứng giữa tham lam và tối ưu chuỗi | `IMPLEMENTED_AND_TESTED` (`b2_greedy`) |
+| B3 — Current Trellis DAG | Viterbi trên `GlyphVariant`, dấu được gắn post-DAG | Đối chứng trực tiếp để đo tác động của state nhận thức dấu | `IMPLEMENTED_AND_TESTED` (`b3_current_trellis`) |
 
-`experiment_runner.py` hiện chỉ gắn nhãn `b3_current_trellis`. Vì vậy, runner PR1 có thể tạo metric kỹ thuật cho engine hiện tại nhưng chưa đủ điều kiện so sánh công bằng bốn phương pháp. Chương 4 chỉ được dùng kết quả đối chứng sau khi TV2 hoàn thành adapter và khóa cùng input/output contract.
+`experiment_runner.py` hiện nhận `--method` để chạy riêng B1, B2 hoặc B3 trên cùng input/output contract. Các adapter phục vụ technical dry-run; Chương 4 chỉ được điền kết quả chính thức sau PR3–PR5 và các validation gate dữ liệu/phần cứng.
 
 ### 3.3.2. Trellis dựa trên `GlyphVariant`
 
@@ -302,7 +303,7 @@ PR1 định nghĩa 20 từ DEV, 20 từ Holdout, hai cấu hình font `oly`/`omn
 
 ### 3.7.4. Cổng nghiệm thu PR3
 
-PR3 chỉ được bắt đầu sau khi Entry Gate E1–E5 hoàn tất. Hiện E1, E2 và E5 đã đạt; E3 về baseline adapters và E4 về interface chuyển tiếp còn chờ PR2. Exit Gate yêu cầu:
+PR3 chỉ được bắt đầu sau khi Entry Gate E1–E5 hoàn tất. Hiện E1, E2, E3 và E5 đã đạt; E4 về shared transition interface còn chờ TV2+TV4 ký duyệt. Exit Gate yêu cầu:
 
 - bảo toàn fingerprint 48/48 cấu hình ASCII;
 - giữ 34/34 strict-validation tests;
@@ -338,7 +339,7 @@ Phương pháp có các giới hạn sau:
 
 Chương này mô tả CA-VHC như một mở rộng có kiểm soát của Trellis hiện hành. Thay đổi trung tâm là chuyển node từ `GlyphVariant` sang `CompositionState`, nhờ đó biến thể thân chữ và cấu hình dấu có thể được đánh giá trong cùng một chuỗi Viterbi. Hàm mục tiêu tách chi phí nội tại khỏi chi phí chuyển tiếp, hard pruning loại state không khả thi và structured trace cung cấp dữ liệu cho metric.
 
-Tại thời điểm lập bản thảo, hạ tầng metric, runner, seed và regression guard đã tồn tại; `CompositionState`, baseline adapters hoàn chỉnh và delayed-stroke scheduler vẫn chưa tồn tại trong production. Chương 4 chỉ được điền kết quả sau khi PR2–PR5 cùng các gate dữ liệu/phần cứng liên quan hoàn tất.
+Tại thời điểm cập nhật, hạ tầng metric, runner, seed, regression guard và baseline adapters B1/B2/B3 đã tồn tại; `CompositionState` và delayed-stroke scheduler vẫn chưa tồn tại trong production. Chương 4 chỉ được điền kết quả sau PR3–PR5 cùng các gate dữ liệu/phần cứng liên quan.
 
 ## Tài liệu tham khảo
 
