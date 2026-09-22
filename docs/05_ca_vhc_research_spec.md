@@ -566,10 +566,11 @@ PR2 Baseline Adapters┘
 - **Phân công:** TV4 chủ trì runner/logging/metric integration; TV1 cung cấp và rà soát corpus/fixtures; TV2 đặc tả motion metrics.
 
 ### PR2: Chuẩn Hóa và Khóa Ba Baseline Đối Chứng B1, B2, B3 (TV2 chủ trì, TV4 phối hợp)
+- **Trạng thái:** `IMPLEMENTED AND TESTED` — Entry Gate E3 hoàn tất; E4 shared interface agreement vẫn chờ TV2+TV4 ký duyệt.
 - **Phạm vi kỹ thuật:**
   - Đóng gói 3 adapter thực nghiệm độc lập: B1 (Static Glyph Renderer), B2 (Greedy Contextual/Connection Heuristic), B3 (Current Trellis DAG without advanced diacritic constraints).
-  - Cho phép runner gọi độc lập từng baseline thông qua cờ nội bộ `_algorithm_mode`.
-  - Có thể tiến hành song song với PR1; hoàn thành interface độc lập trước khi PR3 khởi động.
+  - Adapter nằm tại `backend/handwriting/baselines.py`; runner gọi độc lập qua internal `_algorithm_mode` hoặc CLI `--method` với các tag `b1_static`, `b2_greedy`, `b3_current_trellis`.
+  - B3 mặc định giữ nguyên đường gọi `optimize_word_dag`; public API và snapshot hình học hiện hành không thay đổi.
 - **Phân công:** TV2 chủ trì phần motion adapter; TV4 điều phối tích hợp engine.
 
 ### PR3: CA-VHC Diacritic-Aware Trellis với `CompositionState` (TV4 chủ trì composition, TV2 chủ trì transition cost)
@@ -646,7 +647,7 @@ Bảng đối chiếu kỹ thuật dưới đây xác nhận sự đồng thuậ
 - [x] **PR1 — CA-VHC internal experiment metrics and CSV integration (Commit `daca566`):** Đã hoàn tất tích hợp metrics evaluator, CSV logger schema 19 cột, automated runner và fixture DEV 160 ca.
 - [x] **Pre-PR3 Acceptance Contract defined (Docs 09):** Khóa tiêu chí nghiệm thu trước PR3 ([`09_pr3_acceptance_criteria.md`](09_pr3_acceptance_criteria.md)) và snapshot ma trận ASCII 48 ca ([`pr3_ascii_baseline_fingerprints.json`](../tests/fixtures/pr3_ascii_baseline_fingerprints.json)).
 - [ ] **PR2 baseline adapters:** Hoàn thành 3 adapter B1, B2, B3 độc lập (TV2 chủ trì, đang triển khai).
-- [ ] **PR3 CompositionState production implementation:** Triển khai mã nguồn cấu trúc trạng thái tổ hợp vào engine sau khi đạt Entry Gate (chờ PR2 của TV2).
+- [ ] **PR3 CompositionState production implementation:** Triển khai mã nguồn cấu trúc trạng thái tổ hợp vào engine sau khi đạt Entry Gate; E3/PR2 đã PASS, còn chờ E4 shared interface agreement của TV2+TV4.
 - [ ] **TV1 corpus formal freeze:** TV1 rà soát độ phủ và đóng băng phiên bản benchmark corpus chính thức.
 - [ ] **TV3 physical clearance calibration:** TV3 hiệu chuẩn ngưỡng khoảng cách an toàn $0.20\text{ mm}$ vs $0.50\text{ mm}$ trên máy vẽ thật.
 - [ ] **PR4 delayed-stroke P0:** Triển khai policy gom nét trễ Nearest Neighbor cơ bản.
@@ -694,7 +695,7 @@ Năm quyết định kỹ thuật dưới đây đã được thống nhất gi�
 • TV2 TECHNICAL CROSS-REVIEW:  PASS
 • SOFTWARE STEP C:             AUTHORIZED / IN PROGRESS (PR1 & Pre-PR3 Contract DONE)
 • PR3 ACCEPTANCE CONTRACT:     DEFINED (See docs/09_pr3_acceptance_criteria.md)
-• PR3 ENTRY GATE:             WAITING FOR PR2 (TV2 Baseline Adapters B1/B2/B3)
+• PR3 ENTRY GATE:             WAITING FOR E4 (TV2+TV4 Shared Interface Agreement)
 • READY FOR STEP C:            YES (Software implementation authorized by TV4)
 • FORMAL EXPERIMENT READINESS: NO (Pending TV1 corpus freeze & TV3 hardware calibration)
 • HÀNH ĐỘNG KẾ TIẾP:           TV2 hoàn tất PR2 (Baseline Adapters); TV4 chuẩn bị PR3

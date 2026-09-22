@@ -1198,6 +1198,7 @@ def _text_to_strokes_impl(
     seed=None,
     letter_type="general",
     return_trace=False,
+    algorithm_mode="b3_current_trellis",
 ):
     """
     Hàm thực thi cốt lõi của text_to_strokes và text_to_strokes_structured.
@@ -1348,7 +1349,21 @@ def _text_to_strokes_impl(
             weights = (0.5, 4.0 if enable_lig else 0.0, 2.0, 15.0, 1.0)
 
             t_dag_0 = time.perf_counter()
-            dp_sol = optimize_word_dag(char_info_list, weights=weights, force_lift=(not enable_lig))
+            if algorithm_mode == "b3_current_trellis":
+                dp_sol = optimize_word_dag(
+                    char_info_list, weights=weights, force_lift=(not enable_lig)
+                )
+            else:
+                if __package__:
+                    from .baselines import solve_baseline
+                else:
+                    from handwriting.baselines import solve_baseline
+                dp_sol = solve_baseline(
+                    char_info_list,
+                    algorithm_mode,
+                    weights,
+                    force_lift=(not enable_lig),
+                )
             total_optimize_time_ms += (time.perf_counter() - t_dag_0) * 1000.0
 
             word_base_strokes = []
@@ -1622,7 +1637,8 @@ def text_to_strokes(text, font="oly", style="hand_hocsinh", font_size_mm=7.0, li
 
 
 def text_to_strokes_structured(text, font="oly", style="hand_hocsinh", font_size_mm=7.0, line_spacing_mm=13.0,
-                               paper_size_mm=(210.0, 297.0), margin_mm=20.0, seed=None, letter_type="general"):
+                               paper_size_mm=(210.0, 297.0), margin_mm=20.0, seed=None, letter_type="general",
+                               _algorithm_mode="b3_current_trellis"):
     """
     Hàm nội bộ dành cho nghiên cứu CA-VHC: Trích xuất strokes kèm Structured Render Trace
     (phân loại base_stroke, bridge_stroke, secondary_stroke, diacritic_stroke)
@@ -1632,7 +1648,7 @@ def text_to_strokes_structured(text, font="oly", style="hand_hocsinh", font_size
     return _text_to_strokes_impl(
         text, font=font, style=style, font_size_mm=font_size_mm, line_spacing_mm=line_spacing_mm,
         paper_size_mm=paper_size_mm, margin_mm=margin_mm, seed=seed, letter_type=letter_type,
-        return_trace=True
+        return_trace=True, algorithm_mode=_algorithm_mode
     )
 
 
