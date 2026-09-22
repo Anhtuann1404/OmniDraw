@@ -1,0 +1,73 @@
+# OmniDraw — Calibration Profile (TV3)
+# ======================================
+# Phiên bản: v1.0 (21/09/2026)
+# Người lập: TV3 — Hardware, Calibration & Physical Validation Lead
+#
+# Mục đích:
+#   Lưu trữ toàn bộ thông số hiệu chuẩn vật lý cho máy vẽ AxiDraw,
+#   được nạp vào AxiDrawAdapter và MockSimulatorAdapter trước khi vẽ.
+#
+# Sử dụng:
+#   - AxiDrawAdapter / MockSimulatorAdapter gọi load_calibration_profile() khi khởi tạo.
+#   - Có thể override bằng: adapter.load_profile("path/to/custom_profile.yaml")
+#
+# Đơn vị:
+#   - mm/s   : milimet trên giây (tốc độ di chuyển)
+#   - %      : phần trăm (servo position 0-100, accel 0-100)
+#   - ms     : mili giây (độ trễ servo)
+#   - mm     : milimet (tọa độ và kích thước)
+#
+# PHÂN BIỆT GỐC TỌA ĐỘ VÀ OFFSET AN TOÀN:
+#   - (0, 0) của AxiDraw = góc trên-trái của bàn vẽ cơ học.
+#   - origin.x_mm / origin.y_mm = điểm (0,0) logic của bản vẽ trên giấy.
+#   - Giá trị 5mm là biên an toàn tránh bút vẽ sát mép giấy gây rách.
+#   - SVG viewBox tọa độ (0,0) tương ứng với (origin.x_mm, origin.y_mm) trên mặt bàn vẽ.
+
+version: "1.0"
+
+# ── Thiết bị ──────────────────────────────────────────────────────────────
+device:
+  model: "AxiDraw_V3"            # AxiDraw_V2 | AxiDraw_V3 | AxiDraw_SE_A4
+  # port: null                   # null = auto-detect; ví dụ: "COM3" (Windows) hoặc "/dev/ttyACM0" (Linux)
+  port: null
+
+# ── Khổ giấy và hướng ─────────────────────────────────────────────────────
+paper:
+  size: "a4"                     # a4 | a3 | letter
+  orientation: "landscape"       # landscape (297×210mm) | portrait (210×297mm)
+  width_mm: 297
+  height_mm: 210
+
+# ── Gốc tọa độ và offset ──────────────────────────────────────────────────
+# QUAN TRỌNG: origin là điểm (0,0) logic của SVG trên mặt giấy vật lý.
+# Không phải gốc cơ học của AxiDraw (góc trên-trái bàn vẽ).
+# Biên an toàn 5mm giúp tránh bút vẽ sát mép giấy.
+origin:
+  x_mm: 5.0                     # Offset từ mép trái giấy (biên an toàn)
+  y_mm: 5.0                     # Offset từ mép trên giấy (biên an toàn)
+  note: "Điểm (0,0) SVG tương ứng vị trí (5mm, 5mm) trên giấy vật lý"
+
+# ── Thông số chuyển động ──────────────────────────────────────────────────
+# Đơn vị mm/s và % tương ứng với option của pyaxidraw.AxiDraw.options
+motion:
+  speed_pendown_mm_s: 25        # Tốc độ vẽ nét (pen-down). Handwriting: 25; Art mode: 40
+  speed_penup_mm_s: 75          # Tốc độ nhấc bút di chuyển (rapid travel)
+  accel_pct: 75                 # Gia tốc (%) — giảm nếu thấy rung ở đoạn cua gấp Bézier
+
+# ── Thông số servo bút ────────────────────────────────────────────────────
+# Đơn vị % (0 = thấp nhất, 100 = cao nhất).
+# Điều chỉnh theo loại bút: gel > bi > kim (gel cần pos_down cao hơn).
+pen:
+  pos_up_pct: 60                # Vị trí servo khi bút nhấc lên
+  pos_down_pct: 35              # Vị trí servo khi bút hạ xuống (áp lực lên giấy)
+  delay_down_ms: 120            # Thời gian chờ servo hạ xong trước khi XY di chuyển
+  delay_up_ms: 100              # Thời gian chờ servo nâng xong trước khi XY rapid travel
+
+# ── Ghi chú hiệu chuẩn ──────────────────────────────────────────────────
+calibration_notes:
+  date: "2026-09-21"
+  operator: "TV3"
+  pen_type: "Không xác định — chờ setup phần cứng"
+  paper_type: "Không xác định — chờ setup phần cứng"
+  verified_on_hardware: false   # Đặt true sau khi chạy smoke test thành công trên máy thật
+  hardware_test_log: null       # Điền đường dẫn log khi có: "logs/smoke_test_20260921.csv"

@@ -17,7 +17,6 @@
 
 > *(Chi tiết quy chuẩn phân tách giữa CA-VHC Structural Dataset và Writer Profile Dataset, quy trình thu thập, schema và ranh giới ownership: xem [`08_handwriting_dataset_spec.md`](08_handwriting_dataset_spec.md)).*
 
-
 ---
 
 ## 2. Tối ưu đường vẽ & Quy hoạch quỹ đạo (TV2 — Stroke Optimization & Path Planning Lead)
@@ -34,12 +33,13 @@
 
 ## 3. Phần cứng, Hiệu chuẩn & Thực nghiệm Vật lý (TV3 — Hardware, Calibration & Physical Validation Lead)
 
-| Hạng mục                    | Lựa chọn                 | Lý do    |
-| --------------------------- | ------------------------ | -------- |
-| Vi điều khiển               | *(vd: Arduino/ESP32...)* | *(điền)* |
-| Ngôn ngữ firmware           | Python (qua pyaxidraw)   | Đồng bộ ngôn ngữ với backend Python và tương thích trực tiếp với tập lệnh máy vẽ |
-| Camera/cảm biến sử dụng     | *(điền)*                 | *(điền)* |
-| Thư viện điều khiển AxiDraw | pyaxidraw                | Thư viện Python chính thức để đọc file SVG và gửi lệnh trực tiếp xuống phần cứng (hiện backend đang chạy mô phỏng phần mềm) |
+| Hạng mục                    | Lựa chọn                                                | Lý do                                                                                   |
+| --------------------------- | ------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Thiết bị máy vẽ             | AxiDraw V3 / SE (Khổ vẽ tiêu chuẩn A4/A3)              | Máy vẽ ngòi bút chính xác cao, chuyển động Cartesian XY đai curoa êm ái                  |
+| Vi điều khiển               | EiBotBoard (EBB) v2.8 (Microchip PIC18F46J50)           | Board điều khiển chuyên dụng cho AxiDraw, giao tiếp USB CDC Virtual COM                 |
+| Ngôn ngữ firmware           | EBB Firmware Command Protocol / Python (qua pyaxidraw)  | Đồng bộ ngôn ngữ với backend Python và tương thích trực tiếp với tập lệnh máy vẽ        |
+| Camera / Cảm biến sử dụng   | USB Webcam (UVC standard, cảm biến OV5640 hoặc tương đương) | Giám sát giấy, phát hiện góc nghiêng và độ sạch (Closed-Loop Vision) qua OpenCV        |
+| Thư viện điều khiển AxiDraw | `pyaxidraw` + `backend/hardware_adapter.py`             | Thư viện Python chính thức đọc file SVG và gửi lệnh, có lớp trừu tượng HAL an toàn      |
 
 ### Phân định 3 mức điều khiển phần cứng, thời gian & telemetry
 1. **Mức 1 — Hiện tại (Mô phỏng phần mềm):** Preview/animation trên giao diện và tính toán thời gian vẽ mô phỏng/ước tính (`estimated_draw_time_sec` theo công thức xấp xỉ `total_path_length_mm / 40.0`). Giao tiếp REST polling hiện tại chỉ là truy vấn tiến trình mô phỏng từ backend, chưa phải điều khiển phản hồi từng nét từ máy vẽ thật. *(Lưu ý về implementation/contract debt: Backend hiện vẫn tạm thời lưu giá trị mô phỏng này vào trường `actual_draw_time_sec` khi `status="done"` theo contract API v1.4; đây là khoản nợ kỹ thuật và trường này chỉ được xem là số đo thực tế khi kết nối phần cứng vật lý ở Mức 2).*
