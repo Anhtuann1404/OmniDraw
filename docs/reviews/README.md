@@ -5,14 +5,14 @@
 Mọi thành viên và mọi AI hỗ trợ review phải bắt đầu từ file này. Không dùng tin nhắn rời làm nguồn phân công.
 
 ```text
-REVIEW_PACKAGE_VERSION: v0.1
-REVIEW_TARGET_COMMIT: 5e9c857e42021f8a48d45b1fdaefcfdb87e82ff3
+REVIEW_PACKAGE_VERSION: v0.2
+REVIEW_TARGET_COMMIT: 7ae43e6994506928cb6be8bd61e936b4f5e3857e
 PACKAGE_STATUS: READY_FOR_FORMAL_REVIEW
 INTEGRATION_OWNER: TV4
 ```
 
 > [!IMPORTANT]
-> Mọi verdict trong vòng review này phải đối chiếu commit `5e9c857e42021f8a48d45b1fdaefcfdb87e82ff3`. Nếu nội dung khoa học thay đổi sau commit này, TV4 phải mở vòng review mới hoặc yêu cầu reviewer recheck phần bị ảnh hưởng.
+> Mọi verdict trong vòng review này phải đối chiếu commit `7ae43e6994506928cb6be8bd61e936b4f5e3857e`. Vòng v0.2 đã bao gồm citation chaining round 1, evidence matrix 16 nguồn và Chương 2 v0.2. Nếu nội dung khoa học thay đổi sau commit này, TV4 phải mở vòng review mới hoặc yêu cầu reviewer recheck phần bị ảnh hưởng.
 
 ## 2. Chọn đúng phiếu theo vai trò
 

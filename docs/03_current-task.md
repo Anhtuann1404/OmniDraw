@@ -40,7 +40,7 @@
 
 ### TV4 — Project Lead & Handwriting / CA-VHC Composition Lead
 - [ ] **Điều phối kỹ thuật & Khóa Research Questions (Project Lead):** TV4 đã hoàn tất bản hợp nhất RQ1–RQ3, giả thuyết, methodology blueprint và cross-review gate tại [`10_nckh_research_plan.md`](10_nckh_research_plan.md) (`READY FOR CROSS-REVIEW`). Chưa đánh dấu khóa hoàn toàn trước khi TV1/TV2/TV3 duyệt đúng phạm vi sở hữu.
-- [x] **✅ Khởi tạo Chương 2 theo quy trình nghiên cứu có kiểm soát:** Đã tạo protocol tổng quan có cấu trúc, evidence matrix 11 nguồn hạt giống đã kiểm chứng và bản thảo Chương 2 tại [`11_literature_review_protocol.md`](11_literature_review_protocol.md), [`12_literature_evidence_matrix.md`](12_literature_evidence_matrix.md), [`13_chapter_2_literature_review.md`](13_chapter_2_literature_review.md). Trạng thái vẫn là `TEAM REVIEW PENDING`; chưa tuyên bố systematic review hoặc novelty cuối cùng trước citation chaining và cross-review.
+- [x] **✅ Tổng hợp Chương 2 theo quy trình nghiên cứu có kiểm soát:** Đã hoàn tất seed search và citation chaining vòng 1, mở rộng evidence matrix từ 11 lên 16 nguồn đã xác minh metadata, bổ sung delayed-stroke handling, kinematic synthesis, robotic sequential writing, trajectory optimization và phản chứng CASHG đối với novelty rộng. Chương 2 v0.2 đã thu hẹp khoảng trống về tổ hợp ràng buộc dấu tiếng Việt + collision/clearance + finite-state composition + chi phí single-stroke plotter. Trạng thái vẫn là `TEAM REVIEW PENDING`; chưa tuyên bố systematic review hoặc novelty cuối cùng trước team screening và citation chaining vòng 2.
 - [x] **✅ Khởi tạo Chương 1 — Mở đầu:** Đã lập bản thảo tại [`14_chapter_1_introduction.md`](14_chapter_1_introduction.md) theo cấu trúc bối cảnh → khoảng trống provisional → vấn đề → mục tiêu → RQ1–RQ3 → phạm vi → phương pháp → đóng góp dự kiến. Bản thảo giữ trạng thái `TEAM REVIEW PENDING`, đồng bộ với Research Freeze Pack và không trình bày giả thuyết hoặc tiêu chí nghiệm thu như kết quả.
 - [x] **✅ Khởi tạo Chương 3 — Phương pháp nghiên cứu và thiết kế thuật toán:** Đã lập và cập nhật bản thảo tại [`15_chapter_3_methodology.md`](15_chapter_3_methodology.md); baseline adapters PR2 hiện là `IMPLEMENTED_AND_TESTED`, còn shared interface E4, PR3–PR5 và TV3 calibration vẫn pending. Bản thảo chưa trình bày kết quả thực nghiệm.
 - [x] **✅ Strict Validation completed (34/34 automated tests PASS):** Đã loại bỏ triệt để silent fallback, khóa chặt chẽ mode-aware validation theo từng `input_type`, bảo đảm validation diễn ra trước mọi side effect, và bảo đảm an toàn toàn diện cho pipeline backend; toàn bộ 34 automated tests trong `backend/test_handwriting_validation.py` đạt 34/34 passed:
@@ -71,7 +71,8 @@
 - [ ] **Automated Experiment Matrix Execution:** Chạy tự động ma trận thực nghiệm sau khi PR2 và PR3 hoàn thành (không chạy holdout trước khi TV1 freeze corpus).
 - [ ] **Public Metric Schema:** Định nghĩa public metric schema chỉ cho các trường backend thực sự xuất ổn định; giữ API Spec cập nhật qua PR riêng.
 - [ ] **Backward Compatibility:** Bảo toàn tuyệt đối public API hiện tại (`generate_handwriting_svg`, `text_to_strokes`) và deterministic behavior.
-- [ ] **Tiêu chuẩn kiểm thử dấu:** Xây dựng tiêu chuẩn định lượng pass/fail cho kiểm tra va chạm dấu tiếng Việt (`diacritic collision clearance threshold`) và mở rộng kịch bản kiểm thử trong `backend/handwriting/qa_specimens.py`.
+- [x] **✅ Tiêu chuẩn định lượng kiểm thử dấu:** Đã khóa quy tắc phán quyết thực thi cho va chạm bridge–diacritic trong `classify_diacritic_clearance_acceptance`: `FAIL` khi có va chạm hoặc $d_{min}<0.20\,mm$; `INCONCLUSIVE` trong $[0.20,0.50)\,mm$; `PASS_PROVISIONAL_TARGET` khi $d_{min}\ge0.50\,mm$; `NOT_APPLICABLE` khi không có cặp bridge–diacritic hợp lệ. Đã khóa unit test tại đúng các điểm biên và fail closed với metric không hợp lệ. Ngưỡng $0.50\,mm$ vẫn chờ TV3 hiệu chuẩn, không phải tuyên bố an toàn vật lý.
+- [ ] **Visual QA cho PR3:** Sau khi có mã nguồn PR3, mở rộng `backend/handwriting/qa_specimens.py` bằng tập DEV acceptance và nhóm chẩn đoán `lụy/thụy/quỹ/nguyễn/nghiễm`; nhóm chẩn đoán không được trộn vào corpus nghiệm thu hoặc dùng để tuyên bố kết quả chính thức.
 - [x] **✅ Khung Báo cáo NCKH Chương 3–4:** Đã dựng outline chi tiết, bảng kết quả rỗng, threats to validity và quy tắc không công bố kết quả chưa đo tại [`10_nckh_research_plan.md`](10_nckh_research_plan.md). Trạng thái viết nội dung hoàn chỉnh và kết quả thực nghiệm vẫn `PENDING`.
 - [ ] *Lưu ý phạm vi:* Chưa cần thiết kế thêm Font Pack mới trong sprint này; tập trung tối ưu trên 2 pack hiện có (`omnidraw_legacy` và `omni_casual`).
 
@@ -193,7 +194,7 @@
 - [x] Automated experiment runner
 - [x] Pre-PR3 acceptance contract & ASCII baseline lock
 - [x] Tạo gói phiếu cross-review có contract ngữ cảnh AI tại [`reviews/README.md`](reviews/README.md)
-- [x] TV4 đã tạo checkpoint commit `5e9c857e42021f8a48d45b1fdaefcfdb87e82ff3` và gắn cùng hash vào toàn bộ gói review
+- [x] TV4 quản lý checkpoint và version binding tập trung tại [`reviews/README.md`](reviews/README.md); mọi reviewer phải dùng đúng `REVIEW_TARGET_COMMIT` hiện hành trong gói thay vì hash chép lại ở backlog này
 - [ ] TV1 hoàn tất phiếu [`reviews/tv1_chapter_1_3_review.md`](reviews/tv1_chapter_1_3_review.md), có human verdict và sign-off
 - [ ] TV2 hoàn tất phiếu [`reviews/tv2_chapter_1_3_review.md`](reviews/tv2_chapter_1_3_review.md), có human verdict và sign-off
 - [ ] TV3 hoàn tất phiếu [`reviews/tv3_chapter_1_3_review.md`](reviews/tv3_chapter_1_3_review.md), có human verdict và sign-off

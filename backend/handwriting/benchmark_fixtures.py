@@ -4,6 +4,7 @@ OmniDraw CA-VHC Benchmark Fixtures & Corpus Definitions.
 Defined per docs/05_ca_vhc_research_spec.md:
 - BENCHMARK_DEV_CORPUS_20: 20 development words
 - BENCHMARK_HOLDOUT_CORPUS_20: 20 holdout words (strictly disjoint from dev)
+- PR3_VIETNAMESE_ACCEPTANCE_SPECIMENS: 10 DEV-only software acceptance words
 - STANDARD_SEEDS: [42, 100, 2026, 999999]
 - load_benchmark_fonts(): loads 'oly' (omnidraw_legacy) and 'omni_casual' font packs
 """
@@ -22,6 +23,21 @@ BENCHMARK_HOLDOUT_CORPUS_20: List[str] = [
     "thoáng", "quỳnh", "nhuộm", "duyệt", "khoảnh",
     "giường", "chuyện", "xoay", "bỗng", "quét",
     "khẽ", "nhặt", "nguồn", "sưởi", "vẹn",
+]
+
+# Deliberately selected from DEV only. Do not add holdout words here and do not
+# freeze geometry fingerprints: PR3 is expected to change diacritic placement.
+PR3_VIETNAMESE_ACCEPTANCE_SPECIMENS: List[str] = [
+    "tiếng",
+    "nước",
+    "đường",
+    "khuấy",
+    "thuở",
+    "nghỉ",
+    "trường",
+    "phượng",
+    "mượt",
+    "vẫy",
 ]
 
 STANDARD_SEEDS: List[int] = [42, 100, 2026, 999999]

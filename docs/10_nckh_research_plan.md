@@ -289,7 +289,7 @@ Verdict hợp lệ gồm `PENDING`, `PASS`, `PASS_WITH_CHANGES` và `BLOCKED`. M
 - [ ] TV2 xác nhận baseline và các giả thuyết chuyển động.
 - [ ] TV1 xác nhận phạm vi corpus và quy tắc leakage.
 - [ ] TV3 xác nhận wording cho các tuyên bố vật lý.
-- [x] `REVIEW_TARGET_COMMIT` đã được khóa tại `5e9c857e42021f8a48d45b1fdaefcfdb87e82ff3` và đồng nhất trong toàn bộ gói review.
+- [x] `REVIEW_TARGET_COMMIT` được khóa và version-bind tập trung trong [`reviews/README.md`](reviews/README.md), ba phiếu reviewer và master disposition; tài liệu lõi không tự nhúng hash checkpoint để tránh self-reference.
 - [ ] TV1, TV2 và TV3 nộp verdict có version binding cho đúng phạm vi Chương 1–3.
 - [ ] TV4 xử lý toàn bộ finding tại [`reviews/review_disposition.md`](reviews/review_disposition.md) và kiểm tra chéo Docs 02/03/05/07/08/09/10–15.
 - [ ] Không có metric chưa triển khai nào bị mô tả là measured result.
@@ -302,7 +302,7 @@ RESEARCH FREEZE PACK:          READY FOR CROSS-REVIEW
 RQ1–RQ3 STRUCTURE:             CONSOLIDATED
 RQ FREEZE:                     PENDING TEAM APPROVAL
 CHAPTER 1 DRAFT:               READY FOR TEAM CROSS-REVIEW
-CHAPTER 2 DRAFT:               CITATION CHAINING + TEAM REVIEW PENDING
+CHAPTER 2 DRAFT:               CITATION CHAINING ROUND 1 COMPLETE; TEAM REVIEW PENDING
 CHAPTER 3 DRAFT:               READY FOR TEAM CROSS-REVIEW; PR2/PR3 UPDATE PENDING
 CHAPTER 4 OUTLINE:             READY, RESULTS EMPTY
 FORMAL EXPERIMENT READINESS:   NO

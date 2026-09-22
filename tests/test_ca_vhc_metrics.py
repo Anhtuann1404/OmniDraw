@@ -35,6 +35,8 @@ from handwriting.benchmark_fixtures import (
     load_benchmark_fonts,
 )
 from handwriting.metrics_evaluator import (
+    DIACRITIC_CLEARANCE_PROVISIONAL_TARGET_MM,
+    DIACRITIC_CLEARANCE_TECHNICAL_MIN_MM,
     TraceStroke,
     VALID_STROKE_TYPES,
     segments_intersect,
@@ -42,6 +44,7 @@ from handwriting.metrics_evaluator import (
     segment_to_segment_distance,
     count_bridge_diacritic_collisions,
     compute_diacritic_clearance,
+    classify_diacritic_clearance_acceptance,
     compute_turning_cost,
     compute_curvature_cost_from_vectors,
     compute_curvature_cost_from_stroke,
@@ -55,6 +58,95 @@ from handwriting.engine import (
     generate_handwriting_svg,
     StructuredRenderResult,
 )
+
+
+@pytest.mark.parametrize(
+    ("collision_count", "clearance_mm", "expected"),
+    [
+        (1, 1.00, "FAIL"),
+        (0, 0.199, "FAIL"),
+        (0, 0.20, "INCONCLUSIVE"),
+        (0, 0.499, "INCONCLUSIVE"),
+        (0, 0.50, "PASS_PROVISIONAL_TARGET"),
+        (0, float("inf"), "NOT_APPLICABLE"),
+    ],
+)
+def test_diacritic_clearance_acceptance_boundaries(
+    collision_count, clearance_mm, expected
+):
+    """Lock the exact C2/C3 boundary semantics before PR3 implementation."""
+    assert DIACRITIC_CLEARANCE_TECHNICAL_MIN_MM == 0.20
+    assert DIACRITIC_CLEARANCE_PROVISIONAL_TARGET_MM == 0.50
+    assert (
+        classify_diacritic_clearance_acceptance(collision_count, clearance_mm)
+        == expected
+    )
+
+
+@pytest.mark.parametrize(
+    ("collision_count", "clearance_mm"),
+    [
+        (-1, 0.50),
+        (True, 0.50),
+        (0, -0.01),
+        (0, float("nan")),
+        (0, True),
+        (0, "0.5"),
+        (0, "not-a-number"),
+    ],
+)
+def test_diacritic_clearance_acceptance_rejects_invalid_metrics(
+    collision_count, clearance_mm
+):
+    """Invalid measurements must fail closed instead of receiving a pass verdict."""
+    with pytest.raises(ValueError):
+        classify_diacritic_clearance_acceptance(collision_count, clearance_mm)
+
+
+@pytest.mark.parametrize(
+    "threshold_kwargs",
+    [
+        {"technical_min_mm": True},
+        {"technical_min_mm": "0.20"},
+        {"provisional_target_mm": False},
+        {"provisional_target_mm": "0.50"},
+    ],
+)
+def test_diacritic_clearance_acceptance_rejects_non_numeric_threshold_types(
+    threshold_kwargs,
+):
+    with pytest.raises(ValueError):
+        classify_diacritic_clearance_acceptance(0, 0.50, **threshold_kwargs)
+
+
+@pytest.mark.parametrize(
+    ("raw_clearance_mm", "expected"),
+    [
+        (0.1996, "FAIL"),
+        (0.4996, "INCONCLUSIVE"),
+    ],
+)
+def test_evaluator_preserves_clearance_precision_before_classification(
+    raw_clearance_mm, expected
+):
+    bridge = TraceStroke(
+        points=np.array([[0.0, 0.0], [1.0, 0.0]]),
+        stroke_type="bridge_stroke",
+        char="a->b",
+        word_idx=0,
+    )
+    diacritic = TraceStroke(
+        points=np.array([[0.0, raw_clearance_mm], [1.0, raw_clearance_mm]]),
+        stroke_type="diacritic_stroke",
+        char="b",
+        word_idx=0,
+    )
+
+    metrics = evaluate_ca_vhc_metrics([bridge, diacritic])
+    measured = metrics["minimum_diacritic_clearance_mm"]
+
+    assert measured == pytest.approx(raw_clearance_mm)
+    assert classify_diacritic_clearance_acceptance(0, measured) == expected
 
 
 # ==============================================================================

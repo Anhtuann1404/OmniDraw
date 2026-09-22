@@ -15,6 +15,7 @@ Provides:
 from dataclasses import dataclass, field
 import hashlib
 import math
+import numbers
 from typing import Any, Dict, List, Optional, Sequence
 import numpy as np
 
@@ -25,6 +26,12 @@ VALID_STROKE_TYPES = {
     "secondary_stroke",
     "diacritic_stroke",
 }
+
+# Software acceptance thresholds for bridge--diacritic clearance. These are
+# measurement verdict boundaries, not render parameters. PR3's future
+# DiacriticConfig remains the owner of the geometry-generation threshold.
+DIACRITIC_CLEARANCE_TECHNICAL_MIN_MM = 0.20
+DIACRITIC_CLEARANCE_PROVISIONAL_TARGET_MM = 0.50
 
 
 @dataclass
@@ -300,6 +307,67 @@ def compute_diacritic_clearance(
     return float(min_dist)
 
 
+def classify_diacritic_clearance_acceptance(
+    collision_count: int,
+    minimum_clearance_mm: float,
+    technical_min_mm: float = DIACRITIC_CLEARANCE_TECHNICAL_MIN_MM,
+    provisional_target_mm: float = DIACRITIC_CLEARANCE_PROVISIONAL_TARGET_MM,
+) -> str:
+    """Classify the software-level bridge--diacritic acceptance result.
+
+    Returns one of four machine-readable verdicts defined by the pre-PR3
+    acceptance contract:
+
+    - ``FAIL``: at least one collision, or clearance below the technical floor.
+    - ``INCONCLUSIVE``: clears the technical floor but not the provisional target.
+    - ``PASS_PROVISIONAL_TARGET``: reaches the uncalibrated 0.50 mm target.
+    - ``NOT_APPLICABLE``: no valid bridge--diacritic pair was measurable.
+
+    ``PASS_PROVISIONAL_TARGET`` is a software geometry verdict only. It must not
+    be presented as physical safety until TV3 completes hardware calibration.
+    Invalid or contradictory metric inputs raise ``ValueError`` instead of
+    being silently promoted to a verdict.
+    """
+    if isinstance(collision_count, bool) or not isinstance(
+        collision_count, (int, np.integer)
+    ):
+        raise ValueError("collision_count must be a non-negative integer")
+    if collision_count < 0:
+        raise ValueError("collision_count must be a non-negative integer")
+
+    numeric_inputs = {
+        "minimum_clearance_mm": minimum_clearance_mm,
+        "technical_min_mm": technical_min_mm,
+        "provisional_target_mm": provisional_target_mm,
+    }
+    for name, value in numeric_inputs.items():
+        if isinstance(value, (bool, np.bool_)) or not isinstance(value, numbers.Real):
+            raise ValueError(f"{name} must be a real number")
+
+    clearance = float(minimum_clearance_mm)
+    technical_min = float(technical_min_mm)
+    provisional_target = float(provisional_target_mm)
+
+    if math.isnan(clearance) or clearance < 0.0:
+        raise ValueError("minimum_clearance_mm must be non-negative or +inf")
+    if not math.isfinite(technical_min) or technical_min <= 0.0:
+        raise ValueError("technical_min_mm must be finite and positive")
+    if not math.isfinite(provisional_target) or provisional_target < technical_min:
+        raise ValueError(
+            "provisional_target_mm must be finite and >= technical_min_mm"
+        )
+
+    if collision_count > 0:
+        return "FAIL"
+    if math.isinf(clearance):
+        return "NOT_APPLICABLE"
+    if clearance < technical_min:
+        return "FAIL"
+    if clearance < provisional_target:
+        return "INCONCLUSIVE"
+    return "PASS_PROVISIONAL_TARGET"
+
+
 # ----------------------------- Chi phí độ cong tiếp tuyến (Curvature Cost) -----------------------------
 
 def compute_turning_cost(theta_rad: float) -> float:
@@ -538,7 +606,10 @@ def evaluate_ca_vhc_metrics(
         "pen_lift_distance_mm": round(float(pen_lift_dist), 3),
         "pen_lift_count": int(pen_lift_cnt),
         "collision_count": int(collision_cnt),
-        "minimum_diacritic_clearance_mm": round(float(clearance_mm), 3) if clearance_mm != float('inf') else float('inf'),
+        # Keep full precision internally so acceptance classification cannot cross
+        # the 0.20/0.50 mm boundaries because of presentation rounding. Export
+        # layers such as experiment_runner may round their serialized value.
+        "minimum_diacritic_clearance_mm": float(clearance_mm),
         "curvature_cost": round(float(curv_cost), 4),
         "optimize_time_ms": round(float(optimize_time_ms), 3),
         "stroke_counts_by_type": counts_by_type,
