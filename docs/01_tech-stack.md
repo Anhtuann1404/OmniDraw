@@ -32,13 +32,14 @@
 
 ## 3. Phần cứng, Cơ khí & Cảm biến (Thành viên 3)
 
+| Hạng mục                    | Lựa chọn                                                | Lý do                                                                                   |
+| --------------------------- | ------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Thiết bị máy vẽ             | AxiDraw V3 / SE (Khổ vẽ tiêu chuẩn A4/A3)              | Máy vẽ ngòi bút chính xác cao, chuyển động Cartesian XY đai curoa êm ái                  |
+| Vi điều khiển               | EiBotBoard (EBB) v2.8 (Microchip PIC18F46J50)           | Board điều khiển chuyên dụng cho AxiDraw, giao tiếp USB CDC Virtual COM                 |
+| Ngôn ngữ firmware           | EBB Firmware Command Protocol / Python (qua pyaxidraw)  | Đồng bộ ngôn ngữ với backend Python và tương thích trực tiếp với tập lệnh máy vẽ        |
+| Camera / Cảm biến sử dụng   | USB Webcam (UVC standard, cảm biến OV5640 hoặc tương đương) | Giám sát giấy, phát hiện góc nghiêng và độ sạch (Closed-Loop Vision) qua OpenCV        |
+| Thư viện điều khiển AxiDraw | `pyaxidraw` + `backend/hardware_adapter.py`             | Thư viện Python chính thức đọc file SVG và gửi lệnh, có lớp trừu tượng HAL an toàn      |
 
-| Hạng mục                    | Lựa chọn                 | Lý do    |
-| --------------------------- | ------------------------ | -------- |
-| Vi điều khiển               | *(vd: Arduino/ESP32...)* | *(điền)* |
-| Ngôn ngữ firmware           | Python (qua pyaxidraw) / C++ (EBB Firmware)                 | Đồng bộ ngôn ngữ với backend Python và tương thích trực tiếp với tập lệnh máy vẽ |
-| Camera/cảm biến sử dụng     | *(điền)*                 | *(điền)* |
-| Thư viện điều khiển AxiDraw | pyaxidraw                | Thư viện Python chính thức để đọc file SVG và gửi lệnh trực tiếp xuống phần cứng |
 
 
 
@@ -52,7 +53,6 @@
 | Backend framework  | *python(FastApi)* | *Tốc độ cao, đồng bộ ngôn ngữ vói team AI*           |
 | Giao tiếp realtime | REST polling      | Theo quyết định đã chốt trong `OmniDraw_API_Spec.md` |
 | Database (nếu cần) | *sqlite*          | *gọn nhẹ lưu file cục bộ khời tạo nhanh chóng*       |
-=======
 > *(Chi tiết quy chuẩn phân tách giữa CA-VHC Structural Dataset và Writer Profile Dataset, quy trình thu thập, schema và ranh giới ownership: xem [`08_handwriting_dataset_spec.md`](file:///Users/yingjunn_/Study_/Nckh_2026-2027/OmniDraw/docs/08_handwriting_dataset_spec.md)).*
 
 

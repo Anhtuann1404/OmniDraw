@@ -3,7 +3,6 @@ import asyncio
 import csv
 import math
 import os
-=======
 import sys
 import os
 
@@ -69,9 +68,8 @@ from pydantic import BaseModel
 # ==========================================
 # 1. KHỞI TẠO ỨNG DỤNG & CẤU HÌNH
 # ==========================================
-app = FastAPI(title="OmniDraw API Gateway (Integrated)")
-=======
 from contextlib import asynccontextmanager
+
 from pydantic import BaseModel
 
 from database import init_db, save_history_record, get_all_history
@@ -1241,24 +1239,6 @@ async def pause_print(body: PauseCancelRequest):
 
 @app.post("/api/print/resume")
 async def resume_print(body: PauseCancelRequest):
-
-    job = jobs.get(body.request_id)
-
-    if not job or job["status"] != "paused":
-        raise HTTPException(status_code=409, detail="Chưa pause nên không thể resume")
-    
-    job.update({"started_at": time.monotonic(), "status": "printing", "task": asyncio.create_task(_run_job(body.request_id))})
-    return {"request_id": body.request_id, "status": "printing"}
-
-    if not job: return custom_error("JOB_NOT_FOUND", "Không tìm thấy ID", 404)
-
-    if job["status"] == "paused":
-        job["started_at"] = time.monotonic()
-        job["status"] = "printing"
-        job["task"] = asyncio.create_task(_run_job(body.request_id))
-        return {"request_id": body.request_id, "status": "printing"}
-    return custom_error("INVALID_STATE", "Chỉ có thể tiếp tục khi đang tạm dừng", 409)
-
     res = await hardware.resume_job(body.request_id)
     if "error" in res:
         err = res["error"]
@@ -1266,42 +1246,27 @@ async def resume_print(body: PauseCancelRequest):
     return res
 
 
-
-
 @app.post("/api/print/cancel")
 async def cancel_print(body: PauseCancelRequest):
-
-    job = jobs.get(body.request_id)
-
-    if not job: raise HTTPException(status_code=404, detail="ID không tồn tại")
-    
-
-    if not job: return custom_error("JOB_NOT_FOUND", "Không tìm thấy ID", 404)
-
-
-    if job.get("task") and not job["task"].done(): job["task"].cancel()
-    job["status"] = "cancelled"
-    return {"request_id": body.request_id, "status": "cancelled"}
-
     res = await hardware.cancel_job(body.request_id)
     if "error" in res:
         err = res["error"]
-        return custom_error(err["code"], err["message"], res.get("status_code", 400))
+        return custom_error(
+            err["code"],
+            err["message"],
+            res.get("status_code", 400),
+        )
     return res
+
 
 @app.get("/api/print/status/{request_id}")
 async def get_status(request_id: str, simulate_error: Optional[str] = None):
- Updated upstream
-    job = jobs.get(request_id)
-    if not job: raise HTTPException(status_code=404, detail="ID không tồn tại")
+    res = hardware.get_status(request_id, simulate_error=simulate_error)
+    if "error" in res and res.get("status") != "error":
+        err = res["error"]
+        return custom_error(err["code"], err["message"], res.get("status_code", 404))
+    return res
 
-    if simulate_error in VALID_HARDWARE_ERRORS:
-        job.update({"status": "error", "error": {"code": simulate_error, "message": VALID_HARDWARE_ERRORS[simulate_error]}})
-
-    response = {k: v for k, v in job.items() if k in ["status", "progress_percent", "estimated_time_remaining_sec", "error"]}
-    response["request_id"] = request_id
-    if job["status"] == "done": response["actual_draw_time_sec"] = job["actual_draw_time_sec"]
-    return response
 
 # ==========================================
 # 6. GIAO DIỆN TEST HTML
@@ -1317,26 +1282,6 @@ async def html_tester():
     </body></html>
     """
 
-
-@app.get("/api/print/status/{request_id}")
-async def get_status(request_id: str, simulate_error: Optional[str] = None):
-    job = jobs.get(request_id)
-    if not job: return custom_error("JOB_NOT_FOUND", "Không tìm thấy ID", 404)
-
-    if simulate_error:
-        job.update({"status": "error", "error": {"code": simulate_error,
-                                                 "message": VALID_HARDWARE_ERRORS.get(simulate_error, "Lỗi giả lập")}})
-
-    res = {"request_id": request_id, "status": job["status"], "progress_percent": job["progress_percent"],
-           "estimated_time_remaining_sec": job["estimated_time_remaining_sec"], "error": job["error"]}
-    if job["status"] == "done": res["actual_draw_time_sec"] = job["actual_draw_time_sec"]
-
-    res = hardware.get_status(request_id, simulate_error=simulate_error)
-    if "error" in res and res.get("status") != "error":
-        err = res["error"]
-        return custom_error(err["code"], err["message"], res.get("status_code", 404))
-
-    return res
 
 
 @app.get("/api/camera/inspect-paper")
@@ -1361,4 +1306,4 @@ if __name__ == "__main__":
         print("\n❌ Lỗi: Chưa tìm thấy thư viện uvicorn. Hãy chạy trong môi trường ảo:")
         print(f"   source {os.path.join(_backend_dir, 'venv', 'bin', 'activate')}")
         print("   uvicorn main:app --reload --port 8000")
->>>>>>> develop
+
