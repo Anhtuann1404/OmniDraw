@@ -32,6 +32,7 @@ File này là điểm vào chính của toàn bộ tài liệu OmniDraw. Chọn 
 - [`07_diacritic_aware_state_design.md`](07_diacritic_aware_state_design.md): thiết kế `CompositionState` và diacritic-aware DAG.
 - [`09_pr3_acceptance_criteria.md`](09_pr3_acceptance_criteria.md): Entry/Exit Gate PR3.
 - [`16_rq_code_metric_test_traceability.md`](16_rq_code_metric_test_traceability.md): truy vết RQ–code–metric–test và evidence ledger.
+- [`17_pr3_implementation_readiness.md`](17_pr3_implementation_readiness.md): dependency PR2, bản đồ symbol, các lát cắt triển khai, test map và Definition of Ready cho PR3.
 
 ## Dữ liệu chữ viết tay
 
