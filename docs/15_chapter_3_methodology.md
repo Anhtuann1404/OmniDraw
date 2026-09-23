@@ -134,10 +134,12 @@ Ba baseline được định nghĩa trước khi triển khai Proposed nhằm tr
 | Phương pháp | Quy tắc | Vai trò | Trạng thái adapter |
 | :--- | :--- | :--- | :--- |
 | B1 — Static Glyph Renderer | Dùng canonical glyph và luôn nhấc bút giữa ký tự | Mốc cơ sở về path và số lần nhấc bút | `IMPLEMENTED_AND_TESTED` (`b1_static`) |
-| B2 — Greedy Contextual Heuristic | Chọn quyết định tốt nhất tại từng vị trí theo trạng thái đã chọn trước đó | Đối chứng giữa tham lam và tối ưu chuỗi | `IMPLEMENTED_AND_TESTED` (`b2_greedy`) |
+| B2 — Greedy Contextual Heuristic | Tham lam chọn `GlyphVariant` của thân chữ theo trạng thái đã chọn trước đó; không chọn vị trí dấu | Đối chứng giữa tham lam và tối ưu chuỗi | `IMPLEMENTED_AND_TESTED` (`b2_greedy`) |
 | B3 — Current Trellis DAG | Viterbi trên `GlyphVariant`, dấu được gắn post-DAG | Đối chứng trực tiếp để đo tác động của state nhận thức dấu | `IMPLEMENTED_AND_TESTED` (`b3_current_trellis`) |
 
 `experiment_runner.py` hiện nhận `--method` để chạy riêng B1, B2 hoặc B3 trên cùng input/output contract. Các adapter phục vụ technical dry-run; Chương 4 chỉ được điền kết quả chính thức sau PR3–PR5 và các validation gate dữ liệu/phần cứng.
+
+Cả B1, B2 và B3 vẫn gắn dấu hậu xử lý bằng anchor/canonical geometry qua `generate_accents()`; chỉ Proposed CA-VHC dự kiến đưa ứng viên vị trí dấu vào không gian tối ưu. B2 không phải baseline nhận thức dấu.
 
 ### 3.3.2. Trellis dựa trên `GlyphVariant`
 
@@ -226,12 +228,15 @@ Geometry metric và cost metric phải được phân biệt. `minimum_diacritic
 Chi phí giữa hai state kề nhau được định nghĩa:
 
 $$
-J_{transition}(s',s)=
-w_1D_{penup}+w_2N_{lift}+w_3C_{curvature}
-+w_4C_{bridge\_collision}.
+J_{transition}(s',s)=\min\bigl(J_{conn}(s',s),J_{lift}(s',s)\bigr),
 $$
 
-$D_{penup}$ là quãng di chuyển không vẽ; $N_{lift}$ biểu diễn quyết định nhấc bút; $C_{curvature}$ phạt thay đổi hướng tại vùng nối; $C_{bridge\_collision}$ xét candidate bridge với thân chữ và clearance zone của dấu trong tọa độ world. Một bridge giao vùng dấu ở mức không thể chấp nhận bị hard reject; bridge còn hợp lệ có thể nhận soft penalty theo clearance.
+$$
+J_{lift}=w_1D_{penup}+w_2N_{lift},\qquad
+J_{conn}=w_3C_{curvature}+w_4C_{bridge\_collision}.
+$$
+
+$D_{penup}$ là quãng di chuyển không vẽ và $N_{lift}$ biểu diễn quyết định nhấc bút, chỉ thuộc nhánh `LIFT`. $C_{curvature}$ phạt thay đổi hướng tại vùng nối và $C_{bridge\_collision}$ xét candidate bridge với thân chữ và clearance zone của dấu trong tọa độ world, chỉ thuộc nhánh `CONNECT`. Đặt $J_{conn}=+\infty$ nếu nối không hợp lệ hoặc bridge vi phạm hard constraint; bridge còn hợp lệ có thể nhận soft penalty theo clearance. Nếu cả hai nhánh không hợp lệ, transition không tồn tại. Đây là mô hình Proposed PR3; `eval_transition()` của B3 hiện hành còn cộng legibility vào hai nhánh và phải được tách theo E4 mà không đổi B3.
 
 Việc tách $C_{state}$ và $J_{transition}$ tránh double-count. Legibility và placement của state không được cộng lại trong transition; ngược lại, khoảng cách và curvature giữa hai ký tự không thuộc state cost.
 
@@ -290,7 +295,8 @@ Hạ tầng PR1 hiện tính được:
 | `pen_lift_count` | Số lần chuyển giữa các nét liên tục | Chờ baseline comparability |
 | `collision_count` | Số cặp bridge–diacritic giao nhau | Metric validation; chờ PR3 |
 | `minimum_diacritic_clearance_mm` | Khoảng hở nhỏ nhất giữa bridge và dấu | Chờ PR3 và calibration cho claim vật lý |
-| `curvature_cost` | Chi phí thay đổi hướng tại bridge | Diagnostic; chờ PR2 định nghĩa cuối |
+| `curvature_cost` | Chi phí thay đổi hướng tại bridge | Diagnostic; shared cost contract E4 còn chờ ký duyệt |
+| `acute_turn_count_120deg` | Số góc lệch tiếp tuyến bridge vượt $120^\circ$; diagnostic bắt buộc cho H3.2 | **Chưa triển khai/đo**; TV2 định nghĩa và kiểm thử trong evaluator trước benchmark PR5 |
 | `optimize_time_ms` | Thời gian tối ưu nội bộ | Diagnostic; chưa phải benchmark |
 
 `actual_draw_time_sec`, `c1_violation_count` và một số chẩn đoán cơ khí chưa tồn tại đầy đủ. Chúng không được suy ra từ các metric hiện hành.
@@ -317,13 +323,13 @@ Ngưỡng $0.50$ mm là mục tiêu nghiên cứu provisional. Nó chỉ đượ
 
 ## 3.8. Độ phức tạp và giới hạn phương pháp
 
-Với $N$ vị trí và tối đa $K$ state hợp lệ mỗi layer, Viterbi đầy đủ xét tối đa $K^2$ transition giữa hai layer. Độ phức tạp thời gian là:
+Với $N$ vị trí và tối đa $K$ state hợp lệ mỗi layer, Viterbi đầy đủ xét tối đa $K^2$ transition giữa hai layer. Nếu coi phép đánh giá mỗi cạnh là $O(1)$, số phép đánh giá cạnh và chi phí DP là:
 
 $$
 T(N,K)=O(NK^2),
 $$
 
-và bộ nhớ là $O(NK)$ khi lưu bảng chi phí cùng backpointer. Với $K_{raw}\le9$, đây là cận thiết kế của không gian trạng thái, không phải bằng chứng về latency. Collision geometry, transform và candidate generation vẫn phải được profiling theo protocol PR5.
+Nếu mỗi cạnh phải dựng bridge và so khoảng cách/giao cắt giữa $L_{bridge}$ đoạn bridge với $L_{glyph}$ đoạn nét cần kiểm tra, đặt $L_{geom}=O(L_{bridge}L_{glyph})$ cho phép kiểm tra hình học đơn giản; thời gian worst-case tương ứng là $O(NK^2L_{geom})$, cộng thêm chi phí sinh candidate/transform. Bộ nhớ $O(NK)$ chỉ tính bảng DP và backpointer, chưa tính geometry được cache. Với $K_{raw}\le9$, đây là cận thiết kế của không gian trạng thái, không phải bằng chứng về latency. Số điểm lấy mẫu bridge và collision geometry vẫn phải được profiling theo protocol PR5.
 
 Phương pháp có các giới hạn sau:
 

@@ -58,7 +58,7 @@ Vấn đề nghiên cứu của đề tài được phát biểu như sau:
 
 **RQ1:** Việc dùng Viterbi DP trên `CompositionState` để đồng thời lựa chọn biến thể glyph và vị trí dấu theo ngữ cảnh có giảm quãng đường pen-up và số lần nhấc bút so với B1/B2/B3, trong khi vẫn kiểm soát tổng chiều dài nét tiếp xúc giấy hay không?
 
-Các giả thuyết tương ứng là Proposed CA-VHC giảm `pen_lift_distance_mm` và `pen_lift_count`, trong khi mức tăng `total_path_length_mm` vẫn nằm trong ngưỡng đã khóa. B1 là static glyph renderer, B2 là greedy contextual heuristic và B3 là Trellis DAG hiện hành chưa có ràng buộc dấu nâng cao. Các ngưỡng nghiệm thu chi tiết được quản lý tại [`05_ca_vhc_research_spec.md`](05_ca_vhc_research_spec.md) và [`10_nckh_research_plan.md`](10_nckh_research_plan.md).
+Các giả thuyết tương ứng là Proposed CA-VHC giảm `pen_lift_distance_mm` và `pen_lift_count`, trong khi mức tăng `total_path_length_mm` vẫn nằm trong ngưỡng đã khóa. B1 là static glyph renderer, B2 tham lam chọn `GlyphVariant` của thân chữ, còn B3 dùng Trellis DAG trên biến thể thân chữ. **Cả ba baseline đều gắn dấu hậu xử lý bằng anchor tĩnh qua `generate_accents()`; B2 không tối ưu vị trí dấu.** Chỉ Proposed CA-VHC dự kiến chọn ứng viên dấu cùng biến thể thân chữ. Các ngưỡng nghiệm thu chi tiết được quản lý tại [`05_ca_vhc_research_spec.md`](05_ca_vhc_research_spec.md) và [`10_nckh_research_plan.md`](10_nckh_research_plan.md).
 
 ### 1.4.2. RQ2 — Tránh va chạm dấu tiếng Việt
 
@@ -136,7 +136,7 @@ Về thực tiễn, đầu ra nét đơn có thể giảm phần xử lý trung 
 
 ## 1.9. Giới hạn và ranh giới tuyên bố
 
-Tại thời điểm lập bản thảo, PR1 về metric và experiment infrastructure đã hoàn thành; PR2 baseline adapters đang chờ TV2 hoàn tất; PR3 về Diacritic-Aware Trellis chưa bắt đầu; corpus formal và hardware calibration chưa được khóa. Vì vậy:
+Tại thời điểm cập nhật, PR1 về metric và experiment infrastructure cùng PR2 baseline adapters đã hoàn thành; E4 shared transition interface còn chờ TV2+TV4 ký duyệt, PR3 về Diacritic-Aware Trellis chưa bắt đầu; corpus formal và hardware calibration chưa được khóa. Vì vậy:
 
 - chưa có số liệu chính thức để chấp nhận hoặc bác bỏ RQ1–RQ3;
 - chưa được gọi CA-VHC là real-time hoặc tốt hơn baseline;

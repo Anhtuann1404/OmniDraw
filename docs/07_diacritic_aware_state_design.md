@@ -472,7 +472,11 @@ Trong đó các thành phần được định nghĩa rạch ròi, **phân tách
 ### 8.2 Transition Cost $J_{\text{transition}}(s_{\text{prev}}, s_{\text{curr}})$ — Shared TV2 & TV4
 Chi phí chuyển trạng thái giữa node đứng trước $s_{\text{prev}}$ và node hiện tại $s_{\text{curr}}$:
 
-$$J_{\text{transition}}(s_{\text{prev}}, s_{\text{curr}}) = w_1 \cdot D_{\text{penup}} + w_2 \cdot N_{\text{lift}} + w_3 \cdot C_{\text{curvature}} + w_4 \cdot C_{\text{bridge\_collision}}$$
+$$J_{\text{transition}}(s_{\text{prev}},s_{\text{curr}})=\min\bigl(J_{\text{conn}},J_{\text{lift}}\bigr)$$
+
+$$J_{\text{lift}}=w_1D_{\text{penup}}+w_2N_{\text{lift}},\qquad J_{\text{conn}}=w_3C_{\text{curvature}}+w_4C_{\text{bridge\_collision}}.$$
+
+Nhánh `LIFT` không có bridge nên không cộng curvature/collision; nhánh `CONNECT` không cộng pen-up/lift. Khi vi phạm điều kiện nối hoặc hard collision, đặt $J_{\text{conn}}=+\infty$ và chỉ xét nhánh lift; nếu không có nhánh hợp lệ thì transition không tồn tại. Đây là hợp đồng **Proposed PR3**; B3 hiện hành vẫn cộng legibility theo `eval_transition()` cũ, và cách tách khoản đó khỏi transition mới phải được TV2+TV4 chốt tại E4 trước khi code.
 
 Trong đó các thành phần chuyển động vật lý do TV2 phụ trách chuẩn hóa:
 - $D_{\text{penup}}$: Quãng đường di chuyển đầu bút khi nhấc bút từ điểm thoát của $s_{\text{prev}}$ sang điểm đón của $s_{\text{curr}}$ (mm).
@@ -488,7 +492,7 @@ với:
 $$\mathcal{S}_{\text{check\_world}} = \mathcal{S}_{\text{prev\_world}}^{\text{base}} \cup \mathcal{S}_{\text{curr\_world}}^{\text{base}} \cup \mathcal{S}_{\text{prev\_world}}^{\text{diacritic}} \cup \mathcal{S}_{\text{curr\_world}}^{\text{diacritic}}$$
 
 **Cơ chế giải quyết xung đột của Viterbi DP:**
-Nếu trạng thái $s_{\text{prev}}$ hoặc $s_{\text{curr}}$ đang chọn một ứng viên dấu có vị trí bị cầu nối cắt qua, $C_{\text{bridge\_collision}}$ sẽ tăng vọt (phạt nặng). Thuật toán Viterbi DP sẽ tự động đưa ra một trong hai quyết định tối ưu:
+Nếu cầu nối cắt vùng dấu ở mức vi phạm hard constraint, nhánh `CONNECT` bị loại ($J_{\text{conn}}=+\infty$); với cầu nối vẫn hợp lệ nhưng sát ngưỡng clearance, $C_{\text{bridge\_collision}}$ có thể nhận soft penalty. Thuật toán Viterbi DP sẽ đưa ra một trong hai quyết định tối ưu còn hợp lệ:
 1. **Phương án A (Né dấu):** Giữ nguyên nối nét liền mạch, nhưng chuyển sang chọn một `DiacriticCandidate` an toàn hơn (ví dụ: `safe_left` hoặc `safe_right`) để dấu né khỏi quỹ đạo cầu nối.
 2. **Phương án B (Nhấc bút):** Nếu dịch dấu vẫn không an toàn hoặc gây phạt thẩm mỹ lớn, Viterbi sẽ quyết định **nhấc bút (pen-up)** giữa hai chữ cái thay vì ép nối nét gượng gạo.
 
@@ -670,7 +674,7 @@ Bản đặc tả thiết kế Bước B này được nghiệm thu hoàn thành
 - [x] **6. Anchor source lấy từ đâu trong P0?** $\rightarrow$ Tái sử dụng bảng `centers`, `dot_below_x_offsets` và thuật toán `generate_accents()` hiện tại làm Canonical Geometry Source; ứng viên lệch được sinh qua phép tịnh tiến vector.
 - [x] **7. Candidate được prune ra sao?** $\rightarrow$ Chỉ cắt tỉa các ứng viên bất hợp lệ cứng (chi phí tự va chạm nội tại vượt ngưỡng trần config hoặc vi phạm biên an toàn dòng kẻ); không dùng beam pruning ở P0.
 - [x] **8. State cost gồm những gì?** $\rightarrow$ $C_{\text{state}} = w_{4a} C_{\text{internal\_collision}} + w_5 C_{\text{legibility}} + w_6 C_{\text{placement}}$, không double-count.
-- [x] **9. Transition cost gồm những gì?** $\rightarrow$ $J_{\text{transition}} = w_1 D_{\text{penup}} + w_2 N_{\text{lift}} + w_3 C_{\text{curvature}} + w_4 C_{\text{bridge\_collision}}$.
+- [x] **9. Transition cost gồm những gì?** $\rightarrow$ $J_{\text{transition}}=\min(J_{\text{conn}},J_{\text{lift}})$; nhánh lift chỉ gồm pen-up/lift, nhánh connect chỉ gồm curvature/bridge collision như mục 8.2.
 - [x] **10. Bridge collision kiểm tra dấu thế nào?** $\rightarrow$ Cầu nối Bézier trong hệ tọa độ thế giới được kiểm tra đồng thời với nét thân chữ và nét dấu của cả ký tự đứng trước lẫn ký tự đứng sau.
 - [x] **11. Viterbi recurrence mới là gì?** $\rightarrow$ $DP[i, j] = C_{\text{state}}(s[i, j]) + \min_p (DP[i-1, p] + J_{\text{transition}}(s[i-1, p], s[i, j]))$.
 - [x] **12. Renderer lấy nét dấu từ đâu?** $\rightarrow$ Trích xuất trực tiếp từ `state.diacritic_candidate.strokes_local` đã được Viterbi chọn tối ưu và biến đổi sang tọa độ thế giới qua `transform_state_to_world()`.

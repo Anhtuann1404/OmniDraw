@@ -30,7 +30,7 @@ Research Freeze Pack này hợp nhất các quyết định đã có thành mộ
 
 - `IMPLEMENTED_AND_TESTED`: đã có code và kiểm thử trong repository.
 - `DESIGN_LOCKED`: thiết kế đã được TV2/TV4 review nhưng chưa triển khai production.
-- `PENDING_PR2`: cần baseline adapter hoặc transition interface của TV2.
+- `PENDING_PR2`: trạng thái lịch sử khi chưa có baseline adapter; PR2/E3 hiện đã hoàn tất, còn shared interface E4 chờ TV2+TV4 ký duyệt.
 - `PENDING_PR3`: cần `CompositionState` và Diacritic-Aware Trellis.
 - `PENDING_TV1_FREEZE`: chưa được dùng cho formal experiment.
 - `PENDING_TV3_CALIBRATION`: chưa được dùng cho tuyên bố vật lý.
@@ -67,11 +67,19 @@ Research Freeze Pack này hợp nhất các quyết định đã có thành mộ
 
 | Giả thuyết | Biến độc lập | Biến phụ thuộc | Baseline | Quy tắc nghiệm thu | Owner | Trạng thái |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| H1.1 — Giảm pen-up distance | Phương pháp B1/B2/B3/Proposed | `pen_lift_distance_mm` | B1, B2; B3 là đối chiếu chẩn đoán | FAIL: giảm `<15%` vs B1 hoặc `<5%` vs B2; PASS: giảm `>=25%` vs B1 và `>=10%` vs B2; còn lại INCONCLUSIVE | TV2 lead motion, TV4 runner | `PENDING_PR2`, `PENDING_PR5` |
-| H1.2 — Giảm pen-lift count | Phương pháp | `pen_lift_count` | B1 | FAIL `<20%`; PASS `>=35%`; còn lại INCONCLUSIVE | TV2 + TV4 | `PENDING_PR2`, `PENDING_PR5` |
+| H1.1 — Giảm pen-up distance | Phương pháp B1/B2/B3/Proposed | `pen_lift_distance_mm` | B1, B2; B3 là đối chiếu chẩn đoán | FAIL: giảm `<15%` vs B1 hoặc `<5%` vs B2; PASS: giảm `>=25%` vs B1 và `>=10%` vs B2; còn lại INCONCLUSIVE | TV2 lead motion, TV4 runner | `E3_PASS`; `E4_PENDING`, `PENDING_PR3`, `PENDING_PR5` |
+| H1.2 — Giảm pen-lift count | Phương pháp | `pen_lift_count` | B1 | FAIL `<20%`; PASS `>=35%`; còn lại INCONCLUSIVE | TV2 + TV4 | `E3_PASS`; `E4_PENDING`, `PENDING_PR3`, `PENDING_PR5` |
 | H1.3 — Kiểm soát chiều dài nét | Phương pháp | `total_path_length_mm` | B1 | FAIL: tăng `>15%`; PASS: tăng `<=10%`; còn lại INCONCLUSIVE | TV4 | `PENDING_PR3`, `PENDING_PR5` |
 
 **Điểm cần TV2 cross-review:** định nghĩa chính xác B1/B2/B3, transition-cost interface, cách tách pen-down/pen-up và công thức tổng hợp theo corpus.
+
+Với H1.2, tính tỷ lệ giảm trên **tổng số lần nhấc bút** của cùng tập ca benchmark hỗ trợ nối nét (mỗi $x$ là cấu hình văn bản × font × seed được ghép cặp giữa hai phương pháp), không lấy trung vị tỷ lệ theo từng từ:
+
+$$
+\Delta N_{lift}=\frac{\sum_{x\in\mathcal C}N_{lift}(B1,x)-\sum_{x\in\mathcal C}N_{lift}(Proposed,x)}{\sum_{x\in\mathcal C}N_{lift}(B1,x)}.
+$$
+
+Nếu mẫu số bằng 0, ghi `NOT_APPLICABLE`, không tự gán PASS. Công thức này là quy tắc nghiệm thu dự kiến; chưa có kết quả Proposed hay formal benchmark.
 
 ### 3.2. RQ2 — Tránh va chạm dấu tiếng Việt
 
@@ -91,7 +99,7 @@ Research Freeze Pack này hợp nhất các quyết định đã có thành mộ
 | Giả thuyết | Biến độc lập | Biến phụ thuộc | Baseline | Quy tắc nghiệm thu | Owner | Trạng thái |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | H3.1 — Thời gian Viterbi | Phương pháp và độ dài từ | `optimize_time_ms` median/p95 | B2, B3 | FAIL: median `>15 ms` hoặc p95 `>30 ms`; PASS: median `<=5 ms` và p95 `<=10 ms`; còn lại INCONCLUSIVE | TV4 runner, TV2 algorithm | `PENDING_PR5` |
-| H3.2 — Kiểm soát đổi hướng | Phương pháp | `curvature_cost`, `acute_turn_count_120deg` | B2 | FAIL: giảm `<=0%` hoặc có góc `>120°`; PASS: giảm `>=15%` và không có góc `>120°`; còn lại INCONCLUSIVE | TV2 | `PENDING_PR2`, `PENDING_PR5` |
+| H3.2 — Kiểm soát đổi hướng | Phương pháp | `curvature_cost`, `acute_turn_count_120deg` | B2 | FAIL: giảm `<=0%` hoặc có góc `>120°`; PASS: giảm `>=15%` và không có góc `>120°`; còn lại INCONCLUSIVE | TV2 | `E3_PASS`; `E4_PENDING`, `PENDING_PR3`, `PENDING_PR5` |
 | Physical feasibility | Simulator vs máy thật | `actual_draw_time_sec`, sai số quỹ đạo, lỗi thi công | SVG/simulator | Chỉ kết luận sau calibration và smoke test trên máy thật | TV3 | `PENDING_TV3_CALIBRATION` |
 
 **Ranh giới tuyên bố:** Catmull–Rom sang Bézier không tự động chứng minh $C^1$ ở mọi junction. `c1_violation_count` và dữ liệu máy thật phải tồn tại trước khi đưa ra tuyên bố tương ứng.
@@ -126,7 +134,8 @@ Research Freeze Pack này hợp nhất các quyết định đã có thành mộ
 | `pen_lift_count` | Internal evaluator/runner đã có | Technical dry-run | PR2 baseline comparability |
 | `collision_count` | Internal evaluator đã có | Metric validation | PR3 + acceptance corpus |
 | `minimum_diacritic_clearance_mm` | Internal evaluator đã có | Metric validation | PR3; physical claim cần TV3 |
-| `curvature_cost` | Internal evaluator đã có | Technical dry-run | PR2 definition + PR5 |
+| `curvature_cost` | Internal evaluator đã có | Technical dry-run | E4 shared cost contract + PR5 |
+| `acute_turn_count_120deg` | Chưa triển khai | Không; chỉ là diagnostic dự kiến | TV2 định nghĩa và kiểm thử phép đếm góc bridge; tích hợp evaluator trước PR5/H3.2 |
 | `optimize_time_ms` | Internal timing đã có | Diagnostic only | PR5 protocol median/p95 |
 | `actual_draw_time_sec` | Chưa có số đo máy thật | Không | TV3 hardware run |
 | `c1_violation_count` | Chưa triển khai | Không | Metric implementation + validation |
@@ -169,7 +178,11 @@ Research Freeze Pack này hợp nhất các quyết định đã có thành mộ
 
 $$C_{state}=w_{4a}C_{internal\_collision}+w_5C_{legibility}+w_6C_{placement}$$
 
-$$J_{transition}=w_1D_{penup}+w_2N_{lift}+w_3C_{curvature}+w_4C_{bridge\_collision}$$
+$$J_{transition}(s',s)=\min\bigl(J_{conn}(s',s),J_{lift}(s',s)\bigr)$$
+
+$$J_{lift}=w_1D_{penup}+w_2N_{lift},\qquad J_{conn}=w_3C_{curvature}+w_4C_{bridge\_collision}.$$
+
+Trong nhánh `LIFT`, không có bridge nên curvature/bridge collision không áp dụng; trong nhánh `CONNECT`, không có quãng pen-up hay lần nhấc bút. Đặt $J_{conn}=+\infty$ khi nối không hợp lệ hoặc bridge vi phạm hard constraint; nếu cả hai nhánh không hợp lệ thì transition không tồn tại. Đây là công thức **Proposed PR3**; B3 hiện hành còn cộng legibility vào mỗi nhánh và chỉ được tách theo hợp đồng E4 mà không đổi hành vi cũ.
 
 $$DP[i,j]=C_{state}(s_{i,j})+\min_p\left(DP[i-1,p]+J_{transition}(s_{i-1,p},s_{i,j})\right)$$
 
@@ -216,6 +229,8 @@ $$DP[i,j]=C_{state}(s_{i,j})+\min_p\left(DP[i-1,p]+J_{transition}(s_{i-1,p},s_{i
 - Kiểm tra output schema và failure policy.
 
 ### 4.4. Kết quả RQ1
+
+H1.2 dùng tỷ lệ giảm từ **tổng tích lũy** `pen_lift_count` trên cùng corpus theo công thức mục 3.1; các ô kết quả dưới đây vẫn `PENDING`, không suy ra tỷ lệ từ trung vị từng từ.
 
 | Method | Pen-up distance median | Pen-lift count | Total path length | So với B1 | So với B2 | Phán quyết |
 | :--- | ---: | ---: | ---: | ---: | ---: | :--- |

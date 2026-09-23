@@ -126,7 +126,7 @@ Mọi giả thuyết kiểm chứng trong tài liệu này đều được phân
   - **INCONCLUSIVE (Ưu tiên 3):** Mọi trường hợp còn lại.
 
 - **Giả thuyết H1.2 (Giảm số lần nhấc bút):**
-  Gọi $\Delta N_{\text{lift}} = \frac{N_{\text{lift}}(\text{B1}) - N_{\text{lift}}(\text{CA-VHC})}{N_{\text{lift}}(\text{B1})}$ trên các từ hỗ trợ nối nét.
+  Trên cùng tập ca benchmark $\mathcal C$ gồm các cấu hình văn bản × font × seed được ghép cặp giữa hai phương pháp và hỗ trợ nối nét, gọi $\Delta N_{\text{lift}} = \frac{\sum_{x\in\mathcal C}N_{\text{lift}}(\text{B1},x) - \sum_{x\in\mathcal C}N_{\text{lift}}(\text{CA-VHC},x)}{\sum_{x\in\mathcal C}N_{\text{lift}}(\text{B1},x)}$. Tỷ lệ này tính trên tổng tích lũy, không lấy trung vị tỷ lệ theo từng từ; mẫu số bằng 0 thì ghi `NOT_APPLICABLE`, không suy ra PASS.
   - **FAIL (Ưu tiên 1):** $\Delta N_{\text{lift}} < 20.0\%$.
   - **PASS (Ưu tiên 2):** $\Delta N_{\text{lift}} \ge 35.0\%$.
   - **INCONCLUSIVE (Ưu tiên 3):** Mọi trường hợp còn lại ($20.0\% \le \Delta N_{\text{lift}} < 35.0\%$).
@@ -180,6 +180,7 @@ Mọi giả thuyết kiểm chứng trong tài liệu này đều được phân
 
 - **Giả thuyết H3.2 (Độ trơn hình học & Kiểm soát đổi hướng tiếp tuyến):**
   Gọi $\Delta C_{\text{curv}} = \frac{curvature\_cost(\text{B2}) - curvature\_cost(\text{CA-VHC})}{curvature\_cost(\text{B2})}$ và biến cố $has\_acute\_turn$ là sự xuất hiện của bất kỳ góc lệch tiếp tuyến nào $> 120^\circ$ trên cầu nối.
+  `acute_turn_count_120deg`/`has_acute_turn` hiện **chưa được evaluator tính**; đây là diagnostic bắt buộc phải triển khai, định nghĩa và kiểm thử trước khi H3.2 có thể nhận verdict trong PR5.
   - **FAIL (Ưu tiên 1):** $(\Delta C_{\text{curv}} \le 0.0\%)$ **HOẶC** $(has\_acute\_turn == \text{True})$.
   - **PASS (Ưu tiên 2):** $(\Delta C_{\text{curv}} \ge 15.0\%)$ **VÀ** $(has\_acute\_turn == \text{False})$.
   - **INCONCLUSIVE (Ưu tiên 3):** Mọi trường hợp còn lại.
@@ -646,7 +647,7 @@ Bảng đối chiếu kỹ thuật dưới đây xác nhận sự đồng thuậ
 - [x] **Software Step C authorized by TV4:** Project Lead phê duyệt bắt đầu triển khai phần mềm (`READY FOR STEP C: YES`).
 - [x] **PR1 — CA-VHC internal experiment metrics and CSV integration (Commit `daca566`):** Đã hoàn tất tích hợp metrics evaluator, CSV logger schema 19 cột, automated runner và fixture DEV 160 ca.
 - [x] **Pre-PR3 Acceptance Contract defined (Docs 09):** Khóa tiêu chí nghiệm thu trước PR3 ([`09_pr3_acceptance_criteria.md`](09_pr3_acceptance_criteria.md)) và snapshot ma trận ASCII 48 ca ([`pr3_ascii_baseline_fingerprints.json`](../tests/fixtures/pr3_ascii_baseline_fingerprints.json)).
-- [ ] **PR2 baseline adapters:** Hoàn thành 3 adapter B1, B2, B3 độc lập (TV2 chủ trì, đang triển khai).
+- [x] **PR2 baseline adapters:** Đã hoàn thành 3 adapter B1, B2, B3 độc lập (TV2 chủ trì; E3 PASS). E4 shared transition interface vẫn chờ TV2+TV4 ký duyệt.
 - [ ] **PR3 CompositionState production implementation:** Triển khai mã nguồn cấu trúc trạng thái tổ hợp vào engine sau khi đạt Entry Gate; E3/PR2 đã PASS, còn chờ E4 shared interface agreement của TV2+TV4.
 - [ ] **TV1 corpus formal freeze:** TV1 rà soát độ phủ và đóng băng phiên bản benchmark corpus chính thức.
 - [ ] **TV3 physical clearance calibration:** TV3 hiệu chuẩn ngưỡng khoảng cách an toàn $0.20\text{ mm}$ vs $0.50\text{ mm}$ trên máy vẽ thật.
