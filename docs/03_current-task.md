@@ -11,7 +11,7 @@
 
 | Thành viên                 | Đang làm gì                            | Bị nghẽ ở đâu (nếu có)                  | Dự kiến xong |
 | -------------------------- |----------------------------------------| --------------------------------------- | ----------- |
-| TV1 — AI Core              | Đã chốt và up 15 prompt test lên Drive | *(điền, hoặc để trống nếu không nghẽn)* | Đã xong     |
+| TV1 — AI Core              | Đã hoàn tất Cross-review Chương 1–3 (Phiếu TV1: PASS) & đóng băng Benchmark Corpus v1.0 | *(điền, hoặc để trống nếu không nghẽn)* | Sprint 1–2  |
 | TV2 — AI Ứng dụng/CV       | *(điền)*                               | *(điền)*                                | *(điền)*    |
 | TV3 — Phần cứng            | Đã hoàn tất PR #29 merge vào develop; hoàn thành draft cross-review Chương 1–3 (Phiếu TV3) | Blocked by hardware: chờ máy vẽ AxiDraw & cáp USB vật lý để chạy smoke test và hiệu chuẩn thực tế | Sprint 1–2  |
 | TV4 — Giao diện & Tích hợp | (điền)                                 | *(điền)*                                | *(điền)*    |
@@ -29,9 +29,9 @@
 
 | Thành viên / Đường chạy | Nhiệm vụ trọng tâm Sprint 1–2 | Điểm nghẽn (Blocker) | Trạng thái |
 | :--- | :--- | :--- | :--- |
-| **TV4 — Project Lead & Handwriting / CA-VHC Composition Lead** | Hoàn tất Strict Validation, BƯỚC A/B, PR1 và Pre-PR3 Acceptance Contract; PR2 baseline adapters của TV2 đã hoàn tất; nhiệm vụ kế tiếp là cùng TV2 ký duyệt shared transition interface E4 để mở PR3, đồng thời tổng hợp Research Questions và Chương 3–4 | PR3 chỉ còn chờ Entry Gate E4. TV1 corpus freeze và TV3 hardware calibration là downstream validation gates. | 🟡 Đang làm |
+| **TV4 — Project Lead & Handwriting / CA-VHC Composition Lead** | Hoàn tất Strict Validation, BƯỚC A/B, PR1 và Pre-PR3 Acceptance Contract; PR2 baseline adapters của TV2 đã hoàn tất; nhiệm vụ kế tiếp là cùng TV2 ký duyệt shared transition interface E4 để mở PR3, đồng thời tổng hợp Research Questions và Chương 3–4 | PR3 chỉ còn chờ Entry Gate E4. TV1 corpus freeze đã hoàn tất; TV3 hardware calibration là downstream validation gate. | 🟡 Đang làm |
 | **TV2 — Stroke Optimization & Path Planning Lead** | Step B technical cross-review đã PASS; PR2 baseline adapters B1/B2/B3 đã triển khai và được runner gọi độc lập qua method tag; nhiệm vụ tiếp theo: cùng TV4 ký duyệt shared transition interface E4 cho PR3 và tiếp tục chuẩn hóa ký hiệu toán học hàm mục tiêu $J$ | E4 cần TV4+TV2 cùng ký duyệt; không phải blocker của code PR2 | 🟡 Đang làm |
-| **TV1 — AI Data & Writer Profile Lead** | Hoàn thành thiết kế & đặc tả kỹ thuật bộ phiếu thu thập mẫu **OmniDraw Handwriting Collection Sheet Pack v1** (P01–P04 Pilot Candidate tại `docs/collection_sheets/`); nhiệm vụ tiếp theo: (1) scan-validation pipeline tối thiểu (fiducial detection, deskew, scale check, deterministic auto-crop), (2) bench print/scan P01–P04 ở 600 DPI, (3) coverage analysis P01–P04, (4) chốt collection protocol & error-handling rule (pending protocol decision), (5) chuẩn bị limited pilot 3–5 writers | Không | 🟡 Đang làm |
+| **TV1 — AI Data & Writer Profile Lead** | Đã hoàn tất Cross-review Chương 1–3 (phiếu TV1: CLOSED / PASS) và chính thức đóng băng Benchmark Corpus v1.0 (20 từ DEV, 20 từ Holdout độc lập tuyệt đối tại [`docs/18_benchmark_corpus_freeze_report.md`](18_benchmark_corpus_freeze_report.md)); nhiệm vụ tiếp theo: (1) scan-validation pipeline tối thiểu (fiducial detection, deskew, scale check, deterministic auto-crop), (2) bench print/scan P01–P04 ở 600 DPI, (3) chốt collection protocol & error-handling rule, (4) chuẩn bị limited pilot 3–5 writers | Không | 🟡 Đang làm |
 | **TV3 — Hardware, Calibration & Physical Validation Lead** | Đã hoàn tất HAL/Simulator và PR #29 merge vào develop (23/23 tests pass); hoàn thành bản nháp cross-review Chương 1–3 (phiếu TV3 đạt AI_DRAFT: PASS); chuẩn bị sẵn sàng fixture SVG và quy trình hiệu chuẩn | *Blocked by hardware:* chờ setup cáp & máy vẽ thực tế (hoàn tất nền tảng phần mềm; chờ máy thật để chạy calibration) | 🟡 Đang làm |
 
 ---
@@ -99,7 +99,7 @@
 - [ ] **Nhiệm vụ 7 — Phân tích Độ phủ Ngữ âm & Ngữ cảnh (Coverage Analysis):** Đánh giá độ phủ thực tế của P01 (độ phủ 67 nguyên âm mang dấu tiếng Việt, xác nhận bản demo 24 ô là tập representative, phân tích độ phủ toàn diện), P02 (các vị trí initial/medial/final, cặp nối nét ligatures), P03 (độ phủ chữ cái/dấu của 3 câu pangram) và P04 (độ trôi baseline và dòng chảy đoạn văn).
 - [ ] **Nhiệm vụ 8 — Ban hành Quy định Vận hành Thu thập & Xử lý Lỗi (Collection Protocol & Error Handling):** Chốt chính sách xử lý khi người viết viết sai ký tự/từ/câu (quy định gắn nhãn cờ lỗi `QC_REJECTED` / `QC_FLAGGED`, quy định sử dụng phiếu dự phòng `spare sheet`, quy định có thu thập lại hay không, và vị trí lưu trữ trạng thái kiểm định chất lượng) (**PENDING PROTOCOL DECISION**).
 - [ ] **Nhiệm vụ 9 — Chuẩn bị & Triển khai Thử nghiệm Pilot (Limited Pilot 3–5 Writers):** Tuyển chọn 3–5 người tham gia viết thử nghiệm toàn bộ bộ phiếu P01–P04, rà soát tải thu thập (`completion time`, nhu cầu nghỉ giải lao) và nghiệm thu chất lượng ảnh quét trước khi mở rộng.
-- [ ] **Chuẩn bị benchmark corpus và data fixtures cho CA-VHC:** Chuẩn bị tập ngữ liệu câu/từ chuẩn tiếng Việt và synthetic fixtures đầu vào cho experiment runner của TV4 (tuân thủ quy chuẩn CA-VHC Dataset trong `08_handwriting_dataset_spec.md`).
+- [x] **✅ Chuẩn bị, rà soát độ phủ và đóng băng Benchmark Corpus CA-VHC v1.0:** Hoàn thành phân tích độ phủ ngôn ngữ học, độ phủ hình học (ascender/descender, diacritics stacking) và kiểm chứng tính rời nhau tuyệt đối ($DEV \cap HOLDOUT = \emptyset$) cho 20 từ DEV và 20 từ Holdout. Chính thức đóng băng phiên bản `CA-VHC-CORPUS-v1.0-FROZEN` tại [`docs/18_benchmark_corpus_freeze_report.md`](18_benchmark_corpus_freeze_report.md).
 - [ ] **Chuẩn bị nghiên cứu Writer Profile (P2 Preparation):** Xây dựng bản nháp JSON schema `WriterProfile` (có trường `version`, `metadata`, `feature_vector`) và protocol thu thập & ẩn danh hóa dữ liệu (tuân thủ quy chuẩn Writer Profile Dataset trong `08_handwriting_dataset_spec.md`, cam kết có sự đồng thuận của người viết, loại bỏ chữ ký và thông tin định danh cá nhân nhạy cảm).
 - [ ] **Prototype trích xuất đặc trưng độc lập (P2 Preparation):** Lập trình module prototype trích xuất tối thiểu 4 đặc trưng hình học định lượng cơ bản:
   1. Độ nghiêng trung bình (`slant_deg`);
@@ -196,11 +196,11 @@
 - [x] Pre-PR3 acceptance contract & ASCII baseline lock
 - [x] Tạo gói phiếu cross-review có contract ngữ cảnh AI tại [`reviews/README.md`](reviews/README.md)
 - [x] TV4 quản lý checkpoint và version binding tập trung tại [`reviews/README.md`](reviews/README.md); mọi reviewer phải dùng đúng `REVIEW_TARGET_COMMIT` hiện hành trong gói thay vì hash chép lại ở backlog này
-- [ ] TV1 hoàn tất phiếu [`reviews/tv1_chapter_1_3_review.md`](reviews/tv1_chapter_1_3_review.md), có human verdict và sign-off
+- [x] TV1 hoàn tất phiếu [`reviews/tv1_chapter_1_3_review.md`](reviews/tv1_chapter_1_3_review.md), có human verdict và sign-off
 - [ ] TV2 hoàn tất phiếu [`reviews/tv2_chapter_1_3_review.md`](reviews/tv2_chapter_1_3_review.md), có human verdict và sign-off
 - [x] TV3 hoàn tất phiếu [`reviews/tv3_chapter_1_3_review.md`](reviews/tv3_chapter_1_3_review.md), có human verdict và sign-off
 - [ ] TV4 xử lý toàn bộ finding trong [`reviews/review_disposition.md`](reviews/review_disposition.md) và phát hành bản hợp nhất sau review
-- [ ] TV1 formal corpus review/freeze
+- [x] TV1 formal corpus review/freeze (hoàn tất tại [`docs/18_benchmark_corpus_freeze_report.md`](18_benchmark_corpus_freeze_report.md))
 - [ ] TV3 clearance calibration
 - [ ] PR2 baseline adapters
 - [ ] PR3 CompositionState production implementation

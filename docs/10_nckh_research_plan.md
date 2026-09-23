@@ -277,9 +277,9 @@ Cross-review được thực hiện theo gói tài liệu Chương 1–3 và Res
 
 | Reviewer | Phạm vi phải duyệt | Artifact trọng tâm | Trạng thái |
 | :--- | :--- | :--- | :--- |
-| TV1 | Corpus coverage, DEV/Holdout governance, reproducibility và Writer Profile nằm ngoài RQ P0 | Docs 10–12; Chương 1 mục 1.5/1.9; Chương 3 mục 3.1/3.7/3.8 | `PENDING` |
+| TV1 | Corpus coverage, DEV/Holdout governance, reproducibility và Writer Profile nằm ngoài RQ P0 | Docs 10–12; Chương 1 mục 1.5/1.9; Chương 3 mục 3.1/3.7/3.8 | `CLOSED (PASS)` |
 | TV2 | RQ1, B1/B2/B3, transition cost, Viterbi, curvature và motion metrics | Chương 1 mục 1.4; Chương 2 mục 2.4–2.6; Chương 3 mục 3.3–3.5/3.8 | `PENDING` |
-| TV3 | RQ3 physical feasibility, calibration, actual draw time và physical clearance | Chương 1 mục 1.4.3/1.8/1.9; Chương 2 mục 2.5–2.6; Chương 3 mục 3.1/3.7/3.8 | `PENDING` |
+| TV3 | RQ3 physical feasibility, calibration, actual draw time và physical clearance | Chương 1 mục 1.4.3/1.8/1.9; Chương 2 mục 2.5–2.6; Chương 3 mục 3.1/3.7/3.8 | `CLOSED (PASS)` |
 | TV4 | RQ2, composition geometry, metric/runner integrity, citation boundary và code–docs consistency | Toàn bộ Freeze Pack và Chương 1–3; disposition toàn bộ finding | `INTEGRATION DRAFT COMPLETE — TEAM VERDICTS PENDING` |
 
 Verdict hợp lệ gồm `PENDING`, `PASS`, `PASS_WITH_CHANGES` và `BLOCKED`. Mỗi verdict phải gắn với phiên bản/commit đã review và được reviewer con người xác nhận; AI chỉ được soạn finding và đề xuất `AI_DRAFT_VERDICT`. `PASS_WITH_CHANGES` chưa được tính là hoàn tất cho đến khi finding đã có disposition và reviewer xác nhận lại; review tài liệu không thay thế software, corpus hoặc hardware gate.
@@ -287,8 +287,9 @@ Verdict hợp lệ gồm `PENDING`, `PASS`, `PASS_WITH_CHANGES` và `BLOCKED`. M
 ### 7.1. Điều kiện chuyển sang `RQ FREEZE: APPROVED`
 
 - [ ] TV2 xác nhận baseline và các giả thuyết chuyển động.
-- [ ] TV1 xác nhận phạm vi corpus và quy tắc leakage.
-- [ ] TV3 xác nhận wording cho các tuyên bố vật lý.
+- [x] TV1 xác nhận phạm vi corpus và quy tắc leakage (đã freeze tại [`docs/18_benchmark_corpus_freeze_report.md`](18_benchmark_corpus_freeze_report.md) và ký duyệt phiếu TV1).
+- [x] TV3 xác nhận wording cho các tuyên bố vật lý (đã ký duyệt phiếu TV3).
+
 - [x] `REVIEW_TARGET_COMMIT` được khóa và version-bind tập trung trong [`reviews/README.md`](reviews/README.md), ba phiếu reviewer và master disposition; tài liệu lõi không tự nhúng hash checkpoint để tránh self-reference.
 - [ ] TV1, TV2 và TV3 nộp verdict có version binding cho đúng phạm vi Chương 1–3.
 - [ ] TV4 xử lý toàn bộ finding tại [`reviews/review_disposition.md`](reviews/review_disposition.md) và kiểm tra chéo Docs 02/03/05/07/08/09/10–15.
