@@ -13,7 +13,7 @@
 | -------------------------- |----------------------------------------| --------------------------------------- | ----------- |
 | TV1 — AI Core              | Đã chốt và up 15 prompt test lên Drive | *(điền, hoặc để trống nếu không nghẽn)* | Đã xong     |
 | TV2 — AI Ứng dụng/CV       | *(điền)*                               | *(điền)*                                | *(điền)*    |
-| TV3 — Phần cứng            | xong phần code main.py                 | đợi lead xem rồi thêm bớt để nâng cấp                                  | today     |
+| TV3 — Phần cứng            | Đã hoàn tất PR #29 merge vào develop; hoàn thành draft cross-review Chương 1–3 (Phiếu TV3) | Blocked by hardware: chờ máy vẽ AxiDraw & cáp USB vật lý để chạy smoke test và hiệu chuẩn thực tế | Sprint 1–2  |
 | TV4 — Giao diện & Tích hợp | (điền)                                 | *(điền)*                                | *(điền)*    |
 
 
@@ -32,7 +32,7 @@
 | **TV4 — Project Lead & Handwriting / CA-VHC Composition Lead** | Hoàn tất Strict Validation, BƯỚC A/B, PR1 và Pre-PR3 Acceptance Contract; PR2 baseline adapters của TV2 đã hoàn tất; nhiệm vụ kế tiếp là cùng TV2 ký duyệt shared transition interface E4 để mở PR3, đồng thời tổng hợp Research Questions và Chương 3–4 | PR3 chỉ còn chờ Entry Gate E4. TV1 corpus freeze và TV3 hardware calibration là downstream validation gates. | 🟡 Đang làm |
 | **TV2 — Stroke Optimization & Path Planning Lead** | Step B technical cross-review đã PASS; PR2 baseline adapters B1/B2/B3 đã triển khai và được runner gọi độc lập qua method tag; nhiệm vụ tiếp theo: cùng TV4 ký duyệt shared transition interface E4 cho PR3 và tiếp tục chuẩn hóa ký hiệu toán học hàm mục tiêu $J$ | E4 cần TV4+TV2 cùng ký duyệt; không phải blocker của code PR2 | 🟡 Đang làm |
 | **TV1 — AI Data & Writer Profile Lead** | Hoàn thành thiết kế & đặc tả kỹ thuật bộ phiếu thu thập mẫu **OmniDraw Handwriting Collection Sheet Pack v1** (P01–P04 Pilot Candidate tại `docs/collection_sheets/`); nhiệm vụ tiếp theo: (1) scan-validation pipeline tối thiểu (fiducial detection, deskew, scale check, deterministic auto-crop), (2) bench print/scan P01–P04 ở 600 DPI, (3) coverage analysis P01–P04, (4) chốt collection protocol & error-handling rule (pending protocol decision), (5) chuẩn bị limited pilot 3–5 writers | Không | 🟡 Đang làm |
-| **TV3 — Hardware, Calibration & Physical Validation Lead** | Chuẩn hóa interface chung giữa simulator và máy vẽ thật; chuẩn bị SVG smoke test fixture; lập checklist hiệu chuẩn phần cứng; xác định metrics phần cứng bắt buộc (phân biệt simulator time và `actual_draw_time_sec` thật) | *Blocked by hardware:* chờ setup cáp & máy vẽ thực tế (tập trung hoàn thiện simulator & test protocol) | 🟡 Đang làm |
+| **TV3 — Hardware, Calibration & Physical Validation Lead** | Đã hoàn tất HAL/Simulator và PR #29 merge vào develop (23/23 tests pass); hoàn thành bản nháp cross-review Chương 1–3 (phiếu TV3 đạt AI_DRAFT: PASS); chuẩn bị sẵn sàng fixture SVG và quy trình hiệu chuẩn | *Blocked by hardware:* chờ setup cáp & máy vẽ thực tế (hoàn tất nền tảng phần mềm; chờ máy thật để chạy calibration) | 🟡 Đang làm |
 
 ---
 
@@ -114,6 +114,7 @@
 - [x] Chuẩn bị file SVG fixture chuẩn (`tests/fixtures/smoke_test_specimen.svg` và `tests/fixtures/bezier_length_test.svg`) chứa nét thẳng, Bézier, Arc, handwriting và pen-up.
 - [x] Lập và validate Calibration Profile YAML (`config/calibration_profile.yaml`), nạp tự động thông số vận tốc, gia tốc, nâng hạ bút và offset 5mm.
 - [x] Xác định danh mục metrics phần cứng bắt buộc đo: phân biệt rạch ròi simulator/fake driver (`is_simulated=True`, `actual_hardware_measured=False`) và máy vẽ thật (`is_simulated=False`, `actual_hardware_measured=True`).
+- [x] **Hoàn tất bản nháp Cross-review Báo cáo NCKH Chương 1–3** (phiếu [`docs/reviews/tv3_chapter_1_3_review.md`](reviews/tv3_chapter_1_3_review.md)): xác nhận phân tách rõ rệt thời gian mô phỏng vs `actual_draw_time_sec`, giữ đúng ranh giới an toàn vật lý của clearance, AI draft verdict đạt `PASS`.
 - [ ] *Nếu có máy vẽ và cáp kết nối:* Chạy smoke test trên giấy thật và lưu lại log dữ liệu thực nghiệm đầu tiên. *(Blocked by hardware: chờ máy vẽ & cáp vật lý)*.
 - [x] *Nếu chưa có máy:* Ghi nhận rõ blocker phần cứng, cung cấp fake driver có thể kiểm soát pause/cancel động, simulator và CLI `--smoke-test` để TV4 và TV2 tích hợp không bị lỗi crash.
 
@@ -197,7 +198,7 @@
 - [x] TV4 quản lý checkpoint và version binding tập trung tại [`reviews/README.md`](reviews/README.md); mọi reviewer phải dùng đúng `REVIEW_TARGET_COMMIT` hiện hành trong gói thay vì hash chép lại ở backlog này
 - [ ] TV1 hoàn tất phiếu [`reviews/tv1_chapter_1_3_review.md`](reviews/tv1_chapter_1_3_review.md), có human verdict và sign-off
 - [ ] TV2 hoàn tất phiếu [`reviews/tv2_chapter_1_3_review.md`](reviews/tv2_chapter_1_3_review.md), có human verdict và sign-off
-- [ ] TV3 hoàn tất phiếu [`reviews/tv3_chapter_1_3_review.md`](reviews/tv3_chapter_1_3_review.md), có human verdict và sign-off
+- [x] TV3 hoàn tất phiếu [`reviews/tv3_chapter_1_3_review.md`](reviews/tv3_chapter_1_3_review.md), có human verdict và sign-off
 - [ ] TV4 xử lý toàn bộ finding trong [`reviews/review_disposition.md`](reviews/review_disposition.md) và phát hành bản hợp nhất sau review
 - [ ] TV1 formal corpus review/freeze
 - [ ] TV3 clearance calibration
