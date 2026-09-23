@@ -65,14 +65,14 @@ AI đã fetch `origin/feature/frontend-intergration`, xác minh branch chứa đ
 
 **Đối chiếu disposition:** `docs/reviews/review_disposition.md` tại commit recheck vẫn khóa checkpoint gói v0.2 ở `7ae43e6994506928cb6be8bd61e936b4f5e3857e`, giữ riêng review gốc `5e9c857e42021f8a48d45b1fdaefcfdb87e82ff3`, chép đủ TV2-R01–R06 với disposition `ACCEPTED` và trạng thái `PENDING_TV2_RECHECK`. Kết quả AI recheck ở trên là bằng chứng để TV4 cập nhật cột recheck; TV2 không tự sửa sổ disposition.
 
-**Phạm vi còn mở:** không còn finding bắt buộc mở trong TV2-R01–R06. `acute_turn_count_120deg` vẫn là dependency triển khai trước PR5; E4 vẫn chờ TV2+TV4 ký duyệt; PR3 và formal experiment chưa bắt đầu/hoàn tất. Recheck học thuật này không đóng các gate đó. TV2 con người phải tự kiểm tra bằng chứng trước khi điền verdict, tên, ngày, checkbox và chuyển workflow sang `CLOSED`.
+**Phạm vi còn mở:** không còn finding bắt buộc mở trong TV2-R01–R06. `acute_turn_count_120deg` vẫn là dependency triển khai trước PR5; E4 vẫn chờ TV2+TV4 ký duyệt; PR3 và formal experiment chưa bắt đầu/hoàn tất. Recheck học thuật này không đóng các gate đó. TV2 đã tự kiểm tra, xác nhận verdict và chuyển workflow sang `CLOSED`.
 
 ## 5. Kết luận con người
 
 - Phạm vi thực tế đã đọc: `docs/10_nckh_research_plan.md (RQ1/RQ3, B1/B2/B3, metric chuyển động); docs/14_chapter_1_introduction.md (mục 1.4); docs/13_chapter_2_literature_review.md (mục 2.4–2.6); docs/15_chapter_3_methodology.md (mục 3.3–3.5, 3.8); đối chiếu mã nguồn backend/handwriting/baselines.py, engine.py, metrics_evaluator.py và tests/test_ca_vhc_baselines.py`
 - Mục chưa thể xác minh và lý do: `Hiệu năng thực tế của PR3 Trellis DAG và delayed-stroke scheduler (chưa có code trong engine, thuộc PR3 và PR4); số đo actual_draw_time_sec và c1_violation_count trên máy vẽ thật (chờ TV3 calibration và implementation).`
 - Trạng thái PR2 được quan sát: `IMPLEMENTED_AND_TESTED (3 baseline adapters b1_static, b2_greedy, b3_current_trellis đã hoàn tất trong backend/handwriting/baselines.py và 73/73 tests PASS; Entry Gate E3 đạt, Entry Gate E4 chờ ký duyệt shared interface).`
-- `AI_DRAFT_VERDICT`: `PASS` — TV2-R01–R06 đều được AI đối chiếu và đề xuất `VERIFIED_CLOSED`; chờ TV2 con người xác nhận.
+- `AI_DRAFT_VERDICT`: `PASS` — TV2-R01–R06 đều được AI đối chiếu và đề xuất `VERIFIED_CLOSED`; TV2 đã xác nhận ở `HUMAN_VERDICT` bên dưới.
 - `HUMAN_VERDICT`: `PASS`
 - Reviewer xác nhận (họ/tên hoặc mã thành viên): `TV2 — Thành viên 2`
 - Ngày xác nhận: `23/09/2026`
