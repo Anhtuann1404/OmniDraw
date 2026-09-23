@@ -3,6 +3,8 @@
 ```text
 REVIEWER_ROLE: TV1 — Data & Writer Profile Lead
 REVIEW_TARGET_COMMIT: 7ae43e6994506928cb6be8bd61e936b4f5e3857e
+PACKAGE_CHECKPOINT_COMMIT: 7ae43e6994506928cb6be8bd61e936b4f5e3857e
+RECHECK_TARGET_COMMIT: 031d1983f07895306a0cf31b72300ad4d9e5ee50
 WORKFLOW_STATUS: CLOSED
 AI_DRAFT_VERDICT: PASS
 HUMAN_VERDICT: PASS
@@ -44,14 +46,47 @@ Hãy làm reviewer TV1. Đọc docs/reviews/README.md và phiếu này, sau đó
 
 `TEMPLATE` không phải finding thật và không được tính vào verdict. Trạng thái finding thật: `OPEN`, `ACCEPTED`, `REJECTED_WITH_REASON`, `DEFERRED_WITH_OWNER`, `VERIFIED_CLOSED`.
 
+### 4.1. Recheck scoped TV1 trên commit `031d1983f07895306a0cf31b72300ad4d9e5ee50`
+
+AI reviewer TV1 đã fetch branch, đối chiếu diff giữa checkpoint đã ký PASS (`7ae43e6994506928cb6be8bd61e936b4f5e3857e`) và commit recheck cuối (`031d1983f07895306a0cf31b72300ad4d9e5ee50`) theo đúng phạm vi được giao:
+
+1. **`docs/10_nckh_research_plan.md`**:
+   - **Liên kết ngữ liệu**: Cập nhật link báo cáo corpus freeze chính thức sang [`docs/19_benchmark_corpus_freeze_report.md`](../19_benchmark_corpus_freeze_report.md) (mục 3.1, 4.4, 7.1) — đường dẫn chính xác và tồn tại.
+   - **Công thức H1.2**: Định nghĩa rõ mức giảm số lần nhấc bút $\Delta N_{lift}$ dựa trên tổng tích lũy $\sum_{c \in \mathcal{C}} N_{lift}$ trên tập ghép cặp $\mathcal{C}$ của benchmark corpus (tránh hiện tượng lượng tử hóa khi dùng median từng từ đơn; quy định rõ mẫu số 0 là `NOT_APPLICABLE`).
+   - **Trạng thái PR2 / E4**: Ghi nhận Entry Gate E3 (baseline adapters B1/B2/B3) đã hoàn thành (`IMPLEMENTED_AND_TESTED`), nhưng Entry Gate E4 (chữ ký interface chuyển tiếp) tiếp tục giữ `PENDING` chờ TV2+TV4 ký duyệt; không tuyên bố sớm trước khi có code/hợp đồng chính thức.
+   - **Quản trị phân tách DEV/Holdout**: Bảo toàn kỷ luật $DEV \cap HOLDOUT = \emptyset$; runner bắt buộc có cờ `--allow-holdout` mới được phép chạy trên tập Holdout; ngăn ngừa tuyệt đối rò rỉ dữ liệu.
+
+2. **`docs/14_chapter_1_introduction.md` §1.9**:
+   - **Ranh giới công bố**: Cập nhật đồng bộ trạng thái kỹ thuật (PR1 metric infra và PR2 baseline adapters đã xong; E4 pending; PR3 chưa bắt đầu; chưa có số liệu benchmark chính thức).
+   - **Phân ranh P0 vs P2**: Nhấn mạnh phạm vi nghiên cứu của đề tài ở giai đoạn P0 tập trung hoàn toàn vào tối ưu hóa chuyển tiếp nét đơn tiếng Việt dựa trên dynamic programming; không tuyên bố học động hay thích ứng phong cách cá nhân người dùng (Writer Profile được bảo lưu tường minh cho giai đoạn P2).
+
+3. **`docs/15_chapter_3_methodology.md` §§3.1, 3.7, 3.8**:
+   - **Mục 3.1 (Bảng 3.1.3)**: Khẳng định B1, B2, B3 đều gắn dấu hậu xử lý qua `generate_accents()`; B2 là tham lam thân chữ (`GlyphVariant`), không nhận thức vị trí dấu; chỉ Proposed CA-VHC mới tối ưu đồng thời dấu.
+   - **Mục 3.5.2**: Tái cấu trúc $J_{transition} = \min(J_{conn}, J_{lift})$ với hard constraint $J_{conn} = +\infty$ khi va chạm bridge; bóc tách rõ ràng giữa $C_{state}$ và $J_{transition}$, loại bỏ double-count.
+   - **Mục 3.7.2**: Bổ sung `acute_turn_count_120deg` với trạng thái tường minh `Chưa triển khai/đo`, diagnostic bắt buộc cho H3.2 trước benchmark PR5.
+   - **Mục 3.7.3 & 3.7.4**: Xác nhận bảo toàn 20 từ DEV, 20 từ Holdout, seed 42, fingerprint 48 ca ASCII; Exit Gate PR3 yêu cầu khắt khe giữ nguyên vẹn các invariant này.
+   - **Mục 3.8**: Độ phức tạp thuật toán được bóc tách rành mạch: $O(NK^2)$ là số phép đánh giá cạnh trên Trellis; chi phí thực tế worst-case khi tính toán hình học polyline va chạm là $O(NK^2 L_{geom})$ với $L_{geom} = O(L_{bridge} L_{glyph})$. Không overclaim về độ trễ thời gian thực.
+
+| ID | Claim cần kiểm tra lại | Kết quả AI recheck | Bằng chứng / Đối chiếu |
+| :--- | :--- | :--- | :--- |
+| TV1-R01 | Phân ranh Pilot Candidate người viết thật (~40 writer) vs Benchmark Corpus kỹ thuật | `VERIFIED_CLOSED` | Ranh giới giữa bộ phiếu P01–P04 (`PILOT CANDIDATE`, P2) và Benchmark Corpus 20 DEV / 20 Holdout được duy trì nhất quán tại `docs/10_nckh_research_plan.md` mục 4.4 và `docs/14_chapter_1_introduction.md` §1.9. Không có sự pha trộn giữa dữ liệu người viết thật và benchmark hình học P0. |
+| TV1-R02 | Ranh giới DEV/Holdout và cơ chế chống rò rỉ dữ liệu (leakage prevention) | `VERIFIED_CLOSED` | $DEV \cap HOLDOUT = \emptyset$ vẫn được bảo đảm tuyệt đối; runner tiếp tục chặn truy cập Holdout trừ khi có cờ tường minh `--allow-holdout`. Toàn bộ 48 ca ASCII và tập 20 DEV được freeze tại `docs/19_benchmark_corpus_freeze_report.md`. |
+| TV1-R03 | Phân ranh học thuật giữa CA-VHC P0 và Writer Profile P2 | `VERIFIED_CLOSED` | `docs/14_chapter_1_introduction.md` §1.9 và `docs/15_chapter_3_methodology.md` §3.8 khẳng định CA-VHC P0 là thuật toán tối ưu hóa quy hoạch động hình học; loại bỏ mọi phát biểu ngộ nhận về học máy sinh phong cách cá nhân hóa. |
+
+**Đánh giá tổng thể vòng recheck**: Toàn bộ thay đổi giữa `7ae43e6` và `031d198` thuộc phạm vi TV1 đều tăng cường tính chặt chẽ học thuật, chuẩn hóa công thức toán học (H1.2), làm rõ giới hạn độ phức tạp và bảo vệ nghiêm ngặt ranh giới dữ liệu / tính tái lập. Không phát hiện bất kỳ regression hay lỗi mới nào.
+
 ## 5. Kết luận con người
 
-- Phạm vi thực tế đã đọc: `10_nckh_research_plan.md` (mục 1.1, 2.2, 4.4, 7); `11_literature_review_protocol.md`; `12_literature_evidence_matrix.md`; `14_chapter_1_introduction.md` (mục 1.5, 1.9); `13_chapter_2_literature_review.md` (mục 2.2–2.3); `15_chapter_3_methodology.md` (mục 3.1, 3.7, 3.8).
-- Mục chưa thể xác minh và lý do: Dữ liệu quét thực tế bộ phiếu P01–P04 từ người viết thật (chưa thể xác minh do đang ở giai đoạn `PILOT CANDIDATE`, chưa triển khai in ấn, quét bench và thu thập diện rộng).
-- Trạng thái corpus được quan sát: DEV và Holdout rời nhau hoàn toàn, cấu hình seed/runner đạt chuẩn tái lập, sẵn sàng để TV1 thực hiện bước Formal Corpus Freeze (P0.5).
+- Phạm vi thực tế đã đọc:
+  - Checkpoint ban đầu `7ae43e6994506928cb6be8bd61e936b4f5e3857e`: `10_nckh_research_plan.md` (mục 1.1, 2.2, 4.4, 7); `11_literature_review_protocol.md`; `12_literature_evidence_matrix.md`; `14_chapter_1_introduction.md` (mục 1.5, 1.9); `13_chapter_2_literature_review.md` (mục 2.2–2.3); `15_chapter_3_methodology.md` (mục 3.1, 3.7, 3.8).
+  - Scoped recheck commit `031d1983f07895306a0cf31b72300ad4d9e5ee50`: `docs/10_nckh_research_plan.md` (trạng thái PR2/E4, công thức H1.2, link `19_benchmark_corpus_freeze_report.md`); `docs/14_chapter_1_introduction.md` (§1.9); `docs/15_chapter_3_methodology.md` (§§3.1, 3.7, 3.8).
+- Mục chưa thể xác minh và lý do: Dữ liệu quét thực tế bộ phiếu P01–P04 từ người viết thật (vẫn ở giai đoạn `PILOT CANDIDATE`, thuộc mở rộng tương lai P2).
+- Trạng thái corpus được quan sát: DEV và Holdout rời nhau hoàn toàn, đã chính thức freeze tại `docs/19_benchmark_corpus_freeze_report.md`, cấu hình seed 42 / runner / baseline fingerprints đạt chuẩn tái lập.
 - `AI_DRAFT_VERDICT`: `PASS`
 - `HUMAN_VERDICT`: `PASS`
-- Reviewer xác nhận (họ/tên hoặc mã thành viên): `TV1 (AI Data & Writer Profile Lead)`
+- Reviewer xác nhận (họ/tên hoặc mã thành viên): `TV1 — Thành viên 1 (Data & Writer Profile Lead)`
 - Ngày xác nhận: `23/09/2026`
 - Commit đã review: `7ae43e6994506928cb6be8bd61e936b4f5e3857e`
+- Checkpoint gói cross-review v0.2: `7ae43e6994506928cb6be8bd61e936b4f5e3857e`
+- Commit recheck được TV4 cung cấp: `031d1983f07895306a0cf31b72300ad4d9e5ee50` — `VERIFIED`
 - [x] Tôi đã tự kiểm tra findings và xác nhận verdict trên; đây không phải kết luận tự động của AI.
