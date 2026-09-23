@@ -33,6 +33,7 @@ File này là điểm vào chính của toàn bộ tài liệu OmniDraw. Chọn 
 - [`09_pr3_acceptance_criteria.md`](09_pr3_acceptance_criteria.md): Entry/Exit Gate PR3.
 - [`16_rq_code_metric_test_traceability.md`](16_rq_code_metric_test_traceability.md): truy vết RQ–code–metric–test và evidence ledger.
 - [`17_pr3_implementation_readiness.md`](17_pr3_implementation_readiness.md): dependency PR2, bản đồ symbol, các lát cắt triển khai, test map và Definition of Ready cho PR3.
+- [`18_pr3_e4_shared_transition_contract_draft.md`](18_pr3_e4_shared_transition_contract_draft.md): dự thảo giao diện chuyển tiếp TV2–TV4 để đóng Entry Gate E4; chưa được ký duyệt.
 
 ## Dữ liệu chữ viết tay
 

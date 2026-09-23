@@ -74,7 +74,7 @@ Gateway kiểm tra kiểu đầu vào, style, font, `letter_type`, seed và kh�
 | Snapshot ASCII 48 cấu hình, seed determinism và DEV-only guard | `IMPLEMENTED_AND_TESTED` | [`09_pr3_acceptance_criteria.md`](09_pr3_acceptance_criteria.md) |
 | `DiacriticCandidate`, `CompositionState` và hàm mục tiêu hai cấp | `DESIGN_LOCKED` | Bước B đã được TV2 cross-review và PASS |
 | Baseline adapters B1/B2/B3 | `IMPLEMENTED_AND_TESTED` | TV2 hoàn tất Entry Gate E3; adapter và runner method tags có test bảo vệ |
-| Interface chuyển tiếp dùng chung | `PENDING_PR2_E4` | Chờ TV2+TV4 ký duyệt `CompositionState`, `world_bbox`, `DiacriticConfig` |
+| Interface chuyển tiếp dùng chung | `PENDING_E4_SIGNOFF` | PR2/E3 đã hoàn tất; chờ TV2+TV4 ký duyệt `CompositionState`, `world_bbox`, `DiacriticConfig` và ranh giới chi phí theo [`18_pr3_e4_shared_transition_contract_draft.md`](18_pr3_e4_shared_transition_contract_draft.md) |
 | Diacritic-Aware Trellis production | `PENDING_PR3` | Chưa có trong engine hiện hành |
 | Delayed-stroke scheduler | `PENDING_PR4` | Chỉ có thiết kế phân tầng WHERE/WHEN |
 | Formal benchmark và ablation | `PENDING_PR5` | Chờ PR2–PR4 và corpus freeze |

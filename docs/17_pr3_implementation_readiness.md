@@ -3,11 +3,11 @@
 **Phiên bản:** 0.1
 **Ngày lập:** 2026-09-22
 **Owner:** TV4 — Handwriting / CA-VHC Composition Lead
-**Trạng thái:** `PREPARATION COMPLETE — IMPLEMENTATION BLOCKED BY E3/E4`
+**Trạng thái:** `PREPARATION COMPLETE — IMPLEMENTATION BLOCKED BY E4`
 **Review boundary:** `OUTSIDE_REVIEW_TARGET_7ae43e6` — tài liệu chuẩn bị này không thay đổi Chương 1–3 và không yêu cầu mở lại gói cross-review v0.2.
 
 > [!IMPORTANT]
-> Đây là bản đồ sẵn sàng triển khai, không phải mã PR3 và không phải bằng chứng PR3 đã bắt đầu. Không sửa production engine, không tạo test giả PASS và không chạy Holdout trước khi E3/E4 được đóng.
+> Đây là bản đồ sẵn sàng triển khai, không phải mã PR3 và không phải bằng chứng PR3 đã bắt đầu. E3 đã đóng nhờ PR2; không sửa production engine, không tạo test giả PASS và không chạy Holdout trước khi E4 được đóng.
 
 ## 1. Mục tiêu
 
@@ -25,6 +25,7 @@ Nguồn chuẩn vẫn là:
 - [`07_diacritic_aware_state_design.md`](07_diacritic_aware_state_design.md): kiến trúc `DiacriticCandidate` và `CompositionState`.
 - [`09_pr3_acceptance_criteria.md`](09_pr3_acceptance_criteria.md): Entry/Exit Gate.
 - [`16_rq_code_metric_test_traceability.md`](16_rq_code_metric_test_traceability.md): ánh xạ RQ–metric–test.
+- [`18_pr3_e4_shared_transition_contract_draft.md`](18_pr3_e4_shared_transition_contract_draft.md): dự thảo hợp đồng E4 để TV2/TV4 ký duyệt; chưa phải sign-off.
 
 Nếu pack này mâu thuẫn với Docs 07 hoặc 09, Docs 07/09 có quyền ưu tiên và pack phải được sửa trước khi code.
 
@@ -34,11 +35,11 @@ Nếu pack này mâu thuẫn với Docs 07 hoặc 09, Docs 07/09 có quyền ưu
 | :--- | :--- | :--- | :--- |
 | E1 — PR1 metrics/runner | `PASS` | Evaluator, CSV logger, experiment runner và DEV fingerprint fixture đã tồn tại | Không sửa lại trong PR3 trừ khi cần metadata thật sự mới |
 | E2 — ASCII geometry lock | `PASS` | 48 cấu hình tại `pr3_ascii_baseline_fingerprints.json` | Mọi lát cắt PR3 phải giữ 48/48 fingerprint |
-| E3 — B1/B2/B3 adapters | `WAITING_PR2` | TV2 bàn giao ba adapter dùng chung runner | Chưa viết production PR3 |
+| E3 — B1/B2/B3 adapters | `PASS` | PR #32 merge commit `bcc1a7a`; `baselines.py`, runner method tags và `tests/test_ca_vhc_baselines.py`; full suite 115 passed ngày 2026-09-23 | Dependency PR2 đã nhận; E4 vẫn chặn production PR3 |
 | E4 — Shared transition interface | `WAITING_TV2_TV4_SIGNOFF` | Chữ ký transition, `world_bbox`, `DiacriticConfig` và ownership | Chưa sửa `eval_transition()`/`optimize_word_dag()` |
 | E5 — Corpus integrity | `PASS` | Acceptance specimens chỉ lấy từ DEV; Holdout guard đã có | Cấm `--corpus holdout/all` và `--allow-holdout` trong PR3 |
 
-**Quy tắc mở PR3:** chỉ chuyển trạng thái sang `READY_TO_IMPLEMENT` khi E3 và E4 có code/test hoặc biên bản contract cụ thể trong repository. Tin nhắn miệng hoặc việc PR2 “gần xong” không đủ đóng gate.
+**Quy tắc mở PR3:** chỉ chuyển trạng thái sang `READY_TO_IMPLEMENT` khi E4 được TV2 và TV4 xác nhận bằng hợp đồng cụ thể trong repository, các quyết định còn mở được xử lý và regression trên commit nền vẫn PASS. PR2 đã merge không tự động đóng E4.
 
 ## 3. Checklist nhận bàn giao PR2
 
@@ -46,13 +47,13 @@ TV4 dùng bảng này khi review PR2. Tên symbol cuối cùng do PR2 quyết đ
 
 ### 3.1. Baseline adapters
 
-- [ ] Có ba method độc lập: B1 Static, B2 Greedy và B3 Current Trellis.
-- [ ] Cùng một input text/font/style/seed tạo đầu ra có schema chung để runner so sánh.
-- [ ] Mỗi method có `method_tag` ổn định, không suy từ tên hiển thị UI.
-- [ ] B3 bảo toàn hành vi engine hiện hành trước PR3.
-- [ ] Adapter không đọc Holdout mặc định và không tự chọn corpus.
+- [x] Có ba method độc lập: B1 Static, B2 Greedy và B3 Current Trellis.
+- [x] Cùng một input text/font/style/seed tạo đầu ra có schema chung để runner so sánh.
+- [x] Mỗi method có `method_tag` ổn định, không suy từ tên hiển thị UI.
+- [x] B3 bảo toàn hành vi engine hiện hành trước PR3.
+- [x] Adapter không đọc Holdout mặc định và không tự chọn corpus.
 - [ ] Cùng input/seed chạy lặp lại cho cùng fingerprint và metric hình học.
-- [ ] Không adapter nào gọi Proposed CA-VHC hoặc dùng logic dấu của PR3 trước khi PR3 tồn tại.
+- [x] Không adapter nào gọi Proposed CA-VHC hoặc dùng logic dấu của PR3 trước khi PR3 tồn tại.
 
 ### 3.2. Shared transition contract
 
@@ -75,7 +76,7 @@ TV4 dùng bảng này khi review PR2. Tên symbol cuối cùng do PR2 quyết đ
 6. Test nào chứng minh B1/B2/B3 dùng cùng input và seed?
 7. PR2 thay đổi file nào trong `backend/handwriting/` và có giao nhau với vùng TV4 sẽ sửa không?
 
-Nếu một câu chưa có câu trả lời kiểm chứng được, E4 giữ `WAITING`.
+PR2 đã trả lời các câu về method tag, schema và B3; các quyết định về transition breakdown, world geometry và migration `cost_legibility` đang được ghi tại [`18_pr3_e4_shared_transition_contract_draft.md`](18_pr3_e4_shared_transition_contract_draft.md). Nếu một câu E4 chưa có câu trả lời được hai owner xác nhận, E4 giữ `WAITING`.
 
 ## 4. Bản đồ điểm chạm mã nguồn PR3
 
@@ -223,7 +224,7 @@ Không tạo test `xfail` chỉ để làm dashboard trông đầy đủ. Trư�
 
 PR3 được phép bắt đầu khi toàn bộ mục sau đạt:
 
-- [ ] E3 đóng: B1/B2/B3 đã merge và test pass.
+- [x] E3 đóng: B1/B2/B3 đã merge và test pass (PR #32, `bcc1a7a`; full suite 115 passed ngày 2026-09-23).
 - [ ] E4 đóng: shared transition contract được TV2 và TV4 xác nhận.
 - [ ] Working tree PR3 không chứa thay đổi chưa review của PR2.
 - [ ] 48 ASCII baseline và toàn bộ suite hiện hành pass trên commit nền.

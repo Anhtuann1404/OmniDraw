@@ -698,7 +698,7 @@ Năm quyết định kỹ thuật dưới đây đã được thống nhất gi�
 • PR3 ENTRY GATE:             WAITING FOR E4 (TV2+TV4 Shared Interface Agreement)
 • READY FOR STEP C:            YES (Software implementation authorized by TV4)
 • FORMAL EXPERIMENT READINESS: NO (Pending TV1 corpus freeze & TV3 hardware calibration)
-• HÀNH ĐỘNG KẾ TIẾP:           TV2 hoàn tất PR2 (Baseline Adapters); TV4 chuẩn bị PR3
+• HÀNH ĐỘNG KẾ TIẾP:           TV2+TV4 ký duyệt E4; PR2/E3 đã hoàn tất, PR3 chưa bắt đầu
 ═══════════════════════════════════════════════════════════════════════════════════════════
 ```
 

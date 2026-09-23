@@ -56,7 +56,7 @@ Không được đổi một hàng thành `VERIFIED_INFRASTRUCTURE` chỉ vì t�
 | CSV | [`backend/logs/csv_logger.py`](../backend/logs/csv_logger.py) | Kiểm tra schema nhất quán và ghi dòng deterministic | Internal research schema chưa tự động trở thành public API contract |
 | Regression fixtures | [`tests/fixtures/ca_vhc_pr1_fingerprints.json`](../tests/fixtures/ca_vhc_pr1_fingerprints.json), [`tests/fixtures/pr3_ascii_baseline_fingerprints.json`](../tests/fixtures/pr3_ascii_baseline_fingerprints.json) | Khóa 160 DEV cases và 48 ASCII cases | Fingerprint bảo vệ hình học, không chứng minh chất lượng hoặc hiệu năng |
 | Metric tests | [`tests/test_ca_vhc_metrics.py`](../tests/test_ca_vhc_metrics.py) | Collision, clearance, curvature, trace, corpus disjointness và compatibility | Chủ yếu là unit/synthetic evidence; chưa phải formal comparative experiment |
-| Runner tests | [`tests/test_ca_vhc_experiment_runner.py`](../tests/test_ca_vhc_experiment_runner.py) | Reproducibility, CSV schema, overwrite guard, Holdout guard, frozen DEV snapshot | Chưa kiểm tra parity giữa bốn methods vì PR2/PR3 chưa có |
+| Runner tests | [`tests/test_ca_vhc_experiment_runner.py`](../tests/test_ca_vhc_experiment_runner.py), [`tests/test_ca_vhc_baselines.py`](../tests/test_ca_vhc_baselines.py) | Reproducibility, CSV schema, overwrite guard, Holdout guard, frozen DEV snapshot; B1/B2/B3 method-tag execution | Ba baseline PR2 đã có; parity với Proposed còn chờ PR3, formal comparison còn chờ downstream gates |
 | Pre-PR3 tests | [`tests/test_pr3_acceptance_baseline.py`](../tests/test_pr3_acceptance_baseline.py) | ASCII fingerprint, seed determinism, bounds/SVG, batch-order independence, DEV-only scope | Là precondition/regression lock; không phải PR3 exit evidence |
 
 ---
@@ -93,7 +93,7 @@ Không được đổi một hàng thành `VERIFIED_INFRASTRUCTURE` chỉ vì t�
 | Gate | Điều kiện đóng gate | Bằng chứng bắt buộc | Hiện trạng | Chặn |
 | :--- | :--- | :--- | :--- | :--- |
 | **G0 — Research cross-review** | TV1–TV3 có human verdict; TV4 disposition mọi finding | Ba phiếu review + `review_disposition.md` | `IN_PROGRESS` | `RQ FREEZE: APPROVED` |
-| **G1 — PR2 baseline parity** | B1/B2/B3 chạy độc lập qua cùng interface và schema | Adapter tests; parity tests; TV2 sign-off | `PENDING_PR2` | PR3 Entry Gate; H1/H3 comparative evaluation |
+| **G1 — PR2 baseline parity / E4 interface** | B1/B2/B3 chạy độc lập qua cùng interface và schema; TV2+TV4 thống nhất interface transition cho Proposed | PR #32 (`bcc1a7a`), adapter tests PASS; hợp đồng E4 và hai owner sign-off còn thiếu | `E3_PASS_E4_PENDING` | E4 chặn PR3 implementation; formal H1/H3 còn cần PR3–PR5 |
 | **G2 — PR3 software exit** | `CompositionState` production; 10/10 DEV specimens; 0 crash/NaN; bounds/regression đạt | PR3 unit/integration/acceptance suite | `PENDING_PR3` | H2; Proposed rows; PR4 |
 | **G3 — PR4 delayed-stroke P0** | Deterministic delayed-stroke scheduling và tie-break | Unit/regression tests; stroke-order trace | `PENDING_PR4` | H1 về pen-lift đầy đủ; PR5 |
 | **G4 — Formal corpus freeze** | TV1 duyệt coverage/version và khóa DEV/Holdout | Corpus manifest/version; leakage check | `PENDING_TV1_FREEZE` | Formal PR5 / mở Holdout |

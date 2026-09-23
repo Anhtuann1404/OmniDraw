@@ -67,7 +67,7 @@
   - *Lưu ý phạm vi:* TV4 bắt đầu triển khai PR1 (Metrics & Experiment Infrastructure). Không bắt đầu PR3 (CompositionState) trước khi PR1 có test và metric baseline ổn định. TV1 corpus freeze và TV3 hardware calibration là downstream validation gates.
 - [x] **✅ BƯỚC C / PR1 — Hoàn thiện internal experiment metrics and CSV integration (Commit `daca566`):** Tích hợp hoàn tất CA-VHC internal metrics evaluator (`backend/handwriting/metrics_evaluator.py`), chuẩn hóa hệ thống ghi log CSV (`backend/logs/csv_logger.py`) theo schema 19 cột bất biến, hoàn thành automated experiment runner (`backend/handwriting/experiment_runner.py`), và khóa fixture kiểm chuẩn DEV 160 trường hợp (`tests/fixtures/ca_vhc_pr1_fingerprints.json`) với toàn bộ automated tests đạt PASS.
 - [x] **✅ Pre-PR3 Acceptance Contract & Khóa Snapshot ASCII (Docs 09):** Ban hành Hợp đồng Nghiệm thu Kỹ thuật trước PR3 ([`09_pr3_acceptance_criteria.md`](09_pr3_acceptance_criteria.md)); E1, E2, E3 và E5 đã PASS, Entry Gate chỉ còn chờ E4 shared interface agreement; FORMAL EXPERIMENT READINESS: NO.
-- [ ] **BƯỚC C / PR3 — CA-VHC Diacritic-Aware Trellis DAG (TV4 lead, TV2 phối hợp):** Triển khai `CompositionState = (GlyphVariant, DiacriticCandidate)`, tích hợp kiểm tra va chạm dấu tiếng Việt vào Trellis DAG recurrence và dynamic diacritic placement. *(Trạng thái: CHƯA BẮT ĐẦU — đang chờ TV2 hoàn tất PR2)*.
+- [ ] **BƯỚC C / PR3 — CA-VHC Diacritic-Aware Trellis DAG (TV4 lead, TV2 phối hợp):** Triển khai `CompositionState = (GlyphVariant, DiacriticCandidate)`, tích hợp kiểm tra va chạm dấu tiếng Việt vào Trellis DAG recurrence và dynamic diacritic placement. *(Trạng thái: CHƯA BẮT ĐẦU — PR2/E3 đã hoàn tất, còn chờ TV2+TV4 ký duyệt E4 theo [`18_pr3_e4_shared_transition_contract_draft.md`](18_pr3_e4_shared_transition_contract_draft.md))*.
 - [ ] **Automated Experiment Matrix Execution:** Chạy tự động ma trận thực nghiệm sau khi PR2 và PR3 hoàn thành (không chạy holdout trước khi TV1 freeze corpus).
 - [ ] **Public Metric Schema:** Định nghĩa public metric schema chỉ cho các trường backend thực sự xuất ổn định; giữ API Spec cập nhật qua PR riêng.
 - [ ] **Backward Compatibility:** Bảo toàn tuyệt đối public API hiện tại (`generate_handwriting_svg`, `text_to_strokes`) và deterministic behavior.
@@ -84,7 +84,7 @@
 - [ ] **Chuẩn hóa 2 bộ baseline đối chứng:**
   - *Bộ baseline Art Mode / Path Optimization (TV2 lead):* (1) Original contour order / Naive; (2) Greedy Nearest Neighbor; (3) OmniDraw `cKDTree + Or-opt + Kinematic Turn Penalty`.
   - *Bộ baseline Handwriting CA-VHC (TV2 phụ trách metric chuyển động, TV4 lead composition & runner):* (1) Static Glyph Renderer; (2) Greedy contextual/connection heuristic; (3) Current Trellis DAG (chưa có ràng buộc dấu nâng cao). *(Phương pháp đề xuất CA-VHC mở rộng là đối tượng nghiên cứu được đánh giá, không tính là baseline đối chứng thứ tư).*
-- [ ] **Phối hợp hàm mục tiêu $J$ / Entry Gate E4:** Adapter PR2 tái sử dụng `eval_transition()` hiện hành; còn chờ TV4+TV2 ký duyệt chữ ký chuyển tiếp cho `CompositionState`, `world_bbox` và `DiacriticConfig` trước PR3.
+- [ ] **Phối hợp hàm mục tiêu $J$ / Entry Gate E4:** Adapter PR2 tái sử dụng `eval_transition()` hiện hành; dự thảo hợp đồng tại [`18_pr3_e4_shared_transition_contract_draft.md`](18_pr3_e4_shared_transition_contract_draft.md) nêu interface, `world_bbox`, `DiacriticConfig` và cách tránh double-count `cost_legibility`. Còn chờ TV4+TV2 ký duyệt trước PR3.
 - [ ] **Định lượng hiệu năng:** Xây dựng tiêu chuẩn định lượng đánh giá hiệu quả giảm quãng đường pen-up và độ mượt chuyển động ngòi bút trên tập corpus thử nghiệm.
 - [ ] *Lưu ý phạm vi:* Tập trung vào thuật toán tối ưu chuyển động, không sửa logic hình học hay quy tắc ngữ cảnh trong `backend/handwriting/`.
 
@@ -292,4 +292,3 @@ Một task trong backlog chỉ được tích `[x]` khi:
 |---|---|---|---|
 | TV1 & TV4 | Tích hợp thành công code gọi AI sinh ảnh (TV1) vào API Gateway (TV4), fix lỗi cấu trúc JSON, chuẩn bị chuyển sang dùng Gemini API. | Không | Đã xong |
 | TV2 & TV4 | Đưa code thuật toán tối ưu nét vẽ tranh (TV2) vào Gateway (TV4). Tạo luồng: AI Sinh ảnh -> Chuyển SVG (lưu cache metrics) -> Ghi log CSV. | Không | Đã xong |
-
