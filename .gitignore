@@ -86,3 +86,4 @@ frontend/dist/
 # =========================
 .agents/
 graphify-out/
+.deepseek_usage.json
