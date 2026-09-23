@@ -70,8 +70,10 @@ AI reviewer TV1 đã fetch branch, đối chiếu diff giữa checkpoint đã k�
 | ID | Claim cần kiểm tra lại | Kết quả AI recheck | Bằng chứng / Đối chiếu |
 | :--- | :--- | :--- | :--- |
 | TV1-R01 | Phân ranh Pilot Candidate người viết thật (~40 writer) vs Benchmark Corpus kỹ thuật | `VERIFIED_CLOSED` | Ranh giới giữa bộ phiếu P01–P04 (`PILOT CANDIDATE`, P2) và Benchmark Corpus 20 DEV / 20 Holdout được duy trì nhất quán tại `docs/10_nckh_research_plan.md` mục 4.4 và `docs/14_chapter_1_introduction.md` §1.9. Không có sự pha trộn giữa dữ liệu người viết thật và benchmark hình học P0. |
-| TV1-R02 | Ranh giới DEV/Holdout và cơ chế chống rò rỉ dữ liệu (leakage prevention) | `VERIFIED_CLOSED` | $DEV \cap HOLDOUT = \emptyset$ vẫn được bảo đảm tuyệt đối; runner tiếp tục chặn truy cập Holdout trừ khi có cờ tường minh `--allow-holdout`. Toàn bộ 48 ca ASCII và tập 20 DEV được freeze tại `docs/19_benchmark_corpus_freeze_report.md`. |
+| TV1-R02 | Ranh giới DEV/Holdout và cơ chế chống rò rỉ dữ liệu (leakage prevention) | `VERIFIED_CLOSED` | $DEV \cap HOLDOUT = \emptyset$ vẫn được bảo đảm; runner tiếp tục chặn truy cập Holdout trừ khi có cờ tường minh `--allow-holdout`. Tập 20 DEV và 20 Holdout được freeze tại `docs/19_benchmark_corpus_freeze_report.md`; 48 ca ASCII là technical regression fixture độc lập, được khóa tại `tests/fixtures/pr3_ascii_baseline_fingerprints.json` (xem `docs/09_pr3_acceptance_criteria.md` §3). |
 | TV1-R03 | Phân ranh học thuật giữa CA-VHC P0 và Writer Profile P2 | `VERIFIED_CLOSED` | `docs/14_chapter_1_introduction.md` §1.9 và `docs/15_chapter_3_methodology.md` §3.8 khẳng định CA-VHC P0 là thuật toán tối ưu hóa quy hoạch động hình học; loại bỏ mọi phát biểu ngộ nhận về học máy sinh phong cách cá nhân hóa. |
+
+**Đính chính khi tích hợp (TV4, sau `e4f0dfd`):** Chỉ sửa nguồn dẫn của 48 ca ASCII trong bằng chứng TV1-R02 để tách khỏi corpus 20 DEV / 20 Holdout. Không thay đổi finding, phạm vi recheck hay verdict đã ký của TV1; TV4 sẽ thông báo lại cho TV1.
 
 **Đánh giá tổng thể vòng recheck**: Toàn bộ thay đổi giữa `7ae43e6` và `031d198` thuộc phạm vi TV1 đều tăng cường tính chặt chẽ học thuật, chuẩn hóa công thức toán học (H1.2), làm rõ giới hạn độ phức tạp và bảo vệ nghiêm ngặt ranh giới dữ liệu / tính tái lập. Không phát hiện bất kỳ regression hay lỗi mới nào.
 
