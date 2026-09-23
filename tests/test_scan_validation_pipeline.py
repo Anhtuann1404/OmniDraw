@@ -37,6 +37,8 @@ from backend.scan_validator.specs import (
     SQUARE_20MM_X_MM,
     SQUARE_20MM_Y_MM,
     SQUARE_20MM_SIZE_MM,
+    SQUARE_ASPECT_RATIO_TARGET,
+    SQUARE_SIZE_TOLERANCE_MM,
     mm_to_px,
     px_to_mm,
     get_form_specs,
@@ -141,6 +143,12 @@ def test_specs_and_conversion():
     p04 = get_form_specs("P04")
     assert len(p04) == 1
     assert p04[0].sample_id == "PARA_001"
+
+    # Kiểm tra tọa độ kiểm chuẩn ô vuông và ROI [123.0, 147.0] mm
+    assert SQUARE_20MM_X_MM == 125.0
+    assert SQUARE_20MM_Y_MM == 257.5
+    assert (SQUARE_20MM_X_MM - 2.0) == 123.0
+    assert (SQUARE_20MM_X_MM + SQUARE_20MM_SIZE_MM + 2.0) == 147.0
 
     with pytest.raises(ValueError):
         get_form_specs("INVALID_FORM")
@@ -330,3 +338,192 @@ def test_full_pipeline_run_and_persistence(tmp_path: Path):
         data = json.load(f)
     assert data["form_type"] == "P01"
     assert len(data["crops_metadata"]) == 24
+
+
+# ==============================================================================
+# 8. Hardening & Edge-Case Tests (from Code Review)
+# ==============================================================================
+
+def test_mm_to_px_rounding_precision_at_600dpi():
+    """Kiểm tra hàm mm_to_px dùng round() chuẩn xác, không bị lỗi off-by-one."""
+    # 1.0 mm tại 600 DPI = 600 / 25.4 = 23.622... px -> làm tròn thành 24 px
+    assert mm_to_px(1.0, 600) == 24
+    # 0.5 mm tại 600 DPI = 300 / 25.4 = 11.811... px -> làm tròn thành 12 px
+    assert mm_to_px(0.5, 600) == 12
+    # 25.4 mm (chính xác 1 inch) tại 600 DPI = 600 px
+    assert mm_to_px(25.4, 600) == 600
+    # Ngược lại px_to_mm(600, 600) == 25.4
+    assert abs(px_to_mm(600, 600) - 25.4) < 1e-6
+
+
+def test_calibration_checker_missing_square():
+    """Kiểm tra khi ô vuông bị mất/mờ, checker phải FAIL và KHÔNG fallback pass ngầm."""
+    dpi = 150
+    # Tạo sheet chỉ có thước đo, KHÔNG có ô vuông
+    img = create_synthetic_sheet(dpi=dpi, add_ruler=True, add_square=False)
+    calib = check_calibration(img, dpi=dpi)
+
+    assert calib.ruler_pass is True
+    assert calib.square_pass is False
+    assert calib.overall_pass is False
+    assert calib.square_aspect_ratio_error == abs(0.0 - SQUARE_ASPECT_RATIO_TARGET)
+    assert calib.details["square"]["ar_error"] == abs(0.0 - SQUARE_ASPECT_RATIO_TARGET)
+    assert calib.error_message is not None
+
+
+def test_calibration_checker_square_boundary_tolerance():
+    """Kiểm tra dung sai kích thước ô vuông SQUARE_SIZE_TOLERANCE_MM (0.80 mm) tại các điểm biên."""
+    dpi = 300  # Sử dụng 300 DPI để đạt độ mịn pixel cao (11.8 px/mm)
+    # 1. Kích thước chuẩn 20.0 mm: PASS
+    img_pass = create_synthetic_sheet(dpi=dpi, add_ruler=True, add_square=True)
+    calib_pass = check_calibration(img_pass, dpi=dpi)
+    assert calib_pass.square_pass is True
+
+    # 2. Điểm biên nằm TRONG dung sai: ô vuông 20.5 mm (|20.5 - 20.0| = 0.50 mm <= 0.80 mm) -> PASS
+    img_within = create_synthetic_sheet(dpi=dpi, add_ruler=True, add_square=False)
+    sx1 = mm_to_px(SQUARE_20MM_X_MM, dpi)
+    sy1 = mm_to_px(SQUARE_20MM_Y_MM, dpi)
+    ssz_within = mm_to_px(20.5, dpi)
+    cv2.rectangle(img_within, (sx1, sy1), (sx1 + ssz_within, sy1 + ssz_within), (0, 0, 0), 1)
+    calib_within = check_calibration(img_within, dpi=dpi)
+    assert calib_within.square_pass is True
+
+    # 3. Điểm biên VƯỢT QUÁ dung sai: ô vuông 21.5 mm (|21.5 - 20.0| = 1.50 mm > 0.80 mm) -> FAIL
+    img_fail = create_synthetic_sheet(dpi=dpi, add_ruler=True, add_square=False)
+    ssz_large = mm_to_px(21.5, dpi)
+    cv2.rectangle(img_fail, (sx1, sy1), (sx1 + ssz_large, sy1 + ssz_large), (0, 0, 0), 1)
+    calib_fail = check_calibration(img_fail, dpi=dpi)
+    assert calib_fail.square_pass is False
+    assert calib_fail.overall_pass is False
+
+
+def test_calibration_checker_missing_ruler():
+    """Kiểm tra khi thước đo bị mất/trắng, checker phải FAIL và guard argmax an toàn."""
+    dpi = 150
+    # Tạo sheet chỉ có ô vuông, KHÔNG có thước đo
+    img = create_synthetic_sheet(dpi=dpi, add_ruler=False, add_square=True)
+    calib = check_calibration(img, dpi=dpi)
+
+    assert calib.ruler_pass is False
+    assert calib.overall_pass is False
+
+
+def test_fiducial_detection_missing_one_marker():
+    """Kiểm tra khi chỉ phát hiện 3 mốc (thiếu 1 mốc ở góc), hệ thống từ chối an toàn."""
+    dpi = 150
+    h, w = mm_to_px(A4_HEIGHT_MM, dpi), mm_to_px(A4_WIDTH_MM, dpi)
+    img = np.full((h, w, 3), 255, dtype=np.uint8)
+    f_sz = mm_to_px(FIDUCIAL_SIZE_MM, dpi)
+
+    # Chỉ vẽ 3 mốc (TL, TR, BL), bỏ BR
+    tl = mm_to_px(12.0, dpi)
+    tr = mm_to_px(193.0, dpi)
+    bl_y = mm_to_px(280.0, dpi)
+    cv2.rectangle(img, (tl, tl), (tl + f_sz, tl + f_sz), (0, 0, 0), -1)
+    cv2.rectangle(img, (tr, tl), (tr + f_sz, tl + f_sz), (0, 0, 0), -1)
+    cv2.rectangle(img, (tl, bl_y), (tl + f_sz, bl_y + f_sz), (0, 0, 0), -1)
+
+    result = detect_fiducials(img, dpi=dpi)
+    assert result.is_success is False
+    assert result.detected_count == 3
+    assert result.error_message is not None
+
+
+def test_auto_cropper_all_forms_and_counts():
+    """Kiểm tra auto-cropper hỗ trợ đầy đủ cả 4 form P01, P02, P03, P04 với đúng số lượng ô."""
+    dpi = 150
+    img = create_synthetic_sheet(dpi=dpi)
+
+    crops_p01 = crop_sheet(img, form_type="P01", dpi=dpi)
+    crops_p02 = crop_sheet(img, form_type="P02", dpi=dpi)
+    crops_p03 = crop_sheet(img, form_type="P03", dpi=dpi)
+    crops_p04 = crop_sheet(img, form_type="P04", dpi=dpi)
+
+    assert len(crops_p01) == 24
+    assert len(crops_p02) == 16
+    assert len(crops_p03) == 3
+    assert len(crops_p04) == 1
+
+
+def test_auto_cropper_out_of_bounds_handling():
+    """Kiểm tra auto-cropper xử lý ảnh quá nhỏ mà không gây crash exception."""
+    dpi = 150
+    # Ảnh quá nhỏ (100x100 px), các ô của form nằm ngoài kích thước ảnh
+    tiny_img = np.full((100, 100, 3), 255, dtype=np.uint8)
+    crops = crop_sheet(tiny_img, form_type="P01", dpi=dpi, extract_full_cell=True)
+
+    assert len(crops) == 24
+    assert crops[0].qc_result.overflow_detected is True
+    assert crops[0].qc_result.overflow_details["has_bounds_overflow"] is True
+    for c in crops:
+        assert c.qc_result.qc_status == "QC_REJECTED"
+        assert c.qc_result.overflow_detected is True
+        assert c.qc_result.overflow_details.get("has_bounds_overflow") is True
+        assert c.qc_result.is_valid_for_dataset is False
+        assert c.crop_image.shape == (0, 0, 3)
+        assert c.full_cell_image is None
+
+
+def test_auto_cropper_partial_overflow():
+    """Kiểm tra auto-cropper phát hiện trường hợp ô viết bị cắt một phần ở biên ảnh (partial bounds overflow)."""
+    dpi = 150
+    # Kích thước A4 chuẩn tại 150 DPI là 1240 x 1754 px.
+    # Cắt bớt chiều ngang còn 1000 px khiến các ô cột 4 của P01 bị cắt cụt một phần
+    full_img = create_synthetic_sheet(dpi=dpi)
+    partially_clipped_img = full_img[:, :1000].copy()
+
+    crops = crop_sheet(partially_clipped_img, form_type="P01", dpi=dpi)
+    assert len(crops) == 24
+
+    clipped_crops = [c for c in crops if c.qc_result.overflow_details.get("is_partial_clip")]
+    assert len(clipped_crops) > 0
+    for c in clipped_crops:
+        assert c.qc_result.overflow_detected is True
+        assert c.qc_result.overflow_details["has_bounds_overflow"] is True
+        assert c.qc_result.overflow_details["is_partial_clip"] is True
+        assert c.qc_result.qc_status in ("QC_FLAGGED", "QC_REJECTED")
+
+
+def test_auto_cropper_extract_full_cell_disabled():
+    """Kiểm tra cờ extract_full_cell=False không trích xuất ảnh cell bao quát."""
+    dpi = 150
+    img = create_synthetic_sheet(dpi=dpi)
+    crops = crop_sheet(img, form_type="P01", dpi=dpi, extract_full_cell=False)
+
+    assert len(crops) == 24
+    for c in crops:
+        assert c.full_cell_image is None
+        assert c.crop_image.shape[0] > 0 and c.crop_image.shape[1] > 0
+
+
+def test_full_pipeline_p02_and_p04(tmp_path: Path):
+    """Kiểm tra toàn trình pipeline với form P02 và P04."""
+    dpi = 150
+    img = create_synthetic_sheet(dpi=dpi)
+    pipeline = ScanValidationPipeline(dpi=dpi)
+
+    # Test P02
+    report_p02 = pipeline.process(
+        image_input=img,
+        form_type="P02",
+        output_dir=tmp_path / "out_p02",
+        save_crops=True,
+    )
+    assert report_p02.is_success is True
+    assert report_p02.form_type == "P02"
+    assert report_p02.summary["total_extracted_samples"] == 16
+    assert (tmp_path / "out_p02" / "validation_report.json").exists()
+
+    # Test P04
+    report_p04 = pipeline.process(
+        image_input=img,
+        form_type="P04",
+        output_dir=tmp_path / "out_p04",
+        save_crops=True,
+    )
+    assert report_p04.is_success is True
+    assert report_p04.form_type == "P04"
+    assert report_p04.summary["total_extracted_samples"] == 1
+    assert (tmp_path / "out_p04" / "validation_report.json").exists()
+
+

@@ -310,9 +310,9 @@ def cmd_review(task_description: str, diff_text: Optional[str] = None, test_log:
         "   - Nếu có lỗi/cần sửa: Bắt buộc kết thúc bằng dòng chữ: 'VERDICT: REVISE' kèm danh sách điểm cần sửa cụ thể."
     )
 
-    user_content = f"### TASK ĐÃ THỰC HIỆN:\n{task_description}\n\n### GIT DIFF THAY ĐỔI:\n```diff\n{diff_text[:12000]}\n```\n"
+    user_content = f"### TASK ĐÃ THỰC HIỆN:\n{task_description}\n\n### GIT DIFF THAY ĐỔI:\n```diff\n{diff_text[:50000]}\n```\n"
     if test_log:
-        user_content += f"\n### LOG KIỂM THỬ THỰC TẾ:\n```text\n{test_log[:4000]}\n```\n"
+        user_content += f"\n### LOG KIỂM THỬ THỰC TẾ:\n```text\n{test_log[:10000]}\n```\n"
 
     print(f"🕵️ Đang gửi git diff ({len(diff_text)} bytes) sang DeepSeek để review chéo...")
     review = call_deepseek(

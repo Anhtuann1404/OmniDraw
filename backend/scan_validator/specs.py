@@ -74,6 +74,7 @@ SQUARE_20MM_Y_MM: float = 257.5
 SQUARE_20MM_SIZE_MM: float = 20.0
 SQUARE_ASPECT_RATIO_TARGET: float = 1.000
 SQUARE_ASPECT_RATIO_TOLERANCE: float = 0.005  # Dung sai tỷ lệ cạnh: 1.000 ± 0.005
+SQUARE_SIZE_TOLERANCE_MM: float = 0.80        # Dung sai kích thước bao ngoài viền in (mm)
 
 
 # ==============================================================================
