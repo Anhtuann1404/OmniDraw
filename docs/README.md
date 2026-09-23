@@ -38,6 +38,7 @@ File này là điểm vào chính của toàn bộ tài liệu OmniDraw. Chọn 
 ## Dữ liệu chữ viết tay
 
 - [`08_handwriting_dataset_spec.md`](08_handwriting_dataset_spec.md): đặc tả corpus, Writer Profile và quản trị dữ liệu.
+- [`19_benchmark_corpus_freeze_report.md`](19_benchmark_corpus_freeze_report.md): báo cáo rà soát độ phủ và đóng băng Benchmark Corpus CA-VHC v1.0.
 - [`collection_sheets/README.md`](collection_sheets/README.md): bộ phiếu P01–P04 và hướng dẫn sinh artifact.
 
 ## Tổng quan tài liệu và báo cáo

@@ -3,9 +3,9 @@ OmniDraw CA-VHC Benchmark Fixtures & Corpus Definitions.
 
 Formal Version: CA-VHC-CORPUS-v1.0-FROZEN
 Reviewed and Frozen by: TV1 (AI Data & Writer Profile Lead) - 23/09/2026
-Report: docs/18_benchmark_corpus_freeze_report.md
+Report: docs/19_benchmark_corpus_freeze_report.md
 
-Defined per docs/05_ca_vhc_research_spec.md & docs/18_benchmark_corpus_freeze_report.md:
+Defined per docs/05_ca_vhc_research_spec.md & docs/19_benchmark_corpus_freeze_report.md:
 - BENCHMARK_DEV_CORPUS_20: 20 development words
 - BENCHMARK_HOLDOUT_CORPUS_20: 20 holdout words (strictly disjoint from dev)
 - PR3_VIETNAMESE_ACCEPTANCE_SPECIMENS: 10 DEV-only software acceptance words
