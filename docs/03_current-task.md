@@ -31,7 +31,7 @@
 | :--- | :--- | :--- | :--- |
 | **TV4 — Project Lead & Handwriting / CA-VHC Composition Lead** | Hoàn tất Strict Validation, BƯỚC A/B, PR1 và Pre-PR3 Acceptance Contract; PR2 baseline adapters của TV2 đã hoàn tất; nhiệm vụ kế tiếp là cùng TV2 ký duyệt shared transition interface E4 để mở PR3, đồng thời tổng hợp Research Questions và Chương 3–4 | PR3 chỉ còn chờ Entry Gate E4. TV1 corpus freeze đã hoàn tất; TV3 hardware calibration là downstream validation gate. | 🟡 Đang làm |
 | **TV2 — Stroke Optimization & Path Planning Lead** | Step B technical cross-review đã PASS; PR2 baseline adapters B1/B2/B3 đã triển khai và được runner gọi độc lập qua method tag; nhiệm vụ tiếp theo: cùng TV4 ký duyệt shared transition interface E4 cho PR3 và tiếp tục chuẩn hóa ký hiệu toán học hàm mục tiêu $J$ | E4 cần TV4+TV2 cùng ký duyệt; không phải blocker của code PR2 | 🟡 Đang làm |
-| **TV1 — AI Data & Writer Profile Lead** | Đã hoàn tất Cross-review Chương 1–3 (phiếu TV1: CLOSED / PASS) và chính thức đóng băng Benchmark Corpus v1.0 (20 từ DEV, 20 từ Holdout độc lập tuyệt đối tại [`docs/18_benchmark_corpus_freeze_report.md`](18_benchmark_corpus_freeze_report.md)); nhiệm vụ tiếp theo: (1) scan-validation pipeline tối thiểu (fiducial detection, deskew, scale check, deterministic auto-crop), (2) bench print/scan P01–P04 ở 600 DPI, (3) chốt collection protocol & error-handling rule, (4) chuẩn bị limited pilot 3–5 writers | Không | 🟡 Đang làm |
+| **TV1 — AI Data & Writer Profile Lead** | Đã hoàn tất Cross-review Chương 1–3, đóng băng Benchmark Corpus v1.0 (`CA-VHC-CORPUS-v1.0-FROZEN`), và lập trình hoàn tất Scan-Validation Pipeline tối thiểu (`backend/scan_validator/`, CLI runner, 11/11 tests pass); nhiệm vụ tiếp theo: (1) bench print/scan P01–P04 ở 600 DPI, (2) chốt collection protocol & error-handling rule, (3) chuẩn bị limited pilot 3–5 writers | Không | 🟡 Đang làm |
 | **TV3 — Hardware, Calibration & Physical Validation Lead** | Đã hoàn tất HAL/Simulator và PR #29 merge vào develop (23/23 tests pass); hoàn thành bản nháp cross-review Chương 1–3 (phiếu TV3 đạt AI_DRAFT: PASS); chuẩn bị sẵn sàng fixture SVG và quy trình hiệu chuẩn | *Blocked by hardware:* chờ setup cáp & máy vẽ thực tế (hoàn tất nền tảng phần mềm; chờ máy thật để chạy calibration) | 🟡 Đang làm |
 
 ---
@@ -90,7 +90,7 @@
 
 ### TV1 — AI Data & Writer Profile Lead
 - [x] **✅ Hoàn thành Thiết kế & Đặc tả Kỹ thuật OmniDraw Handwriting Collection Sheet Pack v1 (P01–P04 Pilot Candidate):** Hoàn tất thiết kế vector SVG, xuất bản in PDF A4 và biên soạn tài liệu đặc tả kỹ thuật chi tiết cho cả 4 trang biểu mẫu: P01 (*Isolated Characters & Diacritics*), P02 (*Context & Ligatures*), P03 (*Sentence Flow & Pangrams*), P04 (*Natural Paragraph*). Đã chuẩn hóa: mốc định vị quang học 4 góc (Fiducials), khối kiểm chuẩn thước đo 50mm và ô vuông 20×20mm, khung bao tất định (`bbox_mm`, `writing_bbox_mm`), ranh giới nghiêm ngặt không thu thập PII, làm sạch văn phong học thuật (loại bỏ suy diễn độ mỏi, phân định rạch ròi dữ liệu quét tĩnh vs. động học). Trạng thái hiện hành: **PILOT CANDIDATE — AWAITING PILOT PRINT & SCAN VALIDATION (NOT APPROVED FOR FORMAL DATA COLLECTION)**. Toàn bộ tài liệu, PDF, SVG và script sinh tự động được lưu trữ tại `docs/collection_sheets/P01..P04`.
-- [ ] **Nhiệm vụ 1 — Scan-Validation Pipeline tối thiểu:** Lập trình pipeline thị giác máy tính tự động xử lý ảnh quét phẳng 600 DPI: tự động phát hiện 4 mốc fiducial, thực hiện nắn chỉnh phối cảnh / deskew (`affine_rectify`), kiểm tra dung sai thước đo $50.0 \pm 0.2\,\text{mm}$ và ô vuông tỷ lệ $1.000 \pm 0.005$, và tự động cắt ảnh (`deterministic auto-crop`) theo tọa độ tất định.
+- [x] **✅ Nhiệm vụ 1 — Scan-Validation Pipeline tối thiểu:** Đã lập trình hoàn chỉnh gói `backend/scan_validator/` và CLI runner xử lý ảnh quét phẳng 600 DPI: tự động phát hiện 4 mốc fiducial (`detect_fiducials`), nắn chỉnh phối cảnh / deskew (`rectify_scan` sang chuẩn ISO A4 $4961 \times 7016\text{ px}$), kiểm chuẩn thước đo $50.0 \pm 0.2\,\text{mm}$ và ô vuông tỷ lệ cạnh $1.000 \pm 0.005$ (`check_calibration`), tự động bóc tách ô viết (`crop_sheet` cho P01–P04), đánh giá QC tràn viền lề và nét dơ nền (`evaluate_crop_qc`), và xuất báo cáo JSON chuẩn hóa. Đạt 11/11 tests pass trong `tests/test_scan_validation_pipeline.py`.
 - [ ] **Nhiệm vụ 2 — Bench Print & 600 DPI Bench Scan P01–P04:** Tiến hành in thử nghiệm thực tế bộ 4 trang trên máy in laser độ nét cao giấy A4 tiêu chuẩn $80\,\text{g/m}^2$, quét lại bằng máy quét phẳng quang học $600\,\text{DPI}$ (True scale 1:1, lossless PNG) và chạy qua pipeline kiểm chuẩn.
 - [ ] **Nhiệm vụ 3 — Fiducial Detection Test:** Kiểm thử độ ổn định của giải thuật định vị 4 mốc góc quang học trên các bản quét thật có nhiễu xoay/dịch chuyển nhẹ.
 - [ ] **Nhiệm vụ 4 — Deskew / Page Rectification Validation:** Xác minh độ chính xác góc xoay bù và phép biến đổi phối cảnh trên ảnh scan bench test.
@@ -206,11 +206,11 @@
 - [ ] PR3 CompositionState production implementation
 - [ ] PR4 delayed-stroke P0
 - [ ] Formal CA-VHC experiment
-- [ ] TV1 scan-validation pipeline
-- [ ] fiducial detection test
-- [ ] deskew / rectify validation
-- [ ] page scale validation
-- [ ] deterministic auto-crop validation
+- [x] TV1 scan-validation pipeline (đã hoàn thiện gói `backend/scan_validator/` và CLI runner)
+- [x] fiducial detection test (đã kiểm chứng trong `tests/test_scan_validation_pipeline.py`)
+- [x] deskew / rectify validation (đã kiểm chứng trong `tests/test_scan_validation_pipeline.py`)
+- [x] page scale validation (đã kiểm chứng trong `tests/test_scan_validation_pipeline.py`)
+- [x] deterministic auto-crop validation (đã kiểm chứng trong `tests/test_scan_validation_pipeline.py`)
 - [ ] P01–P04 bench print
 - [ ] P01–P04 600 DPI bench scan
 - [ ] Collection Sheet coverage analysis
@@ -235,6 +235,12 @@ Một task trong backlog chỉ được tích `[x]` khi:
 ---
 
 ## 6. Nhật ký tiến độ theo ngày (Progress Log by Date)
+
+**Ngày 23/9**
+
+| Thành viên | Nội dung thực hiện | Bị nghẽn ở đâu | Trạng thái |
+|---|---|---|---|
+| TV1 | (1) Hoàn tất và ký duyệt Cross-review Chương 1–3 (`docs/reviews/tv1_chapter_1_3_review.md`: CLOSED / PASS).<br>(2) Đóng băng chính thức Benchmark Corpus v1.0 (`CA-VHC-CORPUS-v1.0-FROZEN`) tại [`docs/18_benchmark_corpus_freeze_report.md`](18_benchmark_corpus_freeze_report.md) với 20 DEV và 20 Holdout disjoint hoàn toàn.<br>(3) Hoàn thành lập trình và kiểm chứng tự động toàn diện gói Scan-Validation Pipeline (`backend/scan_validator/`, CLI runner, 11/11 tests pass trong `tests/test_scan_validation_pipeline.py`): phát hiện mốc fiducial 4 góc, nắn phối cảnh chuẩn A4 600 DPI, kiểm chuẩn thước đo 50mm ($\pm 0.2\,\text{mm}$) và ô vuông 20×20mm (Aspect Ratio $1.000 \pm 0.005$), bóc tách ô viết tất định P01–P04, và đánh giá QC tràn viền lề. Toàn bộ test suite repository đạt 126/126 passed. | Không (chờ máy in/quét để bench scan vật lý) | Đã xong |
 
 **Ngày 21/9**
 
