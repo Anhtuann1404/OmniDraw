@@ -29,8 +29,8 @@
 
 | Thành viên / Đường chạy | Nhiệm vụ trọng tâm Sprint 1–2 | Điểm nghẽn (Blocker) | Trạng thái |
 | :--- | :--- | :--- | :--- |
-| **TV4 — Project Lead & Handwriting / CA-VHC Composition Lead** | Hoàn tất Strict Validation, BƯỚC A/B, PR1 và Pre-PR3 Acceptance Contract; PR2 baseline adapters của TV2 đã hoàn tất; nhiệm vụ kế tiếp là cùng TV2 ký duyệt shared transition interface E4 để mở PR3, đồng thời tổng hợp Research Questions và Chương 3–4 | PR3 chỉ còn chờ Entry Gate E4. TV1 corpus freeze đã hoàn tất; TV3 hardware calibration là downstream validation gate. | 🟡 Đang làm |
-| **TV2 — Stroke Optimization & Path Planning Lead** | Step B technical cross-review đã PASS; PR2 baseline adapters B1/B2/B3 đã triển khai và được runner gọi độc lập qua method tag; nhiệm vụ tiếp theo: cùng TV4 ký duyệt shared transition interface E4 cho PR3 và tiếp tục chuẩn hóa ký hiệu toán học hàm mục tiêu $J$ | E4 cần TV4+TV2 cùng ký duyệt; không phải blocker của code PR2 | 🟡 Đang làm |
+| **TV4 — Project Lead & Handwriting / CA-VHC Composition Lead** | Hoàn tất Strict Validation, BƯỚC A/B, PR1 và Pre-PR3 Acceptance Contract; PR2 baseline adapters của TV2 đã hoàn tất; đã ký duyệt Hợp đồng Giao diện Chuyển tiếp E4 cùng TV2 (Docs 18); sẵn sàng triển khai PR3 Slice 0 | Không (Entry Gate E1–E5 đã PASS toàn diện) | 🟢 Sẵn sàng code PR3 |
+| **TV2 — Stroke Optimization & Path Planning Lead** | Step B technical cross-review đã PASS; PR2 baseline adapters B1/B2/B3 đã triển khai; đã cùng TV4 ký duyệt Hợp đồng Giao diện Chuyển tiếp E4 (Docs 18) khóa hàm mục tiêu $J$ | Không | 🟢 Hoàn tất E4 |
 | **TV1 — AI Data & Writer Profile Lead** | Đã ký PASS cross-review Chương 1–3 trên checkpoint `7ae43e6` (còn scoped recheck phần bị sửa sau đó), đóng băng Benchmark Corpus v1.0 (`CA-VHC-CORPUS-v1.0-FROZEN`), và hoàn tất Scan-Validation Pipeline tối thiểu (`backend/scan_validator/`, CLI runner, 11/11 tests pass); tiếp theo: bench print/scan P01–P04 ở 600 DPI, chốt collection protocol và chuẩn bị pilot 3–5 writers | Không | 🟡 Đang làm |
 | **TV3 — Hardware, Calibration & Physical Validation Lead** | Đã hoàn tất HAL/Simulator (PR #29); phiếu cross-review Chương 1–3 đã ký `PASS` (hoàn tất scoped recheck trên `031d198`); ban hành Giao thức Kiểm chuẩn Vật lý (`07_physical_calibration_protocol.md`), tiêu bản RQ3 SVG và tích hợp CLI `--benchmark-rq3` (27/27 tests pass) | *Blocked by hardware:* chờ setup cáp & máy vẽ thực tế (hoàn tất 100% nền tảng phần mềm; chờ máy thật để chạy calibration) | 🟡 Đang làm |
 
@@ -67,7 +67,7 @@
   - *Lưu ý phạm vi:* TV4 bắt đầu triển khai PR1 (Metrics & Experiment Infrastructure). Không bắt đầu PR3 (CompositionState) trước khi PR1 có test và metric baseline ổn định. TV1 corpus freeze và TV3 hardware calibration là downstream validation gates.
 - [x] **✅ BƯỚC C / PR1 — Hoàn thiện internal experiment metrics and CSV integration (Commit `daca566`):** Tích hợp hoàn tất CA-VHC internal metrics evaluator (`backend/handwriting/metrics_evaluator.py`), chuẩn hóa hệ thống ghi log CSV (`backend/logs/csv_logger.py`) theo schema 19 cột bất biến, hoàn thành automated experiment runner (`backend/handwriting/experiment_runner.py`), và khóa fixture kiểm chuẩn DEV 160 trường hợp (`tests/fixtures/ca_vhc_pr1_fingerprints.json`) với toàn bộ automated tests đạt PASS.
 - [x] **✅ Pre-PR3 Acceptance Contract & Khóa Snapshot ASCII (Docs 09):** Ban hành Hợp đồng Nghiệm thu Kỹ thuật trước PR3 ([`09_pr3_acceptance_criteria.md`](09_pr3_acceptance_criteria.md)); E1, E2, E3 và E5 đã PASS, Entry Gate chỉ còn chờ E4 shared interface agreement; FORMAL EXPERIMENT READINESS: NO.
-- [ ] **BƯỚC C / PR3 — CA-VHC Diacritic-Aware Trellis DAG (TV4 lead, TV2 phối hợp):** Triển khai `CompositionState = (GlyphVariant, DiacriticCandidate)`, tích hợp kiểm tra va chạm dấu tiếng Việt vào Trellis DAG recurrence và dynamic diacritic placement. *(Trạng thái: CHƯA BẮT ĐẦU — PR2/E3 đã hoàn tất, còn chờ TV2+TV4 ký duyệt E4 theo [`18_pr3_e4_shared_transition_contract_draft.md`](18_pr3_e4_shared_transition_contract_draft.md))*.
+- [ ] **BƯỚC C / PR3 — CA-VHC Diacritic-Aware Trellis DAG (TV4 lead, TV2 phối hợp):** Triển khai `CompositionState = (GlyphVariant, DiacriticCandidate)`, tích hợp kiểm tra va chạm dấu tiếng Việt vào Trellis DAG recurrence và dynamic diacritic placement. *(Trạng thái: `READY_TO_IMPLEMENT` — Hợp đồng E4 đã được ký duyệt chính thức tại [`18_pr3_e4_shared_transition_contract_draft.md`](18_pr3_e4_shared_transition_contract_draft.md), cho phép triển khai Slice 0–6)*.
 - [ ] **Automated Experiment Matrix Execution:** Chạy tự động ma trận thực nghiệm sau khi PR2 và PR3 hoàn thành (không chạy holdout trước khi TV1 freeze corpus).
 - [ ] **Public Metric Schema:** Định nghĩa public metric schema chỉ cho các trường backend thực sự xuất ổn định; giữ API Spec cập nhật qua PR riêng.
 - [ ] **Backward Compatibility:** Bảo toàn tuyệt đối public API hiện tại (`generate_handwriting_svg`, `text_to_strokes`) và deterministic behavior.
@@ -205,7 +205,7 @@
 - [ ] TV4 xử lý toàn bộ finding trong [`reviews/review_disposition.md`](reviews/review_disposition.md) và phát hành bản hợp nhất sau review
 - [x] TV1 formal corpus review/freeze (hoàn tất tại [`docs/19_benchmark_corpus_freeze_report.md`](19_benchmark_corpus_freeze_report.md))
 - [ ] TV3 clearance calibration
-- [x] PR2 baseline adapters (E3 đã PASS; E4 shared transition interface vẫn chờ TV2+TV4 ký duyệt)
+- [x] PR2 baseline adapters (E3 đã PASS; E4 shared transition interface đã ký duyệt tại [`Docs 18`](18_pr3_e4_shared_transition_contract_draft.md))
 - [ ] PR3 CompositionState production implementation
 - [ ] PR4 delayed-stroke P0
 - [ ] Formal CA-VHC experiment
