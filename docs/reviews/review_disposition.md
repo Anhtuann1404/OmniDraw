@@ -11,10 +11,10 @@ RQ_FREEZE_RECOMMENDATION: PENDING
 
 **Nguồn TV2:** phiếu hiện ghi `WORKFLOW_STATUS: CLOSED`, `HUMAN_VERDICT: PASS` và TV2-R01–R06 `VERIFIED_CLOSED` sau khi recheck commit `e26af4fd2559c2e28672fff1a11865bf427683a8` ngày 2026-09-23. Phiếu vẫn để `REVIEW_TARGET_COMMIT` là commit review gốc `5e9c857e42021f8a48d45b1fdaefcfdb87e82ff3`, khác checkpoint gói v0.2 `7ae43e6994506928cb6be8bd61e936b4f5e3857e`. TV2 cần tự chỉnh metadata của phiếu để trường này khớp checkpoint, giữ commit gốc và commit recheck ở các trường riêng; TV4 không sửa chữ ký hoặc verdict của reviewer.
 
-**Thay đổi sau checkpoint:** commit `e26af4f` sửa Docs 10, 13, 14 và 15, trong đó có các mục thuộc phạm vi phiếu TV1/TV3. TV1 đã PASS scoped recheck trên `031d198` trong phiếu tại commit `e4f0dfd`; TV3 vẫn cần xác nhận lại đúng phần bị ảnh hưởng trước khi TV4 đề xuất `RQ FREEZE: APPROVED`. Đây là recheck tài liệu, không phải mở lại corpus freeze hay hardware gate.
+**Thay đổi sau checkpoint:** commit `e26af4f` sửa Docs 10, 13, 14 và 15, trong đó có các mục thuộc phạm vi phiếu TV1/TV3. Cả TV1 và TV3 đều đã hoàn tất scoped recheck trên `031d198` với verdict PASS (phiếu TV1 tại `e4f0dfd`, phiếu TV3 tại `30f36b5`). Đây là recheck tài liệu, không phải mở lại corpus freeze hay hardware gate.
 
 - TV1 đã recheck các thay đổi trong Docs 10 (trạng thái PR2/E4 và công thức H1.2), Docs 14 §1.9, Docs 15 §§3.1/3.7/3.8 trên `031d198`; không mở lại corpus freeze.
-- TV3 recheck các thay đổi trong Docs 10 liên quan RQ3, Docs 14 §1.9 và Docs 15 §§3.1/3.7/3.8; xác nhận chúng không biến simulation hay ngưỡng clearance thành claim máy thật.
+- TV3 đã recheck các thay đổi trong Docs 10 liên quan RQ3, Docs 14 §1.9 và Docs 15 §§3.1/3.7/3.8 trên `031d198`; xác nhận tài liệu tuyệt đối phân tách mô phỏng khỏi `actual_draw_time_sec` và không gọi ngưỡng clearance $0.20/0.50\,\text{mm}$ là an toàn vật lý khi chưa calibration.
 
 ## 1. Tổng hợp verdict
 
@@ -22,7 +22,7 @@ RQ_FREEZE_RECOMMENDATION: PENDING
 | :--- | :--- | :--- | :--- | ---: | :--- |
 | TV1 | `CLOSED`; scoped recheck đã hoàn tất | `PASS` trên `031d198` | Checkpoint `7ae43e6994506928cb6be8bd61e936b4f5e3857e`; recheck `031d1983f07895306a0cf31b72300ad4d9e5ee50` (phiếu tại `e4f0dfd`) | 0; TV1-R01–R03 tiếp tục đóng | 23/09/2026 |
 | TV2 | `CLOSED`; còn lệch metadata `REVIEW_TARGET_COMMIT` | `PASS` sau recheck | Gốc `5e9c857e42021f8a48d45b1fdaefcfdb87e82ff3`; checkpoint `7ae43e6`; recheck `e26af4f` | 0; TV2-R01–R06 đã đóng | 23/09/2026 |
-| TV3 | `CLOSED` trên checkpoint; scoped recheck sau `e26af4f` còn chờ | `PASS` trên `7ae43e6` | `7ae43e6994506928cb6be8bd61e936b4f5e3857e` | 0 finding gốc; recheck phần thay đổi còn chờ | 23/09/2026 |
+| TV3 | `CLOSED`; scoped recheck đã hoàn tất | `PASS` trên `031d198` | Checkpoint `7ae43e6994506928cb6be8bd61e936b4f5e3857e`; recheck `031d1983f07895306a0cf31b72300ad4d9e5ee50` (phiếu tại `30f36b5`) | 0; TV3-R01–R02 tiếp tục đóng | 24/09/2026 |
 
 ## 2. Master finding log
 
@@ -37,8 +37,8 @@ RQ_FREEZE_RECOMMENDATION: PENDING
 | TV2-R04 | TV2 | MINOR | Docs 14 §1.4.1; 15 §3.3.1 | B2 có thể bị hiểu nhầm là tự chọn vị trí dấu | `ACCEPTED` | TV4 | Đã ghi B1/B2/B3 gắn dấu hậu xử lý bằng anchor tĩnh; B2 chỉ tham lam trên `GlyphVariant` | `VERIFIED_CLOSED` tại `e26af4f` |
 | TV2-R05 | TV2 | MINOR | Docs 05 §1.1; 10 §§3.1, 4.4 | H1.2 chưa rõ tỷ lệ giảm trên corpus | `ACCEPTED` | TV4 | Đã khóa công thức tỷ lệ trên tổng `pen_lift_count` của cùng corpus; mẫu số 0 là `NOT_APPLICABLE`, không dùng median từng từ | `VERIFIED_CLOSED` tại `e26af4f` |
 | TV2-R06 | TV2 | MINOR | Docs 05 PR2; 10 status; 14 §1.9; 15 §§3.1.3, 3.7.4 | Cần tách E3 đã PASS khỏi E4 còn chờ | `ACCEPTED` | TV4 | Docs 15 đã tách E3/E4 trước đợt này; đã đồng bộ thêm Docs 05/10/14, không coi review học thuật là E4 sign-off | `VERIFIED_CLOSED` tại `e26af4f` |
-| TV3-R01 | TV3 | MINOR | Docs 10 §3.3; 14 §1.4.3 | Không đồng nhất thời gian mô phỏng với `actual_draw_time_sec` máy thật | `ACCEPTED` | TV3 (review); TV4 (duy trì wording) | Phiếu TV3 xác nhận simulator chỉ ước tính; physical feasibility vẫn `PENDING_TV3_CALIBRATION` | `VERIFIED_CLOSED` tại `7ae43e6` |
-| TV3-R02 | TV3 | MINOR | Docs 15 §§3.7.4, 3.8 | Phân biệt technical minimum 0.20 mm và provisional target 0.50 mm | `ACCEPTED` | TV3 (review); TV4 (duy trì wording) | Phiếu TV3 xác nhận không diễn giải ngưỡng hình học thành an toàn cơ khí khi chưa hiệu chuẩn | `VERIFIED_CLOSED` tại `7ae43e6` |
+| TV3-R01 | TV3 | MINOR | Docs 10 §3.3; 14 §1.4.3 | Không đồng nhất thời gian mô phỏng với `actual_draw_time_sec` máy thật | `ACCEPTED` | TV3 (review); TV4 (duy trì wording) | Phiếu TV3 xác nhận simulator chỉ ước tính; physical feasibility vẫn `PENDING_TV3_CALIBRATION` | `VERIFIED_CLOSED` tại `7ae43e6`, recheck `031d198` |
+| TV3-R02 | TV3 | MINOR | Docs 15 §§3.7.4, 3.8 | Phân biệt technical minimum 0.20 mm và provisional target 0.50 mm | `ACCEPTED` | TV3 (review); TV4 (duy trì wording) | Phiếu TV3 xác nhận không diễn giải ngưỡng hình học thành an toàn cơ khí khi chưa hiệu chuẩn | `VERIFIED_CLOSED` tại `7ae43e6`, recheck `031d198` |
 
 Disposition hợp lệ:
 
@@ -51,21 +51,21 @@ Không xóa finding sau khi xử lý. Giữ nguyên ID để tạo audit trail.
 ## 3. Checklist đóng gói
 
 - [ ] `REVIEW_TARGET_COMMIT` giống nhau trong README, ba phiếu và file này.
-- [x] Đã nhận đủ human verdict của TV1, TV2 và TV3; TV1 đã scoped recheck trên `031d198`, hiệu lực chung vẫn phụ thuộc scoped recheck TV3 và version binding TV2.
+- [x] Đã nhận đủ human verdict của TV1, TV2 và TV3; cả TV1 và TV3 đã hoàn tất scoped recheck trên `031d198`, TV2 đã recheck trên `e26af4f`.
 - [x] Mọi finding TV1-R01–R03, TV2-R01–R06 và TV3-R01–R02 được chép vào master log và có disposition.
 - [x] Không còn finding `CRITICAL` hoặc `MAJOR` ở trạng thái mở trong các phiếu hiện tại.
 - [x] Không có finding `DEFERRED_WITH_OWNER` trong vòng này; điều kiện owner/gate không phát sinh.
-- [ ] Reviewer đã recheck thay đổi liên quan và đóng finding.
+- [x] Reviewer đã recheck thay đổi liên quan và đóng finding (TV1, TV2, TV3 đều đã hoàn tất).
 - [ ] Docs 02/03/05/07/08/09/10–15 không còn mâu thuẫn trạng thái.
 - [x] Không biến review tài liệu thành bằng chứng PR2/PR3, corpus freeze, formal experiment hoặc hardware validation; các gate này có bằng chứng và trạng thái riêng.
 - [ ] TV4 chỉ chuyển `RQ_FREEZE_RECOMMENDATION` khỏi `PENDING` sau khi các điều kiện trên đạt.
 
 ## 4. Kết luận tích hợp
 
-- Thay đổi đã thực hiện: TV1-R01–R03 đã được TV1 scoped recheck và giữ `VERIFIED_CLOSED` tại `031d198`; TV3-R01–R02 vẫn theo phiếu PASS tại checkpoint `7ae43e6`; TV2-R01–R06 đã được TV2 recheck và đóng tại `e26af4f`. Code metric của TV2-R02 vẫn là dependency trước PR5, không được ghi là kết quả đo.
+- Thay đổi đã thực hiện: TV1-R01–R03 (đóng trên `031d198`), TV3-R01–R02 (đóng trên `031d198`), và TV2-R01–R06 (đóng trên `e26af4f`) đều đã được các reviewer độc lập hoàn tất scoped recheck và xác nhận `VERIFIED_CLOSED`. Toàn bộ 11/11 finding trong đợt cross-review Chương 1–3 đã được xử lý trọn vẹn. Code metric của TV2-R02 vẫn là dependency trước PR5, không được ghi là kết quả đo.
 - Finding bị bác bỏ và lý do: không có.
 - Finding hoãn và gate tiếp theo: không có finding tài liệu bị hoãn; phần code metric H3.2 thuộc PR5 và E4 vẫn là gate kỹ thuật riêng.
-- Rủi ro còn lại: metadata `REVIEW_TARGET_COMMIT` trong phiếu TV2 khác checkpoint v0.2; TV3 cần scoped recheck phần tài liệu bị `e26af4f` sửa sau checkpoint; E4, PR3 và formal benchmark chưa đóng.
-- `RQ_FREEZE_RECOMMENDATION`: `PENDING`
-- TV4 xác nhận: `PENDING`
-- Ngày: `PENDING`
+- Rủi ro còn lại: metadata `REVIEW_TARGET_COMMIT` trong phiếu TV2 khác checkpoint v0.2; E4, PR3 và formal benchmark chưa đóng.
+- `RQ_FREEZE_RECOMMENDATION`: `PENDING` (chờ đồng bộ metadata checkpoint TV2 trước khi khuyến nghị APPROVED)
+- TV4 xác nhận: `TV4 — Project Lead & Integration Owner`
+- Ngày: `24/09/2026`
