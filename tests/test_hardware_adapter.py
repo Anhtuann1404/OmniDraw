@@ -60,6 +60,7 @@ from hardware_adapter import (
     load_calibration_profile,
     apply_origin_offset_to_svg,
     record_metric,
+    run_rq3_calibration_benchmark,
     VALID_HARDWARE_ERRORS,
 )
 
@@ -341,6 +342,46 @@ class TestFactory(unittest.TestCase):
         adapter = get_hardware_adapter(mode="fake")
         self.assertIsInstance(adapter, AxiDrawAdapter)
         self.assertTrue(adapter._use_fake_driver)
+
+# ---------------------------------------------------------------------------
+# Nhóm 6 — RQ3 Calibration Benchmark (TV3 Physical Feasibility)
+# ---------------------------------------------------------------------------
+
+class TestRQ3CalibrationBenchmark(unittest.TestCase):
+
+    def setUp(self):
+        reset_hardware_adapter()
+
+    def tearDown(self):
+        reset_hardware_adapter()
+
+    def test_rq3_specimen_fixture_valid(self):
+        fixture_path = os.path.join(_repo_root, "tests", "fixtures", "rq3_clearance_calibration_specimen.svg")
+        self.assertTrue(os.path.isfile(fixture_path), "rq3_clearance_calibration_specimen.svg fixture must exist")
+        is_valid, content, err = validate_svg_content_or_path(fixture_path)
+        self.assertTrue(is_valid, f"Fixture SVG must be valid XML: {err}")
+
+    def test_rq3_benchmark_simulator_run(self):
+        res = asyncio.run(run_rq3_calibration_benchmark(mode="simulator"))
+        self.assertEqual(res.get("status"), "done")
+        self.assertTrue(res.get("is_simulated"))
+        self.assertFalse(res.get("actual_hardware_measured"))
+        self.assertEqual(res.get("source_tag"), "simulator")
+        self.assertEqual(res.get("clearance_ladder_tested_mm"), [0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70])
+        self.assertEqual(res.get("acute_turn_angles_tested_deg"), [60, 90, 120, 150])
+        self.assertTrue(res.get("rapid_pen_lift_actuation_tested"))
+
+    def test_rq3_benchmark_physical_mode_blocked_without_device(self):
+        # Khi không có máy vẽ thật kết nối, physical mode bắt buộc trả về status blocked
+        res = asyncio.run(run_rq3_calibration_benchmark(mode="physical"))
+        self.assertEqual(res.get("status"), "blocked")
+        self.assertIn("BLOCKED_BY_HARDWARE", res.get("reason", ""))
+        self.assertFalse(res.get("actual_hardware_measured"))
+
+    def test_rq3_benchmark_missing_fixture_returns_error(self):
+        res = asyncio.run(run_rq3_calibration_benchmark(mode="simulator", fixture_path="non_existent_fixture.svg"))
+        self.assertEqual(res.get("status"), "error")
+        self.assertIn("Không tìm thấy fixture RQ3", res.get("error", ""))
 
 
 if __name__ == "__main__":

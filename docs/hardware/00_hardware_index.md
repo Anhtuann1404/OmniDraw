@@ -26,6 +26,7 @@ From phase Q3 onward, all hardware modifications, additions, and architectural d
 | [04_corexy_frame_spec.md](04_corexy_frame_spec.md) | **CoreXY & Frame Specification** | SYSTEM CONCEPT BASELINE | 2020 extrusion chassis, CoreXY belt routing, gantry mechanics |
 | [05_electronics_spec.md](05_electronics_spec.md) | **Electronics Specification** | SYSTEM CONCEPT / TBD | Controller candidate, stepper drivers, power regulation, wiring |
 | [06_validation_plan.md](06_validation_plan.md) | **Hardware Validation Plan** | PROPOSED VALIDATION PLAN / TBD | Experimental test procedures, validation matrices, target criteria |
+| [07_physical_calibration_protocol.md](07_physical_calibration_protocol.md) | **Physical Calibration Protocol** | ACTIVE BASELINE PROTOCOL | RQ3 physical calibration, ink bleed, clearance ladder, telemetry |
 | [hardware_decision_log.md](hardware_decision_log.md) | **Hardware Decision Log** | ACTIVE | Architectural decisions, interface freeze history, change rationale |
 
 ---
