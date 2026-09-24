@@ -2,9 +2,10 @@
 
 ```text
 REVIEWER_ROLE: TV2 — Stroke Optimization & Path Planning Lead
-REVIEW_TARGET_COMMIT: 5e9c857e42021f8a48d45b1fdaefcfdb87e82ff3
-PACKAGE_CHECKPOINT_COMMIT: 7ae43e6994506928cb6be8bd61e936b4f5e3857e
+REVIEW_TARGET_COMMIT: 7ae43e6994506928cb6be8bd61e936b4f5e3857e
+ORIGINAL_REVIEW_COMMIT: 5e9c857e42021f8a48d45b1fdaefcfdb87e82ff3
 RECHECK_TARGET_COMMIT: e26af4fd2559c2e28672fff1a11865bf427683a8
+INTEGRATION_VERIFICATION_COMMIT: 031d1983f07895306a0cf31b72300ad4d9e5ee50
 WORKFLOW_STATUS: CLOSED
 AI_DRAFT_VERDICT: PASS
 HUMAN_VERDICT: PASS
@@ -21,12 +22,12 @@ HUMAN_VERDICT: PASS
 
 ## 2. Tiêu chí phải xác nhận
 
-- [ ] B1/B2/B3 có định nghĩa so sánh được và không nhầm với Proposed CA-VHC.
-- [ ] $C_{state}$ và $J_{transition}$ không double-count.
-- [ ] Viterbi recurrence, backpointer và độ phức tạp được mô tả đúng.
-- [ ] Pen-up, pen-lift, curvature và acute-turn metrics có định nghĩa nhất quán.
-- [ ] Ranh giới code hiện hành, PR2 và PR3 được gắn trạng thái đúng.
-- [ ] Claim hiệu năng chưa vượt quá evidence hiện có.
+- [x] B1/B2/B3 có định nghĩa so sánh được và không nhầm với Proposed CA-VHC.
+- [x] $C_{state}$ và $J_{transition}$ không double-count.
+- [x] Viterbi recurrence, backpointer và độ phức tạp được mô tả đúng.
+- [x] Pen-up, pen-lift, curvature và acute-turn metrics có định nghĩa nhất quán.
+- [x] Ranh giới code hiện hành, PR2 và PR3 được gắn trạng thái đúng.
+- [x] Claim hiệu năng chưa vượt quá evidence hiện có.
 
 > [!IMPORTANT]
 > PASS tài liệu trong phiếu này không đồng nghĩa PR2 baseline adapters đã hoàn tất hoặc Entry Gate PR3 đã mở. Nếu interface PR2 chưa đủ để kiểm tra một claim, ghi finding/blocker riêng.
@@ -67,16 +68,27 @@ AI đã fetch `origin/feature/frontend-intergration`, xác minh branch chứa đ
 
 **Phạm vi còn mở:** không còn finding bắt buộc mở trong TV2-R01–R06. `acute_turn_count_120deg` vẫn là dependency triển khai trước PR5; E4 vẫn chờ TV2+TV4 ký duyệt; PR3 và formal experiment chưa bắt đầu/hoàn tất. Recheck học thuật này không đóng các gate đó. TV2 đã tự kiểm tra, xác nhận verdict và chuyển workflow sang `CLOSED`.
 
+### 4.2. Đối chiếu commit tích hợp `031d1983f07895306a0cf31b72300ad4d9e5ee50`
+
+AI đã xác minh `031d1983f07895306a0cf31b72300ad4d9e5ee50` là hậu duệ của commit recheck `e26af4fd2559c2e28672fff1a11865bf427683a8` và rà lại toàn bộ sáu tiêu chí tại §2 trên snapshot tích hợp.
+
+- Commit tích hợp không thay đổi `backend/handwriting/engine.py`, `backend/handwriting/baselines.py`, `backend/handwriting/metrics_evaluator.py` hoặc `tests/test_ca_vhc_baselines.py`; khóa hành vi B3 và bằng chứng code của R01/R04 được giữ nguyên.
+- Docs 05, 13, 14 và 15 không thay đổi giữa `e26af4f` và `031d198` trong phạm vi TV2. Docs 10 chỉ đồng bộ trạng thái cross-review/version binding; các công thức H1.2, `CONNECT`/`LIFT`, trạng thái `acute_turn_count_120deg` và ranh giới E3/E4 vẫn giữ nguyên.
+- Thay đổi corpus chỉ bổ sung metadata freeze và đổi liên kết báo cáo sang `docs/19_benchmark_corpus_freeze_report.md`; không đổi danh sách corpus hoặc kết luận R01–R06.
+
+**Kết luận AI:** thay đổi từ `e26af4f` đến `031d198` không làm thay đổi kết luận chuyên môn. TV2-R01–R06 tiếp tục là `VERIFIED_CLOSED`; `AI_DRAFT_VERDICT` tiếp tục là `PASS`. TV2 đã tự xác nhận `HUMAN_VERDICT: PASS`.
+
 ## 5. Kết luận con người
 
 - Phạm vi thực tế đã đọc: `docs/10_nckh_research_plan.md (RQ1/RQ3, B1/B2/B3, metric chuyển động); docs/14_chapter_1_introduction.md (mục 1.4); docs/13_chapter_2_literature_review.md (mục 2.4–2.6); docs/15_chapter_3_methodology.md (mục 3.3–3.5, 3.8); đối chiếu mã nguồn backend/handwriting/baselines.py, engine.py, metrics_evaluator.py và tests/test_ca_vhc_baselines.py`
 - Mục chưa thể xác minh và lý do: `Hiệu năng thực tế của PR3 Trellis DAG và delayed-stroke scheduler (chưa có code trong engine, thuộc PR3 và PR4); số đo actual_draw_time_sec và c1_violation_count trên máy vẽ thật (chờ TV3 calibration và implementation).`
 - Trạng thái PR2 được quan sát: `IMPLEMENTED_AND_TESTED (3 baseline adapters b1_static, b2_greedy, b3_current_trellis đã hoàn tất trong backend/handwriting/baselines.py và 73/73 tests PASS; Entry Gate E3 đạt, Entry Gate E4 chờ ký duyệt shared interface).`
-- `AI_DRAFT_VERDICT`: `PASS` — TV2-R01–R06 đều được AI đối chiếu và đề xuất `VERIFIED_CLOSED`; TV2 đã xác nhận ở `HUMAN_VERDICT` bên dưới.
+- `AI_DRAFT_VERDICT`: `PASS` — TV2-R01–R06 vẫn `VERIFIED_CLOSED` sau khi đối chiếu commit tích hợp `031d1983f07895306a0cf31b72300ad4d9e5ee50`; TV2 đã xác nhận.
 - `HUMAN_VERDICT`: `PASS`
 - Reviewer xác nhận (họ/tên hoặc mã thành viên): `TV2 — Thành viên 2`
-- Ngày xác nhận: `23/09/2026`
-- Commit đã review: `5e9c857e42021f8a48d45b1fdaefcfdb87e82ff3`
-- Checkpoint gói cross-review v0.2: `7ae43e6994506928cb6be8bd61e936b4f5e3857e`
+- Ngày xác nhận: `24/09/2026`
+- Commit review gốc: `5e9c857e42021f8a48d45b1fdaefcfdb87e82ff3`
+- Checkpoint gói cross-review v0.2 / `REVIEW_TARGET_COMMIT`: `7ae43e6994506928cb6be8bd61e936b4f5e3857e`
 - Commit recheck được TV4 cung cấp: `e26af4fd2559c2e28672fff1a11865bf427683a8` — `VERIFIED`
+- Commit tích hợp cuối đã đối chiếu: `031d1983f07895306a0cf31b72300ad4d9e5ee50` — `VERIFIED_NO_IMPACT_ON_TV2_VERDICT`
 - [x] Tôi đã tự kiểm tra findings và xác nhận verdict trên; đây không phải kết luận tự động của AI.
