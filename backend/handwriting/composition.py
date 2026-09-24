@@ -27,6 +27,8 @@ if __package__:
         _stroke_min_distance,
         segments_intersect,
         point_to_segment_distance,
+        build_ligature_bridge,
+        bridge_collision_cost,
         GLYPH_CENTERS,
         GLYPHS,
     )
@@ -40,6 +42,8 @@ else:
             _stroke_min_distance,
             segments_intersect,
             point_to_segment_distance,
+            build_ligature_bridge,
+            bridge_collision_cost,
             GLYPH_CENTERS,
             GLYPHS,
         )
@@ -52,6 +56,8 @@ else:
             _stroke_min_distance,
             segments_intersect,
             point_to_segment_distance,
+            build_ligature_bridge,
+            bridge_collision_cost,
             GLYPH_CENTERS,
             GLYPHS,
         )
@@ -621,3 +627,307 @@ def build_glyph_world_geometry(
         base_strokes=w_base,
         diacritic_strokes=w_diac,
     )
+
+
+# =============================================================================
+# 7. Đánh giá Chuyển tiếp Trạng thái (Hợp đồng E4: evaluate_composition_transition)
+# =============================================================================
+
+def evaluate_composition_transition(
+    prev_state: CompositionState,
+    curr_state: CompositionState,
+    prev_world: GlyphWorldGeometry,
+    curr_world: GlyphWorldGeometry,
+    transition_weights: Optional[TransitionWeights] = None,
+    diacritic_config: Optional[DiacriticConfig] = None,
+    force_lift: bool = False,
+    scale_hint: float = 1.0,
+) -> TransitionResult:
+    """
+    Đánh giá chi phí chuyển tiếp J_transition(prev, curr) giữa hai node CompositionState theo Hợp đồng E4:
+    - Nhánh LIFT: J_lift = w1 * D_penup + w2 * N_lift (N_lift = 1).
+    - Nhánh CONNECT: J_conn = w3 * C_curvature + w4 * C_bridge_collision.
+    - Cắt tỉa cứng (Hard reject): Gán J_conn = +inf nếu vi phạm hard clearance hoặc giao cắt dấu.
+    - Kết quả: Chọn min(J_conn, J_lift); nếu cả hai không hợp lệ -> REJECT (+inf).
+    - Không chứa cost_legibility (đã chuyển hoàn toàn sang C_state).
+    """
+    tw = transition_weights if transition_weights is not None else TransitionWeights()
+    cfg = diacritic_config if diacritic_config is not None else DiacriticConfig()
+
+    p_exit = prev_world.p_exit
+    p_entry = curr_world.p_entry
+    v_exit = prev_world.v_exit
+    v_entry = curr_world.v_entry
+
+    d_vec = p_entry - p_exit
+    dist = float(np.linalg.norm(d_vec))
+    dx = float(d_vec[0])
+
+    # Nhánh LIFT: Quãng đường penup + chi phí phạt nhấc bút
+    cost_lift = tw.w_penup * dist + tw.w_lift * 1.0
+
+    if force_lift:
+        return TransitionResult(
+            is_valid=True,
+            decision="LIFT",
+            total_cost=float(cost_lift),
+            breakdown=TransitionCostBreakdown(
+                d_penup_mm=dist,
+                n_lift=1,
+                c_curvature=0.0,
+                c_bridge_collision=0.0,
+                total_cost=float(cost_lift),
+            ),
+            bridge_strokes=None,
+        )
+
+    # Kiểm tra điều kiện hình học cho phép nối nét
+    u = prev_state.base_variant
+    w = curr_state.base_variant
+    can_connect = (u.can_out and w.can_in and dx > -0.2 and dist < 12.0)
+
+    if not can_connect:
+        return TransitionResult(
+            is_valid=True,
+            decision="LIFT",
+            total_cost=float(cost_lift),
+            breakdown=TransitionCostBreakdown(
+                d_penup_mm=dist,
+                n_lift=1,
+                c_curvature=0.0,
+                c_bridge_collision=0.0,
+                total_cost=float(cost_lift),
+            ),
+            bridge_strokes=None,
+        )
+
+    # 1. Chi phí bẻ góc tiếp tuyến (Curvature Cost)
+    if dist > 1e-4:
+        u_d = d_vec / dist
+        cos1 = float(np.clip(np.dot(v_exit, u_d), -1.0, 1.0))
+        cos2 = float(np.clip(np.dot(u_d, v_entry), -1.0, 1.0))
+        c_curvature = (1.0 - cos1) + (1.0 - cos2)
+    else:
+        c_curvature = 0.0
+
+    # 2. Dựng candidate bridge trong world frame
+    candidate_br = build_ligature_bridge(p_exit, v_exit, p_entry, v_entry, scale_hint=scale_hint, n=6)
+
+    # 3. Kiểm tra va chạm Bridge với 4 tập nét ở world frame:
+    # prev_base, prev_diacritic, curr_base, curr_diacritic (Docs 18 Section 2.2 line 99)
+    all_diac_strokes = list(prev_world.diacritic_strokes) + list(curr_world.diacritic_strokes)
+    c_diac_collision = 0.0
+    diac_hard_collision = False
+
+    for ds in all_diac_strokes:
+        if len(ds) == 0:
+            continue
+        d = _stroke_min_distance(candidate_br, ds)
+        # Va chạm cứng: cắt qua nét dấu hoặc khoảng hở <= tolerance
+        if d <= cfg.internal_collision_tolerance_mm:
+            diac_hard_collision = True
+            break
+        # Phạt mềm nếu lấn vào vùng an toàn clearance
+        if d < cfg.clearance_threshold_mm:
+            pen = (cfg.clearance_threshold_mm - d) / (cfg.clearance_threshold_mm if cfg.clearance_threshold_mm > 0 else 1.0)
+            c_diac_collision += 4.0 * pen
+
+    if diac_hard_collision:
+        cost_conn = float("inf")
+    else:
+        # Kiểm tra va chạm với thân chữ (base strokes)
+        c_base = bridge_collision_cost(
+            candidate_br,
+            prev_strokes=prev_world.base_strokes,
+            curr_strokes=curr_world.base_strokes,
+            scale_hint=scale_hint,
+        )
+        if c_base >= 6.0:  # Xuyên thấu thân chữ nghiêm trọng
+            cost_conn = float("inf")
+        else:
+            c_collision = c_base + c_diac_collision
+            if dx <= 0.0:
+                c_collision += 2.0
+            if dist > 8.0:
+                c_collision += (dist - 8.0) * 0.4
+            cost_conn = tw.w_curvature * c_curvature + tw.w_bridge_collision * c_collision
+
+    # 4. Phán quyết nhánh tối ưu: min(J_conn, J_lift)
+    if cost_conn < cost_lift and not math.isinf(cost_conn):
+        return TransitionResult(
+            is_valid=True,
+            decision="CONNECT",
+            total_cost=float(cost_conn),
+            breakdown=TransitionCostBreakdown(
+                d_penup_mm=0.0,
+                n_lift=0,
+                c_curvature=float(c_curvature),
+                c_bridge_collision=float(c_collision),
+                total_cost=float(cost_conn),
+            ),
+            bridge_strokes=[candidate_br],
+        )
+    else:
+        return TransitionResult(
+            is_valid=True,
+            decision="LIFT",
+            total_cost=float(cost_lift),
+            breakdown=TransitionCostBreakdown(
+                d_penup_mm=dist,
+                n_lift=1,
+                c_curvature=0.0,
+                c_bridge_collision=0.0,
+                total_cost=float(cost_lift),
+            ),
+            bridge_strokes=None,
+        )
+
+
+# =============================================================================
+# 8. Thuật toán Quy hoạch Động Viterbi Diacritic-Aware Trellis DAG
+# =============================================================================
+
+def optimize_word_composition_dag(
+    char_info_list: List[Dict[str, Any]],
+    transition_weights: Optional[TransitionWeights] = None,
+    diacritic_config: Optional[DiacriticConfig] = None,
+    font_pack: Optional[Dict[str, Any]] = None,
+    force_lift: bool = False,
+    scale_hint: float = 1.0,
+) -> Dict[str, Any]:
+    """
+    Quy hoạch động Viterbi DP trên Diacritic-Aware Trellis DAG:
+    - Layer: CompositionState = (GlyphVariant, DiacriticCandidate)
+    - Kích thước không gian trạng thái: K_raw <= 9 mỗi layer
+    - Hàm mục tiêu Bellman: DP[i, j] = C_state(s[i, j]) + min_p (DP[i-1, p] + J_transition(prev, curr))
+    - Fail-closed: Nếu không tìm thấy đường đi hợp lệ -> ném ngoại lệ NoValidCompositionState.
+    """
+    n = len(char_info_list)
+    if n == 0:
+        return {
+            "states": [],
+            "transitions": [],
+            "conns": [],
+            "bridge_strokes": [],
+            "total_cost": 0.0,
+        }
+
+    tw = transition_weights if transition_weights is not None else TransitionWeights()
+    cfg = diacritic_config if diacritic_config is not None else DiacriticConfig()
+
+    # 1. Xây dựng tập CompositionState và GlyphWorldGeometry cho từng layer
+    states_per_char: List[List[CompositionState]] = []
+    world_per_char: List[List[GlyphWorldGeometry]] = []
+
+    for item in char_info_list:
+        states = build_composition_states(item, font_pack=font_pack, config=cfg)
+        if not states:
+            raise NoValidCompositionState(
+                f"Ký tự '{item.get('char', '')}' không còn CompositionState nào hợp lệ."
+            )
+        scale_vec = item.get("scale_vec", np.array([1.0, 1.0]))
+        offset = item.get("offset", np.array([0.0, 0.0]))
+        geoms = [build_glyph_world_geometry(s, scale_vec=scale_vec, offset=offset) for s in states]
+        states_per_char.append(states)
+        world_per_char.append(geoms)
+
+    # Trường hợp từ đơn 1 ký tự
+    if n == 1:
+        costs = [compute_state_cost(s, config=cfg) for s in states_per_char[0]]
+        best_j = int(np.argmin(costs))
+        return {
+            "states": [states_per_char[0][best_j]],
+            "transitions": [],
+            "conns": [],
+            "bridge_strokes": [],
+            "total_cost": float(costs[best_j]),
+        }
+
+    # 2. Khởi tạo Base Case (Layer 0)
+    dp: List[Dict[int, float]] = [{} for _ in range(n)]
+    bp: List[Dict[int, int]] = [{} for _ in range(n)]
+    tr_map: List[Dict[int, Optional[TransitionResult]]] = [{} for _ in range(n)]
+
+    for j, s in enumerate(states_per_char[0]):
+        dp[0][j] = compute_state_cost(s, config=cfg)
+        bp[0][j] = -1
+        tr_map[0][j] = None
+
+    # 3. Bước truy hồi Viterbi (Inductive Step)
+    for i in range(1, n):
+        curr_states = states_per_char[i]
+        curr_geoms = world_per_char[i]
+        prev_states = states_per_char[i - 1]
+        prev_geoms = world_per_char[i - 1]
+
+        for j, (curr_s, curr_w) in enumerate(zip(curr_states, curr_geoms)):
+            c_state = compute_state_cost(curr_s, config=cfg)
+            best_cost = float("inf")
+            best_p = -1
+            best_tr: Optional[TransitionResult] = None
+
+            for p, (prev_s, prev_w) in enumerate(zip(prev_states, prev_geoms)):
+                prev_dp = dp[i - 1].get(p, float("inf"))
+                if math.isinf(prev_dp):
+                    continue
+
+                tr = evaluate_composition_transition(
+                    prev_state=prev_s,
+                    curr_state=curr_s,
+                    prev_world=prev_w,
+                    curr_world=curr_w,
+                    transition_weights=tw,
+                    diacritic_config=cfg,
+                    force_lift=force_lift,
+                    scale_hint=scale_hint,
+                )
+
+                if not tr.is_valid or math.isinf(tr.total_cost):
+                    continue
+
+                total_c = prev_dp + tr.total_cost + c_state
+                if total_c < best_cost:
+                    best_cost = total_c
+                    best_p = p
+                    best_tr = tr
+
+            dp[i][j] = best_cost
+            bp[i][j] = best_p
+            tr_map[i][j] = best_tr
+
+    # 4. Kết thúc và Truy ngược đường đi (Termination & Backtracking)
+    last_dp = dp[n - 1]
+    valid_costs = [(c, j) for j, c in last_dp.items() if not math.isinf(c)]
+    if not valid_costs:
+        raise NoValidCompositionState(
+            "Không tìm thấy đường đi hợp lệ qua toàn bộ từ trong Diacritic-Aware Trellis DAG. "
+            "Toàn bộ transitions hoặc states đã bị loại bỏ bởi ràng buộc cứng (Fail-closed)."
+        )
+
+    best_total_cost, best_last_j = min(valid_costs)
+
+    chosen_states: List[CompositionState] = [None] * n  # type: ignore
+    chosen_transitions: List[TransitionResult] = [None] * (n - 1)  # type: ignore
+    curr_j = best_last_j
+
+    for i in range(n - 1, 0, -1):
+        chosen_states[i] = states_per_char[i][curr_j]
+        chosen_transitions[i - 1] = tr_map[i][curr_j]  # type: ignore
+        curr_j = bp[i][curr_j]
+
+    chosen_states[0] = states_per_char[0][curr_j]
+
+    conns = [tr.decision == "CONNECT" for tr in chosen_transitions]
+    bridge_strokes = [
+        (tr.bridge_strokes[0] if (tr and tr.bridge_strokes) else None)
+        for tr in chosen_transitions
+    ]
+
+    return {
+        "states": chosen_states,
+        "transitions": chosen_transitions,
+        "conns": conns,
+        "bridge_strokes": bridge_strokes,
+        "total_cost": float(best_total_cost),
+    }
+

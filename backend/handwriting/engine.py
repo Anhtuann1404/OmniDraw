@@ -1353,6 +1353,21 @@ def _text_to_strokes_impl(
                 dp_sol = optimize_word_dag(
                     char_info_list, weights=weights, force_lift=(not enable_lig)
                 )
+            elif algorithm_mode in ("proposed", "proposed_ca_vhc", "pr3_ca_vhc"):
+                if __package__:
+                    from .composition import optimize_word_composition_dag
+                else:
+                    try:
+                        from handwriting.composition import optimize_word_composition_dag
+                    except ImportError:
+                        from backend.handwriting.composition import optimize_word_composition_dag
+                dp_sol = optimize_word_composition_dag(
+                    char_info_list,
+                    font_pack=font_pack,
+                    force_lift=(not enable_lig),
+                    scale_hint=float(scale),
+                )
+                dp_sol["variants"] = [s.base_variant for s in dp_sol["states"]]
             else:
                 if __package__:
                     from .baselines import solve_baseline
@@ -1419,9 +1434,12 @@ def _text_to_strokes_impl(
                     else:
                         bridge_curv_cost = 0.0
 
-                    bridge = build_ligature_bridge(
-                        p_exit, v_ex_world, p_entry, v_en_world, scale_hint=scale_hint, n=6
-                    )
+                    if dp_sol.get("bridge_strokes") and dp_sol["bridge_strokes"][char_idx - 1] is not None:
+                        bridge = dp_sol["bridge_strokes"][char_idx - 1]
+                    else:
+                        bridge = build_ligature_bridge(
+                            p_exit, v_ex_world, p_entry, v_en_world, scale_hint=scale_hint, n=6
+                        )
                     merged = np.vstack([word_base_strokes[-1], bridge[1:-1], prim_strokes[0]])
                     word_base_strokes[-1] = merged
 
@@ -1500,8 +1518,30 @@ def _text_to_strokes_impl(
                         "meta": {"part": "d_bar", "char_idx": char_idx},
                     })
 
-                # Sinh và đặt dấu theo quy tắc hình học
-                if info["accents"]:
+                # Sinh và đặt dấu (lấy trực tiếp từ CompositionState nếu ở proposed_ca_vhc, tránh double-render)
+                if algorithm_mode in ("proposed", "proposed_ca_vhc", "pr3_ca_vhc") and "states" in dp_sol:
+                    state = dp_sol["states"][char_idx]
+                    dc = state.diacritic_candidate
+                    if dc is not None:
+                        shift_vec = np.array([dc.dx, dc.dy], dtype=float)
+                        strokes_to_place = dc.canonical_strokes_local if dc.canonical_strokes_local else dc.strokes_local
+                        for acc_idx, acc_s in enumerate(strokes_to_place):
+                            acc_scaled = acc_s.astype(float) * info["scale_vec"]
+                            acc_placed = acc_scaled + info["offset"] + shift_vec
+                            word_secondary_strokes.append(acc_placed)
+                            word_secondary_meta.append({
+                                "stroke_type": "diacritic_stroke",
+                                "char": b_char,
+                                "meta": {
+                                    "accents": info["accents"],
+                                    "accent_index": acc_idx,
+                                    "char_idx": char_idx,
+                                    "placement_tag": dc.placement_tag,
+                                    "dx_mm": dc.dx,
+                                    "dy_mm": dc.dy,
+                                },
+                            })
+                elif info["accents"]:
                     acc_list = generate_accents(
                         b_char,
                         info["accents"],
@@ -1623,7 +1663,8 @@ def _text_to_strokes_impl(
 
 
 def text_to_strokes(text, font="oly", style="hand_hocsinh", font_size_mm=7.0, line_spacing_mm=13.0,
-                    paper_size_mm=(210.0, 297.0), margin_mm=20.0, seed=None, letter_type="general"):
+                    paper_size_mm=(210.0, 297.0), margin_mm=20.0, seed=None, letter_type="general",
+                    _algorithm_mode="b3_current_trellis"):
     """
     Biến đổi văn bản tiếng Việt thành mảng các nét vẽ mm (List of ndarray (N, 2)).
     Hỗ trợ xuống dòng tự động, căn lề, proportional kerning, nối nét cursive và chống dính dấu.
@@ -1632,7 +1673,7 @@ def text_to_strokes(text, font="oly", style="hand_hocsinh", font_size_mm=7.0, li
     return _text_to_strokes_impl(
         text, font=font, style=style, font_size_mm=font_size_mm, line_spacing_mm=line_spacing_mm,
         paper_size_mm=paper_size_mm, margin_mm=margin_mm, seed=seed, letter_type=letter_type,
-        return_trace=False
+        return_trace=False, algorithm_mode=_algorithm_mode
     )
 
 
