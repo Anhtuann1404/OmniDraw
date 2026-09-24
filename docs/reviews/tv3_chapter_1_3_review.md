@@ -3,6 +3,7 @@
 ```text
 REVIEWER_ROLE: TV3 — Hardware, Calibration & Physical Validation Lead
 REVIEW_TARGET_COMMIT: 7ae43e6994506928cb6be8bd61e936b4f5e3857e
+RECHECK_COMMIT: 031d1983f07895306a0cf31b72300ad4d9e5ee50
 WORKFLOW_STATUS: CLOSED
 AI_DRAFT_VERDICT: PASS
 HUMAN_VERDICT: PASS
@@ -44,14 +45,28 @@ Hãy làm reviewer TV3. Đọc docs/reviews/README.md và phiếu này, sau đó
 
 `TEMPLATE` không phải finding thật và không được tính vào verdict. Trạng thái finding thật: `OPEN`, `ACCEPTED`, `REJECTED_WITH_REASON`, `DEFERRED_WITH_OWNER`, `VERIFIED_CLOSED`.
 
+### 4.1. Recheck TV3-R01–R02 trên commit `031d1983f07895306a0cf31b72300ad4d9e5ee50`
+
+AI TV3 đã đối chiếu diff giữa checkpoint đã duyệt `7ae43e6994506928cb6be8bd61e936b4f5e3857e` và commit cuối `031d1983f07895306a0cf31b72300ad4d9e5ee50` trên các file thuộc phạm vi TV3: [`docs/10_nckh_research_plan.md`](../10_nckh_research_plan.md) (RQ3, clearance, physical feasibility), [`docs/14_chapter_1_introduction.md`](../14_chapter_1_introduction.md) (§1.9), và [`docs/15_chapter_3_methodology.md`](../15_chapter_3_methodology.md) (§§3.1, 3.7, 3.8).
+
+| ID | Claim cần kiểm tra khi recheck | Kết quả AI recheck | Bằng chứng đối chiếu trên commit `031d1983f07895306a0cf31b72300ad4d9e5ee50` |
+| :--- | :--- | :--- | :--- |
+| TV3-R01 | Phân tách tuyệt đối thời gian mô phỏng khỏi `actual_draw_time_sec` trên máy thật | `VERIFIED_CLOSED` | 1. `docs/10_nckh_research_plan.md` Bảng 3.3 giữ nhãn `PENDING_TV3_CALIBRATION`; Bảng 4.3 ghi rõ `actual_draw_time_sec` là "Chưa có số đo máy thật" (phụ thuộc "TV3 hardware run").<br>2. `docs/14_chapter_1_introduction.md` §1.9 dòng 144 bảo lưu nguyên tắc: "chưa được dùng kết quả simulator thay cho `actual_draw_time_sec`".<br>3. `docs/15_chapter_3_methodology.md` §3.1.2 khẳng định engine không được suy diễn khả năng thi công vật lý từ SVG; §3.7.2 xác nhận `actual_draw_time_sec` chưa tồn tại và không được suy ra từ metric hiện hành; §3.7.3 cấm gộp số liệu giữa simulator và máy thật. |
+| TV3-R02 | Không gọi ngưỡng clearance $0.20\,\text{mm}$ / $0.50\,\text{mm}$ là an toàn vật lý khi chưa calibration | `VERIFIED_CLOSED` | 1. `docs/10_nckh_research_plan.md` Bảng 4.3 nêu rõ `minimum_diacritic_clearance_mm`: "physical claim cần TV3".<br>2. `docs/14_chapter_1_introduction.md` §1.9 dòng 143 giữ nguyên ranh giới: "chưa được gọi clearance hiện tại là ngưỡng an toàn vật lý".<br>3. `docs/15_chapter_3_methodology.md` §3.7.4 phân định $0.20\,\text{mm}$ là technical minimum cho phần mềm, $0.50\,\text{mm}$ chỉ là provisional research target và chỉ được nâng thành tuyên bố vật lý sau calibration; §3.8 mục 2 & 6 khẳng định polyline geometry không mô phỏng độ loang mực, độ nảy ngòi bút, sai số cơ khí và chưa có bằng chứng an toàn vật lý. |
+
+**Ranh giới kỹ thuật & phần cứng:**
+- Recheck này xác nhận toàn bộ wording và giới hạn tuyên bố trong tài liệu hoàn toàn bảo toàn các nguyên tắc an toàn vật lý của TV3.
+- Recheck tài liệu này **tuyệt đối không đóng hardware-calibration gate**; trạng thái đo đạc thực nghiệm vẫn là `BLOCKED_BY_HARDWARE` và `PENDING_TV3_CALIBRATION`.
+
 ## 5. Kết luận con người
 
-- Phạm vi thực tế đã đọc: `10_nckh_research_plan.md` (RQ3, clearance, physical feasibility); `14_chapter_1_introduction.md` (1.4.3, 1.8–1.9); `13_chapter_2_literature_review.md` (2.5–2.6); `15_chapter_3_methodology.md` (3.1, 3.7–3.8).
-- Mục chưa thể xác minh và lý do: Số đo thực nghiệm trên máy vẽ AxiDraw vật lý (chưa thể xác minh do đang chờ phần cứng và cáp kết nối: `BLOCKED_BY_HARDWARE`).
+- Phạm vi thực tế đã đọc: `10_nckh_research_plan.md` (RQ3, clearance, physical feasibility); `14_chapter_1_introduction.md` (§1.9); `15_chapter_3_methodology.md` (§§3.1, 3.7, 3.8).
+- Mục chưa thể xác minh và lý do: Số đo thực nghiệm trên máy vẽ AxiDraw vật lý (chưa thể xác minh do đang chờ phần cứng: `BLOCKED_BY_HARDWARE`).
 - Trạng thái calibration được quan sát: `PENDING_TV3_CALIBRATION`
-- `AI_DRAFT_VERDICT`: `PASS`
+- `AI_DRAFT_VERDICT`: `PASS` (tài liệu tuân thủ tuyệt đối ranh giới vật lý, TV3-R01 và TV3-R02 duy trì VERIFIED_CLOSED).
 - `HUMAN_VERDICT`: `PASS`
 - Reviewer xác nhận (họ/tên hoặc mã thành viên): `TV3 (Hardware, Calibration & Physical Validation Lead)`
-- Ngày xác nhận: `23/09/2026`
-- Commit đã review: `7ae43e6994506928cb6be8bd61e936b4f5e3857e`
+- Ngày xác nhận: `24/09/2026`
+- Commit checkpoint: `7ae43e6994506928cb6be8bd61e936b4f5e3857e`
+- Commit recheck: `031d1983f07895306a0cf31b72300ad4d9e5ee50`
 - [x] Tôi đã tự kiểm tra findings và xác nhận verdict trên; đây không phải kết luận tự động của AI.
