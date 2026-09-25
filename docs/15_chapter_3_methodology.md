@@ -77,8 +77,53 @@ Gateway kiểm tra kiểu đầu vào, style, font, `letter_type`, seed và kh�
 | Interface chuyển tiếp dùng chung | `IMPLEMENTED_AND_LOCKED` | Hợp đồng E4 đã được TV2 và TV4 ký duyệt chính thức theo [`18_pr3_e4_shared_transition_contract_draft.md`](18_pr3_e4_shared_transition_contract_draft.md) |
 | Diacritic-Aware Trellis production | `PENDING_PR3` | Chưa có trong engine hiện hành |
 | Delayed-stroke scheduler | `PENDING_PR4` | Chỉ có thiết kế phân tầng WHERE/WHEN |
+| Benchmark Corpus v1.0 (freeze đối chứng) | `FROZEN_AND_VERIFIED` | [`08_handwriting_dataset_spec.md`](08_handwriting_dataset_spec.md), `tests/test_benchmark_corpus_coverage.py` |
+| Bộ phiếu thu thập P01–P04 & Báo cáo độ phủ | `DESIGNED_AND_AUDITED` | `docs/collection_sheets/P01..P04/`, [`20_p01_p04_coverage_analysis_report.md`](20_p01_p04_coverage_analysis_report.md) |
+| Giao thức thu thập, chính sách No-PII & Kiểm soát lỗi 5 bước | `POLICY_LOCKED` | [`21_handwriting_collection_protocol_and_error_handling.md`](21_handwriting_collection_protocol_and_error_handling.md) |
+| Pipeline kiểm chuẩn quang học 600 DPI (Scan-Validation) | `IMPLEMENTED_AND_TESTED` | `backend/scan_validator/`, `tests/test_scan_validation_pipeline.py` |
+| Schema & Bộ trích xuất Hồ sơ Người viết (Writer Profile P2) | `IMPLEMENTED_AND_TESTED` | `backend/writer_profile/`, `tests/test_writer_profile_extractor.py` |
+| Thu thập Pilot (3–5 người viết) và Quét máy thật 600 DPI | `BLOCKED_BY_HARDWARE` | Chờ trang bị máy in độ nét cao và máy quét phẳng 600 DPI chuyên dụng |
 | Formal benchmark và ablation | `PENDING_PR5` | Chờ PR2–PR4 và corpus freeze |
 | Clearance và thời gian vẽ trên máy thật | `PENDING_TV3_CALIBRATION` | Chưa có số đo vật lý |
+
+### 3.1.4. Quy trình thu thập dữ liệu, kiểm chuẩn quang học 600 DPI và trích xuất hồ sơ phong cách (Phân hệ TV1)
+
+Để đảm bảo tính hợp lệ thực nghiệm cho các nghiên cứu tiếp theo (bao gồm tinh chỉnh mỏ neo dấu CA-VHC và mô hình hóa phong cách cá nhân hóa P2), phân hệ dữ liệu do TV1 chủ trì được thiết kế theo một chuỗi quy trình khép kín, chuẩn hóa từ biểu mẫu thu thập vật lý đến hồ sơ số học.
+
+#### 3.1.4.1. Thiết kế bộ phiếu thu thập P01–P04 và phân tích độ phủ
+Bộ phiếu **OmniDraw Handwriting Collection Sheet Pack v1** gồm 4 trang khổ A4 định chuẩn ($210 \times 297\,\text{mm}$):
+1. **P01 — Bảng ký tự rời & Tổ hợp dấu (Single Characters & Diacritic Coverage):** Thu thập 26 chữ thường, 26 chữ hoa, 10 chữ số và 18 nguyên âm có dấu tiêu biểu trong các ô định vị $14 \times 14\,\text{mm}$ với clearance quang học $1.0\,\text{mm}$.
+2. **P02 — Từ ngữ cảnh & Nối nét (Contextual Words & Ligatures):** Thu thập 12 từ ngữ cảnh đại diện cho 3 nhóm vị trí: đầu từ viết hoa (*Kính gửi*, *Thân gửi*), nối nét giữa từ và khoảng hở dấu (*thuyền*, *nghiêng*, *nguyễn*), và đuôi từ kết thúc (*bạn*, *nam*, *nhìn*).
+3. **P03 — Câu Pangram tiếng Việt chuẩn mực (Sentence Flow):** Thu thập 3 câu văn chuẩn mực phủ rộng âm vị và thanh điệu trên các dòng kẻ dẫn hướng đôi $8.0\,\text{mm}$.
+4. **P04 — Đoạn văn xuôi liền mạch (Natural Paragraph Writing):** Thu thập 1 đoạn văn liên tục 5 dòng kẻ ($35$ từ, $172$ ký tự) để phân tích độ trôi baseline dài hạn, mật độ chữ và khoảng cách dòng tự nhiên.
+
+Theo Báo cáo Phân tích Độ phủ ([`20_p01_p04_coverage_analysis_report.md`](20_p01_p04_coverage_analysis_report.md)), bộ phiếu v1 đã đạt độ phủ ngữ âm $100\%$ đối với 12 nguyên âm cơ sở, 5 thanh điệu tiếng Việt và 3/3 phụ âm có dấu cấu trúc (`đ`, `Đ`, `g`), đồng thời bao quát đầy đủ 4 trạng thái ngữ cảnh (`isolated`, `word_initial`, `word_medial`, `word_final`). Bộ phiếu được phê duyệt chính thức cho giai đoạn thử nghiệm Pilot (`APPROVED FOR PILOT PHASE`).
+
+#### 3.1.4.2. Giao thức thu thập, chính sách No-PII và kiểm soát lỗi 5 bước
+Giao thức thu thập dữ liệu ([`21_handwriting_collection_protocol_and_error_handling.md`](21_handwriting_collection_protocol_and_error_handling.md)) thiết lập các nguyên tắc vận hành:
+- **Bảo vệ quyền riêng tư tuyệt đối (No-PII Policy):** Tuyệt đối không in thông tin định danh cá nhân (họ tên, email, CCCD) lên phiếu quét. Mỗi người viết được cấp một mã ẩn danh duy nhất $W\{xxx\}$ (ví dụ: $W001$, $W002$).
+- **Xử lý lỗi cấp ô, dòng và trang:** Nghiêm cấm đồ đè nét, tẩy xóa hoặc bôi trắng. Khi viết sai, người viết gạch chéo một nét dứt khoát; thuật toán QC sẽ tự động phân loại ô lỗi vào nhóm `QC_FLAGGED` hoặc `QC_REJECTED`. Quy định cấp phát phiếu dự phòng (tối đa 2 bản/phiên) và tiêu chí hủy bỏ toàn bộ phiên thu thập khi vượt ngưỡng $10\%$ ô lỗi.
+- **Vòng đời kiểm soát chất lượng dữ liệu 5 trạng thái:**
+  $$\text{QC\_RAW} \longrightarrow \text{QC\_EXTRACTED} \longrightarrow \text{QC\_AUTO\_FLAGGED} \longrightarrow \text{QC\_MANUAL\_AUDIT} \longrightarrow \{\text{QC\_VERIFIED\_PASS} \mid \text{QC\_REJECTED}\}.$$
+
+#### 3.1.4.3. Pipeline kiểm chuẩn quang học 600 DPI (Scan-Validation Pipeline)
+Nhằm tự động hóa khâu xử lý ảnh quét thô và triệt tiêu sai số cơ học của thiết bị quét phẳng, pipeline `backend/scan_validator/` thực thi chuỗi 6 bước xử lý tất định:
+1. **Phát hiện mốc quang học Fiducial:** Định vị 4 khối vuông đen $5 \times 5\,\text{mm}$ tại 4 góc trang giấy thông qua phân tích contour và kiểm tra hình học.
+2. **Nắn chỉnh phối cảnh (Perspective Rectification):** Áp dụng phép biến đổi phối cảnh đưa ảnh quét về canvas A4 danh định tại độ phân giải mục tiêu $600\,\text{DPI}$ ($4960 \times 7016\,\text{pixels}$).
+3. **Kiểm tra khối hiệu chuẩn vật lý (Scale Calibration):** Đo đạc thước chuẩn $50\,\text{mm}$ (dung sai $\le 0.5\%$) và hình vuông tỷ lệ $20 \times 20\,\text{mm}$ (tỷ lệ $1.0 \pm 0.005$) nhằm phát hiện hiện tượng co giãn quang học hoặc trôi bước động cơ của máy quét.
+4. **Cắt tự động tất định (Deterministic Auto-Cropping):** Cắt tọa độ milimet từng ô viết tay thành các specimen độc lập dựa trên đặc tả layout trong `specs.py`.
+5. **Đánh giá tràn biên và mật độ mực (QC Evaluation):** Đo tỷ lệ mật độ mực, kiểm tra xâm lấn vùng biên an toàn (boundary overflow) và phân loại trạng thái QC (`QC_PASS`, `QC_EMPTY`, `QC_FLAGGED`, `QC_REJECTED`).
+6. **Lưu trữ cấu trúc hóa:** Xuất ảnh canvas nắn thẳng, ảnh cắt mẫu và báo cáo JSON kiểm định `validation_report.json`.
+
+#### 3.1.4.4. Khung trích xuất hồ sơ phong cách người viết (Writer Profile P2)
+Hồ sơ phong cách người viết (`dataset/schemas/writer_profile.schema.json`) số hóa thói quen viết của từng cá nhân phục vụ nhánh nghiên cứu cá nhân hóa P2. Module `backend/writer_profile/extractor.py` trích xuất 4 nhóm vector đặc trưng hình học cốt lõi:
+1. **Góc nghiêng trung bình nét chữ ($\theta_{\text{slant}}$):** Ước lượng từ các phân đoạn nét dọc ($|\Delta y| / L > 0.5$):
+   $$\theta_{\text{slant}} = \frac{\sum_{k} L_k \cdot \arctan2(\Delta x_k, |\Delta y_k|)}{\sum_{k} L_k} \in [-45^{\circ}, 45^{\circ}].$$
+2. **Tỷ lệ khung chữ trung bình ($\text{AR}_{\text{mean}}$):** Tỷ lệ chiều rộng trên chiều cao thân chữ:
+   $$\text{AR}_{\text{mean}} = \frac{1}{N_{\text{chars}}} \sum_{i=1}^{N_{\text{chars}}} \frac{W_i}{H_i} \in [0.2, 3.0].$$
+3. **Phân bố khoảng cách chữ, từ và dòng:** Đo tỷ lệ khoảng hở trung bình giữa các ký tự liên tiếp và giữa các từ so với chiều rộng trung bình của ký tự.
+4. **Độ dao động đường chân dòng ($\sigma_{\text{jitter}}$):** Đo độ lệch chuẩn sai số phần dư của các điểm tiếp xúc chân chữ so với đường hồi quy tuyến tính danh định:
+   $$r_i = y_i - (a \cdot x_i + b), \qquad \sigma_{\text{jitter}} = \sqrt{\frac{1}{M-1}\sum_{i=1}^M (r_i - \bar{r})^2}.$$
 
 ## 3.2. Biểu diễn chữ viết tay nét đơn
 
