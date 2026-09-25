@@ -8,18 +8,19 @@
 
 ## 1. Phân biệt Thời gian Mô phỏng và Thời gian Thực tế
 
-| Trường | Nguồn | is_simulated | actual_hardware_measured | Dùng trong phân tích học thuật NCKH? |
-|--------|-------|--------------|--------------------------|-------------------------------------|
-| `estimated_draw_time_sec` | Tính toán từ hình học SVG | True/False | False | Chỉ dùng làm baseline đối chứng thời gian ước lượng |
-| `actual_draw_time_sec` (simulator) | asyncio wall-clock (MockSimulatorAdapter) | True | False | ❌ **KHÔNG** đưa vào bảng số liệu vật lý thực nghiệm |
-| `actual_draw_time_sec` (fake driver) | threading giả lập CI (_FakeAxiDrawDriver) | True | False | ❌ **KHÔNG** đưa vào bảng số liệu vật lý thực nghiệm |
-| `actual_draw_time_sec` (AxiDraw thật) | Wall-clock đo từ lúc motor bắt đầu kéo nét tới lúc về gốc | False | True | ✅ **DÙNG** làm số liệu thực nghiệm vật lý chính thức |
+| Trường | Nguồn | is_simulated | actual_hardware_measured | actual_draw_time_sec | error_code | Dùng trong phân tích NCKH? |
+|--------|-------|--------------|--------------------------|----------------------|------------|----------------------------|
+| `estimated_draw_time_sec` | Tính toán từ hình học SVG | True/False | False | — | rỗng | Baseline đối chứng thời gian ước lượng |
+| `actual_draw_time_sec` (simulator) | asyncio wall-clock (MockSimulatorAdapter) | True | False | Số đo ảo | rỗng | ❌ **KHÔNG** đưa vào phân tích vật lý |
+| `actual_draw_time_sec` (fake driver) | threading giả lập CI (_FakeAxiDrawDriver) | True | False | Số đo CI | rỗng | ❌ **KHÔNG** đưa vào phân tích vật lý |
+| `actual_draw_time_sec` (AxiDraw thật - Thành công) | Wall-clock đo từ lúc motor kéo nét tới lúc về gốc | False | True | Thời gian thực đo (> 0) | rỗng | ✅ **DÙNG** làm số liệu thực nghiệm chính thức |
+| `actual_draw_time_sec` (AxiDraw thật - Thất bại/Mất kết nối) | Ngắt kết nối/ngoại lệ phần cứng | False | False | **Rỗng (None)** (không điền 0 hay timing giả) | `HARDWARE_NOT_CONNECTED` / `HARDWARE_ERROR` | ❌ Số liệu lỗi; dùng kiểm toán độ tin cậy hệ thống |
 
-> **Quy tắc bắt buộc:** Cột `source_tag` trong CSV phân biệt 3 loại nguồn:
-> - `simulator` → thời gian ảo mô phỏng phần mềm
-> - `axidraw_fake_driver` → môi trường CI test (kiểm tra logic ngắt/pause không làm máy chuyển động)
-> - `axidraw_real` → dữ liệu thực nghiệm vật lý hợp lệ cho bài báo NCKH
-
+> **Quy tắc bắt buộc (NCKH Research Data Integrity):**
+> - Cột `source_tag` trong CSV phân biệt 3 loại nguồn: `simulator`, `axidraw_fake_driver`, `axidraw_real`.
+> - Cột `actual_hardware_measured` **chỉ được phép bằng `True`** khi job trên phần cứng thật hoàn tất thành công (`status == "done"`) và có thời gian thực đo hợp lệ ($> 0$).
+> - Physical thất bại/mất kết nối phải ghi `is_simulated = False`, `actual_hardware_measured = False`, và `actual_draw_time_sec` để trống (None / `""`), tuyệt đối không ghi timing giả hoặc thay bằng `0`.
+> - Nếu request chủ đích là `physical`, hệ thống tuyệt đối không âm thầm fallback sang `simulator`.
 
 ---
 
@@ -29,24 +30,29 @@
 |---------|--------|---------|
 | **T_start** | Thời điểm `plot_run()` được gọi (sau `plot_setup()`) | Không tính thời gian chuẩn bị/kết nối |
 | **T_end** | Thời điểm `plot_run()` trả về (bao gồm về gốc) | Bao gồm thời gian nâng bút và về (0,0) |
-| **T_pause** | Tích lũy `elapsed_before_pause` | Hiện chỉ có trong simulator; thật chưa hỗ trợ |
+| **T_pause** | Tích lũy `elapsed_before_pause` | Simulator & fake driver hỗ trợ; physical trả về `HARDWARE_PAUSE_UNSUPPORTED` |
 | **T_setup** | Không tính vào actual_draw_time_sec | plot_setup là đọc file, không điều khiển cơ học |
 
 ---
 
-## 3. Schema Mẫu Ghi Kết quả Thực nghiệm
+## 3. Schema Chuẩn Ghi Kết quả Thực nghiệm (9 Cột)
 
-File: `logs/hardware_metrics.csv`
-Columns: `request_id, timestamp, actual_draw_time_sec, estimated_draw_time_sec, is_simulated, hardware_status, source_tag`
+File: `logs/hardware_metrics.csv` (lưu riêng, không gộp schema vào experiment CSV; dùng `request_id` làm khóa liên kết).
 
-> **Đề xuất mở rộng cho TV4** (cần thống nhất trước khi sửa schema):
-> Khi sẵn sàng đo sai số tọa độ, đề nghị thêm các cột:
-> - `svg_path`: đường dẫn SVG đầu vào (để tái lập thực nghiệm)
-> - `profile_version`: phiên bản calibration profile dùng
-> - `coord_error_mean_mm`: sai số tọa độ trung bình (mm)
-> - `coord_error_max_mm`: sai số cực đại
-> - `pass_fail`: "PASS" | "FAIL" | "PENDING"
-> - `notes`: ghi chú tự do
+```csv
+request_id,timestamp,actual_draw_time_sec,estimated_draw_time_sec,is_simulated,actual_hardware_measured,hardware_status,error_code,source_tag
+```
+
+Chi tiết các trường:
+1. `request_id`: Mã định danh duy nhất của tác vụ in (khóa liên kết dữ liệu với pipeline thí nghiệm).
+2. `timestamp`: Thời gian ghi nhận theo chuẩn ISO 8601 UTC.
+3. `actual_draw_time_sec`: Thời gian thi công thực tế (giây). Chỉ có giá trị khi `status == "done"`; nếu thất bại để rỗng (`""`), không thay bằng 0.
+4. `estimated_draw_time_sec`: Thời gian dự tính từ mô hình hình học SVG (giây).
+5. `is_simulated`: `True` nếu chạy qua simulator hoặc fake driver; `False` nếu chạy trên driver vật lý thật.
+6. `actual_hardware_measured`: `True` duy nhất khi physical job hoàn tất thành công và có số đo thực tế $> 0$; tất cả các trường hợp khác (kể cả lỗi physical) đều bằng `False`.
+7. `hardware_status`: Trạng thái kết thúc của thiết bị (`done`, `error`, `cancelled`).
+8. `error_code`: Mã lỗi chuẩn (ví dụ: `HARDWARE_NOT_CONNECTED`, `HARDWARE_ERROR`, `HARDWARE_PAUSE_UNSUPPORTED`), để rỗng nếu thành công.
+9. `source_tag`: Gắn nhãn nguồn thiết bị (`simulator`, `axidraw_fake_driver`, `axidraw_real`).
 
 ---
 
@@ -138,22 +144,34 @@ Trong đó:
 - $L_{\text{penup\_real}}$: Quãng đường di chuyển nhấc bút thực tế nối giữa điểm kết thúc của nét trước tới điểm bắt đầu của nét sau (và từ gốc $(0,0)$ tới nét đầu, từ nét cuối về $(0,0)$).
 - $N_{\text{lifts}}$: Số lần nhấc/hạ ngòi bút thực tế.
 
-### Giới hạn phần cứng TV3 cần TV4 biết:
-- Pause/resume thực sự: pyaxidraw hiện chưa có API ngắt khẩn cấp giữa nét và tiếp tục an toàn.
-  → TV3 đã cấu hình: trên fake driver hỗ trợ pause/resume an toàn qua event; trên máy thật gửi lệnh an toàn và trả cờ `"pause_supported": false`.
-  → Đề xuất TV4 cập nhật endpoint `POST /api/print/pause` và hiển thị thông báo cảnh báo trên UI.
-- Tiến độ giữa chừng (progress_percent) trên máy thật chỉ là ước lượng dựa trên thời gian.
-  → Đã bổ sung `"progress_is_estimated": true` trong response của `GET /api/print/status/{request_id}`.
-- Phát hiện lỗi phần cứng (kẹt giấy, hết mực): CHƯA có nguồn tín hiệu cảm biến từ EBB firmware hiện hành.
-  → Đang ghi nhận rõ rệt là giới hạn phần cứng, không tạo số liệu giả lập khi chưa có cảm biến thật.
+### Giới hạn phần cứng TV3 & Hợp đồng Tích hợp TV4:
+- **Tính năng tạm dừng (pause_supported):**
+  - Simulator & Fake driver: `pause_supported: true` (hỗ trợ ngắt an toàn và tiếp tục nét vẽ).
+  - Máy vật lý AxiDraw thật: `pause_supported: false` (chưa xác minh cơ chế ngắt khẩn cấp an toàn giữa chừng nét vẽ trong pyaxidraw).
+  - **Quy tắc an toàn phần cứng:** Adapter kiểm tra capability trước khi đổi trạng thái. Khi chạy máy thật, tuyệt đối không chuyển job sang `paused`; trạng thái giữ nguyên `printing`.
+  - Trả lỗi có cấu trúc HTTP 400:
+    ```json
+    {
+      "error": {
+        "code": "HARDWARE_PAUSE_UNSUPPORTED",
+        "message": "AxiDraw phần cứng chưa hỗ trợ hoặc chưa xác minh tính năng tạm dừng (pause) an toàn giữa chừng"
+      },
+      "pause_supported": false,
+      "status": "printing"
+    }
+    ```
+  - Đồng nhất trường `pause_supported` trong toàn bộ response của `start_job`, `get_status`, `pause_job`, `resume_job`.
+- **Tiến độ giữa chừng (progress_percent):**
+  - Trên máy thật là ước lượng dựa trên thời gian hình học.
+  - Luôn đi kèm cờ `"progress_is_estimated": true` trong response của `GET /api/print/status/{request_id}`.
+- **Phát hiện lỗi phần cứng:**
+  - Chưa có cảm biến phần cứng (kẹt giấy, hết mực), không giả lập dữ liệu sai lệch. Khi mất kết nối hoặc ngoại lệ, trả mã lỗi chuẩn `HARDWARE_NOT_CONNECTED` hoặc `HARDWARE_ERROR`.
 
-  → Sẽ bổ sung sau khi nghiên cứu EBB firmware documentation.
-
-### Trạng thái review chéo:
-- [ ] TV3 chờ TV2 cung cấp feedback về giả định vận tốc/gia tốc.
-- [ ] TV3 chờ TV4 thống nhất schema CSV mở rộng (xem đề xuất Section 3).
-- [ ] TV3 chờ TV4 review cảnh báo pause_supported trong API response.
-- [ ] TV3 → TV4: cần bổ sung `pause_supported: false` vào OmniDraw_API_Spec-4.md.
+### Trạng thái review chéo & Bàn giao TV4:
+- [x] Schema `logs/hardware_metrics.csv` 9 cột chuẩn hóa với `actual_hardware_measured` và `error_code`.
+- [x] Quy tắc toàn vẹn dữ liệu: `actual_hardware_measured=True` chỉ khi máy thật hoàn tất thành công; lỗi ghi nhận trống timing và mã lỗi rõ ràng.
+- [x] Capability `pause_supported` đồng nhất; từ chối an toàn với mã `HARDWARE_PAUSE_UNSUPPORTED`, không đổi sai trạng thái job.
+- [x] Bộ testsuite tích hợp 32 test unit/integration PASS 100%.
 
 ---
 

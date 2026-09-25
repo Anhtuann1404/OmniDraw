@@ -63,6 +63,7 @@ VALID_HARDWARE_ERRORS: Dict[str, str] = {
     "HARDWARE_NOT_CONNECTED": "Mất kết nối máy vẽ",
     "HARDWARE_PAPER_JAM": "Phát hiện kẹt giấy tại bàn vẽ",
     "HARDWARE_OUT_OF_INK": "Hết mực hoặc ngòi không tiếp xúc giấy",
+    "HARDWARE_PAUSE_UNSUPPORTED": "AxiDraw phần cứng chưa hỗ trợ hoặc chưa xác minh tính năng tạm dừng (pause) an toàn giữa chừng",
     "JOB_NOT_FOUND": "Không tìm thấy ID bản vẽ",
     "JOB_ALREADY_EXISTS": "Bản vẽ này đang chạy",
     "INVALID_STATE": "Trạng thái không hợp lệ cho thao tác",
@@ -373,19 +374,87 @@ def record_metric(job: Dict[str, Any]) -> None:
         "actual_draw_time_sec",
         "estimated_draw_time_sec",
         "is_simulated",
+        "actual_hardware_measured",
         "hardware_status",
+        "error_code",
         "source_tag",
     ]
     now = datetime.datetime.now(datetime.timezone.utc).isoformat()
+
+    err_code = ""
+    err_obj = job.get("error")
+    if isinstance(err_obj, dict):
+        err_code = str(err_obj.get("code") or "")
+    elif err_obj:
+        err_code = str(err_obj)
+    if not err_code and job.get("error_code"):
+        err_code = str(job.get("error_code"))
+
+    hw_status = job.get("status") or job.get("hardware_status", "")
+    is_sim = bool(job.get("is_simulated", True))
+    src_tag = job.get("source_tag", "simulator")
+
+    raw_actual_time = job.get("actual_draw_time_sec")
+    actual_time = None
+    if hw_status == "done" and raw_actual_time is not None:
+        try:
+            val = float(raw_actual_time)
+            if val > 0:
+                actual_time = round(val, 2)
+        except (ValueError, TypeError):
+            actual_time = None
+
+    actual_hw_measured = bool(
+        (not is_sim)
+        and (src_tag == "axidraw_real")
+        and (hw_status == "done")
+        and (actual_time is not None)
+        and (actual_time > 0)
+    )
+
+    est_time = job.get("total_draw_time_sec")
+    if est_time is None:
+        est_time = job.get("estimated_draw_time_sec")
+
     row = {
         "request_id": job.get("request_id", ""),
         "timestamp": now,
-        "actual_draw_time_sec": job.get("actual_draw_time_sec"),
-        "estimated_draw_time_sec": job.get("total_draw_time_sec"),
-        "is_simulated": job.get("is_simulated", True),
-        "hardware_status": job.get("status", ""),
-        "source_tag": job.get("source_tag", "simulator"),
+        "actual_draw_time_sec": actual_time if actual_time is not None else "",
+        "estimated_draw_time_sec": est_time if est_time is not None else "",
+        "is_simulated": is_sim,
+        "actual_hardware_measured": actual_hw_measured,
+        "hardware_status": hw_status,
+        "error_code": err_code,
+        "source_tag": src_tag,
     }
+
+    # Auto-migration if file exists with an older/different header
+    if os.path.exists(csv_path):
+        try:
+            with open(csv_path, "r", encoding="utf-8") as f:
+                first_line = f.readline().strip()
+            expected_header = ",".join(fieldnames)
+            if first_line and first_line != expected_header:
+                with open(csv_path, "r", encoding="utf-8") as f:
+                    reader = csv.DictReader(f)
+                    old_rows = list(reader)
+                with open(csv_path, "w", newline="", encoding="utf-8") as f:
+                    writer = csv.DictWriter(f, fieldnames=fieldnames)
+                    writer.writeheader()
+                    for old_row in old_rows:
+                        if "actual_hardware_measured" not in old_row:
+                            old_row["actual_hardware_measured"] = (
+                                str(old_row.get("is_simulated", "")).lower() == "false"
+                                and old_row.get("source_tag") == "axidraw_real"
+                                and old_row.get("hardware_status") == "done"
+                            )
+                        if "error_code" not in old_row:
+                            old_row["error_code"] = ""
+                        clean_row = {k: old_row.get(k, "") for k in fieldnames}
+                        writer.writerow(clean_row)
+        except Exception:
+            pass
+
     write_header = not os.path.exists(csv_path)
     with open(csv_path, "a", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -839,6 +908,11 @@ class HardwareAdapterInterface(ABC):
     def is_simulation(self) -> bool:
         pass
 
+    @property
+    @abstractmethod
+    def pause_supported(self) -> bool:
+        pass
+
     @abstractmethod
     def load_profile(self, profile_path: Optional[str] = None) -> None:
         pass
@@ -907,6 +981,10 @@ class MockSimulatorAdapter(HardwareAdapterInterface):
     def is_simulation(self) -> bool:
         return True
 
+    @property
+    def pause_supported(self) -> bool:
+        return True
+
     async def _simulate_task(self, request_id: str) -> None:
         job = self.jobs.get(request_id)
         if not job:
@@ -963,6 +1041,7 @@ class MockSimulatorAdapter(HardwareAdapterInterface):
                     "message": VALID_HARDWARE_ERRORS["HARDWARE_NOT_CONNECTED"],
                 },
                 "status_code": 503,
+                "pause_supported": self.pause_supported,
             }
 
         is_valid, resolved, err_code = validate_svg_content_or_path(svg_content_or_path)
@@ -973,6 +1052,7 @@ class MockSimulatorAdapter(HardwareAdapterInterface):
                     "message": VALID_HARDWARE_ERRORS.get(err_code or "SVG_READ_ERROR"),
                 },
                 "status_code": 400,
+                "pause_supported": self.pause_supported,
             }
 
         existing = self.jobs.get(request_id)
@@ -983,6 +1063,7 @@ class MockSimulatorAdapter(HardwareAdapterInterface):
                     "message": VALID_HARDWARE_ERRORS["JOB_ALREADY_EXISTS"],
                 },
                 "status_code": 409,
+                "pause_supported": self.pause_supported,
             }
 
         speed_pendown = self._profile.get("motion", {}).get("speed_pendown_mm_s", ASSUMED_PEN_SPEED_MM_PER_SEC)
@@ -1016,7 +1097,7 @@ class MockSimulatorAdapter(HardwareAdapterInterface):
             "task": None,
         }
         self.jobs[request_id]["task"] = asyncio.create_task(self._simulate_task(request_id))
-        return {"request_id": request_id, "status": "printing"}
+        return {"request_id": request_id, "status": "printing", "pause_supported": self.pause_supported}
 
     async def pause_job(self, request_id: str) -> Dict[str, Any]:
         job = self.jobs.get(request_id)
@@ -1024,11 +1105,13 @@ class MockSimulatorAdapter(HardwareAdapterInterface):
             return {
                 "error": {"code": "JOB_NOT_FOUND", "message": VALID_HARDWARE_ERRORS["JOB_NOT_FOUND"]},
                 "status_code": 404,
+                "pause_supported": self.pause_supported,
             }
         if job["status"] not in ("printing", "queued"):
             return {
                 "error": {"code": "INVALID_STATE", "message": "Chỉ có thể pause khi đang printing"},
                 "status_code": 409,
+                "pause_supported": self.pause_supported,
             }
 
         if job.get("started_at"):
@@ -1043,7 +1126,7 @@ class MockSimulatorAdapter(HardwareAdapterInterface):
                 pass
         job["task"] = None
         job["status"] = "paused"
-        return {"request_id": request_id, "status": "paused"}
+        return {"request_id": request_id, "status": "paused", "pause_supported": self.pause_supported}
 
     async def resume_job(self, request_id: str) -> Dict[str, Any]:
         job = self.jobs.get(request_id)
@@ -1051,11 +1134,13 @@ class MockSimulatorAdapter(HardwareAdapterInterface):
             return {
                 "error": {"code": "JOB_NOT_FOUND", "message": VALID_HARDWARE_ERRORS["JOB_NOT_FOUND"]},
                 "status_code": 404,
+                "pause_supported": self.pause_supported,
             }
         if job["status"] != "paused":
             return {
                 "error": {"code": "INVALID_STATE", "message": "Chỉ có thể resume khi đang paused"},
                 "status_code": 409,
+                "pause_supported": self.pause_supported,
             }
 
         old_task = job.get("task")
@@ -1069,7 +1154,7 @@ class MockSimulatorAdapter(HardwareAdapterInterface):
         job["started_at"] = time.monotonic()
         job["status"] = "printing"
         job["task"] = asyncio.create_task(self._simulate_task(request_id))
-        return {"request_id": request_id, "status": "printing"}
+        return {"request_id": request_id, "status": "printing", "pause_supported": self.pause_supported}
 
     async def cancel_job(self, request_id: str) -> Dict[str, Any]:
         job = self.jobs.get(request_id)
@@ -1077,6 +1162,7 @@ class MockSimulatorAdapter(HardwareAdapterInterface):
             return {
                 "error": {"code": "JOB_NOT_FOUND", "message": VALID_HARDWARE_ERRORS["JOB_NOT_FOUND"]},
                 "status_code": 404,
+                "pause_supported": self.pause_supported,
             }
         if job["status"] in ("done", "cancelled"):
             return {
@@ -1085,6 +1171,7 @@ class MockSimulatorAdapter(HardwareAdapterInterface):
                     "message": f"Không thể cancel job đã ở trạng thái '{job['status']}'",
                 },
                 "status_code": 409,
+                "pause_supported": self.pause_supported,
             }
 
         task = job.get("task")
@@ -1097,7 +1184,7 @@ class MockSimulatorAdapter(HardwareAdapterInterface):
         job["task"] = None
         job["status"] = "cancelled"
         record_metric(job)
-        return {"request_id": request_id, "status": "cancelled"}
+        return {"request_id": request_id, "status": "cancelled", "pause_supported": self.pause_supported}
 
     def get_status(self, request_id: str, simulate_error: Optional[str] = None) -> Dict[str, Any]:
         job = self.jobs.get(request_id)
@@ -1105,6 +1192,7 @@ class MockSimulatorAdapter(HardwareAdapterInterface):
             return {
                 "error": {"code": "JOB_NOT_FOUND", "message": VALID_HARDWARE_ERRORS["JOB_NOT_FOUND"]},
                 "status_code": 404,
+                "pause_supported": self.pause_supported,
             }
 
         if simulate_error:
@@ -1117,6 +1205,7 @@ class MockSimulatorAdapter(HardwareAdapterInterface):
             "progress_percent": job["progress_percent"],
             "estimated_time_remaining_sec": job["estimated_time_remaining_sec"],
             "error": job["error"],
+            "pause_supported": self.pause_supported,
         }
         if job["status"] in ("done", "cancelled", "error"):
             res["actual_draw_time_sec"] = job.get("actual_draw_time_sec")
@@ -1320,10 +1409,13 @@ class AxiDrawAdapter(HardwareAdapterInterface):
                 job["_cancel_event"].set()
                 job["_pause_event"].set()
                 job["status"] = "error"
+                job["actual_draw_time_sec"] = None
+                job["actual_hardware_measured"] = False
                 job["error"] = {
                     "code": "HARDWARE_NOT_CONNECTED",
                     "message": VALID_HARDWARE_ERRORS["HARDWARE_NOT_CONNECTED"],
                 }
+                record_metric(job)
 
         if self._ad:
             try:
@@ -1348,6 +1440,11 @@ class AxiDrawAdapter(HardwareAdapterInterface):
     def is_simulation(self) -> bool:
         return self._use_fake_driver
 
+    @property
+    def pause_supported(self) -> bool:
+        # Simulator / fake driver: True. Physical (unverified in pyaxidraw): False.
+        return bool(self._use_fake_driver)
+
     def _get_source_tag(self) -> str:
         if self._use_fake_driver:
             return "axidraw_fake_driver"
@@ -1364,12 +1461,25 @@ class AxiDrawAdapter(HardwareAdapterInterface):
                 if not self._use_fake_driver
                 else "Fake driver chưa được kết nối. Gọi connect() trước."
             )
+            # Physical thất bại/mất kết nối: ghi nhận CSV rõ ràng với is_simulated=False, actual_hardware_measured=False
+            if not self._use_fake_driver:
+                record_metric({
+                    "request_id": request_id,
+                    "status": "error",
+                    "actual_draw_time_sec": None,
+                    "total_draw_time_sec": None,
+                    "is_simulated": False,
+                    "actual_hardware_measured": False,
+                    "source_tag": self._get_source_tag(),
+                    "error": {"code": "HARDWARE_NOT_CONNECTED", "message": err_msg},
+                })
             return {
                 "error": {
                     "code": "HARDWARE_NOT_CONNECTED",
                     "message": err_msg,
                 },
                 "status_code": 503,
+                "pause_supported": self.pause_supported,
             }
 
         is_valid, resolved, err_code = validate_svg_content_or_path(svg_content_or_path)
@@ -1380,6 +1490,7 @@ class AxiDrawAdapter(HardwareAdapterInterface):
                     "message": VALID_HARDWARE_ERRORS.get(err_code or "SVG_READ_ERROR"),
                 },
                 "status_code": 400,
+                "pause_supported": self.pause_supported,
             }
 
         with self._job_lock:
@@ -1391,6 +1502,7 @@ class AxiDrawAdapter(HardwareAdapterInterface):
                         "message": f"Máy đang thi công job '{active[0]}'. Không thể bắt đầu job mới.",
                     },
                     "status_code": 409,
+                    "pause_supported": self.pause_supported,
                 }
 
         raw_svg_content = ""
@@ -1437,7 +1549,7 @@ class AxiDrawAdapter(HardwareAdapterInterface):
             "started_at": time.monotonic(),
             "svg_path": final_svg_path,
             "is_simulated": not is_real,
-            "actual_hardware_measured": is_real,
+            "actual_hardware_measured": False,
             "source_tag": self._get_source_tag(),
             "_pause_event": pause_evt,
             "_cancel_event": cancel_evt,
@@ -1469,11 +1581,14 @@ class AxiDrawAdapter(HardwareAdapterInterface):
                     return
 
                 elapsed = int(time.monotonic() - t_start)
+                if elapsed <= 0:
+                    elapsed = 1
                 job.update({
                     "status": "done",
                     "progress_percent": 100,
                     "estimated_time_remaining_sec": 0,
                     "actual_draw_time_sec": elapsed,
+                    "actual_hardware_measured": is_real,
                 })
                 record_metric(job)
 
@@ -1484,13 +1599,15 @@ class AxiDrawAdapter(HardwareAdapterInterface):
                     err_code = "HARDWARE_NOT_CONNECTED"
                 job.update({
                     "status": "error",
+                    "actual_draw_time_sec": None,
+                    "actual_hardware_measured": False,
                     "error": {"code": err_code, "message": err_msg},
                 })
                 record_metric(job)
 
         thread = threading.Thread(target=_plot_worker, daemon=True)
         thread.start()
-        return {"request_id": request_id, "status": "printing"}
+        return {"request_id": request_id, "status": "printing", "pause_supported": self.pause_supported}
 
     async def pause_job(self, request_id: str) -> Dict[str, Any]:
         job = self.jobs.get(request_id)
@@ -1498,23 +1615,26 @@ class AxiDrawAdapter(HardwareAdapterInterface):
             return {
                 "error": {"code": "JOB_NOT_FOUND", "message": VALID_HARDWARE_ERRORS["JOB_NOT_FOUND"]},
                 "status_code": 404,
-            }
-        if job["status"] not in ("printing", "queued"):
-            return {
-                "error": {"code": "INVALID_STATE", "message": "Chỉ có thể pause khi đang printing"},
-                "status_code": 409,
+                "pause_supported": self.pause_supported,
             }
 
-        # Kiểm tra nếu driver thật KHÔNG hỗ trợ pause:
-        if not self._use_fake_driver and not hasattr(self._ad, "pause"):
+        # TV4 Requirement: Kiểm tra capability trước khi đổi trạng thái; physical không hỗ trợ thì tuyệt đối không chuyển job sang paused.
+        if not self.pause_supported:
             return {
                 "error": {
-                    "code": "NOT_SUPPORTED",
-                    "message": "AxiDraw phần cứng không hỗ trợ tạm dừng (pause) giữa chừng nét vẽ theo tài liệu pyaxidraw.",
+                    "code": "HARDWARE_PAUSE_UNSUPPORTED",
+                    "message": VALID_HARDWARE_ERRORS["HARDWARE_PAUSE_UNSUPPORTED"],
                 },
                 "status_code": 400,
                 "pause_supported": False,
                 "status": job["status"],
+            }
+
+        if job["status"] not in ("printing", "queued"):
+            return {
+                "error": {"code": "INVALID_STATE", "message": "Chỉ có thể pause khi đang printing"},
+                "status_code": 409,
+                "pause_supported": self.pause_supported,
             }
 
         job["status"] = "paused"
@@ -1526,7 +1646,7 @@ class AxiDrawAdapter(HardwareAdapterInterface):
         return {
             "request_id": request_id,
             "status": "paused",
-            "pause_supported": True if self._use_fake_driver else False,
+            "pause_supported": True,
         }
 
     async def resume_job(self, request_id: str) -> Dict[str, Any]:
@@ -1535,11 +1655,25 @@ class AxiDrawAdapter(HardwareAdapterInterface):
             return {
                 "error": {"code": "JOB_NOT_FOUND", "message": VALID_HARDWARE_ERRORS["JOB_NOT_FOUND"]},
                 "status_code": 404,
+                "pause_supported": self.pause_supported,
             }
+
+        if not self.pause_supported:
+            return {
+                "error": {
+                    "code": "HARDWARE_PAUSE_UNSUPPORTED",
+                    "message": VALID_HARDWARE_ERRORS["HARDWARE_PAUSE_UNSUPPORTED"],
+                },
+                "status_code": 400,
+                "pause_supported": False,
+                "status": job["status"],
+            }
+
         if job["status"] != "paused":
             return {
                 "error": {"code": "INVALID_STATE", "message": "Chỉ có thể resume khi đang paused"},
                 "status_code": 409,
+                "pause_supported": self.pause_supported,
             }
 
         job["status"] = "printing"
@@ -1551,7 +1685,7 @@ class AxiDrawAdapter(HardwareAdapterInterface):
         return {
             "request_id": request_id,
             "status": "printing",
-            "pause_supported": True if self._use_fake_driver else False,
+            "pause_supported": True,
         }
 
     async def cancel_job(self, request_id: str) -> Dict[str, Any]:
@@ -1560,6 +1694,7 @@ class AxiDrawAdapter(HardwareAdapterInterface):
             return {
                 "error": {"code": "JOB_NOT_FOUND", "message": VALID_HARDWARE_ERRORS["JOB_NOT_FOUND"]},
                 "status_code": 404,
+                "pause_supported": self.pause_supported,
             }
         if job["status"] in ("done", "cancelled"):
             return {
@@ -1568,21 +1703,27 @@ class AxiDrawAdapter(HardwareAdapterInterface):
                     "message": f"Không thể cancel job đã ở trạng thái '{job['status']}'",
                 },
                 "status_code": 409,
+                "pause_supported": self.pause_supported,
             }
 
         job["status"] = "cancelled"
+        job["actual_draw_time_sec"] = None
+        job["actual_hardware_measured"] = False
         job["_cancel_event"].set()
         job["_pause_event"].set()
 
         # Ngắt driver thực sự
         if self._ad:
-            if hasattr(self._ad, 'stop'):
-                self._ad.stop()
-            elif hasattr(self._ad, 'disconnect'):
-                self._ad.disconnect()
+            try:
+                if hasattr(self._ad, 'stop'):
+                    self._ad.stop()
+                elif hasattr(self._ad, 'disconnect'):
+                    self._ad.disconnect()
+            except Exception:
+                pass
 
         record_metric(job)
-        return {"request_id": request_id, "status": "cancelled"}
+        return {"request_id": request_id, "status": "cancelled", "pause_supported": self.pause_supported}
 
     def get_status(self, request_id: str, simulate_error: Optional[str] = None) -> Dict[str, Any]:
         job = self.jobs.get(request_id)
@@ -1590,25 +1731,42 @@ class AxiDrawAdapter(HardwareAdapterInterface):
             return {
                 "error": {"code": "JOB_NOT_FOUND", "message": VALID_HARDWARE_ERRORS["JOB_NOT_FOUND"]},
                 "status_code": 404,
+                "pause_supported": self.pause_supported,
             }
 
         if simulate_error:
             msg = VALID_HARDWARE_ERRORS.get(simulate_error, f"Lỗi giả lập: {simulate_error}")
-            job.update({"status": "error", "error": {"code": simulate_error, "message": msg}})
+            job.update({
+                "status": "error",
+                "actual_draw_time_sec": None,
+                "actual_hardware_measured": False,
+                "error": {"code": simulate_error, "message": msg},
+            })
 
-        is_real = self._is_real_physical_measurement()
+        is_real = (not self._use_fake_driver)
+        status = job["status"]
+
+        actual_time = job.get("actual_draw_time_sec") if status == "done" else None
+        actual_hw_measured = bool(
+            is_real
+            and status == "done"
+            and actual_time is not None
+            and actual_time > 0
+        )
+
         res: Dict[str, Any] = {
             "request_id": request_id,
-            "status": job["status"],
+            "status": status,
             "progress_percent": job.get("progress_percent", 0),
             "estimated_time_remaining_sec": job.get("estimated_time_remaining_sec", 0),
             "error": job.get("error"),
             "progress_is_estimated": True,
+            "pause_supported": self.pause_supported,
         }
-        if job["status"] in ("done", "cancelled", "error"):
-            res["actual_draw_time_sec"] = job.get("actual_draw_time_sec")
+        if status in ("done", "cancelled", "error"):
+            res["actual_draw_time_sec"] = actual_time
             res["is_simulated"] = not is_real
-            res["actual_hardware_measured"] = is_real
+            res["actual_hardware_measured"] = actual_hw_measured
             res["source_tag"] = self._get_source_tag()
 
         return res
@@ -1696,14 +1854,17 @@ async def _run_smoke_test(mode: str = "simulator", fixture_path: Optional[str] =
         return 1
     print(f"   Trạng thái ban đầu: {res.get('status')}")
 
-    print("5. Thử nghiệm tạm dừng (pause)...")
-    p_res = await adapter.pause_job(req_id)
-    print(f"   Trạng thái sau pause: {p_res.get('status')}")
-    await asyncio.sleep(0.1)
+    if adapter.pause_supported:
+        print("5. Thử nghiệm tạm dừng (pause)...")
+        p_res = await adapter.pause_job(req_id)
+        print(f"   Trạng thái sau pause: {p_res.get('status')}")
+        await asyncio.sleep(0.1)
 
-    print("6. Thử nghiệm tiếp tục (resume)...")
-    r_res = await adapter.resume_job(req_id)
-    print(f"   Trạng thái sau resume: {r_res.get('status')}")
+        print("6. Thử nghiệm tiếp tục (resume)...")
+        r_res = await adapter.resume_job(req_id)
+        print(f"   Trạng thái sau resume: {r_res.get('status')}")
+    else:
+        print("5-6. Tạm dừng (pause) chưa được hỗ trợ trên phần cứng thật (pause_supported=False). Bỏ qua.")
 
     print("7. Đợi tác vụ hoàn tất (polling status)...")
     for _ in range(100):

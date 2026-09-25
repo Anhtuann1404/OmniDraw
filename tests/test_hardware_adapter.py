@@ -36,6 +36,7 @@ import csv
 import os
 import sys
 import tempfile
+import time
 import unittest
 
 _current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -382,6 +383,238 @@ class TestRQ3CalibrationBenchmark(unittest.TestCase):
         res = asyncio.run(run_rq3_calibration_benchmark(mode="simulator", fixture_path="non_existent_fixture.svg"))
         self.assertEqual(res.get("status"), "error")
         self.assertIn("Không tìm thấy fixture RQ3", res.get("error", ""))
+
+
+# ---------------------------------------------------------------------------
+# Nhóm 7 — TV4 Integration Contracts (Pause Capability & CSV Data Integrity)
+# ---------------------------------------------------------------------------
+
+class MockRealAxiDrawDriver:
+    def __init__(self, fail_on_run: bool = False, fail_msg: str = "Device disconnected"):
+        self.options = type("opts", (), {
+            "mode": "plot",
+            "model": 1,
+            "speed_pendown": 25,
+            "speed_penup": 75,
+            "accel": 75,
+            "pen_pos_up": 60,
+            "pen_pos_down": 35,
+            "pen_delay_up": 100,
+            "pen_delay_down": 120,
+            "port": None,
+            "auto_rotate": True,
+        })()
+        self.fail_on_run = fail_on_run
+        self.fail_msg = fail_msg
+        self.plot_setup_called = False
+        self.plot_ran = False
+
+    def interactive(self):
+        pass
+
+    def connect(self) -> bool:
+        return True
+
+    def disconnect(self):
+        pass
+
+    def plot_setup(self, svg_path: str):
+        self.plot_setup_called = True
+
+    def plot_run(self):
+        if self.fail_on_run:
+            raise RuntimeError(self.fail_msg)
+        time.sleep(0.05)
+        self.plot_ran = True
+
+    def stop(self):
+        pass
+
+
+class TestTV4IntegrationContracts(unittest.IsolatedAsyncioTestCase):
+
+    def setUp(self):
+        self.fixture = os.path.join(_repo_root, "tests", "fixtures", "smoke_test_specimen.svg")
+        self.csv_path = os.path.join(_repo_root, "logs", "hardware_metrics.csv")
+        reset_hardware_adapter()
+
+    def tearDown(self):
+        reset_hardware_adapter()
+
+    def _get_csv_rows_for_request(self, request_id: str):
+        if not os.path.isfile(self.csv_path):
+            return []
+        with open(self.csv_path, "r", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            return [row for row in reader if row.get("request_id") == request_id]
+
+    async def test_physical_success_records_actual_hardware_measured(self):
+        """
+        TV4 Contract:
+        Physical job hoàn tất thành công -> actual_hardware_measured=True, is_simulated=False, source_tag=axidraw_real.
+        CSV ghi đúng 9 cột với thời gian thực đo > 0.
+        """
+        adapter = AxiDrawAdapter(use_fake_driver=False)
+        adapter._ad = MockRealAxiDrawDriver()
+        adapter._connected = True
+
+        self.assertFalse(adapter.pause_supported)
+        self.assertFalse(adapter.is_simulation)
+
+        req_id = f"test-phys-ok-{int(time.time() * 1000)}"
+        start_res = await adapter.start_job(req_id, self.fixture)
+        self.assertEqual(start_res["status"], "printing")
+        self.assertFalse(start_res["pause_supported"])
+
+        # Chờ worker thread hoàn thành
+        for _ in range(50):
+            await asyncio.sleep(0.05)
+            st = adapter.get_status(req_id)
+            if st["status"] == "done":
+                break
+
+        st = adapter.get_status(req_id)
+        self.assertEqual(st["status"], "done")
+        self.assertFalse(st["is_simulated"])
+        self.assertTrue(st["actual_hardware_measured"])
+        self.assertEqual(st["source_tag"], "axidraw_real")
+        self.assertFalse(st["pause_supported"])
+        self.assertIsNotNone(st.get("actual_draw_time_sec"))
+        self.assertGreater(st["actual_draw_time_sec"], 0)
+
+        # Kiểm tra hàng CSV tương ứng
+        rows = self._get_csv_rows_for_request(req_id)
+        self.assertGreaterEqual(len(rows), 1)
+        last_row = rows[-1]
+        self.assertEqual(last_row["hardware_status"], "done")
+        self.assertEqual(last_row["is_simulated"], "False")
+        self.assertEqual(last_row["actual_hardware_measured"], "True")
+        self.assertEqual(last_row["source_tag"], "axidraw_real")
+        self.assertEqual(last_row["error_code"], "")
+        self.assertTrue(float(last_row["actual_draw_time_sec"]) > 0)
+
+    async def test_physical_runtime_failure_records_unmeasured_and_empty_timing(self):
+        """
+        TV4 Contract:
+        Physical thất bại / mất kết nối runtime:
+        - is_simulated=False
+        - actual_hardware_measured=False
+        - actual_draw_time_sec rỗng/None (KHÔNG ghi timing giả hoặc 0)
+        - error_code được ghi nhận (ví dụ: HARDWARE_NOT_CONNECTED)
+        """
+        adapter = AxiDrawAdapter(use_fake_driver=False)
+        adapter._ad = MockRealAxiDrawDriver(fail_on_run=True, fail_msg="AxiDraw disconnected unexpectedly")
+        adapter._connected = True
+
+        req_id = f"test-phys-fail-{int(time.time() * 1000)}"
+        start_res = await adapter.start_job(req_id, self.fixture)
+        self.assertEqual(start_res["status"], "printing")
+
+        for _ in range(50):
+            await asyncio.sleep(0.05)
+            st = adapter.get_status(req_id)
+            if st["status"] == "error":
+                break
+
+        st = adapter.get_status(req_id)
+        self.assertEqual(st["status"], "error")
+        self.assertFalse(st["is_simulated"])
+        self.assertFalse(st["actual_hardware_measured"])
+        self.assertIsNone(st.get("actual_draw_time_sec"), "Physical lỗi không được ghi timing giả hoặc 0")
+        self.assertEqual(st["error"]["code"], "HARDWARE_NOT_CONNECTED")
+        self.assertFalse(st["pause_supported"])
+
+        rows = self._get_csv_rows_for_request(req_id)
+        self.assertGreaterEqual(len(rows), 1)
+        last_row = rows[-1]
+        self.assertEqual(last_row["hardware_status"], "error")
+        self.assertEqual(last_row["is_simulated"], "False")
+        self.assertEqual(last_row["actual_hardware_measured"], "False")
+        self.assertEqual(last_row["actual_draw_time_sec"], "")
+        self.assertEqual(last_row["error_code"], "HARDWARE_NOT_CONNECTED")
+        self.assertEqual(last_row["source_tag"], "axidraw_real")
+
+    async def test_physical_not_connected_records_failure_and_does_not_fallback(self):
+        """
+        TV4 Contract:
+        Request mode physical khi chưa kết nối:
+        - Tuyệt đối không âm thầm fallback sang simulator
+        - Trả về status 503 với error HARDWARE_NOT_CONNECTED
+        - CSV ghi nhận error với is_simulated=False, actual_hardware_measured=False
+        """
+        reset_hardware_adapter()
+        adapter = get_hardware_adapter(mode="physical")
+        self.assertIsInstance(adapter, AxiDrawAdapter)
+        self.assertFalse(adapter._use_fake_driver)
+        self.assertNotIsInstance(adapter, MockSimulatorAdapter)
+
+        req_id = f"test-phys-noconn-{int(time.time() * 1000)}"
+        res = await adapter.start_job(req_id, self.fixture)
+        self.assertEqual(res["status_code"], 503)
+        self.assertEqual(res["error"]["code"], "HARDWARE_NOT_CONNECTED")
+        self.assertFalse(res["pause_supported"])
+
+        rows = self._get_csv_rows_for_request(req_id)
+        self.assertGreaterEqual(len(rows), 1)
+        last_row = rows[-1]
+        self.assertEqual(last_row["hardware_status"], "error")
+        self.assertEqual(last_row["error_code"], "HARDWARE_NOT_CONNECTED")
+        self.assertEqual(last_row["is_simulated"], "False")
+        self.assertEqual(last_row["actual_hardware_measured"], "False")
+        self.assertEqual(last_row["actual_draw_time_sec"], "")
+        self.assertEqual(last_row["source_tag"], "axidraw_real")
+
+    async def test_physical_pause_rejected_status_unchanged(self):
+        """
+        TV4 Contract:
+        Physical pause_supported: False.
+        Khi gọi pause trên physical:
+        - Kiểm tra capability trước khi đổi trạng thái
+        - Tuyệt đối không chuyển job sang paused (vẫn giữ printing)
+        - Trả lỗi có cấu trúc HARDWARE_PAUSE_UNSUPPORTED với status_code 400 và pause_supported: False
+        """
+        adapter = AxiDrawAdapter(use_fake_driver=False)
+        adapter._ad = MockRealAxiDrawDriver()
+        adapter._connected = True
+
+        req_id = f"test-phys-pause-{int(time.time() * 1000)}"
+        await adapter.start_job(req_id, self.fixture)
+
+        # Trạng thái ban đầu đang printing
+        st_before = adapter.get_status(req_id)
+        self.assertEqual(st_before["status"], "printing")
+
+        # Gọi pause trên physical (chưa hỗ trợ pause an toàn)
+        p_res = await adapter.pause_job(req_id)
+        self.assertEqual(p_res["status_code"], 400)
+        self.assertEqual(p_res["error"]["code"], "HARDWARE_PAUSE_UNSUPPORTED")
+        self.assertFalse(p_res["pause_supported"])
+        self.assertEqual(p_res["status"], "printing")
+
+        # Trạng thái job KHÔNG bị đổi thành paused!
+        job = adapter.jobs[req_id]
+        self.assertEqual(job["status"], "printing", "Job status must NOT transition to paused when pause is unsupported!")
+
+        # Gọi resume cũng từ chối với HARDWARE_PAUSE_UNSUPPORTED
+        r_res = await adapter.resume_job(req_id)
+        self.assertEqual(r_res["status_code"], 400)
+        self.assertEqual(r_res["error"]["code"], "HARDWARE_PAUSE_UNSUPPORTED")
+        self.assertFalse(r_res["pause_supported"])
+
+    def test_consistent_pause_supported_flag(self):
+        """
+        TV4 Contract:
+        Đồng nhất pause_supported trong response của simulator và fake driver (=True)
+        so với physical (=False).
+        """
+        sim = MockSimulatorAdapter(connected=True)
+        self.assertTrue(sim.pause_supported)
+
+        fake = AxiDrawAdapter(use_fake_driver=True)
+        self.assertTrue(fake.pause_supported)
+
+        phys = AxiDrawAdapter(use_fake_driver=False)
+        self.assertFalse(phys.pause_supported)
 
 
 if __name__ == "__main__":

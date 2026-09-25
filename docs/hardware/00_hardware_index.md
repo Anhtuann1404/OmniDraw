@@ -1,7 +1,7 @@
 # Hardware Source-of-Truth Index
 
 **Project:** OmniDraw Plotter V1  
-**Directory:** `OmniDraw/docs/hardware/`  
+**Directory:** `docs/hardware/`
 **Current Baseline:** V1.1  
 **Last Updated:** 2026-09-21  
 
