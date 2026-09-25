@@ -885,6 +885,145 @@ class TestTV4IntegrationContracts(unittest.IsolatedAsyncioTestCase):
         phys = AxiDrawAdapter(use_fake_driver=False, metrics_csv_path=self.csv_path)
         self.assertFalse(phys.pause_supported)
 
+    async def test_cancel_during_record_metric_does_not_revert_to_done(self):
+        """
+        TV4 Race Condition Finding:
+        Trong _plot_worker(), khi record_metric() đang chạy, nếu có Cancel (cancel_job) xen vào:
+        - Job được đổi sang trạng thái terminal 'cancelled'
+        - Worker hoàn tất record_metric() TUYỆT ĐỐI không được ghi đè job thành 'done'
+        - Sử dụng threading barrier / event để chặn ngay lúc record_metric() đang chạy nhằm tái hiện race condition.
+        """
+        import threading
+        from unittest.mock import patch
+
+        adapter = AxiDrawAdapter(use_fake_driver=False, metrics_csv_path=self.csv_path)
+        adapter._ad = MockRealAxiDrawDriver()
+        adapter._connected = True
+
+        req_id = f"test-race-cancel-{int(time.time() * 1000)}"
+
+        in_record_metric_evt = threading.Event()
+        can_proceed_evt = threading.Event()
+        orig_record_metric = record_metric
+
+        def intercepted_record_metric(job, csv_path=None):
+            # Chỉ chặn khi worker gọi record_metric với payload done cho chính req_id này
+            if job.get("request_id") == req_id and job.get("status") == "done":
+                in_record_metric_evt.set()
+                # Chờ đến khi test gọi cancel_job xong mới cho worker bước tiếp
+                can_proceed_evt.wait(timeout=5.0)
+            return orig_record_metric(job, csv_path=csv_path)
+
+        with patch("hardware_adapter.record_metric", side_effect=intercepted_record_metric):
+            start_res = await adapter.start_job(req_id, self.fixture)
+            self.assertEqual(start_res["status"], "printing")
+
+            # 1. Chờ worker chạy đến điểm chặn bên trong record_metric
+            for _ in range(50):
+                if in_record_metric_evt.is_set():
+                    break
+                await asyncio.sleep(0.05)
+            self.assertTrue(in_record_metric_evt.is_set(), "Worker phải chạm điểm chặn trong record_metric")
+
+            # 2. Ngay lúc worker đang kẹt trong record_metric, client thực hiện Cancel
+            cancel_res = await adapter.cancel_job(req_id)
+            self.assertEqual(cancel_res["status"], "cancelled")
+
+            # Trạng thái ngay lúc cancel thành công phải là cancelled
+            st_during = adapter.get_status(req_id)
+            self.assertEqual(st_during["status"], "cancelled")
+
+            # 3. Mở khóa cho worker chạy tiếp sau record_metric
+            can_proceed_evt.set()
+
+            # 4. Chờ worker hoàn thành chu trình kết thúc
+            await asyncio.sleep(0.2)
+
+            # 5. Khẳng định: Trạng thái job KHÔNG BAO GIỜ bị đảo ngược lại thành 'done'!
+            st_final = adapter.get_status(req_id)
+            self.assertEqual(
+                st_final["status"],
+                "cancelled",
+                "Job đã bị Cancel tuyệt đối không được worker ghi đè thành 'done'!",
+            )
+            self.assertFalse(st_final["actual_hardware_measured"])
+            self.assertIsNone(st_final.get("actual_draw_time_sec"))
+
+            # 6. Kiểm tra hàng CSV: Dòng cuối cùng không thể là 'done'
+            rows = self._get_csv_rows_for_request(req_id)
+            self.assertGreaterEqual(len(rows), 1)
+            self.assertEqual(rows[-1]["hardware_status"], "cancelled")
+            self.assertEqual(rows[-1]["actual_hardware_measured"], "False")
+
+    async def test_disconnect_during_record_metric_does_not_revert_to_done(self):
+        """
+        TV4 Race Condition Finding:
+        Trong _plot_worker(), khi record_metric() đang chạy, nếu có Disconnect (disconnect) xen vào:
+        - Job được đổi sang trạng thái terminal 'error' (HARDWARE_NOT_CONNECTED)
+        - Worker hoàn tất record_metric() TUYỆT ĐỐI không được ghi đè job thành 'done'
+        - Sử dụng điểm chặn trong record_metric() để tái hiện race condition khi ngắt kết nối.
+        """
+        import threading
+        from unittest.mock import patch
+
+        adapter = AxiDrawAdapter(use_fake_driver=False, metrics_csv_path=self.csv_path)
+        adapter._ad = MockRealAxiDrawDriver()
+        adapter._connected = True
+
+        req_id = f"test-race-disc-{int(time.time() * 1000)}"
+
+        in_record_metric_evt = threading.Event()
+        can_proceed_evt = threading.Event()
+        orig_record_metric = record_metric
+
+        def intercepted_record_metric(job, csv_path=None):
+            if job.get("request_id") == req_id and job.get("status") == "done":
+                in_record_metric_evt.set()
+                can_proceed_evt.wait(timeout=5.0)
+            return orig_record_metric(job, csv_path=csv_path)
+
+        with patch("hardware_adapter.record_metric", side_effect=intercepted_record_metric):
+            start_res = await adapter.start_job(req_id, self.fixture)
+            self.assertEqual(start_res["status"], "printing")
+
+            # 1. Chờ worker chạm điểm chặn trong record_metric
+            for _ in range(50):
+                if in_record_metric_evt.is_set():
+                    break
+                await asyncio.sleep(0.05)
+            self.assertTrue(in_record_metric_evt.is_set(), "Worker phải chạm điểm chặn trong record_metric")
+
+            # 2. Ngay lúc worker đang kẹt trong record_metric, gọi disconnect()
+            adapter.disconnect()
+
+            # Trạng thái job lúc này phải chuyển sang error
+            st_during = adapter.get_status(req_id)
+            self.assertEqual(st_during["status"], "error")
+            self.assertEqual(st_during["error"]["code"], "HARDWARE_NOT_CONNECTED")
+
+            # 3. Mở khóa cho worker chạy tiếp sau record_metric
+            can_proceed_evt.set()
+
+            # 4. Chờ worker thoát
+            await asyncio.sleep(0.2)
+
+            # 5. Khẳng định: Trạng thái job KHÔNG BAO GIỜ bị đảo ngược lại thành 'done'!
+            st_final = adapter.get_status(req_id)
+            self.assertEqual(
+                st_final["status"],
+                "error",
+                "Job đã bị Disconnect tuyệt đối không được worker ghi đè thành 'done'!",
+            )
+            self.assertFalse(st_final["actual_hardware_measured"])
+            self.assertIsNone(st_final.get("actual_draw_time_sec"))
+            self.assertEqual(st_final["error"]["code"], "HARDWARE_NOT_CONNECTED")
+
+            # 6. Kiểm tra CSV: Dòng cuối cùng cho req_id này là 'error'
+            rows = self._get_csv_rows_for_request(req_id)
+            self.assertGreaterEqual(len(rows), 1)
+            self.assertEqual(rows[-1]["hardware_status"], "error")
+            self.assertEqual(rows[-1]["actual_hardware_measured"], "False")
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

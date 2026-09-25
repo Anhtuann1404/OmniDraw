@@ -473,6 +473,9 @@ def migrate_hardware_metrics_csv(csv_path: str, force: bool = False) -> bool:
         raise
 
 
+_metrics_file_lock = threading.RLock()
+
+
 def record_metric(job: Dict[str, Any], csv_path: Optional[str] = None) -> None:
     if csv_path is None:
         env_path = os.environ.get("OMNIDRAW_HARDWARE_METRICS_PATH")
@@ -537,18 +540,25 @@ def record_metric(job: Dict[str, Any], csv_path: Optional[str] = None) -> None:
         "source_tag": src_tag,
     }
 
-    # Auto-migration if file exists with an older/different header
-    if os.path.exists(csv_path) and os.path.getsize(csv_path) > 0:
-        migrate_hardware_metrics_csv(csv_path)
+    with _metrics_file_lock:
+        if hw_status == "done":
+            cancel_evt = job.get("_cancel_event")
+            if cancel_evt and cancel_evt.is_set():
+                # Job đã bị cancel trong lúc chuẩn bị ghi log done; bỏ qua không ghi done
+                return
 
-    write_header = (not os.path.exists(csv_path)) or (os.path.getsize(csv_path) == 0)
-    with open(csv_path, "a", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=fieldnames)
-        if write_header:
-            writer.writeheader()
-        writer.writerow(row)
-        f.flush()
-        os.fsync(f.fileno())
+        # Auto-migration if file exists with an older/different header
+        if os.path.exists(csv_path) and os.path.getsize(csv_path) > 0:
+            migrate_hardware_metrics_csv(csv_path)
+
+        write_header = (not os.path.exists(csv_path)) or (os.path.getsize(csv_path) == 0)
+        with open(csv_path, "a", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            if write_header:
+                writer.writeheader()
+            writer.writerow(row)
+            f.flush()
+            os.fsync(f.fileno())
 
 
 # ---------------------------------------------------------------------------
@@ -1119,6 +1129,8 @@ class MockSimulatorAdapter(HardwareAdapterInterface):
                     try:
                         record_metric(metric_entry, csv_path=self._metrics_csv_path)
                     except Exception as log_exc:
+                        if job_now.get("status") in ("cancelled", "error"):
+                            return
                         job_now.update({
                             "status": "error",
                             "task": None,
@@ -1129,6 +1141,9 @@ class MockSimulatorAdapter(HardwareAdapterInterface):
                                 "message": f"Không thể ghi nhật ký phần cứng (metrics): {log_exc}",
                             },
                         })
+                        return
+
+                    if job_now.get("status") in ("cancelled", "error"):
                         return
 
                     job_now.update(done_payload)
@@ -1514,18 +1529,19 @@ class AxiDrawAdapter(HardwareAdapterInterface):
         return self._connected
 
     def disconnect(self) -> None:
-        for rid, job in self.jobs.items():
-            if job.get("status") in ("printing", "paused"):
-                job["_cancel_event"].set()
-                job["_pause_event"].set()
-                job["status"] = "error"
-                job["actual_draw_time_sec"] = None
-                job["actual_hardware_measured"] = False
-                job["error"] = {
-                    "code": "HARDWARE_NOT_CONNECTED",
-                    "message": VALID_HARDWARE_ERRORS["HARDWARE_NOT_CONNECTED"],
-                }
-                record_metric(job, csv_path=self._metrics_csv_path)
+        with self._job_lock:
+            for rid, job in self.jobs.items():
+                if job.get("status") in ("printing", "paused"):
+                    job["_cancel_event"].set()
+                    job["_pause_event"].set()
+                    job["status"] = "error"
+                    job["actual_draw_time_sec"] = None
+                    job["actual_hardware_measured"] = False
+                    job["error"] = {
+                        "code": "HARDWARE_NOT_CONNECTED",
+                        "message": VALID_HARDWARE_ERRORS["HARDWARE_NOT_CONNECTED"],
+                    }
+                    record_metric(job, csv_path=self._metrics_csv_path)
 
         if self._ad:
             try:
@@ -1687,8 +1703,9 @@ class AxiDrawAdapter(HardwareAdapterInterface):
                         return
                     time.sleep(0.05)
 
-                if job["_cancel_event"].is_set() or job.get("status") in ("cancelled", "error", "paused"):
-                    return
+                with adapter_ref._job_lock:
+                    if job["_cancel_event"].is_set() or job.get("status") in ("cancelled", "error", "paused"):
+                        return
 
                 elapsed = round(max(0.001, time.monotonic() - t_start), 3)
 
@@ -1706,30 +1723,41 @@ class AxiDrawAdapter(HardwareAdapterInterface):
                 try:
                     record_metric(metric_entry, csv_path=adapter_ref._metrics_csv_path)
                 except Exception as log_exc:
-                    err_code = "LOG_WRITE_ERROR"
-                    err_msg = f"Không thể ghi nhật ký phần cứng (metrics): {log_exc}"
-                    job.update({
-                        "status": "error",
-                        "actual_draw_time_sec": None,
-                        "actual_hardware_measured": False,
-                        "error": {"code": err_code, "message": err_msg},
-                    })
+                    with adapter_ref._job_lock:
+                        if not (job["_cancel_event"].is_set() or job.get("status") in ("cancelled", "error")):
+                            err_code = "LOG_WRITE_ERROR"
+                            err_msg = f"Không thể ghi nhật ký phần cứng (metrics): {log_exc}"
+                            job.update({
+                                "status": "error",
+                                "actual_draw_time_sec": None,
+                                "actual_hardware_measured": False,
+                                "error": {"code": err_code, "message": err_msg},
+                            })
                     return
 
-                # CHỈ CÔNG BỐ DONE SAU KHI DÒNG CSV ĐÃ GHI THÀNH CÔNG VÀO ĐĨA
-                job.update(done_payload)
+                # TV4 Finding: Sau record_metric và trước khi chốt done, Cancel/Disconnect có thể
+                # đã đổi job sang cancelled/error. Bắt buộc kiểm tra lại dưới _job_lock;
+                # bảo đảm job đã Cancel/Disconnect không bao giờ quay lại done!
+                with adapter_ref._job_lock:
+                    if job["_cancel_event"].is_set() or job.get("status") in ("cancelled", "error"):
+                        return
+
+                    # CHỈ CÔNG BỐ DONE NẾU CHƯA BỊ CANCEL/DISCONNECT
+                    job.update(done_payload)
 
             except Exception as exc:
                 err_code = "HARDWARE_ERROR"
                 err_msg = str(exc)
                 if "not connected" in err_msg.lower() or "disconnect" in err_msg.lower():
                     err_code = "HARDWARE_NOT_CONNECTED"
-                job.update({
-                    "status": "error",
-                    "actual_draw_time_sec": None,
-                    "actual_hardware_measured": False,
-                    "error": {"code": err_code, "message": err_msg},
-                })
+                with adapter_ref._job_lock:
+                    if not (job["_cancel_event"].is_set() or job.get("status") in ("cancelled", "error")):
+                        job.update({
+                            "status": "error",
+                            "actual_draw_time_sec": None,
+                            "actual_hardware_measured": False,
+                            "error": {"code": err_code, "message": err_msg},
+                        })
                 try:
                     record_metric(job, csv_path=adapter_ref._metrics_csv_path)
                 except Exception:
@@ -1740,120 +1768,123 @@ class AxiDrawAdapter(HardwareAdapterInterface):
         return {"request_id": request_id, "status": "printing", "pause_supported": self.pause_supported}
 
     async def pause_job(self, request_id: str) -> Dict[str, Any]:
-        job = self.jobs.get(request_id)
-        if not job:
+        with self._job_lock:
+            job = self.jobs.get(request_id)
+            if not job:
+                return {
+                    "error": {"code": "JOB_NOT_FOUND", "message": VALID_HARDWARE_ERRORS["JOB_NOT_FOUND"]},
+                    "status_code": 404,
+                    "pause_supported": self.pause_supported,
+                }
+
+            # TV4 Requirement: Kiểm tra capability trước khi đổi trạng thái; physical không hỗ trợ thì tuyệt đối không chuyển job sang paused.
+            if not self.pause_supported:
+                return {
+                    "error": {
+                        "code": "HARDWARE_PAUSE_UNSUPPORTED",
+                        "message": VALID_HARDWARE_ERRORS["HARDWARE_PAUSE_UNSUPPORTED"],
+                    },
+                    "status_code": 400,
+                    "pause_supported": False,
+                    "status": job["status"],
+                }
+
+            if job["status"] not in ("printing", "queued"):
+                return {
+                    "error": {"code": "INVALID_STATE", "message": "Chỉ có thể pause khi đang printing"},
+                    "status_code": 409,
+                    "pause_supported": self.pause_supported,
+                }
+
+            job["status"] = "paused"
+            job["_pause_event"].clear()
+
+            if hasattr(self._ad, 'pause'):
+                self._ad.pause()
+
             return {
-                "error": {"code": "JOB_NOT_FOUND", "message": VALID_HARDWARE_ERRORS["JOB_NOT_FOUND"]},
-                "status_code": 404,
-                "pause_supported": self.pause_supported,
+                "request_id": request_id,
+                "status": "paused",
+                "pause_supported": True,
             }
-
-        # TV4 Requirement: Kiểm tra capability trước khi đổi trạng thái; physical không hỗ trợ thì tuyệt đối không chuyển job sang paused.
-        if not self.pause_supported:
-            return {
-                "error": {
-                    "code": "HARDWARE_PAUSE_UNSUPPORTED",
-                    "message": VALID_HARDWARE_ERRORS["HARDWARE_PAUSE_UNSUPPORTED"],
-                },
-                "status_code": 400,
-                "pause_supported": False,
-                "status": job["status"],
-            }
-
-        if job["status"] not in ("printing", "queued"):
-            return {
-                "error": {"code": "INVALID_STATE", "message": "Chỉ có thể pause khi đang printing"},
-                "status_code": 409,
-                "pause_supported": self.pause_supported,
-            }
-
-        job["status"] = "paused"
-        job["_pause_event"].clear()
-
-        if hasattr(self._ad, 'pause'):
-            self._ad.pause()
-
-        return {
-            "request_id": request_id,
-            "status": "paused",
-            "pause_supported": True,
-        }
 
     async def resume_job(self, request_id: str) -> Dict[str, Any]:
-        job = self.jobs.get(request_id)
-        if not job:
+        with self._job_lock:
+            job = self.jobs.get(request_id)
+            if not job:
+                return {
+                    "error": {"code": "JOB_NOT_FOUND", "message": VALID_HARDWARE_ERRORS["JOB_NOT_FOUND"]},
+                    "status_code": 404,
+                    "pause_supported": self.pause_supported,
+                }
+
+            if not self.pause_supported:
+                return {
+                    "error": {
+                        "code": "HARDWARE_PAUSE_UNSUPPORTED",
+                        "message": VALID_HARDWARE_ERRORS["HARDWARE_PAUSE_UNSUPPORTED"],
+                    },
+                    "status_code": 400,
+                    "pause_supported": False,
+                    "status": job["status"],
+                }
+
+            if job["status"] != "paused":
+                return {
+                    "error": {"code": "INVALID_STATE", "message": "Chỉ có thể resume khi đang paused"},
+                    "status_code": 409,
+                    "pause_supported": self.pause_supported,
+                }
+
+            job["status"] = "printing"
+            job["_pause_event"].set()
+
+            if hasattr(self._ad, 'resume'):
+                self._ad.resume()
+
             return {
-                "error": {"code": "JOB_NOT_FOUND", "message": VALID_HARDWARE_ERRORS["JOB_NOT_FOUND"]},
-                "status_code": 404,
-                "pause_supported": self.pause_supported,
+                "request_id": request_id,
+                "status": "printing",
+                "pause_supported": True,
             }
-
-        if not self.pause_supported:
-            return {
-                "error": {
-                    "code": "HARDWARE_PAUSE_UNSUPPORTED",
-                    "message": VALID_HARDWARE_ERRORS["HARDWARE_PAUSE_UNSUPPORTED"],
-                },
-                "status_code": 400,
-                "pause_supported": False,
-                "status": job["status"],
-            }
-
-        if job["status"] != "paused":
-            return {
-                "error": {"code": "INVALID_STATE", "message": "Chỉ có thể resume khi đang paused"},
-                "status_code": 409,
-                "pause_supported": self.pause_supported,
-            }
-
-        job["status"] = "printing"
-        job["_pause_event"].set()
-
-        if hasattr(self._ad, 'resume'):
-            self._ad.resume()
-
-        return {
-            "request_id": request_id,
-            "status": "printing",
-            "pause_supported": True,
-        }
 
     async def cancel_job(self, request_id: str) -> Dict[str, Any]:
-        job = self.jobs.get(request_id)
-        if not job:
-            return {
-                "error": {"code": "JOB_NOT_FOUND", "message": VALID_HARDWARE_ERRORS["JOB_NOT_FOUND"]},
-                "status_code": 404,
-                "pause_supported": self.pause_supported,
-            }
-        if job["status"] in ("done", "cancelled"):
-            return {
-                "error": {
-                    "code": "INVALID_STATE",
-                    "message": f"Không thể cancel job đã ở trạng thái '{job['status']}'",
-                },
-                "status_code": 409,
-                "pause_supported": self.pause_supported,
-            }
+        with self._job_lock:
+            job = self.jobs.get(request_id)
+            if not job:
+                return {
+                    "error": {"code": "JOB_NOT_FOUND", "message": VALID_HARDWARE_ERRORS["JOB_NOT_FOUND"]},
+                    "status_code": 404,
+                    "pause_supported": self.pause_supported,
+                }
+            if job["status"] in ("done", "cancelled"):
+                return {
+                    "error": {
+                        "code": "INVALID_STATE",
+                        "message": f"Không thể cancel job đã ở trạng thái '{job['status']}'",
+                    },
+                    "status_code": 409,
+                    "pause_supported": self.pause_supported,
+                }
 
-        job["status"] = "cancelled"
-        job["actual_draw_time_sec"] = None
-        job["actual_hardware_measured"] = False
-        job["_cancel_event"].set()
-        job["_pause_event"].set()
+            job["status"] = "cancelled"
+            job["actual_draw_time_sec"] = None
+            job["actual_hardware_measured"] = False
+            job["_cancel_event"].set()
+            job["_pause_event"].set()
 
-        # Ngắt driver thực sự
-        if self._ad:
-            try:
-                if hasattr(self._ad, 'stop'):
-                    self._ad.stop()
-                elif hasattr(self._ad, 'disconnect'):
-                    self._ad.disconnect()
-            except Exception:
-                pass
+            # Ngắt driver thực sự
+            if self._ad:
+                try:
+                    if hasattr(self._ad, 'stop'):
+                        self._ad.stop()
+                    elif hasattr(self._ad, 'disconnect'):
+                        self._ad.disconnect()
+                except Exception:
+                    pass
 
-        record_metric(job, csv_path=self._metrics_csv_path)
-        return {"request_id": request_id, "status": "cancelled", "pause_supported": self.pause_supported}
+            record_metric(job, csv_path=self._metrics_csv_path)
+            return {"request_id": request_id, "status": "cancelled", "pause_supported": self.pause_supported}
 
     def get_status(self, request_id: str, simulate_error: Optional[str] = None) -> Dict[str, Any]:
         job = self.jobs.get(request_id)
