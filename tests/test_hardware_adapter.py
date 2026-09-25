@@ -65,6 +65,31 @@ from hardware_adapter import (
     VALID_HARDWARE_ERRORS,
 )
 
+_module_temp_csv = None
+
+
+def setUpModule():
+    global _module_temp_csv
+    _module_temp_csv = tempfile.NamedTemporaryFile(delete=False, suffix=".csv")
+    _module_temp_csv.close()
+    os.environ["OMNIDRAW_HARDWARE_METRICS_PATH"] = _module_temp_csv.name
+
+
+def tearDownModule():
+    global _module_temp_csv
+    if "OMNIDRAW_HARDWARE_METRICS_PATH" in os.environ:
+        del os.environ["OMNIDRAW_HARDWARE_METRICS_PATH"]
+    if _module_temp_csv and os.path.exists(_module_temp_csv.name):
+        try:
+            os.remove(_module_temp_csv.name)
+        except OSError:
+            pass
+    if _module_temp_csv and os.path.exists(_module_temp_csv.name + ".bak"):
+        try:
+            os.remove(_module_temp_csv.name + ".bak")
+        except OSError:
+            pass
+
 
 # ---------------------------------------------------------------------------
 # Nhóm 1 — Hình học SVG & Nhóm Transform
@@ -435,11 +460,30 @@ class TestTV4IntegrationContracts(unittest.IsolatedAsyncioTestCase):
 
     def setUp(self):
         self.fixture = os.path.join(_repo_root, "tests", "fixtures", "smoke_test_specimen.svg")
-        self.csv_path = os.path.join(_repo_root, "logs", "hardware_metrics.csv")
+        self._temp_csv_file = tempfile.NamedTemporaryFile(delete=False, suffix=".csv")
+        self._temp_csv_file.close()
+        self.csv_path = self._temp_csv_file.name
+        self._prev_env = os.environ.get("OMNIDRAW_HARDWARE_METRICS_PATH")
+        os.environ["OMNIDRAW_HARDWARE_METRICS_PATH"] = self.csv_path
         reset_hardware_adapter()
 
     def tearDown(self):
         reset_hardware_adapter()
+        if self._prev_env is not None:
+            os.environ["OMNIDRAW_HARDWARE_METRICS_PATH"] = self._prev_env
+        else:
+            os.environ.pop("OMNIDRAW_HARDWARE_METRICS_PATH", None)
+        if os.path.exists(self.csv_path):
+            try:
+                os.remove(self.csv_path)
+            except OSError:
+                pass
+        bak_file = self.csv_path + ".bak"
+        if os.path.exists(bak_file):
+            try:
+                os.remove(bak_file)
+            except OSError:
+                pass
 
     def _get_csv_rows_for_request(self, request_id: str):
         if not os.path.isfile(self.csv_path):
@@ -454,7 +498,7 @@ class TestTV4IntegrationContracts(unittest.IsolatedAsyncioTestCase):
         Physical job hoàn tất thành công -> actual_hardware_measured=True, is_simulated=False, source_tag=axidraw_real.
         CSV ghi đúng 9 cột với thời gian thực đo > 0.
         """
-        adapter = AxiDrawAdapter(use_fake_driver=False)
+        adapter = AxiDrawAdapter(use_fake_driver=False, metrics_csv_path=self.csv_path)
         adapter._ad = MockRealAxiDrawDriver()
         adapter._connected = True
 
@@ -493,6 +537,150 @@ class TestTV4IntegrationContracts(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(last_row["error_code"], "")
         self.assertTrue(float(last_row["actual_draw_time_sec"]) > 0)
 
+    async def test_physical_short_job_subsecond_timing(self):
+        """
+        TV4 Review feedback:
+        Bỏ phép int() và việc ép thời gian dưới 1s thành 1s.
+        Job vật lý siêu ngắn (< 1s) phải lưu thời gian thực dạng float,
+        chính xác đến mili-giây (ví dụ 0.05s thay vì ép thành 1s nguyên).
+        """
+        adapter = AxiDrawAdapter(use_fake_driver=False, metrics_csv_path=self.csv_path)
+        adapter._ad = MockRealAxiDrawDriver()
+        adapter._connected = True
+
+        req_id = f"test-phys-subsecond-{int(time.time() * 1000)}"
+        start_res = await adapter.start_job(req_id, self.fixture)
+        self.assertEqual(start_res["status"], "printing")
+
+        for _ in range(50):
+            await asyncio.sleep(0.05)
+            st = adapter.get_status(req_id)
+            if st["status"] == "done":
+                break
+
+        st = adapter.get_status(req_id)
+        self.assertEqual(st["status"], "done")
+        self.assertTrue(st["actual_hardware_measured"])
+        measured_time = st.get("actual_draw_time_sec")
+        self.assertIsNotNone(measured_time)
+        self.assertIsInstance(measured_time, float, "actual_draw_time_sec phải là kiểu float, không bị ép int()")
+        self.assertLess(measured_time, 1.0, "Thời gian job ngắn (<1s) không được ép thành 1s")
+        self.assertGreater(measured_time, 0.0)
+
+        # Kiểm tra file CSV
+        rows = self._get_csv_rows_for_request(req_id)
+        self.assertGreaterEqual(len(rows), 1)
+        csv_time = float(rows[-1]["actual_draw_time_sec"])
+        self.assertLess(csv_time, 1.0)
+        self.assertGreater(csv_time, 0.0)
+        self.assertEqual(rows[-1]["actual_hardware_measured"], "True")
+
+    def test_csv_migration_safe_backup_and_unverified_unmeasured(self):
+        """
+        TV4 Review feedback:
+        Auto-migration của hardware_metrics.csv:
+        - Không ghi đè dữ liệu cũ âm thầm: phải tạo file .bak sao lưu nguyên vẹn
+        - Chỉ gán actual_hardware_measured=True cho dòng cũ nếu physical job hoàn tất VÀ actual_draw_time_sec > 0
+        - Nếu không xác minh được (physical lỗi, hoặc time <= 0, hoặc simulator), giữ False (chưa đo).
+        """
+        old_headers = [
+            "request_id",
+            "timestamp",
+            "actual_draw_time_sec",
+            "estimated_draw_time_sec",
+            "is_simulated",
+            "hardware_status",
+            "source_tag",
+        ]
+        old_data = [
+            # 1. Physical job hoàn tất với thời gian > 0 -> Hợp lệ -> actual_hardware_measured=True
+            {
+                "request_id": "leg-phys-done-ok",
+                "timestamp": "2026-09-20T10:00:00Z",
+                "actual_draw_time_sec": "15.42",
+                "estimated_draw_time_sec": "15.0",
+                "is_simulated": "False",
+                "hardware_status": "done",
+                "source_tag": "axidraw_real",
+            },
+            # 2. Physical job thất bại -> Không xác minh được -> actual_hardware_measured=False
+            {
+                "request_id": "leg-phys-failed",
+                "timestamp": "2026-09-20T10:05:00Z",
+                "actual_draw_time_sec": "",
+                "estimated_draw_time_sec": "15.0",
+                "is_simulated": "False",
+                "hardware_status": "error",
+                "source_tag": "axidraw_real",
+            },
+            # 3. Physical job done nhưng time <= 0 -> Không hợp lệ -> actual_hardware_measured=False
+            {
+                "request_id": "leg-phys-zero-time",
+                "timestamp": "2026-09-20T10:10:00Z",
+                "actual_draw_time_sec": "0",
+                "estimated_draw_time_sec": "15.0",
+                "is_simulated": "False",
+                "hardware_status": "done",
+                "source_tag": "axidraw_real",
+            },
+            # 4. Job simulator hoàn tất -> Không phải máy thật -> actual_hardware_measured=False
+            {
+                "request_id": "leg-sim-done",
+                "timestamp": "2026-09-20T10:15:00Z",
+                "actual_draw_time_sec": "12.0",
+                "estimated_draw_time_sec": "12.0",
+                "is_simulated": "True",
+                "hardware_status": "done",
+                "source_tag": "simulator",
+            },
+        ]
+
+        # Ghi file CSV dạng schema cũ (7 cột)
+        with open(self.csv_path, "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=old_headers)
+            writer.writeheader()
+            for r in old_data:
+                writer.writerow(r)
+
+        with open(self.csv_path, "r", encoding="utf-8") as f:
+            original_content = f.read()
+
+        # Gọi record_metric với một job mới -> kích hoạt auto-migration
+        new_job = {
+            "request_id": "new-job-after-migration",
+            "status": "done",
+            "actual_draw_time_sec": 4.56,
+            "estimated_draw_time_sec": 4.5,
+            "is_simulated": False,
+            "source_tag": "axidraw_real",
+        }
+        record_metric(new_job, csv_path=self.csv_path)
+
+        # 1. Kiểm tra file backup .bak đã được tạo và chứa đúng nội dung cũ
+        bak_path = self.csv_path + ".bak"
+        self.assertTrue(os.path.exists(bak_path), "File backup .bak phải được tạo trước khi migrate")
+        with open(bak_path, "r", encoding="utf-8") as f:
+            bak_content = f.read()
+        self.assertEqual(bak_content, original_content, "File backup phải bảo toàn nguyên vẹn dữ liệu gốc")
+
+        # 2. Đọc file CSV mới đã được migrate sang 9 cột
+        with open(self.csv_path, "r", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            migrated_rows = {row["request_id"]: row for row in reader}
+
+        self.assertIn("leg-phys-done-ok", migrated_rows)
+        self.assertIn("leg-phys-failed", migrated_rows)
+        self.assertIn("leg-phys-zero-time", migrated_rows)
+        self.assertIn("leg-sim-done", migrated_rows)
+        self.assertIn("new-job-after-migration", migrated_rows)
+
+        # 3. Kiểm tra logic phân loại actual_hardware_measured
+        self.assertEqual(migrated_rows["leg-phys-done-ok"]["actual_hardware_measured"], "True")
+        self.assertEqual(migrated_rows["leg-phys-failed"]["actual_hardware_measured"], "False")
+        self.assertEqual(migrated_rows["leg-phys-zero-time"]["actual_hardware_measured"], "False")
+        self.assertEqual(migrated_rows["leg-sim-done"]["actual_hardware_measured"], "False")
+        self.assertEqual(migrated_rows["new-job-after-migration"]["actual_hardware_measured"], "True")
+
     async def test_physical_runtime_failure_records_unmeasured_and_empty_timing(self):
         """
         TV4 Contract:
@@ -502,7 +690,7 @@ class TestTV4IntegrationContracts(unittest.IsolatedAsyncioTestCase):
         - actual_draw_time_sec rỗng/None (KHÔNG ghi timing giả hoặc 0)
         - error_code được ghi nhận (ví dụ: HARDWARE_NOT_CONNECTED)
         """
-        adapter = AxiDrawAdapter(use_fake_driver=False)
+        adapter = AxiDrawAdapter(use_fake_driver=False, metrics_csv_path=self.csv_path)
         adapter._ad = MockRealAxiDrawDriver(fail_on_run=True, fail_msg="AxiDraw disconnected unexpectedly")
         adapter._connected = True
 
@@ -543,7 +731,7 @@ class TestTV4IntegrationContracts(unittest.IsolatedAsyncioTestCase):
         - CSV ghi nhận error với is_simulated=False, actual_hardware_measured=False
         """
         reset_hardware_adapter()
-        adapter = get_hardware_adapter(mode="physical")
+        adapter = get_hardware_adapter(mode="physical", metrics_csv_path=self.csv_path)
         self.assertIsInstance(adapter, AxiDrawAdapter)
         self.assertFalse(adapter._use_fake_driver)
         self.assertNotIsInstance(adapter, MockSimulatorAdapter)
@@ -573,7 +761,7 @@ class TestTV4IntegrationContracts(unittest.IsolatedAsyncioTestCase):
         - Tuyệt đối không chuyển job sang paused (vẫn giữ printing)
         - Trả lỗi có cấu trúc HARDWARE_PAUSE_UNSUPPORTED với status_code 400 và pause_supported: False
         """
-        adapter = AxiDrawAdapter(use_fake_driver=False)
+        adapter = AxiDrawAdapter(use_fake_driver=False, metrics_csv_path=self.csv_path)
         adapter._ad = MockRealAxiDrawDriver()
         adapter._connected = True
 
@@ -607,13 +795,13 @@ class TestTV4IntegrationContracts(unittest.IsolatedAsyncioTestCase):
         Đồng nhất pause_supported trong response của simulator và fake driver (=True)
         so với physical (=False).
         """
-        sim = MockSimulatorAdapter(connected=True)
+        sim = MockSimulatorAdapter(connected=True, metrics_csv_path=self.csv_path)
         self.assertTrue(sim.pause_supported)
 
-        fake = AxiDrawAdapter(use_fake_driver=True)
+        fake = AxiDrawAdapter(use_fake_driver=True, metrics_csv_path=self.csv_path)
         self.assertTrue(fake.pause_supported)
 
-        phys = AxiDrawAdapter(use_fake_driver=False)
+        phys = AxiDrawAdapter(use_fake_driver=False, metrics_csv_path=self.csv_path)
         self.assertFalse(phys.pause_supported)
 
 

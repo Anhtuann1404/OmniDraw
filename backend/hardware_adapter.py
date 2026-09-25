@@ -30,6 +30,7 @@ import datetime
 import math
 import os
 import re
+import shutil
 import sys
 import threading
 import time
@@ -364,10 +365,20 @@ def apply_origin_offset_to_svg(svg_content: str, offset_x_mm: float = 5.0, offse
 # Ghi nhận Metrics (CSV Logging)
 # ---------------------------------------------------------------------------
 
-def record_metric(job: Dict[str, Any]) -> None:
-    log_dir = os.path.join(os.path.dirname(__file__), "..", "logs")
-    os.makedirs(log_dir, exist_ok=True)
-    csv_path = os.path.join(log_dir, "hardware_metrics.csv")
+def record_metric(job: Dict[str, Any], csv_path: Optional[str] = None) -> None:
+    if csv_path is None:
+        env_path = os.environ.get("OMNIDRAW_HARDWARE_METRICS_PATH")
+        if env_path:
+            csv_path = env_path
+        else:
+            log_dir = os.path.join(os.path.dirname(__file__), "..", "logs")
+            os.makedirs(log_dir, exist_ok=True)
+            csv_path = os.path.join(log_dir, "hardware_metrics.csv")
+    else:
+        parent_dir = os.path.dirname(os.path.abspath(csv_path))
+        if parent_dir:
+            os.makedirs(parent_dir, exist_ok=True)
+
     fieldnames = [
         "request_id",
         "timestamp",
@@ -400,7 +411,7 @@ def record_metric(job: Dict[str, Any]) -> None:
         try:
             val = float(raw_actual_time)
             if val > 0:
-                actual_time = round(val, 2)
+                actual_time = round(val, 3)
         except (ValueError, TypeError):
             actual_time = None
 
@@ -429,12 +440,17 @@ def record_metric(job: Dict[str, Any]) -> None:
     }
 
     # Auto-migration if file exists with an older/different header
-    if os.path.exists(csv_path):
+    if os.path.exists(csv_path) and os.path.getsize(csv_path) > 0:
         try:
             with open(csv_path, "r", encoding="utf-8") as f:
                 first_line = f.readline().strip()
             expected_header = ",".join(fieldnames)
             if first_line and first_line != expected_header:
+                # Sao lưu bảo toàn dữ liệu nghiên cứu cũ, tuyệt đối không ghi đè âm thầm
+                backup_path = csv_path + ".bak"
+                shutil.copy2(csv_path, backup_path)
+                print(f"[TV3 MIGRATION] Phát hiện schema CSV cũ trong '{csv_path}'. Đã tạo bản sao lưu an toàn tại '{backup_path}'.")
+
                 with open(csv_path, "r", encoding="utf-8") as f:
                     reader = csv.DictReader(f)
                     old_rows = list(reader)
@@ -442,20 +458,41 @@ def record_metric(job: Dict[str, Any]) -> None:
                     writer = csv.DictWriter(f, fieldnames=fieldnames)
                     writer.writeheader()
                     for old_row in old_rows:
-                        if "actual_hardware_measured" not in old_row:
-                            old_row["actual_hardware_measured"] = (
-                                str(old_row.get("is_simulated", "")).lower() == "false"
-                                and old_row.get("source_tag") == "axidraw_real"
-                                and old_row.get("hardware_status") == "done"
-                            )
+                        # Xác minh tính hợp lệ của thời gian thực nghiệm vật lý
+                        raw_time = old_row.get("actual_draw_time_sec", "")
+                        has_valid_time = False
+                        try:
+                            if raw_time is not None and str(raw_time).strip() != "":
+                                has_valid_time = float(raw_time) > 0.0
+                        except (ValueError, TypeError):
+                            has_valid_time = False
+
+                        is_real_src = (
+                            str(old_row.get("is_simulated", "")).lower() == "false"
+                            and old_row.get("source_tag") == "axidraw_real"
+                        )
+                        is_done = (old_row.get("hardware_status") == "done")
+
+                        if "actual_hardware_measured" not in old_row or old_row.get("actual_hardware_measured") == "":
+                            # Chỉ gán True khi xác minh được physical job hoàn tất VÀ actual_draw_time_sec > 0
+                            if is_real_src and is_done and has_valid_time:
+                                old_row["actual_hardware_measured"] = True
+                            else:
+                                old_row["actual_hardware_measured"] = False
+                                if is_real_src:
+                                    print(
+                                        f"[TV3 MIGRATION] Dòng request_id='{old_row.get('request_id')}' không xác minh được physical job hoàn tất với thời gian > 0. "
+                                        f"Giữ actual_hardware_measured=False (chưa đo)."
+                                    )
+
                         if "error_code" not in old_row:
                             old_row["error_code"] = ""
                         clean_row = {k: old_row.get(k, "") for k in fieldnames}
                         writer.writerow(clean_row)
-        except Exception:
-            pass
+        except Exception as exc:
+            print(f"[TV3 MIGRATION WARNING] Lỗi khi migrate schema CSV: {exc}")
 
-    write_header = not os.path.exists(csv_path)
+    write_header = (not os.path.exists(csv_path)) or (os.path.getsize(csv_path) == 0)
     with open(csv_path, "a", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         if write_header:
@@ -945,9 +982,11 @@ class HardwareAdapterInterface(ABC):
 class MockSimulatorAdapter(HardwareAdapterInterface):
 
     def __init__(self, connected: bool = True, speed_factor: float = 1.0,
-                 profile_path: Optional[str] = None):
+                 profile_path: Optional[str] = None,
+                 metrics_csv_path: Optional[str] = None):
         self._connected = connected
         self._speed_factor = max(0.1, speed_factor)
+        self._metrics_csv_path = metrics_csv_path
         self.jobs: Dict[str, Dict[str, Any]] = {}
         self._profile: Dict[str, Any] = {}
         self.load_profile(profile_path)
@@ -1023,7 +1062,7 @@ class MockSimulatorAdapter(HardwareAdapterInterface):
                         "actual_hardware_measured": False,
                         "task": None,
                     })
-                    record_metric(job_now)
+                    record_metric(job_now, csv_path=self._metrics_csv_path)
                     return
 
         except asyncio.CancelledError:
@@ -1183,7 +1222,7 @@ class MockSimulatorAdapter(HardwareAdapterInterface):
                 pass
         job["task"] = None
         job["status"] = "cancelled"
-        record_metric(job)
+        record_metric(job, csv_path=self._metrics_csv_path)
         return {"request_id": request_id, "status": "cancelled", "pause_supported": self.pause_supported}
 
     def get_status(self, request_id: str, simulate_error: Optional[str] = None) -> Dict[str, Any]:
@@ -1316,11 +1355,13 @@ class AxiDrawAdapter(HardwareAdapterInterface):
     """
 
     def __init__(self, port: Optional[str] = None, use_fake_driver: bool = False,
-                 profile_path: Optional[str] = None):
+                 profile_path: Optional[str] = None,
+                 metrics_csv_path: Optional[str] = None):
         self._port = port
         self._connected = False
         self._ad: Any = None
         self._use_fake_driver = use_fake_driver
+        self._metrics_csv_path = metrics_csv_path
         self._job_lock = threading.Lock()
         self.jobs: Dict[str, Dict[str, Any]] = {}
         self._profile: Dict[str, Any] = {}
@@ -1415,7 +1456,7 @@ class AxiDrawAdapter(HardwareAdapterInterface):
                     "code": "HARDWARE_NOT_CONNECTED",
                     "message": VALID_HARDWARE_ERRORS["HARDWARE_NOT_CONNECTED"],
                 }
-                record_metric(job)
+                record_metric(job, csv_path=self._metrics_csv_path)
 
         if self._ad:
             try:
@@ -1472,7 +1513,7 @@ class AxiDrawAdapter(HardwareAdapterInterface):
                     "actual_hardware_measured": False,
                     "source_tag": self._get_source_tag(),
                     "error": {"code": "HARDWARE_NOT_CONNECTED", "message": err_msg},
-                })
+                }, csv_path=self._metrics_csv_path)
             return {
                 "error": {
                     "code": "HARDWARE_NOT_CONNECTED",
@@ -1580,9 +1621,7 @@ class AxiDrawAdapter(HardwareAdapterInterface):
                 if job["_cancel_event"].is_set() or job.get("status") in ("cancelled", "error", "paused"):
                     return
 
-                elapsed = int(time.monotonic() - t_start)
-                if elapsed <= 0:
-                    elapsed = 1
+                elapsed = round(max(0.001, time.monotonic() - t_start), 3)
                 job.update({
                     "status": "done",
                     "progress_percent": 100,
@@ -1590,7 +1629,7 @@ class AxiDrawAdapter(HardwareAdapterInterface):
                     "actual_draw_time_sec": elapsed,
                     "actual_hardware_measured": is_real,
                 })
-                record_metric(job)
+                record_metric(job, csv_path=adapter_ref._metrics_csv_path)
 
             except Exception as exc:
                 err_code = "HARDWARE_ERROR"
@@ -1603,7 +1642,7 @@ class AxiDrawAdapter(HardwareAdapterInterface):
                     "actual_hardware_measured": False,
                     "error": {"code": err_code, "message": err_msg},
                 })
-                record_metric(job)
+                record_metric(job, csv_path=adapter_ref._metrics_csv_path)
 
         thread = threading.Thread(target=_plot_worker, daemon=True)
         thread.start()
@@ -1722,7 +1761,7 @@ class AxiDrawAdapter(HardwareAdapterInterface):
             except Exception:
                 pass
 
-        record_metric(job)
+        record_metric(job, csv_path=self._metrics_csv_path)
         return {"request_id": request_id, "status": "cancelled", "pause_supported": self.pause_supported}
 
     def get_status(self, request_id: str, simulate_error: Optional[str] = None) -> Dict[str, Any]:
@@ -1780,26 +1819,27 @@ _global_hardware_adapter: Optional[HardwareAdapterInterface] = None
 
 
 def get_hardware_adapter(mode: str = "auto", speed_factor: float = 1.0,
-                         profile_path: Optional[str] = None) -> HardwareAdapterInterface:
+                         profile_path: Optional[str] = None,
+                         metrics_csv_path: Optional[str] = None) -> HardwareAdapterInterface:
     global _global_hardware_adapter
     if _global_hardware_adapter is not None:
         return _global_hardware_adapter
 
     if mode == "physical":
-        adapter = AxiDrawAdapter(profile_path=profile_path, use_fake_driver=False)
+        adapter = AxiDrawAdapter(profile_path=profile_path, use_fake_driver=False, metrics_csv_path=metrics_csv_path)
     elif mode == "fake":
-        adapter = AxiDrawAdapter(use_fake_driver=True, profile_path=profile_path)
+        adapter = AxiDrawAdapter(use_fake_driver=True, profile_path=profile_path, metrics_csv_path=metrics_csv_path)
     elif mode == "simulator":
-        adapter = MockSimulatorAdapter(speed_factor=speed_factor, profile_path=profile_path)
+        adapter = MockSimulatorAdapter(speed_factor=speed_factor, profile_path=profile_path, metrics_csv_path=metrics_csv_path)
     else:  # auto
         try:
-            candidate = AxiDrawAdapter(profile_path=profile_path, use_fake_driver=False)
+            candidate = AxiDrawAdapter(profile_path=profile_path, use_fake_driver=False, metrics_csv_path=metrics_csv_path)
             if candidate.connect():
                 adapter = candidate
             else:
-                adapter = MockSimulatorAdapter(speed_factor=speed_factor, profile_path=profile_path)
+                adapter = MockSimulatorAdapter(speed_factor=speed_factor, profile_path=profile_path, metrics_csv_path=metrics_csv_path)
         except Exception:
-            adapter = MockSimulatorAdapter(speed_factor=speed_factor, profile_path=profile_path)
+            adapter = MockSimulatorAdapter(speed_factor=speed_factor, profile_path=profile_path, metrics_csv_path=metrics_csv_path)
 
     _global_hardware_adapter = adapter
     return _global_hardware_adapter
