@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="297mm" height="210mm" viewBox="0 0 297 210">
+  <!-- OmniDraw TV3 RQ3 Physical Calibration & Clearance Specimen Fixture -->
+  <!-- Khung can toa do A4 (Boundary Verification) -->
+  <path d="M 10 10 L 287 10 L 287 200 L 10 200 Z" fill="none" stroke="#000000" stroke-width="0.4" id="boundary_frame" />
+
+  <!-- ====================================================================== -->
+  <!-- KHOI D: Thuoc do kiem chuan quang hoc 50.0mm & O vuong 20.0x20.0mm    -->
+  <!-- ====================================================================== -->
+  <g id="block_d_calibration_bars">
+    <!-- Thuoc do 50mm ngang tai (20, 25) -->
+    <path d="M 20 25 L 70 25 M 20 22 L 20 28 M 70 22 L 70 28" fill="none" stroke="#000000" stroke-width="0.5" id="calib_bar_50mm_x" />
+    <text x="35" y="22" font-family="sans-serif" font-size="3" fill="#000000">50.0 mm</text>
+
+    <!-- Thuoc do 50mm doc tai (20, 35) -->
+    <path d="M 20 35 L 20 85 M 17 35 L 23 35 M 17 85 L 23 85" fill="none" stroke="#000000" stroke-width="0.5" id="calib_bar_50mm_y" />
+
+    <!-- O vuong kiem chuan 20x20mm tai (35, 45) -->
+    <path d="M 35 45 L 55 45 L 55 65 L 35 65 Z" fill="none" stroke="#000000" stroke-width="0.5" id="calib_square_20mm" />
+    <text x="38" y="56" font-family="sans-serif" font-size="2.5" fill="#000000">20x20mm</text>
+  </g>
+
+  <!-- ====================================================================== -->
+  <!-- KHOI A: Thang khoang ho dau thanh (Diacritic Clearance Ladder)          -->
+  <!-- Danh sach khoang ho: 0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70 mm       -->
+  <!-- ====================================================================== -->
+  <g id="block_a_clearance_ladder">
+    <text x="90" y="22" font-family="sans-serif" font-size="3.5" font-weight="bold" fill="#000000">BLOCK A: DIACRITIC CLEARANCE LADDER (0.10mm - 0.70mm)</text>
+
+    <!-- Cap 1: d = 0.10 mm (Y = 30.00 va Y = 30.10) -->
+    <path d="M 90 30.00 L 170 30.00 M 90 30.10 L 170 30.10" fill="none" stroke="#000000" stroke-width="0.3" id="clearance_0_10mm" />
+    <text x="175" y="30.5" font-family="sans-serif" font-size="2.2" fill="#000000">d = 0.10 mm</text>
+
+    <!-- Cap 2: d = 0.20 mm (Y = 38.00 va Y = 38.20) [Technical Minimum] -->
+    <path d="M 90 38.00 L 170 38.00 M 90 38.20 L 170 38.20" fill="none" stroke="#000000" stroke-width="0.3" id="clearance_0_20mm" />
+    <text x="175" y="38.5" font-family="sans-serif" font-size="2.2" fill="#000000">d = 0.20 mm (Technical Min)</text>
+
+    <!-- Cap 3: d = 0.30 mm (Y = 46.00 va Y = 46.30) -->
+    <path d="M 90 46.00 L 170 46.00 M 90 46.30 L 170 46.30" fill="none" stroke="#000000" stroke-width="0.3" id="clearance_0_30mm" />
+    <text x="175" y="46.5" font-family="sans-serif" font-size="2.2" fill="#000000">d = 0.30 mm</text>
+
+    <!-- Cap 4: d = 0.40 mm (Y = 54.00 va Y = 54.40) -->
+    <path d="M 90 54.00 L 170 54.00 M 90 54.40 L 170 54.40" fill="none" stroke="#000000" stroke-width="0.3" id="clearance_0_40mm" />
+    <text x="175" y="54.5" font-family="sans-serif" font-size="2.2" fill="#000000">d = 0.40 mm</text>
+
+    <!-- Cap 5: d = 0.50 mm (Y = 62.00 va Y = 62.50) [Provisional Target] -->
+    <path d="M 90 62.00 L 170 62.00 M 90 62.50 L 170 62.50" fill="none" stroke="#000000" stroke-width="0.3" id="clearance_0_50mm" />
+    <text x="175" y="62.5" font-family="sans-serif" font-size="2.2" fill="#000000">d = 0.50 mm (Target)</text>
+
+    <!-- Cap 6: d = 0.60 mm (Y = 70.00 va Y = 70.60) -->
+    <path d="M 90 70.00 L 170 70.00 M 90 70.60 L 170 70.60" fill="none" stroke="#000000" stroke-width="0.3" id="clearance_0_60mm" />
+    <text x="175" y="70.5" font-family="sans-serif" font-size="2.2" fill="#000000">d = 0.60 mm</text>
+
+    <!-- Cap 7: d = 0.70 mm (Y = 78.00 va Y = 78.70) -->
+    <path d="M 90 78.00 L 170 78.00 M 90 78.70 L 170 78.70" fill="none" stroke="#000000" stroke-width="0.3" id="clearance_0_70mm" />
+    <text x="175" y="78.5" font-family="sans-serif" font-size="2.2" fill="#000000">d = 0.70 mm</text>
+  </g>
+
+  <!-- ====================================================================== -->
+  <!-- KHOI B: Kiem tra goc be cua ngat net (Kinematic Turn & Acute Angles)    -->
+  <!-- Cac goc bẻ: 60 deg, 90 deg, 120 deg, 150 deg                           -->
+  <!-- ====================================================================== -->
+  <g id="block_b_acute_turns">
+    <text x="20" y="105" font-family="sans-serif" font-size="3.5" font-weight="bold" fill="#000000">BLOCK B: ACUTE TURNS &amp; CORNERING VIBRATION</text>
+
+    <!-- Goc 60 do -->
+    <path d="M 25 140 L 40 115 L 55 140" fill="none" stroke="#000000" stroke-width="0.5" id="turn_60deg" />
+    <text x="35" y="145" font-family="sans-serif" font-size="2.5" fill="#000000">Turn 60°</text>
+
+    <!-- Goc 90 do -->
+    <path d="M 75 140 L 90 115 L 115 115" fill="none" stroke="#000000" stroke-width="0.5" id="turn_90deg" />
+    <text x="85" y="145" font-family="sans-serif" font-size="2.5" fill="#000000">Turn 90°</text>
+
+    <!-- Goc 120 do (Nguong kiem tra H3.2) -->
+    <path d="M 135 140 L 155 120 L 180 135" fill="none" stroke="#000000" stroke-width="0.5" id="turn_120deg" />
+    <text x="145" y="145" font-family="sans-serif" font-size="2.5" fill="#000000">Turn 120° (H3.2)</text>
+
+    <!-- Goc 150 do -->
+    <path d="M 200 135 L 225 122 L 255 125" fill="none" stroke="#000000" stroke-width="0.5" id="turn_150deg" />
+    <text x="215" y="145" font-family="sans-serif" font-size="2.5" fill="#000000">Turn 150°</text>
+  </g>
+
+  <!-- ====================================================================== -->
+  <!-- KHOI C: Tan suat nhac ha but truc Z (Rapid Pen-Lift Actuation)          -->
+  <!-- ====================================================================== -->
+  <g id="block_c_rapid_pen_lift">
+    <text x="20" y="165" font-family="sans-serif" font-size="3.5" font-weight="bold" fill="#000000">BLOCK C: RAPID PEN-LIFT ACTUATION (Z-AXIS LATENCY)</text>
+
+    <!-- Dãy nét đứt 2mm vẽ, 2mm nhấc bút -->
+    <path d="M 25 175 L 30 175 M 34 175 L 39 175 M 43 175 L 48 175 M 52 175 L 57 175 M 61 175 L 66 175 M 70 175 L 75 175 M 79 175 L 84 175 M 88 175 L 93 175 M 97 175 L 102 175 M 106 175 L 111 175 M 115 175 L 120 175 M 124 175 L 129 175 M 133 175 L 138 175 M 142 175 L 147 175 M 151 175 L 156 175 M 160 175 L 165 175 M 169 175 L 174 175 M 178 175 L 183 175 M 187 175 L 192 175 M 196 175 L 201 175 M 205 175 L 210 175 M 214 175 L 219 175 M 223 175 L 228 175 M 232 175 L 237 175 M 241 175 L 246 175 M 250 175 L 255 175 M 259 175 L 264 175 M 268 175 L 273 175" fill="none" stroke="#000000" stroke-width="0.4" id="rapid_pen_lift_series" />
+    <text x="25" y="185" font-family="sans-serif" font-size="2.2" fill="#000000">28 Pen Lifts / Rapid actuation test (2mm draw / 4mm pitch)</text>
+  </g>
+</svg>

@@ -13,7 +13,7 @@
 | -------------------------- |----------------------------------------| --------------------------------------- | ----------- |
 | TV1 — AI Core              | Đã hoàn tất Cross-review Chương 1–3 (Phiếu TV1: PASS) & đóng băng Benchmark Corpus v1.0 | *(điền, hoặc để trống nếu không nghẽn)* | Sprint 1–2  |
 | TV2 — AI Ứng dụng/CV       | *(điền)*                               | *(điền)*                                | *(điền)*    |
-| TV3 — Phần cứng            | Đã hoàn tất PR #29 merge vào develop; hoàn thành draft cross-review Chương 1–3 (Phiếu TV3) | Blocked by hardware: chờ máy vẽ AxiDraw & cáp USB vật lý để chạy smoke test và hiệu chuẩn thực tế | Sprint 1–2  |
+| TV3 — Phần cứng            | Hoàn tất ký duyệt cross-review Chương 1–3 (PASS trên commit 031d198), ban hành Protocol kiểm chuẩn và tích hợp RQ3 Benchmark CLI | Blocked by hardware: chờ máy vẽ AxiDraw & cáp USB vật lý để chạy thực nghiệm trên giấy thật | Sprint 1–2  |
 | TV4 — Giao diện & Tích hợp | (điền)                                 | *(điền)*                                | *(điền)*    |
 
 
@@ -32,7 +32,7 @@
 | **TV4 — Project Lead & Handwriting / CA-VHC Composition Lead** | Hoàn tất Strict Validation, BƯỚC A/B, PR1 và Pre-PR3 Acceptance Contract; PR2 baseline adapters của TV2 đã hoàn tất; nhiệm vụ kế tiếp là cùng TV2 ký duyệt shared transition interface E4 để mở PR3, đồng thời tổng hợp Research Questions và Chương 3–4 | PR3 chỉ còn chờ Entry Gate E4. TV1 corpus freeze đã hoàn tất; TV3 hardware calibration là downstream validation gate. | 🟡 Đang làm |
 | **TV2 — Stroke Optimization & Path Planning Lead** | Step B technical cross-review đã PASS; PR2 baseline adapters B1/B2/B3 đã triển khai và được runner gọi độc lập qua method tag; nhiệm vụ tiếp theo: cùng TV4 ký duyệt shared transition interface E4 cho PR3 và tiếp tục chuẩn hóa ký hiệu toán học hàm mục tiêu $J$ | E4 cần TV4+TV2 cùng ký duyệt; không phải blocker của code PR2 | 🟡 Đang làm |
 | **TV1 — AI Data & Writer Profile Lead** | Đã ký PASS cross-review Chương 1–3 trên checkpoint `7ae43e6` (còn scoped recheck phần bị sửa sau đó), đóng băng Benchmark Corpus v1.0 (`CA-VHC-CORPUS-v1.0-FROZEN`), và hoàn tất Scan-Validation Pipeline tối thiểu (`backend/scan_validator/`, CLI runner, 11/11 tests pass); tiếp theo: bench print/scan P01–P04 ở 600 DPI, chốt collection protocol và chuẩn bị pilot 3–5 writers | Không | 🟡 Đang làm |
-| **TV3 — Hardware, Calibration & Physical Validation Lead** | Đã hoàn tất HAL/Simulator và PR #29 merge vào develop (23/23 tests pass); phiếu cross-review Chương 1–3 đã ký `PASS` trên checkpoint `7ae43e6`, còn scoped recheck các thay đổi sau đó; chuẩn bị fixture SVG và quy trình hiệu chuẩn | *Blocked by hardware:* chờ setup cáp & máy vẽ thực tế (hoàn tất nền tảng phần mềm; chờ máy thật để chạy calibration) | 🟡 Đang làm |
+| **TV3 — Hardware, Calibration & Physical Validation Lead** | Đã hoàn tất HAL/Simulator (PR #29); phiếu cross-review Chương 1–3 đã ký `PASS` (hoàn tất scoped recheck trên `031d198`); ban hành Giao thức Kiểm chuẩn Vật lý (`07_physical_calibration_protocol.md`), tiêu bản RQ3 SVG và tích hợp CLI `--benchmark-rq3` (27/27 tests pass) | *Blocked by hardware:* chờ setup cáp & máy vẽ thực tế (hoàn tất 100% nền tảng phần mềm; chờ máy thật để chạy calibration) | 🟡 Đang làm |
 
 ---
 
@@ -114,9 +114,12 @@
 - [x] Chuẩn bị file SVG fixture chuẩn (`tests/fixtures/smoke_test_specimen.svg` và `tests/fixtures/bezier_length_test.svg`) chứa nét thẳng, Bézier, Arc, handwriting và pen-up.
 - [x] Lập và validate Calibration Profile YAML (`config/calibration_profile.yaml`), nạp tự động thông số vận tốc, gia tốc, nâng hạ bút và offset 5mm.
 - [x] Xác định danh mục metrics phần cứng bắt buộc đo: phân biệt rạch ròi simulator/fake driver (`is_simulated=True`, `actual_hardware_measured=False`) và máy vẽ thật (`is_simulated=False`, `actual_hardware_measured=True`).
-- [x] **Hoàn tất bản nháp Cross-review Báo cáo NCKH Chương 1–3** (phiếu [`docs/reviews/tv3_chapter_1_3_review.md`](reviews/tv3_chapter_1_3_review.md)): xác nhận phân tách rõ rệt thời gian mô phỏng vs `actual_draw_time_sec`, giữ đúng ranh giới an toàn vật lý của clearance, AI draft verdict đạt `PASS`.
-- [ ] *Nếu có máy vẽ và cáp kết nối:* Chạy smoke test trên giấy thật và lưu lại log dữ liệu thực nghiệm đầu tiên. *(Blocked by hardware: chờ máy vẽ & cáp vật lý)*.
-- [x] *Nếu chưa có máy:* Ghi nhận rõ blocker phần cứng, cung cấp fake driver có thể kiểm soát pause/cancel động, simulator và CLI `--smoke-test` để TV4 và TV2 tích hợp không bị lỗi crash.
+- [x] **Hoàn tất ký duyệt Cross-review Báo cáo NCKH Chương 1–3** (phiếu [`docs/reviews/tv3_chapter_1_3_review.md`](reviews/tv3_chapter_1_3_review.md)): xác nhận phân tách rõ rệt thời gian mô phỏng vs `actual_draw_time_sec`, giữ đúng ranh giới an toàn vật lý của clearance, hoàn tất scoped recheck trên commit `031d198` với `HUMAN_VERDICT: PASS`, workflow `CLOSED`.
+- [x] **Ban hành Giao thức Kiểm chuẩn & Thực nghiệm Vật lý Máy vẽ** ([`docs/hardware/07_physical_calibration_protocol.md`](hardware/07_physical_calibration_protocol.md)): quy chuẩn hóa vật tư (Double A A4 80gsm, bút gel Pentel EnerGel/Pilot G2 0.5mm), phương pháp đo loang mực qua scan quang học 600 DPI, và ma trận kiểm tra clearance/góc cua nhọn cho RQ3.
+- [x] **Chuẩn bị Tiêu bản Kiểm chuẩn RQ3 SVG** ([`tests/fixtures/rq3_clearance_calibration_specimen.svg`](../tests/fixtures/rq3_clearance_calibration_specimen.svg)): thang khoảng hở $0.10 \to 0.70\,\text{mm}$, góc cua $60^\circ, 90^\circ, 120^\circ, 150^\circ$, dải nhấc bút nhanh 28 chu kỳ, và thước chuẩn 50.0mm.
+- [x] **Tích hợp CLI Benchmark Tự động RQ3:** hoàn thiện hàm `run_rq3_calibration_benchmark()` và CLI `--benchmark-rq3` trong `backend/hardware_adapter.py`, tự động thu thập telemetry và ghi log `logs/hardware_metrics.csv` (27/27 tests PASS trong `tests/test_hardware_adapter.py`).
+- [ ] *Nếu có máy vẽ và cáp kết nối:* Chạy benchmark trên giấy thật theo đúng giao thức để đo `actual_draw_time_sec` và đóng cổng `PENDING_TV3_CALIBRATION`. *(Blocked by hardware: chờ máy vẽ & cáp vật lý)*.
+- [x] *Nếu chưa có máy:* Đã hoàn tất 100% nền tảng phần mềm, fake driver, simulator, SVG fixtures, giao thức kiểm chuẩn, và benchmark runner sẵn sàng cho ngày cắm máy thật.
 
 
 ### Quy định phối hợp toàn nhóm trong Sprint

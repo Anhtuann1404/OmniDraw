@@ -62,17 +62,18 @@ Trước khi gửi bất kỳ lệnh vẽ nào xuống máy vẽ vật lý, TV3 
    - Khi chạy ở chế độ `MockSimulatorAdapter`, trường này phản ánh thời gian chạy ảo.
 2. **`actual_draw_time_sec` (Thời gian Thi công Vật lý Thực tế):**
    - **Định nghĩa bắt buộc:** Chỉ được đo bằng đồng hồ bấm giờ phần cứng / wall-clock time thực tế khi máy vẽ AxiDraw vật lý bắt đầu kéo nét đầu tiên đến khi nâng bút về gốc $(0,0)$.
-   - **Xóa nợ Contract:** Trong kết quả trả về của `backend/hardware_adapter.py`:
-     - Nếu chạy mô phỏng: Cờ `is_simulated = True` và `actual_hardware_measured = False`.
-     - Nếu chạy máy thật: Cờ `is_simulated = False` và `actual_hardware_measured = True`.
-   - Trong log CSV của bài báo NCKH, chỉ những mẫu chạy máy thật mới được đưa số liệu `actual_draw_time_sec` vào phân tích đối chứng.
+   - **Quy tắc phân định nguồn (NCKH Data Integrity):**
+     - Simulator & Fake driver: `is_simulated = True`, `actual_hardware_measured = False`.
+     - AxiDraw máy thật thành công (`status == "done"`): `is_simulated = False`, `actual_hardware_measured = True`, `actual_draw_time_sec` ghi nhận thời gian thực đo $> 0$.
+     - AxiDraw máy thật thất bại/mất kết nối: `is_simulated = False`, `actual_hardware_measured = False`, `actual_draw_time_sec` rỗng (None), ghi nhận `error_code` (e.g. `HARDWARE_NOT_CONNECTED`). Tuyệt đối không ghi số liệu timing giả hoặc thay bằng 0.
+   - Trong log CSV của bài báo NCKH, chỉ những mẫu chạy máy thật thành công mới được đưa số liệu `actual_draw_time_sec` vào phân tích đối chứng.
 
 ---
 
 ## 5. Quy trình Kiểm thử Tự động với SVG Fixture (Smoke Test Protocol)
 
 Trước khi đưa máy vào vẽ các tác phẩm lớn:
-1. Nạp file fixture chuẩn: [`tests/fixtures/smoke_test_specimen.svg`](file:///d:/UED/NCKH/OmniDraw/tests/fixtures/smoke_test_specimen.svg).
+1. Nạp file fixture chuẩn: `tests/fixtures/smoke_test_specimen.svg`.
 2. Chạy lệnh kiểm thử độc lập:
    ```powershell
    python -m unittest tests/test_hardware_adapter.py
@@ -87,7 +88,7 @@ Trước khi đưa máy vào vẽ các tác phẩm lớn:
 
 ## 6. Calibration Profile YAML
 
-File cấu hình hiệu chuẩn: [`config/calibration_profile.yaml`](file:///d:/UED/NCKH/OmniDraw/config/calibration_profile.yaml)
+File cấu hình hiệu chuẩn: `config/calibration_profile.yaml`
 
 - Chứa đầy đủ: phiên bản, thiết bị, khổ/hướng giấy, gốc tọa độ + offset 5 mm, tốc độ, gia tốc, servo bút.
 - Được nạp tự động bởi `MockSimulatorAdapter` và `AxiDrawAdapter` khi khởi tạo.
@@ -104,15 +105,16 @@ File cấu hình hiệu chuẩn: [`config/calibration_profile.yaml`](file:///d:/
 
 File log: `logs/hardware_metrics.csv`
 
-Columns: `request_id, timestamp, actual_draw_time_sec, estimated_draw_time_sec, is_simulated, hardware_status, source_tag`
+Columns: `request_id, timestamp, actual_draw_time_sec, estimated_draw_time_sec, is_simulated, actual_hardware_measured, hardware_status, error_code, source_tag`
 
 **Quy tắc sử dụng trong báo cáo NCKH (Data Integrity):**
 
-| `source_tag` | `is_simulated` | `actual_hardware_measured` | Dùng trong phân tích vật lý NCKH? |
-|---|---|---|---|
-| `simulator` | True | False | ❌ Không — thời gian ảo mô phỏng phần mềm |
-| `axidraw_fake_driver` | True | False | ❌ Không — môi trường CI test |
-| `axidraw_real` | False | True | ✅ Có — số đo thực tế từ thiết bị vật lý |
+| `source_tag` | `is_simulated` | `actual_hardware_measured` | `actual_draw_time_sec` | `error_code` | Dùng trong phân tích NCKH? |
+|---|---|---|---|---|---|
+| `simulator` | True | False | Số đo ảo | rỗng | ❌ Không — thời gian ảo mô phỏng phần mềm |
+| `axidraw_fake_driver` | True | False | Số đo CI | rỗng | ❌ Không — môi trường CI test |
+| `axidraw_real` (Done) | False | True | Thực đo (> 0) | rỗng | ✅ Có — số đo thực tế từ thiết bị vật lý |
+| `axidraw_real` (Error) | False | False | Rỗng (None) | Mã lỗi | ❌ Không — số đo lỗi / ngắt kết nối |
 
 ---
 
@@ -134,14 +136,15 @@ python backend/camera_inspector.py --capture --output logs/camera_test.jpg
 
 ---
 
-## 9. Phối hợp TV3 → TV4 (Đề xuất cần thống nhất)
+## 9. Phối hợp TV3 → TV4 (Trạng thái Hợp đồng Tích hợp)
 
-| Mục | Nội dung đề xuất | Endpoint chuẩn (theo API Spec v1.4) | Trạng thái |
-|-----|-----------------|--------------------------------------|------------|
-| API response pause | Thêm `"pause_supported": false` khi chạy máy thật | `POST /api/print/pause` | Chờ TV4 review |
-| progress trung gian | `"progress_is_estimated": true` trong status response | `GET /api/print/status/{request_id}` | Đã implement |
-| CSV schema mở rộng | Thêm `svg_path, profile_version, coord_error_mean_mm, pass_fail` | N/A (file CSV) | Chờ TV4 thống nhất |
-| Cảnh báo UI | Hiển thị cảnh báo khi pause trên máy thật | Frontend Confirm/Printing Screen | Chờ TV4 implement |
+| Mục | Nội dung hợp đồng | Trạng thái kỹ thuật TV3 |
+|-----|-------------------|--------------------------|
+| `pause_supported` | Simulator/fake: `true`; Physical: `false`. Kiểm tra capability trước khi đổi trạng thái; từ chối với lỗi `HARDWARE_PAUSE_UNSUPPORTED` (HTTP 400), job status giữ nguyên `printing`. | ✅ Đã hoàn tất và pass unit test |
+| `actual_hardware_measured` | Chỉ `true` khi physical hoàn tất thành công (`status == "done"` và timing $> 0$); thất bại/mất kết nối ghi `false` và để trống timing. | ✅ Đã chuẩn hóa trong HAL & CSV |
+| Hardware CSV Schema | Schema chuẩn 9 cột độc lập, dùng `request_id` làm khóa liên kết. | ✅ Đã implement `record_metric()` |
+| Progress trung gian | `"progress_is_estimated": true` trong status response. | ✅ Đã implement |
+| Không fallback ngầm | Physical mode thiếu thiết bị/driver trả về 503 `HARDWARE_NOT_CONNECTED`, tuyệt đối không chạy ngầm sang simulator. | ✅ Đã implement & verify test |
 
 ---
 
