@@ -61,6 +61,8 @@ from hardware_adapter import (
     load_calibration_profile,
     apply_origin_offset_to_svg,
     record_metric,
+    migrate_hardware_metrics_csv,
+    HARDWARE_METRICS_FIELDNAMES,
     run_rq3_calibration_benchmark,
     VALID_HARDWARE_ERRORS,
 )
@@ -575,13 +577,44 @@ class TestTV4IntegrationContracts(unittest.IsolatedAsyncioTestCase):
         self.assertGreater(csv_time, 0.0)
         self.assertEqual(rows[-1]["actual_hardware_measured"], "True")
 
-    def test_csv_migration_safe_backup_and_unverified_unmeasured(self):
+    async def test_physical_logging_failure_prevents_done_and_records_error(self):
         """
-        TV4 Review feedback:
-        Auto-migration của hardware_metrics.csv:
-        - Không ghi đè dữ liệu cũ âm thầm: phải tạo file .bak sao lưu nguyên vẹn
-        - Chỉ gán actual_hardware_measured=True cho dòng cũ nếu physical job hoàn tất VÀ actual_draw_time_sec > 0
-        - Nếu không xác minh được (physical lỗi, hoặc time <= 0, hoặc simulator), giữ False (chưa đo).
+        TV4 Review Feedback:
+        Job physical không được công bố done trước khi dòng CSV tương ứng ghi thành công.
+        Nếu ghi log metrics lỗi, job chuyển sang status error (LOG_WRITE_ERROR),
+        tuyệt đối không được công bố done!
+        """
+        # Trỏ metrics_csv_path tới thư mục không thể ghi / đường dẫn không hợp lệ
+        invalid_csv_path = os.path.join(self.csv_path, "invalid_subdir", "metrics.csv")
+        adapter = AxiDrawAdapter(use_fake_driver=False, metrics_csv_path=invalid_csv_path)
+        adapter._ad = MockRealAxiDrawDriver()
+        adapter._connected = True
+
+        req_id = f"test-phys-logfail-{int(time.time() * 1000)}"
+        start_res = await adapter.start_job(req_id, self.fixture)
+        self.assertEqual(start_res["status"], "printing")
+
+        for _ in range(50):
+            await asyncio.sleep(0.05)
+            st = adapter.get_status(req_id)
+            if st["status"] != "printing":
+                break
+
+        st = adapter.get_status(req_id)
+        # Bắt buộc phải là error, TUYỆT ĐỐI không được là done!
+        self.assertEqual(st["status"], "error")
+        self.assertFalse(st["actual_hardware_measured"])
+        self.assertIsNone(st.get("actual_draw_time_sec"))
+        self.assertEqual(st["error"]["code"], "LOG_WRITE_ERROR")
+
+    def test_csv_migration_never_trusts_existing_true_and_handles_nan_and_inf(self):
+        """
+        TV4 Review Feedback:
+        Khi migrate CSV:
+        - Luôn xác minh lại actual_hardware_measured từ is_simulated, source_tag,
+          hardware_status và actual_draw_time_sec hữu hạn, > 0.
+        - TUYỆT ĐỐI KHÔNG tin giá trị True có sẵn trong dòng cũ.
+        - Xử lý các giá trị NaN/inf/âm/không hợp lệ.
         """
         old_headers = [
             "request_id",
@@ -589,97 +622,145 @@ class TestTV4IntegrationContracts(unittest.IsolatedAsyncioTestCase):
             "actual_draw_time_sec",
             "estimated_draw_time_sec",
             "is_simulated",
+            "actual_hardware_measured",
             "hardware_status",
             "source_tag",
         ]
         old_data = [
-            # 1. Physical job hoàn tất với thời gian > 0 -> Hợp lệ -> actual_hardware_measured=True
+            # 1. Gắn True nhưng is_simulated=True -> Phải bị đổi thành False
             {
-                "request_id": "leg-phys-done-ok",
+                "request_id": "bad-sim-true",
                 "timestamp": "2026-09-20T10:00:00Z",
-                "actual_draw_time_sec": "15.42",
+                "actual_draw_time_sec": "15.0",
                 "estimated_draw_time_sec": "15.0",
-                "is_simulated": "False",
-                "hardware_status": "done",
-                "source_tag": "axidraw_real",
-            },
-            # 2. Physical job thất bại -> Không xác minh được -> actual_hardware_measured=False
-            {
-                "request_id": "leg-phys-failed",
-                "timestamp": "2026-09-20T10:05:00Z",
-                "actual_draw_time_sec": "",
-                "estimated_draw_time_sec": "15.0",
-                "is_simulated": "False",
-                "hardware_status": "error",
-                "source_tag": "axidraw_real",
-            },
-            # 3. Physical job done nhưng time <= 0 -> Không hợp lệ -> actual_hardware_measured=False
-            {
-                "request_id": "leg-phys-zero-time",
-                "timestamp": "2026-09-20T10:10:00Z",
-                "actual_draw_time_sec": "0",
-                "estimated_draw_time_sec": "15.0",
-                "is_simulated": "False",
-                "hardware_status": "done",
-                "source_tag": "axidraw_real",
-            },
-            # 4. Job simulator hoàn tất -> Không phải máy thật -> actual_hardware_measured=False
-            {
-                "request_id": "leg-sim-done",
-                "timestamp": "2026-09-20T10:15:00Z",
-                "actual_draw_time_sec": "12.0",
-                "estimated_draw_time_sec": "12.0",
                 "is_simulated": "True",
+                "actual_hardware_measured": "True",
                 "hardware_status": "done",
                 "source_tag": "simulator",
             },
+            # 2. Gắn True nhưng source_tag=axidraw_fake_driver -> Phải bị đổi thành False
+            {
+                "request_id": "bad-fake-true",
+                "timestamp": "2026-09-20T10:05:00Z",
+                "actual_draw_time_sec": "15.0",
+                "estimated_draw_time_sec": "15.0",
+                "is_simulated": "False",
+                "actual_hardware_measured": "True",
+                "hardware_status": "done",
+                "source_tag": "axidraw_fake_driver",
+            },
+            # 3. Gắn True nhưng status=error -> Phải bị đổi thành False
+            {
+                "request_id": "bad-status-true",
+                "timestamp": "2026-09-20T10:10:00Z",
+                "actual_draw_time_sec": "15.0",
+                "estimated_draw_time_sec": "15.0",
+                "is_simulated": "False",
+                "actual_hardware_measured": "True",
+                "hardware_status": "error",
+                "source_tag": "axidraw_real",
+            },
+            # 4. Gắn True nhưng thời gian là NaN -> Phải bị đổi thành False và xóa NaN
+            {
+                "request_id": "bad-nan-time-true",
+                "timestamp": "2026-09-20T10:15:00Z",
+                "actual_draw_time_sec": "NaN",
+                "estimated_draw_time_sec": "15.0",
+                "is_simulated": "False",
+                "actual_hardware_measured": "True",
+                "hardware_status": "done",
+                "source_tag": "axidraw_real",
+            },
+            # 5. Gắn True nhưng thời gian là Inf -> Phải bị đổi thành False và xóa Inf
+            {
+                "request_id": "bad-inf-time-true",
+                "timestamp": "2026-09-20T10:20:00Z",
+                "actual_draw_time_sec": "inf",
+                "estimated_draw_time_sec": "15.0",
+                "is_simulated": "False",
+                "actual_hardware_measured": "True",
+                "hardware_status": "done",
+                "source_tag": "axidraw_real",
+            },
+            # 6. Gắn True nhưng thời gian âm <= 0 -> Phải bị đổi thành False
+            {
+                "request_id": "bad-negative-time-true",
+                "timestamp": "2026-09-20T10:25:00Z",
+                "actual_draw_time_sec": "-5.5",
+                "estimated_draw_time_sec": "15.0",
+                "is_simulated": "False",
+                "actual_hardware_measured": "True",
+                "hardware_status": "done",
+                "source_tag": "axidraw_real",
+            },
+            # 7. Dòng hợp lệ thực sự -> Giữ/Gán True
+            {
+                "request_id": "leg-valid-phys-done",
+                "timestamp": "2026-09-20T10:30:00Z",
+                "actual_draw_time_sec": "24.5",
+                "estimated_draw_time_sec": "25.0",
+                "is_simulated": "False",
+                "actual_hardware_measured": "False",
+                "hardware_status": "done",
+                "source_tag": "axidraw_real",
+            },
         ]
 
-        # Ghi file CSV dạng schema cũ (7 cột)
         with open(self.csv_path, "w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=old_headers)
             writer.writeheader()
             for r in old_data:
                 writer.writerow(r)
 
-        with open(self.csv_path, "r", encoding="utf-8") as f:
-            original_content = f.read()
+        # Gọi migrate_hardware_metrics_csv
+        res = migrate_hardware_metrics_csv(self.csv_path)
+        self.assertTrue(res)
 
-        # Gọi record_metric với một job mới -> kích hoạt auto-migration
-        new_job = {
-            "request_id": "new-job-after-migration",
-            "status": "done",
-            "actual_draw_time_sec": 4.56,
-            "estimated_draw_time_sec": 4.5,
-            "is_simulated": False,
-            "source_tag": "axidraw_real",
-        }
-        record_metric(new_job, csv_path=self.csv_path)
+        # Kiểm tra file backup .bak
+        self.assertTrue(os.path.exists(self.csv_path + ".bak"))
 
-        # 1. Kiểm tra file backup .bak đã được tạo và chứa đúng nội dung cũ
-        bak_path = self.csv_path + ".bak"
-        self.assertTrue(os.path.exists(bak_path), "File backup .bak phải được tạo trước khi migrate")
-        with open(bak_path, "r", encoding="utf-8") as f:
-            bak_content = f.read()
-        self.assertEqual(bak_content, original_content, "File backup phải bảo toàn nguyên vẹn dữ liệu gốc")
-
-        # 2. Đọc file CSV mới đã được migrate sang 9 cột
         with open(self.csv_path, "r", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             migrated_rows = {row["request_id"]: row for row in reader}
 
-        self.assertIn("leg-phys-done-ok", migrated_rows)
-        self.assertIn("leg-phys-failed", migrated_rows)
-        self.assertIn("leg-phys-zero-time", migrated_rows)
-        self.assertIn("leg-sim-done", migrated_rows)
-        self.assertIn("new-job-after-migration", migrated_rows)
+        # Kiểm tra: Tất cả các dòng 1-6 đều bị đổi thành False
+        self.assertEqual(migrated_rows["bad-sim-true"]["actual_hardware_measured"], "False")
+        self.assertEqual(migrated_rows["bad-fake-true"]["actual_hardware_measured"], "False")
+        self.assertEqual(migrated_rows["bad-status-true"]["actual_hardware_measured"], "False")
+        self.assertEqual(migrated_rows["bad-nan-time-true"]["actual_hardware_measured"], "False")
+        self.assertEqual(migrated_rows["bad-nan-time-true"]["actual_draw_time_sec"], "")
+        self.assertEqual(migrated_rows["bad-inf-time-true"]["actual_hardware_measured"], "False")
+        self.assertEqual(migrated_rows["bad-inf-time-true"]["actual_draw_time_sec"], "")
+        self.assertEqual(migrated_rows["bad-negative-time-true"]["actual_hardware_measured"], "False")
 
-        # 3. Kiểm tra logic phân loại actual_hardware_measured
-        self.assertEqual(migrated_rows["leg-phys-done-ok"]["actual_hardware_measured"], "True")
-        self.assertEqual(migrated_rows["leg-phys-failed"]["actual_hardware_measured"], "False")
-        self.assertEqual(migrated_rows["leg-phys-zero-time"]["actual_hardware_measured"], "False")
-        self.assertEqual(migrated_rows["leg-sim-done"]["actual_hardware_measured"], "False")
-        self.assertEqual(migrated_rows["new-job-after-migration"]["actual_hardware_measured"], "True")
+        # Dòng 7 hợp lệ duy nhất được gán True
+        self.assertEqual(migrated_rows["leg-valid-phys-done"]["actual_hardware_measured"], "True")
+        self.assertEqual(migrated_rows["leg-valid-phys-done"]["actual_draw_time_sec"], "24.5")
+
+    def test_csv_migration_failure_preserves_original_file(self):
+        """
+        TV4 Review Feedback:
+        Giữ bản gốc nếu migrate thất bại; tránh ghi đè trực tiếp file gốc trước khi bản mới hoàn tất.
+        """
+        old_headers = ["request_id", "timestamp", "status"]
+        original_content = "request_id,timestamp,status\norig-1,2026-09-20,done\n"
+        with open(self.csv_path, "w", newline="", encoding="utf-8") as f:
+            f.write(original_content)
+
+        from unittest.mock import patch
+
+        with patch("csv.DictWriter.writerow", side_effect=IOError("Disk write failed in migration")):
+            with self.assertRaises(IOError):
+                migrate_hardware_metrics_csv(self.csv_path)
+
+        # File gốc PHẢI được bảo toàn nguyên vẹn, không bị xóa hoặc làm rỗng
+        self.assertTrue(os.path.exists(self.csv_path))
+        with open(self.csv_path, "r", encoding="utf-8") as f:
+            current_content = f.read()
+        self.assertEqual(current_content, original_content, "File gốc phải được giữ nguyên khi migration thất bại")
+
+        # File tạm .tmp phải được dọn dẹp sạch sẽ
+        self.assertFalse(os.path.exists(self.csv_path + ".tmp"))
 
     async def test_physical_runtime_failure_records_unmeasured_and_empty_timing(self):
         """

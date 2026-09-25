@@ -73,6 +73,7 @@ VALID_HARDWARE_ERRORS: Dict[str, str] = {
     "SVG_INVALID": "Nội dung SVG không hợp lệ hoặc sai cú pháp XML",
     "PROFILE_LOAD_ERROR": "Không thể nạp hoặc validate calibration profile",
     "HARDWARE_ERROR": "Lỗi phần cứng chưa phân loại",
+    "LOG_WRITE_ERROR": "Lỗi ghi nhận nhật ký thực nghiệm phần cứng",
 }
 
 # ---------------------------------------------------------------------------
@@ -362,8 +363,115 @@ def apply_origin_offset_to_svg(svg_content: str, offset_x_mm: float = 5.0, offse
 
 
 # ---------------------------------------------------------------------------
-# Ghi nhận Metrics (CSV Logging)
+# Ghi nhận Metrics (CSV Logging) & Schema Migration
 # ---------------------------------------------------------------------------
+
+HARDWARE_METRICS_FIELDNAMES: List[str] = [
+    "request_id",
+    "timestamp",
+    "actual_draw_time_sec",
+    "estimated_draw_time_sec",
+    "is_simulated",
+    "actual_hardware_measured",
+    "hardware_status",
+    "error_code",
+    "source_tag",
+]
+
+
+def migrate_hardware_metrics_csv(csv_path: str, force: bool = False) -> bool:
+    """
+    Migrate và chuẩn hóa file CSV metrics phần cứng theo schema chuẩn 9 cột.
+
+    Quy tắc an toàn (NCKH Research Data Integrity):
+    1. Không tin giá trị actual_hardware_measured có sẵn (kể cả đã gán True trước đó).
+    2. Luôn xác minh lại nghiêm ngặt:
+       - is_simulated == False
+       - source_tag == "axidraw_real"
+       - hardware_status == "done"
+       - actual_draw_time_sec là số thực hữu hạn (math.isfinite) và > 0.
+       Nếu thiếu bất kỳ điều kiện nào, BẮT BUỘC gán actual_hardware_measured = False.
+    3. Bảo toàn dữ liệu gốc:
+       - Tạo bản sao lưu .bak trước khi migrate.
+       - Ghi ra file tạm (.tmp) trước; chỉ khi hoàn tất 100% mới ghi đè nguyên tử (atomic replace)
+         vào file gốc. Nếu migrate lỗi, giữ nguyên file gốc và dọn dẹp file tạm.
+    """
+    if not (os.path.exists(csv_path) and os.path.getsize(csv_path) > 0):
+        return False
+
+    expected_header = ",".join(HARDWARE_METRICS_FIELDNAMES)
+
+    with open(csv_path, "r", encoding="utf-8") as f:
+        first_line = f.readline().strip()
+
+    if not force and first_line == expected_header:
+        return False
+
+    # 1. Sao lưu file .bak
+    backup_path = csv_path + ".bak"
+    shutil.copy2(csv_path, backup_path)
+    print(f"[TV3 MIGRATION] Phát hiện schema CSV cũ trong '{csv_path}'. Đã tạo bản sao lưu an toàn tại '{backup_path}'.")
+
+    tmp_path = csv_path + ".tmp"
+    try:
+        with open(csv_path, "r", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            old_rows = list(reader)
+
+        # 2. Ghi ra file tạm .tmp để đảm bảo tính nguyên tử (atomic), không ghi đè trực tiếp file gốc
+        with open(tmp_path, "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=HARDWARE_METRICS_FIELDNAMES)
+            writer.writeheader()
+            for old_row in old_rows:
+                raw_time = old_row.get("actual_draw_time_sec", "")
+                has_valid_time = False
+                cleaned_time = ""
+                try:
+                    if raw_time is not None and str(raw_time).strip() != "":
+                        val = float(raw_time)
+                        if math.isfinite(val) and val > 0.0:
+                            has_valid_time = True
+                            cleaned_time = str(round(val, 3))
+                except (ValueError, TypeError):
+                    has_valid_time = False
+
+                is_real_src = (
+                    str(old_row.get("is_simulated", "")).strip().lower() == "false"
+                    and str(old_row.get("source_tag", "")).strip() == "axidraw_real"
+                )
+                is_done = (str(old_row.get("hardware_status", "")).strip() == "done")
+
+                # LUÔN xác minh lại, TUYỆT ĐỐI không tin giá trị True có sẵn
+                if is_real_src and is_done and has_valid_time:
+                    old_row["actual_hardware_measured"] = True
+                    old_row["actual_draw_time_sec"] = cleaned_time
+                else:
+                    old_row["actual_hardware_measured"] = False
+                    if is_real_src and not has_valid_time:
+                        old_row["actual_draw_time_sec"] = ""
+
+                if "error_code" not in old_row:
+                    old_row["error_code"] = ""
+                clean_row = {k: old_row.get(k, "") for k in HARDWARE_METRICS_FIELDNAMES}
+                writer.writerow(clean_row)
+
+            f.flush()
+            os.fsync(f.fileno())
+
+        # Ghi thành công 100% mới thay thế file gốc
+        os.replace(tmp_path, csv_path)
+        return True
+
+    except Exception as exc:
+        # Giữ nguyên bản gốc nếu thất bại, dọn dẹp file tạm
+        if os.path.exists(tmp_path):
+            try:
+                os.remove(tmp_path)
+            except OSError:
+                pass
+        print(f"[TV3 MIGRATION WARNING] Lỗi khi migrate schema CSV: {exc}. Giữ nguyên file gốc.")
+        raise
+
 
 def record_metric(job: Dict[str, Any], csv_path: Optional[str] = None) -> None:
     if csv_path is None:
@@ -379,17 +487,7 @@ def record_metric(job: Dict[str, Any], csv_path: Optional[str] = None) -> None:
         if parent_dir:
             os.makedirs(parent_dir, exist_ok=True)
 
-    fieldnames = [
-        "request_id",
-        "timestamp",
-        "actual_draw_time_sec",
-        "estimated_draw_time_sec",
-        "is_simulated",
-        "actual_hardware_measured",
-        "hardware_status",
-        "error_code",
-        "source_tag",
-    ]
+    fieldnames = HARDWARE_METRICS_FIELDNAMES
     now = datetime.datetime.now(datetime.timezone.utc).isoformat()
 
     err_code = ""
@@ -410,7 +508,7 @@ def record_metric(job: Dict[str, Any], csv_path: Optional[str] = None) -> None:
     if hw_status == "done" and raw_actual_time is not None:
         try:
             val = float(raw_actual_time)
-            if val > 0:
+            if math.isfinite(val) and val > 0:
                 actual_time = round(val, 3)
         except (ValueError, TypeError):
             actual_time = None
@@ -441,56 +539,7 @@ def record_metric(job: Dict[str, Any], csv_path: Optional[str] = None) -> None:
 
     # Auto-migration if file exists with an older/different header
     if os.path.exists(csv_path) and os.path.getsize(csv_path) > 0:
-        try:
-            with open(csv_path, "r", encoding="utf-8") as f:
-                first_line = f.readline().strip()
-            expected_header = ",".join(fieldnames)
-            if first_line and first_line != expected_header:
-                # Sao lưu bảo toàn dữ liệu nghiên cứu cũ, tuyệt đối không ghi đè âm thầm
-                backup_path = csv_path + ".bak"
-                shutil.copy2(csv_path, backup_path)
-                print(f"[TV3 MIGRATION] Phát hiện schema CSV cũ trong '{csv_path}'. Đã tạo bản sao lưu an toàn tại '{backup_path}'.")
-
-                with open(csv_path, "r", encoding="utf-8") as f:
-                    reader = csv.DictReader(f)
-                    old_rows = list(reader)
-                with open(csv_path, "w", newline="", encoding="utf-8") as f:
-                    writer = csv.DictWriter(f, fieldnames=fieldnames)
-                    writer.writeheader()
-                    for old_row in old_rows:
-                        # Xác minh tính hợp lệ của thời gian thực nghiệm vật lý
-                        raw_time = old_row.get("actual_draw_time_sec", "")
-                        has_valid_time = False
-                        try:
-                            if raw_time is not None and str(raw_time).strip() != "":
-                                has_valid_time = float(raw_time) > 0.0
-                        except (ValueError, TypeError):
-                            has_valid_time = False
-
-                        is_real_src = (
-                            str(old_row.get("is_simulated", "")).lower() == "false"
-                            and old_row.get("source_tag") == "axidraw_real"
-                        )
-                        is_done = (old_row.get("hardware_status") == "done")
-
-                        if "actual_hardware_measured" not in old_row or old_row.get("actual_hardware_measured") == "":
-                            # Chỉ gán True khi xác minh được physical job hoàn tất VÀ actual_draw_time_sec > 0
-                            if is_real_src and is_done and has_valid_time:
-                                old_row["actual_hardware_measured"] = True
-                            else:
-                                old_row["actual_hardware_measured"] = False
-                                if is_real_src:
-                                    print(
-                                        f"[TV3 MIGRATION] Dòng request_id='{old_row.get('request_id')}' không xác minh được physical job hoàn tất với thời gian > 0. "
-                                        f"Giữ actual_hardware_measured=False (chưa đo)."
-                                    )
-
-                        if "error_code" not in old_row:
-                            old_row["error_code"] = ""
-                        clean_row = {k: old_row.get(k, "") for k in fieldnames}
-                        writer.writerow(clean_row)
-        except Exception as exc:
-            print(f"[TV3 MIGRATION WARNING] Lỗi khi migrate schema CSV: {exc}")
+        migrate_hardware_metrics_csv(csv_path)
 
     write_header = (not os.path.exists(csv_path)) or (os.path.getsize(csv_path) == 0)
     with open(csv_path, "a", newline="", encoding="utf-8") as f:
@@ -498,6 +547,8 @@ def record_metric(job: Dict[str, Any], csv_path: Optional[str] = None) -> None:
         if write_header:
             writer.writeheader()
         writer.writerow(row)
+        f.flush()
+        os.fsync(f.fileno())
 
 
 # ---------------------------------------------------------------------------
@@ -1053,7 +1104,7 @@ class MockSimulatorAdapter(HardwareAdapterInterface):
                 job_now["estimated_time_remaining_sec"] = max(0, int(total - elapsed))
 
                 if elapsed >= total:
-                    job_now.update({
+                    done_payload = {
                         "status": "done",
                         "progress_percent": 100,
                         "estimated_time_remaining_sec": 0,
@@ -1061,8 +1112,26 @@ class MockSimulatorAdapter(HardwareAdapterInterface):
                         "is_simulated": True,
                         "actual_hardware_measured": False,
                         "task": None,
-                    })
-                    record_metric(job_now, csv_path=self._metrics_csv_path)
+                    }
+                    metric_entry = dict(job_now)
+                    metric_entry.update(done_payload)
+
+                    try:
+                        record_metric(metric_entry, csv_path=self._metrics_csv_path)
+                    except Exception as log_exc:
+                        job_now.update({
+                            "status": "error",
+                            "task": None,
+                            "actual_draw_time_sec": None,
+                            "actual_hardware_measured": False,
+                            "error": {
+                                "code": "LOG_WRITE_ERROR",
+                                "message": f"Không thể ghi nhật ký phần cứng (metrics): {log_exc}",
+                            },
+                        })
+                        return
+
+                    job_now.update(done_payload)
                     return
 
         except asyncio.CancelledError:
@@ -1622,14 +1691,33 @@ class AxiDrawAdapter(HardwareAdapterInterface):
                     return
 
                 elapsed = round(max(0.001, time.monotonic() - t_start), 3)
-                job.update({
+
+                done_payload = {
                     "status": "done",
                     "progress_percent": 100,
                     "estimated_time_remaining_sec": 0,
                     "actual_draw_time_sec": elapsed,
                     "actual_hardware_measured": is_real,
-                })
-                record_metric(job, csv_path=adapter_ref._metrics_csv_path)
+                }
+                metric_entry = dict(job)
+                metric_entry.update(done_payload)
+
+                # TV4 Requirement: Job physical không được công bố done trước khi dòng CSV tương ứng ghi thành công.
+                try:
+                    record_metric(metric_entry, csv_path=adapter_ref._metrics_csv_path)
+                except Exception as log_exc:
+                    err_code = "LOG_WRITE_ERROR"
+                    err_msg = f"Không thể ghi nhật ký phần cứng (metrics): {log_exc}"
+                    job.update({
+                        "status": "error",
+                        "actual_draw_time_sec": None,
+                        "actual_hardware_measured": False,
+                        "error": {"code": err_code, "message": err_msg},
+                    })
+                    return
+
+                # CHỈ CÔNG BỐ DONE SAU KHI DÒNG CSV ĐÃ GHI THÀNH CÔNG VÀO ĐĨA
+                job.update(done_payload)
 
             except Exception as exc:
                 err_code = "HARDWARE_ERROR"
@@ -1642,7 +1730,10 @@ class AxiDrawAdapter(HardwareAdapterInterface):
                     "actual_hardware_measured": False,
                     "error": {"code": err_code, "message": err_msg},
                 })
-                record_metric(job, csv_path=adapter_ref._metrics_csv_path)
+                try:
+                    record_metric(job, csv_path=adapter_ref._metrics_csv_path)
+                except Exception:
+                    pass
 
         thread = threading.Thread(target=_plot_worker, daemon=True)
         thread.start()
