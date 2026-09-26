@@ -1,15 +1,15 @@
 # OmniDraw — Hợp đồng Giao diện Chuyển tiếp E4 cho PR3
 
-**Trạng thái:** `TV2_CHANGES_REQUIRED — E4 REOPENED FOR CORRECTION`
+**Trạng thái:** `APPROVED — SHARED TRANSITION CONTRACT LOCKED`
 
-**Ngày TV2 review:** 2026-09-25
+**Ngày TV2 recheck cuối:** 2026-09-26
 
 **Owners:** TV4 (Handwriting & CA-VHC Composition Lead) và TV2 (Stroke Optimization & Path Planning Lead)
 
 **Phạm vi:** Hợp đồng giao diện kỹ thuật nội bộ của CA-VHC PR3; không làm thay đổi public API, renderer hiện hành hoặc các baseline B1/B2/B3.
 
 > [!IMPORTANT]
-> TV2 đã review lại contract trên commit tích hợp `7d1c1d3b7388ce3ff76dd823c19bd8607f994d19` và xác nhận `PASS_WITH_CHANGES`. E4 chưa được đóng lại cho đến khi TV4 xử lý các điều kiện bắt buộc ở Mục 3.1 và TV2 recheck. Review này không tự khôi phục phần triển khai PR3 đã bị revert.
+> TV4 và TV2 đã cùng phê duyệt contract tại commit recheck `4677aad158abe49968610946a0221025e25740fb`. TV2 xác nhận các correction về ranh giới B3/PR3, invariant của `TransitionResult`, bridge immutability, error semantics, test plan và ownership đã đáp ứng đầy đủ Mục 3.1. E4 được đóng `PASS`; quyết định này chỉ mở quyền triển khai PR3 theo contract, không tự khôi phục implementation đã bị revert và không đóng các gate thực nghiệm downstream.
 
 ---
 
@@ -22,7 +22,7 @@
 
 ---
 
-## 2. Đặc tả Hợp đồng Kỹ thuật E4 (đang sửa theo TV2 review)
+## 2. Đặc tả Hợp đồng Kỹ thuật E4 (đã khóa)
 
 ### 2.1. Cấu trúc dữ liệu và Chữ ký Callable
 
@@ -168,20 +168,20 @@ TV2 đồng ý Q7 theo quyết định hiện tại: độ dịch mang đơn v�
 
 | Vai trò | Người xác nhận | Quyết định | Bằng chứng kiểm chứng |
 | :--- | :--- | :---: | :--- |
-| **TV2 — Stroke Optimization & Path Planning Lead** | Khải (TV2) | **CHANGES_REQUIRED** | `PASS_WITH_CHANGES`; đã trả lời Q1–Q7. Các điều kiện về immutability, zero-tangent, sentinel/error semantics, contract version và ranh giới test plan đã được đưa vào bản contract này; chờ TV4 recheck và hai owner đồng thuận trước khi đóng E4. |
-| **TV4 — Handwriting & CA-VHC Composition Lead** | Tuấn (TV4) | **PENDING_RECHECK** | `APPROVED` ngày 2026-09-24 chỉ áp dụng cho bản E4 cũ đã bị mở lại; đó là bản ghi lịch sử, không phải chữ ký cho contract hiện hành. TV4 chưa ký lại bản có các correction mới. |
+| **TV2 — Stroke Optimization & Path Planning Lead** | Khải (TV2) | **APPROVED** | Recheck cuối trên `4677aad`: Q1–Q7 và toàn bộ correction bắt buộc đã nhất quán; không còn finding E4 mở. |
+| **TV4 — Handwriting & CA-VHC Composition Lead** | Tuấn (TV4) | **APPROVED** | TV4 recheck và phê duyệt cùng phiên bản contract `4677aad`: ranh giới B3/PR3, invariant kết quả, error semantics, test plan và ownership đã thống nhất. |
 
-- **TV2 verdict:** **`PASS_WITH_CHANGES`**
-- **TV2_APPROVAL:** **`CHANGES_REQUIRED`**
+- **TV2 verdict:** **`PASS`**
+- **TV2_APPROVAL:** **`APPROVED`**
 - **TV2 reviewer:** **Khải (TV2)**
-- **Ngày xác nhận:** **2026-09-25**
-- **Commit đã review:** **`7d1c1d3b7388ce3ff76dd823c19bd8607f994d19`**
-- **Entry Gate E4 Verdict:** **`REOPENED — WAITING_TV4_CHANGES_AND_TV2_RECHECK`**
-- **Trạng thái PR3 trên nhánh tích hợp:** **`IMPLEMENTATION_REVERTED`**
+- **Ngày xác nhận cuối:** **2026-09-26**
+- **Commit recheck chung:** **`4677aad158abe49968610946a0221025e25740fb`**
+- **Entry Gate E4 Verdict:** **`PASS`**
+- **Trạng thái PR3:** **`READY_TO_IMPLEMENT`** *(implementation trước đó vẫn đã revert; triển khai lại phải tuân theo contract này)*
 
 ```text
 ===================================================================
-ENTRY GATE E4: REOPENED — CHANGES REQUIRED
-PR3 SOFTWARE IMPLEMENTATION: NOT RE-AUTHORIZED BY THIS REVIEW
+ENTRY GATE E4: PASS — SHARED CONTRACT LOCKED
+PR3 SOFTWARE IMPLEMENTATION: READY_TO_IMPLEMENT
 ===================================================================
 ```
