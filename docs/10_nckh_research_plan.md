@@ -30,7 +30,7 @@ Research Freeze Pack này hợp nhất các quyết định đã có thành mộ
 
 - `IMPLEMENTED_AND_TESTED`: đã có code và kiểm thử trong repository.
 - `DESIGN_LOCKED`: thiết kế đã được TV2/TV4 review nhưng chưa triển khai production.
-- `PENDING_PR2`: trạng thái lịch sử khi chưa có baseline adapter; PR2/E3 hiện đã hoàn tất, còn shared interface E4 chờ TV2+TV4 ký duyệt.
+- `PENDING_PR2`: trạng thái lịch sử khi chưa có baseline adapter; PR2/E3 và shared interface E4 hiện đã hoàn tất ([`Docs 18`](18_pr3_e4_shared_transition_contract_draft.md)).
 - `PENDING_PR3`: cần `CompositionState` và Diacritic-Aware Trellis.
 - `PENDING_TV1_FREEZE`: chưa được dùng cho formal experiment.
 - `PENDING_TV3_CALIBRATION`: chưa được dùng cho tuyên bố vật lý.
@@ -67,8 +67,8 @@ Research Freeze Pack này hợp nhất các quyết định đã có thành mộ
 
 | Giả thuyết | Biến độc lập | Biến phụ thuộc | Baseline | Quy tắc nghiệm thu | Owner | Trạng thái |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| H1.1 — Giảm pen-up distance | Phương pháp B1/B2/B3/Proposed | `pen_lift_distance_mm` | B1, B2; B3 là đối chiếu chẩn đoán | FAIL: giảm `<15%` vs B1 hoặc `<5%` vs B2; PASS: giảm `>=25%` vs B1 và `>=10%` vs B2; còn lại INCONCLUSIVE | TV2 lead motion, TV4 runner | `E3_PASS`; `E4_PENDING`, `PENDING_PR3`, `PENDING_PR5` |
-| H1.2 — Giảm pen-lift count | Phương pháp | `pen_lift_count` | B1 | FAIL `<20%`; PASS `>=35%`; còn lại INCONCLUSIVE | TV2 + TV4 | `E3_PASS`; `E4_PENDING`, `PENDING_PR3`, `PENDING_PR5` |
+| H1.1 — Giảm pen-up distance | Phương pháp B1/B2/B3/Proposed | `pen_lift_distance_mm` | B1, B2; B3 là đối chiếu chẩn đoán | FAIL: giảm `<15%` vs B1 hoặc `<5%` vs B2; PASS: giảm `>=25%` vs B1 và `>=10%` vs B2; còn lại INCONCLUSIVE | TV2 lead motion, TV4 runner | `E3_PASS`; `E4_PASS`, `PENDING_PR3`, `PENDING_PR5` |
+| H1.2 — Giảm pen-lift count | Phương pháp | `pen_lift_count` | B1 | FAIL `<20%`; PASS `>=35%`; còn lại INCONCLUSIVE | TV2 + TV4 | `E3_PASS`; `E4_PASS`, `PENDING_PR3`, `PENDING_PR5` |
 | H1.3 — Kiểm soát chiều dài nét | Phương pháp | `total_path_length_mm` | B1 | FAIL: tăng `>15%`; PASS: tăng `<=10%`; còn lại INCONCLUSIVE | TV4 | `PENDING_PR3`, `PENDING_PR5` |
 
 **Điểm cần TV2 cross-review:** định nghĩa chính xác B1/B2/B3, transition-cost interface, cách tách pen-down/pen-up và công thức tổng hợp theo corpus.
@@ -99,7 +99,7 @@ Nếu mẫu số bằng 0, ghi `NOT_APPLICABLE`, không tự gán PASS. Công th
 | Giả thuyết | Biến độc lập | Biến phụ thuộc | Baseline | Quy tắc nghiệm thu | Owner | Trạng thái |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | H3.1 — Thời gian Viterbi | Phương pháp và độ dài từ | `optimize_time_ms` median/p95 | B2, B3 | FAIL: median `>15 ms` hoặc p95 `>30 ms`; PASS: median `<=5 ms` và p95 `<=10 ms`; còn lại INCONCLUSIVE | TV4 runner, TV2 algorithm | `PENDING_PR5` |
-| H3.2 — Kiểm soát đổi hướng | Phương pháp | `curvature_cost`, `acute_turn_count_120deg` | B2 | FAIL: giảm `<=0%` hoặc có góc `>120°`; PASS: giảm `>=15%` và không có góc `>120°`; còn lại INCONCLUSIVE | TV2 | `E3_PASS`; `E4_PENDING`, `PENDING_PR3`, `PENDING_PR5` |
+| H3.2 — Kiểm soát đổi hướng | Phương pháp | `curvature_cost`, `acute_turn_count_120deg` | B2 | FAIL: giảm `<=0%` hoặc có góc `>120°`; PASS: giảm `>=15%` và không có góc `>120°`; còn lại INCONCLUSIVE | TV2 | `E3_PASS`; `E4_PASS`, `PENDING_PR3`, `PENDING_PR5` |
 | Physical feasibility | Simulator vs máy thật | `actual_draw_time_sec`, sai số quỹ đạo, lỗi thi công | SVG/simulator | Chỉ kết luận sau calibration và smoke test trên máy thật | TV3 | `PENDING_TV3_CALIBRATION` |
 
 **Ranh giới tuyên bố:** Catmull–Rom sang Bézier không tự động chứng minh $C^1$ ở mọi junction. `c1_violation_count` và dữ liệu máy thật phải tồn tại trước khi đưa ra tuyên bố tương ứng.

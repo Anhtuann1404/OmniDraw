@@ -1,0 +1,26 @@
+{
+  "profile_id": "profile_W002_v1",
+  "writer_id": "W002",
+  "version": "1.0.0",
+  "created_at": "2026-09-25T07:39:11.366654+00:00",
+  "num_samples_analyzed": 50,
+  "global_style": {
+    "mean_slant_deg": 15.0,
+    "aspect_ratio_mean": 1.068,
+    "stroke_width_mean_mm": 0.5,
+    "baseline_jitter_std": 0.0
+  },
+  "spacing": {
+    "char_spacing_mean_ratio": 0.25,
+    "word_spacing_mean_ratio": 0.85,
+    "line_spacing_mean_ratio": 1.5
+  },
+  "diacritic_tendencies": {
+    "diacritic_offset_bias": [
+      0.0,
+      0.0
+    ],
+    "diacritic_scale_ratio": 1.0
+  },
+  "allograph_tendencies": {}
+}
