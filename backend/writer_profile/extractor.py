@@ -12,6 +12,11 @@ Tuân thủ nghiêm ngặt:
 - docs/08_handwriting_dataset_spec.md (Section 8)
 - dataset/schemas/writer_profile.schema.json
 - Ponytail Senior Dev Discipline: Tối giản, toán học hình thức, không thêm phụ thuộc ngoài.
+
+Ranh giới kiến trúc & Nghiên cứu:
+- Writer Profile P2 tiếp tục độc lập hoàn toàn với CA-VHC P0.
+- Đây là prototype kiểm thử ngoại tuyến bằng synthetic fixtures (tests/fixtures/writer_profile_synthetic_samples.json),
+  chưa được xác thực trên mẫu viết tay thật và chưa bật trong luồng render/API chính.
 """
 
 from __future__ import annotations

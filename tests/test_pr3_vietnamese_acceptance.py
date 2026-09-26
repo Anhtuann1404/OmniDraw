@@ -308,3 +308,35 @@ def test_pr3_renderer_does_not_duplicate_diacritics():
             f"Từ '{word}': số nét dấu ({len(diac_strokes)}) khác với B3 ({len(diac_b3)}), "
             "có thể bị double-render hoặc thiếu dấu!"
         )
+
+
+# =============================================================================
+# 9. test_pr3_renderer_fail_closed_when_dp_bridge_missing
+# =============================================================================
+
+def test_pr3_renderer_fail_closed_when_dp_bridge_missing(monkeypatch):
+    """
+    Finding 2 regression test:
+    Khi DP quyết định CONNECT trong proposed_ca_vhc mode, renderer BẮT BUỘC phải dùng
+    evaluated bridge geometry do DP sinh ra.
+    Nếu bridge geometry bị thiếu (None hoặc rỗng), renderer phải fail-closed (raise RuntimeError),
+    tuyệt đối không âm thầm tái tổng hợp (synthesize) bridge mới chưa qua đánh giá cost.
+    """
+    import backend.handwriting.composition as comp_mod
+
+    orig_opt = comp_mod.optimize_word_composition_dag
+
+    def mock_opt_missing_bridge(*args, **kwargs):
+        sol = orig_opt(*args, **kwargs)
+        # Giả lập lỗi hỏng contract: DP chọn CONNECT nhưng danh sách bridge_strokes bị xóa/None
+        sol["conns"] = [True] * len(sol["conns"])
+        sol["bridge_strokes"] = [None] * len(sol["conns"])
+        return sol
+
+    monkeypatch.setattr(comp_mod, "optimize_word_composition_dag", mock_opt_missing_bridge)
+
+    with pytest.raises(RuntimeError, match="Proposed CA-VHC fail-closed: DP selected CONNECT"):
+        text_to_strokes_structured(
+            "minh", font="oly", style="hand_hocsinh", _algorithm_mode="proposed_ca_vhc"
+        )
+

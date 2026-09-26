@@ -230,6 +230,7 @@ def compute_clearance_zone_local(
 def compute_internal_clearance_mm(
     base_strokes_local: Sequence[np.ndarray],
     diacritic_strokes_local: Sequence[np.ndarray],
+    scale_vec: Tuple[float, float] = (1.0, 1.0),
     base_char: str = "",
     accents: Sequence[str] = (),
 ) -> float:
@@ -237,8 +238,12 @@ def compute_internal_clearance_mm(
     Tính khoảng cách hở Euclide nhỏ nhất (min clearance mm) trong nội tại ký tự:
     - Giữa các nét dấu với nhau (accent–accent).
     - Giữa các nét dấu với nét thân chữ (accent–base), bỏ qua điểm gắn móc tự nhiên trên 'o'/'u'.
+    - Tọa độ nét được chuyển đổi từ glyph-local sang world mm thông qua vector scale bất đẳng hướng scale_vec (sx, sy).
     """
-    valid_diac = [s for s in diacritic_strokes_local if len(s) > 0]
+    sx, sy = float(scale_vec[0]), float(scale_vec[1])
+    s_vec = np.array([sx, sy], dtype=float)
+
+    valid_diac = [np.asarray(s, dtype=float) * s_vec for s in diacritic_strokes_local if len(s) > 0]
     if not valid_diac:
         return float("inf")
 
@@ -253,7 +258,7 @@ def compute_internal_clearance_mm(
                     min_dist = d
 
     # 2. Khoảng cách giữa nét dấu với nét thân chữ (accent–base)
-    valid_base = [s for s in base_strokes_local if len(s) > 0]
+    valid_base = [np.asarray(s, dtype=float) * s_vec for s in base_strokes_local if len(s) > 0]
     if valid_base:
         for idx, d_stroke in enumerate(valid_diac):
             # Móc của o/u được gắn liền góc trên bên phải của thân chữ theo thiết kế font
@@ -270,6 +275,7 @@ def compute_internal_clearance_mm(
 def compute_internal_collision_cost(
     base_strokes_local: Sequence[np.ndarray],
     diacritic_strokes_local: Sequence[np.ndarray],
+    scale_vec: Tuple[float, float] = (1.0, 1.0),
     tolerance_mm: float = 0.05,
     clearance_threshold_mm: float = 0.20,
     max_internal_collision_cost: float = 0.50,
@@ -290,6 +296,7 @@ def compute_internal_collision_cost(
     min_dist = compute_internal_clearance_mm(
         base_strokes_local=base_strokes_local,
         diacritic_strokes_local=diacritic_strokes_local,
+        scale_vec=scale_vec,
         base_char=base_char,
         accents=accents,
     )
@@ -478,6 +485,8 @@ def build_composition_states(
     line_top_bound = char_info.get("line_top_bound_local", float("inf"))
     line_bot_bound = char_info.get("line_bottom_bound_local", -float("inf"))
 
+    scale_vec = tuple(char_info.get("scale_vec", (1.0, 1.0)))
+
     for bv in base_variants:
         for dc in diacritic_candidates:
             # Cắt tỉa cứng 0: Dữ liệu hình học rỗng hoặc chứa NaN/Inf
@@ -491,6 +500,7 @@ def build_composition_states(
             internal_cost = compute_internal_collision_cost(
                 base_strokes_local=bv.strokes,
                 diacritic_strokes_local=dc.strokes_local,
+                scale_vec=scale_vec,
                 tolerance_mm=cfg.internal_collision_tolerance_mm,
                 clearance_threshold_mm=cfg.clearance_threshold_mm,
                 max_internal_collision_cost=cfg.max_internal_collision_cost,

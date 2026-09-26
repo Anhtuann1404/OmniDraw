@@ -1436,6 +1436,11 @@ def _text_to_strokes_impl(
 
                     if dp_sol.get("bridge_strokes") and dp_sol["bridge_strokes"][char_idx - 1] is not None:
                         bridge = dp_sol["bridge_strokes"][char_idx - 1]
+                    elif algorithm_mode in ("proposed", "proposed_ca_vhc", "pr3_ca_vhc"):
+                        raise RuntimeError(
+                            f"Proposed CA-VHC fail-closed: DP selected CONNECT between char index {char_idx - 1} "
+                            f"('{prev_info['char']}') and {char_idx} ('{b_char}'), but evaluated bridge geometry is missing."
+                        )
                     else:
                         bridge = build_ligature_bridge(
                             p_exit, v_ex_world, p_entry, v_en_world, scale_hint=scale_hint, n=6

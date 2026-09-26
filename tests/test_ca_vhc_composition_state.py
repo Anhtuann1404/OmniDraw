@@ -485,3 +485,56 @@ def test_transform_state_to_world_uses_single_frame_contract():
     )
     assert np.allclose(gw.v_entry, expected_v_en)
     assert np.allclose(gw.v_exit, expected_v_ex)
+
+
+# =============================================================================
+# 11. test_compute_internal_clearance_mm_scale_vec_anisotropic
+# =============================================================================
+
+def test_compute_internal_clearance_mm_scale_vec_anisotropic():
+    """
+    Finding 1: Kiểm thử compute_internal_clearance_mm với các scale_vec khác nhau:
+    - scale_vec=(1.0, 1.0): Khoảng cách cơ sở.
+    - scale_vec=(2.0, 2.0) đẳng hướng: Khoảng cách tăng gấp đôi.
+    - scale_vec=(3.0, 0.5) bất đẳng hướng: Khoảng cách x co giãn 3x, y co giãn 0.5x.
+    - Kiểm thử chuyển đổi sang world mm trong compute_internal_collision_cost.
+    """
+    base_stroke = [np.array([[0.0, 0.0], [1.0, 0.0]], dtype=float)]
+    # Nét dấu nằm ở x=0.0, y=2.0 (khoảng cách dọc dy=2.0)
+    diac_stroke = [np.array([[0.0, 2.0], [1.0, 2.0]], dtype=float)]
+
+    # 1. Scale đẳng hướng (1.0, 1.0)
+    c_1 = compute_internal_clearance_mm(base_stroke, diac_stroke, scale_vec=(1.0, 1.0))
+    assert c_1 == pytest.approx(2.0, rel=1e-5)
+
+    # 2. Scale đẳng hướng (2.0, 2.0) -> dy trở thành 4.0 mm
+    c_2 = compute_internal_clearance_mm(base_stroke, diac_stroke, scale_vec=(2.0, 2.0))
+    assert c_2 == pytest.approx(4.0, rel=1e-5)
+
+    # 3. Scale bất đẳng hướng (3.0, 0.5) -> dy trở thành 2.0 * 0.5 = 1.0 mm
+    c_aniso = compute_internal_clearance_mm(base_stroke, diac_stroke, scale_vec=(3.0, 0.5))
+    assert c_aniso == pytest.approx(1.0, rel=1e-5)
+
+    # 4. Khoảng cách xiên: base tại (0,0), diac tại (3, 4) -> khoảng cách ban đầu 5.0
+    base_pt = [np.array([[0.0, 0.0]])]
+    diac_pt = [np.array([[3.0, 4.0]])]
+    c_diag_1 = compute_internal_clearance_mm(base_pt, diac_pt, scale_vec=(1.0, 1.0))
+    assert c_diag_1 == pytest.approx(5.0, rel=1e-5)
+
+    # scale_vec=(2.0, 0.5) -> diac world tại (6.0, 2.0) -> dist = sqrt(36 + 4) = sqrt(40)
+    c_diag_aniso = compute_internal_clearance_mm(base_pt, diac_pt, scale_vec=(2.0, 0.5))
+    assert c_diag_aniso == pytest.approx(math.sqrt(40.0), rel=1e-5)
+
+    # 5. Kiểm thử lan truyền sang compute_internal_collision_cost
+    base_close = [np.array([[0.0, 0.0]])]
+    diac_close = [np.array([[0.0, 0.10]])]
+    cost_unscaled = compute_internal_collision_cost(
+        base_close, diac_close, scale_vec=(1.0, 1.0), clearance_threshold_mm=0.20
+    )
+    assert cost_unscaled > 0.0
+
+    cost_scaled_up = compute_internal_collision_cost(
+        base_close, diac_close, scale_vec=(1.0, 2.5), clearance_threshold_mm=0.20
+    )
+    assert cost_scaled_up == 0.0
+
