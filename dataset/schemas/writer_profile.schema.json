@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "OmniDraw_Writer_Profile_Schema",
+  "description": "Schema định nghĩa hồ sơ đặc trưng phong cách người viết chữ viết tay tiếng Việt phục vụ nghiên cứu cá nhân hóa P2",
+  "type": "object",
+  "required": [
+    "profile_id",
+    "writer_id",
+    "version",
+    "created_at",
+    "num_samples_analyzed",
+    "global_style",
+    "spacing",
+    "diacritic_tendencies"
+  ],
+  "properties": {
+    "profile_id": {
+      "type": "string",
+      "description": "Mã định danh duy nhất của hồ sơ phong cách, ví dụ: 'profile_W001_v1'"
+    },
+    "writer_id": {
+      "type": "string",
+      "description": "Mã tham chiếu người viết ẩn danh, ví dụ: 'W001'"
+    },
+    "version": {
+      "type": "string",
+      "description": "Phiên bản thuật toán trích xuất đặc trưng, ví dụ: '1.0.0'"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "num_samples_analyzed": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Số lượng mẫu ký tự/từ dùng để ước lượng vector đặc trưng"
+    },
+    "global_style": {
+      "type": "object",
+      "required": [
+        "mean_slant_deg",
+        "aspect_ratio_mean",
+        "stroke_width_mean_mm",
+        "baseline_jitter_std"
+      ],
+      "properties": {
+        "mean_slant_deg": {
+          "type": "number",
+          "minimum": -45.0,
+          "maximum": 45.0,
+          "description": "Góc nghiêng trung bình của nét dọc so với phương thẳng đứng (độ)"
+        },
+        "aspect_ratio_mean": {
+          "type": "number",
+          "minimum": 0.2,
+          "maximum": 3.0,
+          "description": "Tỷ lệ chiều rộng / chiều cao trung bình của thân chữ (x-height body)"
+        },
+        "stroke_width_mean_mm": {
+          "type": "number",
+          "minimum": 0.1,
+          "maximum": 2.0,
+          "description": "Bề rộng nét bút ước tính (mm)"
+        },
+        "baseline_jitter_std": {
+          "type": "number",
+          "minimum": 0.0,
+          "description": "Độ lệch chuẩn dao động của chân chữ quanh baseline danh định (mm)"
+        }
+      }
+    },
+    "spacing": {
+      "type": "object",
+      "required": [
+        "char_spacing_mean_ratio",
+        "word_spacing_mean_ratio",
+        "line_spacing_mean_ratio"
+      ],
+      "properties": {
+        "char_spacing_mean_ratio": {
+          "type": "number",
+          "description": "Tỷ lệ khoảng cách giữa các ký tự so với chiều rộng trung bình"
+        },
+        "word_spacing_mean_ratio": {
+          "type": "number",
+          "description": "Tỷ lệ khoảng cách giữa các từ so với chiều rộng ký tự"
+        },
+        "line_spacing_mean_ratio": {
+          "type": "number",
+          "description": "Tỷ lệ khoảng cách giữa các dòng văn bản so với chiều cao chữ"
+        }
+      }
+    },
+    "diacritic_tendencies": {
+      "type": "object",
+      "required": [
+        "diacritic_offset_bias",
+        "diacritic_scale_ratio"
+      ],
+      "properties": {
+        "diacritic_offset_bias": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Độ lệch dịch tâm dấu trung bình của cá nhân người viết so với chuẩn [dx, dy] (mm)"
+        },
+        "diacritic_scale_ratio": {
+          "type": "number",
+          "minimum": 0.5,
+          "maximum": 2.0,
+          "description": "Tỷ lệ kích thước dấu trung bình so với kích thước thân chữ (scale)"
+        }
+      }
+    },
+    "allograph_tendencies": {
+      "type": "object",
+      "description": "Bảng tần suất/xác suất lựa chọn biến thể glyph cụ thể (ví dụ tỷ lệ dùng nét móc cuối từ)",
+      "additionalProperties": { "type": "number" }
+    }
+  }
+}
