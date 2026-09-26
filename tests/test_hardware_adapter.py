@@ -65,6 +65,8 @@ from hardware_adapter import (
     migrate_hardware_metrics_csv,
     HARDWARE_METRICS_FIELDNAMES,
     run_rq3_calibration_benchmark,
+    extract_rq3_band_specimen_svg,
+    RQ3_SPEED_BANDS,
     VALID_HARDWARE_ERRORS,
 )
 
@@ -399,6 +401,8 @@ class TestRQ3CalibrationBenchmark(unittest.TestCase):
         self.assertEqual(res.get("clearance_ladder_tested_mm"), [0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70])
         self.assertEqual(res.get("acute_turn_angles_tested_deg"), [60, 90, 120, 150])
         self.assertTrue(res.get("rapid_pen_lift_actuation_tested"))
+        self.assertEqual(res.get("bands_tested"), ["rapid_pen_lift_20mms", "rapid_pen_lift_40mms", "rapid_pen_lift_60mms"])
+        self.assertEqual(len(res.get("band_results", {})), 3)
 
     def test_rq3_benchmark_physical_mode_blocked_without_device(self):
         # Khi không có máy vẽ thật kết nối, physical mode bắt buộc trả về status blocked
@@ -411,6 +415,140 @@ class TestRQ3CalibrationBenchmark(unittest.TestCase):
         res = asyncio.run(run_rq3_calibration_benchmark(mode="simulator", fixture_path="non_existent_fixture.svg"))
         self.assertEqual(res.get("status"), "error")
         self.assertIn("Không tìm thấy fixture RQ3", res.get("error", ""))
+
+    def test_extract_rq3_band_specimen_svg(self):
+        """
+        TV2-HW-R04:
+        Kiểm tra hàm trích xuất SVG dải vận tốc độc lập từ tiêu bản RQ3:
+        - Trích xuất thành công 3 dải: rapid_pen_lift_20mms, rapid_pen_lift_40mms, rapid_pen_lift_60mms.
+        - Mỗi dải tạo ra SVG hợp lệ có viewBox 0 0 297 210.
+        - Chỉ chứa đúng 1 path tương ứng với band_id đó.
+        - Giữ nguyên cấu trúc hình học: 20 nhịp vẽ 2.0mm, 19 nhịp nhấc 2.0mm.
+        """
+        fixture_path = os.path.join(_repo_root, "tests", "fixtures", "rq3_clearance_calibration_specimen.svg")
+        bands = ["rapid_pen_lift_20mms", "rapid_pen_lift_40mms", "rapid_pen_lift_60mms"]
+        for band_id in bands:
+            band_svg = extract_rq3_band_specimen_svg(fixture_path, band_id)
+            is_valid, content, err = validate_svg_content_or_path(band_svg)
+            self.assertTrue(is_valid, f"Extracted SVG for {band_id} must be valid XML: {err}")
+            self.assertIn(f'id="{band_id}"', band_svg)
+            for other_band in bands:
+                if other_band != band_id:
+                    self.assertNotIn(f'id="{other_band}"', band_svg)
+
+    def test_rq3_benchmark_dispatches_3_discrete_speed_jobs_with_driver_stub(self):
+        """
+        TV2-HW-R04 Unit Test:
+        Sử dụng driver stub ghi nhận các lệnh được dispatch, chứng minh runner thực hiện
+        chính xác 3 jobs tương ứng với 3 dải tốc độ 20, 40, 60 mm/s.
+        Test này bắt buộc thất bại nếu runner gửi 1 job chung cho toàn bộ SVG.
+        """
+        class RecordingAxiDrawDriverStub:
+            def __init__(self):
+                self.options = type("opts", (), {
+                    "mode": "plot",
+                    "model": 1,
+                    "speed_pendown": 25,
+                    "speed_penup": 75,
+                    "accel": 75,
+                    "pen_pos_up": 60,
+                    "pen_pos_down": 35,
+                    "pen_delay_up": 100,
+                    "pen_delay_down": 120,
+                    "port": None,
+                    "auto_rotate": True,
+                })()
+                self._connected = False
+                self.dispatched_jobs = []
+
+            def interactive(self):
+                pass
+
+            def connect(self) -> bool:
+                self._connected = True
+                return True
+
+            def disconnect(self):
+                self._connected = False
+
+            def plot_setup(self, svg_path: str):
+                with open(svg_path, "r", encoding="utf-8") as f:
+                    content = f.read()
+                self.dispatched_jobs.append({
+                    "speed_pendown": getattr(self.options, "speed_pendown", None),
+                    "speed_penup": getattr(self.options, "speed_penup", None),
+                    "svg_path": svg_path,
+                    "svg_content": content,
+                })
+
+            def plot_run(self):
+                time.sleep(0.01)
+
+        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp_csv:
+            tmp_csv_path = tmp_csv.name
+
+        try:
+            driver_stub = RecordingAxiDrawDriverStub()
+            adapter = AxiDrawAdapter(use_fake_driver=False, metrics_csv_path=tmp_csv_path)
+            adapter._ad = driver_stub
+            adapter._connected = True
+
+            res = asyncio.run(run_rq3_calibration_benchmark(mode="physical", adapter=adapter))
+
+            self.assertEqual(res.get("status"), "done")
+            self.assertFalse(res.get("is_simulated"))
+            self.assertTrue(res.get("actual_hardware_measured"))
+
+            # KIỂM ĐỊNH BẮT BUỘC 1: Dispatch chính xác 3 jobs riêng biệt (FAIL nếu chỉ gửi 1 job chung)
+            self.assertEqual(
+                len(driver_stub.dispatched_jobs),
+                3,
+                f"Runner MUST dispatch exactly 3 discrete jobs for the 3 speed bands! Got {len(driver_stub.dispatched_jobs)}"
+            )
+
+            # KIỂM ĐỊNH BẮT BUỘC 2: Tốc độ áp dụng trên driver đúng thứ tự [20, 40, 60] mm/s
+            applied_speeds = [job["speed_pendown"] for job in driver_stub.dispatched_jobs]
+            self.assertEqual(
+                applied_speeds,
+                [20, 40, 60],
+                f"Dispatched driver speeds must be exactly [20, 40, 60] mm/s! Got {applied_speeds}"
+            )
+
+            # KIỂM ĐỊNH BẮT BUỘC 3: Mỗi job chỉ gửi tiêu bản dải đó, không gửi toàn bộ SVG specimen
+            expected_bands = ["rapid_pen_lift_20mms", "rapid_pen_lift_40mms", "rapid_pen_lift_60mms"]
+            for idx, expected_band in enumerate(expected_bands):
+                job_svg = driver_stub.dispatched_jobs[idx]["svg_content"]
+                self.assertIn(f'id="{expected_band}"', job_svg)
+                self.assertNotIn("boundary_frame", job_svg, "Isolated band SVG must not include boundary_frame")
+                self.assertNotIn("block_a_clearance_ladder", job_svg, "Isolated band SVG must not include block A")
+
+            # KIỂM ĐỊNH BẮT BUỘC 4: Telemetry trả về ghi nhận đầy đủ 3 dải
+            self.assertEqual(res.get("bands_tested"), expected_bands)
+            band_res = res.get("band_results", {})
+            self.assertEqual(len(band_res), 3)
+            for b_id, b_speed in zip(expected_bands, [20.0, 40.0, 60.0]):
+                self.assertIn(b_id, band_res)
+                self.assertEqual(band_res[b_id]["speed_pendown_mm_s"], b_speed)
+                self.assertTrue(band_res[b_id]["actual_hardware_measured"])
+                self.assertFalse(band_res[b_id]["is_simulated"])
+                self.assertEqual(band_res[b_id]["source_tag"], "axidraw_real")
+
+            # KIỂM ĐỊNH BẮT BUỘC 5: File CSV ghi nhận đúng 3 rows với các vận tốc tương ứng
+            with open(tmp_csv_path, "r", encoding="utf-8") as f:
+                reader = csv.DictReader(f)
+                rows = list(reader)
+
+            self.assertEqual(len(rows), 3, "CSV must contain exactly 3 rows for the 3 speed bands")
+            for idx, (row, b_id, b_speed) in enumerate(zip(rows, expected_bands, ["20.0", "40.0", "60.0"])):
+                self.assertIn(b_id, row["request_id"])
+                self.assertEqual(row["hardware_status"], "done")
+                self.assertEqual(row["actual_hardware_measured"], "True")
+                self.assertEqual(row["speed_pendown_mm_s"], b_speed)
+
+        finally:
+            if os.path.exists(tmp_csv_path):
+                os.remove(tmp_csv_path)
+
 
 
 # ---------------------------------------------------------------------------

@@ -53,7 +53,11 @@ Tiêu bản kiểm chuẩn được thiết kế trên khổ A4 ngang ($297 \tim
   3. Kiểm chứng thực nghiệm cho giả thuyết H3.2 (`acute_turn_count_120deg`).
 
 ### 3.3. Khối C: Tần suất nâng hạ bút trục Z (Rapid Pen-Lift Actuation Test)
-- **Cấu trúc:** Dãy nét đứt tuần hoàn chu kỳ $2\,\text{mm}$ nét vẽ / $2\,\text{mm}$ nhấc bút ở các dải tốc độ $v \in \{20, 40, 60\}\,\text{mm/s}$.
+- **Cấu trúc:** Dãy nét đứt tuần hoàn chu kỳ $2.0\,\text{mm}$ nét vẽ (20 nhịp) / $2.0\,\text{mm}$ nhấc bút (19 nhịp) ở 3 dải tốc độ độc lập $v \in \{20.0, 40.0, 60.0\}\,\text{mm/s}$:
+  - `rapid_pen_lift_20mms`: $v = 20\,\text{mm/s}$, tần số danh định $f = 5.0\,\text{Hz}$, tọa độ $Y = 172.0\,\text{mm}$.
+  - `rapid_pen_lift_40mms`: $v = 40\,\text{mm/s}$, tần số danh định $f = 10.0\,\text{Hz}$, tọa độ $Y = 180.0\,\text{mm}$.
+  - `rapid_pen_lift_60mms`: $v = 60\,\text{mm/s}$, tần số danh định $f = 15.0\,\text{Hz}$, tọa độ $Y = 188.0\,\text{mm}$.
+- **Cơ chế thi công (TV2-HW-R04):** Runner phân tách thành 3 jobs rời rạc, nạp vận tốc phần cứng chuẩn xác qua `adapter.set_speed()`, vẽ tuần tự tại các tọa độ Y khác nhau trên cùng một tờ giấy A4 mà không chồng chéo, và ghi nhận riêng biệt 3 bản ghi telemetry trong `logs/hardware_metrics.csv`.
 - **Mục tiêu:**
   1. Kiểm tra độ trễ thực tế của servo trục Z ($t_{down}, t_{up}$).
   2. Phát hiện hiện tượng vệt đuôi chuột (pen drag) do nhấc bút không kịp hoặc đọng mực do hạ bút chậm.
@@ -74,6 +78,9 @@ Tiêu bản kiểm chuẩn được thiết kế trên khổ A4 ngang ($297 \tim
       │
       ▼
 [BƯỚC 3: Chạy CLI Benchmark tự động (--benchmark-rq3)]
+  ├── Trích xuất 3 dải vận tốc độc lập (20, 40, 60 mm/s)
+  ├── Thiết lập adapter.set_speed() và thi công tuần tự 3 jobs
+  └── Ghi nhận 3 rows telemetry vào logs/hardware_metrics.csv
       │
       ▼
 [BƯỚC 4: Để khô mực 15 phút & Quét phẳng 600 DPI]
@@ -100,7 +107,9 @@ Tiêu bản kiểm chuẩn được thiết kế trên khổ A4 ngang ($297 \tim
    ```bash
    python backend/hardware_adapter.py --benchmark-rq3 --mode physical
    ```
-2. Hệ thống sẽ tự động gửi tiêu bản `tests/fixtures/rq3_clearance_calibration_specimen.svg` sang driver phần cứng, bấm giờ độ phân giải microsecond, thu thập telemetry và lưu kết quả vào `logs/hardware_metrics.csv`.
+2. Hệ thống sẽ tự động trích xuất 3 dải tiêu bản từ `tests/fixtures/rq3_clearance_calibration_specimen.svg`, áp dụng các vận tốc 20, 40, 60 mm/s trực tiếp vào driver phần cứng AxiDraw qua `adapter.set_speed()`, bấm giờ độ phân giải microsecond cho từng dải, thu thập telemetry và lưu 3 dòng kết quả độc lập vào `logs/hardware_metrics.csv`.
+3. Nếu thiết bị chưa cắm hoặc thiếu driver, hệ thống sẽ trả về mã an toàn `status: "blocked"` (`BLOCKED_BY_HARDWARE`), tuyệt đối không rơi vào fake driver hay ghi nhận sai lệch `actual_hardware_measured=True`.
+
 
 ### Bước 4: Để khô mực & Quét phẳng
 1. Sau khi máy vẽ hoàn tất, giữ nguyên bản vẽ trên bàn phẳng ít nhất 15 phút ở nhiệt độ phòng ($25^\circ\text{C}$) để mực gel đóng rắn hoàn toàn, tránh lem bẩn khi quét.

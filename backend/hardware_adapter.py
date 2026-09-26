@@ -1124,6 +1124,11 @@ class HardwareAdapterInterface(ABC):
     def get_status(self, request_id: str, simulate_error: Optional[str] = None) -> Dict[str, Any]:
         pass
 
+    @abstractmethod
+    def set_speed(self, speed_pendown_mm_s: float, speed_penup_mm_s: Optional[float] = None) -> None:
+        """Thiết lập vận tốc thi công động học (mm/s) cho adapter."""
+        pass
+
 
 # ---------------------------------------------------------------------------
 # MockSimulatorAdapter
@@ -1143,6 +1148,13 @@ class MockSimulatorAdapter(HardwareAdapterInterface):
 
     def load_profile(self, profile_path: Optional[str] = None) -> None:
         self._profile = load_calibration_profile(profile_path)
+
+    def set_speed(self, speed_pendown_mm_s: float, speed_penup_mm_s: Optional[float] = None) -> None:
+        if "motion" not in self._profile:
+            self._profile["motion"] = {}
+        self._profile["motion"]["speed_pendown_mm_s"] = float(speed_pendown_mm_s)
+        if speed_penup_mm_s is not None:
+            self._profile["motion"]["speed_penup_mm_s"] = float(speed_penup_mm_s)
 
     def connect(self, port: Optional[str] = None) -> bool:
         self._connected = True
@@ -1565,6 +1577,16 @@ class AxiDrawAdapter(HardwareAdapterInterface):
 
     def load_profile(self, profile_path: Optional[str] = None) -> None:
         self._profile = load_calibration_profile(profile_path)
+
+    def set_speed(self, speed_pendown_mm_s: float, speed_penup_mm_s: Optional[float] = None) -> None:
+        """Thiết lập vận tốc thi công động học (mm/s) cho adapter và driver."""
+        if "motion" not in self._profile:
+            self._profile["motion"] = {}
+        self._profile["motion"]["speed_pendown_mm_s"] = float(speed_pendown_mm_s)
+        if speed_penup_mm_s is not None:
+            self._profile["motion"]["speed_penup_mm_s"] = float(speed_penup_mm_s)
+        self._apply_profile_to_driver()
+
 
     def _init_driver(self) -> None:
         if self._use_fake_driver:
@@ -2183,15 +2205,79 @@ async def _run_smoke_test(mode: str = "simulator", fixture_path: Optional[str] =
     return 1
 
 
+# ---------------------------------------------------------------------------
+# RQ3 Calibration Benchmark Support (Block C Speed Bands)
+# ---------------------------------------------------------------------------
+
+RQ3_SPEED_BANDS: List[Dict[str, Any]] = [
+    {
+        "band_id": "rapid_pen_lift_20mms",
+        "speed_mm_s": 20.0,
+        "name": "Band 1: v=20 mm/s",
+        "nominal_frequency_hz": 5.0,
+    },
+    {
+        "band_id": "rapid_pen_lift_40mms",
+        "speed_mm_s": 40.0,
+        "name": "Band 2: v=40 mm/s",
+        "nominal_frequency_hz": 10.0,
+    },
+    {
+        "band_id": "rapid_pen_lift_60mms",
+        "speed_mm_s": 60.0,
+        "name": "Band 3: v=60 mm/s",
+        "nominal_frequency_hz": 15.0,
+    },
+]
+
+
+def extract_rq3_band_specimen_svg(fixture_path_or_content: str, band_id: str) -> str:
+    """
+    Trích xuất một dải kiểm chuẩn vận tốc riêng biệt từ specimen SVG của RQ3 (Khối C).
+    Bảo toàn cấu trúc viewBox="0 0 297 210", giữ nguyên hình học và tọa độ Y thực tế của dải
+    (20 nhịp vẽ 2.0mm, 19 nhịp nhấc 2.0mm) để thi công tuần tự trên cùng một trang giấy A4.
+    """
+    content = ""
+    if os.path.isfile(fixture_path_or_content):
+        with open(fixture_path_or_content, "r", encoding="utf-8") as f:
+            content = f.read()
+    else:
+        content = fixture_path_or_content
+
+    root = ET.fromstring(content)
+    target_elem = None
+    for elem in root.iter():
+        if elem.attrib.get("id") == band_id:
+            target_elem = elem
+            break
+
+    if target_elem is None:
+        raise ValueError(f"Không tìm thấy path với id '{band_id}' trong RQ3 specimen SVG.")
+
+    d_attr = target_elem.attrib.get("d", "")
+    stroke_w = target_elem.attrib.get("stroke-width", "0.4")
+    stroke = target_elem.attrib.get("stroke", "#000000")
+
+    return (
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="297mm" height="210mm" viewBox="0 0 297 210">\n'
+        f'  <!-- OmniDraw TV3 RQ3 Extracted Speed Band: {band_id} -->\n'
+        f'  <path d="{d_attr}" fill="none" stroke="{stroke}" stroke-width="{stroke_w}" id="{band_id}" />\n'
+        f'</svg>'
+    )
+
+
 async def run_rq3_calibration_benchmark(
     mode: str = "simulator",
     fixture_path: Optional[str] = None,
     profile_path: Optional[str] = None,
     adapter: Optional[HardwareAdapterInterface] = None,
+    band_id: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Thực hiện quy trình benchmark kiểm chuẩn phần cứng phục vụ RQ3 (Physical Feasibility & Diacritic Clearance).
     - Sử dụng tiêu bản tests/fixtures/rq3_clearance_calibration_specimen.svg.
+    - TV2-HW-R04: Phân tách Khối C thành 3 jobs rời rạc tương ứng với 3 dải vận tốc (20, 40, 60 mm/s),
+      áp dụng tốc độ vật lý chuẩn xác qua adapter.set_speed() và ghi nhận độc lập vào CSV metrics.
     - Hỗ trợ các mode: simulator, fake, physical.
     - Thu thập telemetry đầy đủ (actual_draw_time_sec, estimated_draw_time_sec, draw_distance_mm, penup_distance_mm, pen_lift_count).
     - Phân định rõ ràng is_simulated vs actual_hardware_measured theo quy chuẩn học thuật NCKH.
@@ -2232,51 +2318,121 @@ async def run_rq3_calibration_benchmark(
             "rq3_verified": False,
         }
 
-    req_id = f"rq3-bench-{int(time.time() * 1000)}"
-    start_res = await adapter.start_job(req_id, fixture_path)
-    if "error" in start_res:
-        return {
-            "status": "error",
-            "error": start_res["error"],
-            "request_id": req_id,
-            "rq3_verified": False,
-        }
-
-    # Polling chờ hoàn tất
-    for _ in range(120):
-        await asyncio.sleep(0.1)
-        st = adapter.get_status(req_id)
-        if st["status"] == "done":
-            return {
-                "status": "done",
-                "request_id": req_id,
-                "mode": mode,
-                "actual_draw_time_sec": st.get("actual_draw_time_sec"),
-                "estimated_draw_time_sec": st.get("total_draw_time_sec"),
-                "draw_distance_mm": st.get("draw_distance_mm"),
-                "penup_distance_mm": st.get("penup_distance_mm"),
-                "pen_lift_count": st.get("pen_lift_count"),
-                "is_simulated": st.get("is_simulated", True),
-                "actual_hardware_measured": st.get("actual_hardware_measured", False),
-                "source_tag": st.get("source_tag", mode),
-                "clearance_ladder_tested_mm": [0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70],
-                "acute_turn_angles_tested_deg": [60, 90, 120, 150],
-                "rapid_pen_lift_actuation_tested": True,
-                "rq3_telemetry_recorded": True,
-            }
-        elif st["status"] == "error":
+    bands_to_run = RQ3_SPEED_BANDS
+    if band_id:
+        matched = [b for b in RQ3_SPEED_BANDS if b["band_id"] == band_id]
+        if not matched:
             return {
                 "status": "error",
-                "error": st.get("error", "Lỗi trong quá trình in"),
-                "request_id": req_id,
+                "error": f"Band '{band_id}' không hợp lệ. Chọn từ: {[b['band_id'] for b in RQ3_SPEED_BANDS]}",
+                "rq3_verified": False,
+            }
+        bands_to_run = matched
+
+    band_results: Dict[str, Dict[str, Any]] = {}
+    composite_req_id = f"rq3-composite-{int(time.time() * 1000)}"
+
+    for band_info in bands_to_run:
+        cur_band_id = band_info["band_id"]
+        cur_speed = float(band_info["speed_mm_s"])
+
+        # Trích xuất SVG riêng cho từng dải vận tốc
+        try:
+            band_svg_content = extract_rq3_band_specimen_svg(fixture_path, cur_band_id)
+        except Exception as exc:
+            return {
+                "status": "error",
+                "error": f"Lỗi trích xuất band {cur_band_id}: {exc}",
                 "rq3_verified": False,
             }
 
+        # Cấu hình vận tốc profile trên adapter / driver
+        adapter.set_speed(speed_pendown_mm_s=cur_speed)
+
+        band_req_id = f"rq3-bench-{cur_band_id}-{int(time.time() * 1000)}"
+        start_res = await adapter.start_job(band_req_id, band_svg_content)
+        if "error" in start_res:
+            return {
+                "status": "error",
+                "error": start_res["error"],
+                "request_id": band_req_id,
+                "band_id": cur_band_id,
+                "rq3_verified": False,
+            }
+
+        # Polling chờ hoàn tất job của từng dải
+        band_done = False
+        last_st: Dict[str, Any] = {}
+        for _ in range(120):
+            await asyncio.sleep(0.05)
+            last_st = adapter.get_status(band_req_id)
+            if last_st["status"] == "done":
+                band_done = True
+                break
+            elif last_st["status"] == "error":
+                return {
+                    "status": "error",
+                    "error": last_st.get("error", f"Lỗi trong quá trình in band {cur_band_id}"),
+                    "request_id": band_req_id,
+                    "band_id": cur_band_id,
+                    "rq3_verified": False,
+                }
+
+        if not band_done:
+            return {
+                "status": "timeout",
+                "error": f"Timeout quá hạn chờ hoàn thành band {cur_band_id}",
+                "request_id": band_req_id,
+                "band_id": cur_band_id,
+                "rq3_verified": False,
+            }
+
+        band_results[cur_band_id] = {
+            "band_id": cur_band_id,
+            "request_id": band_req_id,
+            "speed_pendown_mm_s": cur_speed,
+            "actual_draw_time_sec": last_st.get("actual_draw_time_sec"),
+            "estimated_draw_time_sec": last_st.get("total_draw_time_sec"),
+            "draw_distance_mm": last_st.get("draw_distance_mm"),
+            "penup_distance_mm": last_st.get("penup_distance_mm"),
+            "pen_lift_count": last_st.get("pen_lift_count"),
+            "is_simulated": last_st.get("is_simulated", True),
+            "actual_hardware_measured": last_st.get("actual_hardware_measured", False),
+            "source_tag": last_st.get("source_tag", mode),
+            "status": "done",
+        }
+
+    # Tổng hợp metrics trên các dải
+    total_draw_dist = sum(b.get("draw_distance_mm") or 0.0 for b in band_results.values())
+    total_penup_dist = sum(b.get("penup_distance_mm") or 0.0 for b in band_results.values())
+    total_lifts = sum(b.get("pen_lift_count") or 0 for b in band_results.values())
+    total_est = sum(b.get("estimated_draw_time_sec") or 0.0 for b in band_results.values())
+
+    actual_times = [b.get("actual_draw_time_sec") for b in band_results.values()]
+    total_actual = round(sum(actual_times), 4) if all(t is not None for t in actual_times) else None
+
+    all_simulated = all(b.get("is_simulated", True) for b in band_results.values())
+    all_hw_measured = all(b.get("actual_hardware_measured", False) for b in band_results.values())
+    source_tag = next(iter(band_results.values()))["source_tag"] if band_results else mode
+
     return {
-        "status": "timeout",
-        "error": "Timeout quá 12s chờ hoàn thành RQ3 benchmark",
-        "request_id": req_id,
-        "rq3_verified": False,
+        "status": "done",
+        "request_id": composite_req_id,
+        "mode": mode,
+        "actual_draw_time_sec": total_actual,
+        "estimated_draw_time_sec": round(total_est, 4) if total_est else None,
+        "draw_distance_mm": round(total_draw_dist, 4),
+        "penup_distance_mm": round(total_penup_dist, 4),
+        "pen_lift_count": total_lifts,
+        "is_simulated": all_simulated,
+        "actual_hardware_measured": all_hw_measured,
+        "source_tag": source_tag,
+        "clearance_ladder_tested_mm": [0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70],
+        "acute_turn_angles_tested_deg": [60, 90, 120, 150],
+        "rapid_pen_lift_actuation_tested": True,
+        "rq3_telemetry_recorded": True,
+        "bands_tested": [b["band_id"] for b in bands_to_run],
+        "band_results": band_results,
     }
 
 
@@ -2306,8 +2462,12 @@ if __name__ == "__main__":
         res = asyncio.run(run_rq3_calibration_benchmark(mode=args.mode, fixture_path=args.svg, profile_path=args.profile))
         print("Kết quả benchmark RQ3:")
         for k, v in res.items():
-            print(f"  - {k}: {v}")
+            if k == "band_results" and isinstance(v, dict):
+                print(f"  - {k}:")
+                for bid, bval in v.items():
+                    print(f"      * {bid}: speed={bval.get('speed_pendown_mm_s')} mm/s, req_id={bval.get('request_id')}, time={bval.get('actual_draw_time_sec')}s, is_sim={bval.get('is_simulated')}, measured={bval.get('actual_hardware_measured')}")
+            else:
+                print(f"  - {k}: {v}")
         sys.exit(0 if res.get("status") in {"done", "blocked"} else 1)
     else:
         parser.print_help()
-

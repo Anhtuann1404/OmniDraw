@@ -174,7 +174,8 @@ Trong đó:
   - Ngưỡng kiểm định giả thuyết H3.2: `turn_120deg` ($\theta_{turn} = 120^\circ$, góc trong $60^\circ$).
 - **Khối C (Kích hoạt Nâng Hạ Bút Nhanh - TV2-HW-R04):**
   - Chu kỳ: $2.00\,\text{mm}$ nét vẽ / $2.00\,\text{mm}$ nhấc bút (Pitch $= 4.00\,\text{mm}$), 20 nhịp lift/draw.
-  - Phân tách thành 3 dải vận tốc độc lập: $20\,\text{mm/s}$ (Band 1), $40\,\text{mm/s}$ (Band 2), $60\,\text{mm/s}$ (Band 3) nhằm đánh giá độ trễ servo trục Z và hiện tượng vẹt đuôi mực.
+  - Phân tách thành 3 dải vận tốc độc lập: $20\,\text{mm/s}$ (Band 1), $40\,\text{mm/s}$ (Band 2), $60\,\text{mm/s}$ (Band 3) nhằm đánh giá độ trễ servo trục Z và hiện tượng vệt đuôi mực.
+  - Cơ chế thực thi (TV2-HW-R04 Resolved): Runner `run_rq3_calibration_benchmark()` trích xuất 3 tiêu bản dải rời rạc (`rapid_pen_lift_20mms`, `rapid_pen_lift_40mms`, `rapid_pen_lift_60mms`), thiết lập trực tiếp `speed_pendown` vào driver cho từng dải qua `adapter.set_speed()`, thi công tuần tự 3 jobs tại các cao độ Y độc lập ($Y=172, 180, 188\,\text{mm}$) trên trang A4, và ghi nhận 3 dòng độc lập trong CSV metrics. Đã kiểm chứng bằng test stub driver dispatching đúng 3 jobs với các tốc độ $[20, 40, 60]\,\text{mm/s}$.
 
 ### Giới hạn phần cứng TV3 & Hợp đồng Tích hợp TV4:
 - **Tính năng tạm dừng (pause_supported):**
@@ -209,7 +210,8 @@ Trong đó:
 - [x] Schema `logs/hardware_metrics.csv` 22 cột mở rộng với đầy đủ telemetry chuyển động và cờ mô hình.
 - [x] Tiêu bản `rq3_clearance_calibration_specimen.svg` chuẩn hóa góc bẻ Khối B và 3 dải tốc độ Khối C.
 - [x] Bất biến provenance đo lường vật lý đã được kiểm chứng bằng test tự động.
-- [x] Bộ testsuite tích hợp 42 test unit/integration PASS 100%.
+- [x] Bộ testsuite tích hợp 44 test hardware PASS 100% (toàn repo 170 test PASS 100%).
+
 
 ---
 
