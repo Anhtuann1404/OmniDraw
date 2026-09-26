@@ -3,11 +3,11 @@
 **Phiên bản:** 0.2
 **Ngày lập:** 2026-09-24
 **Owner:** TV4 — Handwriting / CA-VHC Composition Lead
-**Trạng thái:** `READY_TO_IMPLEMENT (E4 APPROVED AND LOCKED)`
+**Trạng thái:** `NOT_READY — E4 REOPENED FOR TV4 CHANGES AND TV2 RECHECK`
 **Review boundary:** `OUTSIDE_REVIEW_TARGET_7ae43e6` — tài liệu chuẩn bị này không thay đổi Chương 1–3 và không yêu cầu mở lại gói cross-review v0.2.
 
 > [!IMPORTANT]
-> Entry Gate E4 đã chính thức được TV2 và TV4 ký duyệt tại [`18_pr3_e4_shared_transition_contract_draft.md`](18_pr3_e4_shared_transition_contract_draft.md). Toàn bộ 5 Entry Gate E1–E5 đã đạt `PASS`. Mã nguồn phần mềm PR3 chính thức được cấp phép triển khai (Slice 0–6).
+> Quyết định ngày 2026-09-24 từng ghi E4 `PASS` và PR3 `READY_TO_IMPLEMENT`. TV2 review ngày 2026-09-25 đã mở lại E4 với verdict `PASS_WITH_CHANGES`; trạng thái hiện hành là chờ TV4 xử lý contract và TV2 recheck. Phần triển khai PR3 trên nhánh tích hợp cũng đã bị revert tại `7d1c1d3`; tài liệu này không cấp phép khôi phục implementation.
 
 ## 1. Mục tiêu
 
@@ -25,7 +25,7 @@ Nguồn chuẩn vẫn là:
 - [`07_diacritic_aware_state_design.md`](07_diacritic_aware_state_design.md): kiến trúc `DiacriticCandidate` và `CompositionState`.
 - [`09_pr3_acceptance_criteria.md`](09_pr3_acceptance_criteria.md): Entry/Exit Gate.
 - [`16_rq_code_metric_test_traceability.md`](16_rq_code_metric_test_traceability.md): ánh xạ RQ–metric–test.
-- [`18_pr3_e4_shared_transition_contract_draft.md`](18_pr3_e4_shared_transition_contract_draft.md): hợp đồng giao diện chuyển tiếp E4 đã được ký duyệt.
+- [`18_pr3_e4_shared_transition_contract_draft.md`](18_pr3_e4_shared_transition_contract_draft.md): nguồn trạng thái hiện hành của E4; đang `CHANGES_REQUIRED`.
 
 Nếu pack này mâu thuẫn với Docs 07 hoặc 09, Docs 07/09 có quyền ưu tiên và pack phải được sửa trước khi code.
 
@@ -36,10 +36,10 @@ Nếu pack này mâu thuẫn với Docs 07 hoặc 09, Docs 07/09 có quyền ưu
 | E1 — PR1 metrics/runner | `PASS` | Evaluator, CSV logger, experiment runner và DEV fingerprint fixture đã tồn tại | Không sửa lại trong PR3 trừ khi cần metadata thật sự mới |
 | E2 — ASCII geometry lock | `PASS` | 48 cấu hình tại `pr3_ascii_baseline_fingerprints.json` | Mọi lát cắt PR3 phải giữ 48/48 fingerprint |
 | E3 — B1/B2/B3 adapters | `PASS` | PR #32 merge commit `bcc1a7a`; `baselines.py`, runner method tags và `tests/test_ca_vhc_baselines.py`; full suite 136 passed | Dependency PR2 đã nhận; E3 hoàn tất |
-| E4 — Shared transition interface | `PASS` | Hợp đồng giao diện chuyển tiếp đã được TV2 và TV4 ký duyệt tại [`18_pr3_e4_shared_transition_contract_draft.md`](18_pr3_e4_shared_transition_contract_draft.md) | Entry Gate E4 hoàn tất; cho phép bắt đầu Slice 0 |
+| E4 — Shared transition interface | `REOPENED / CHANGES_REQUIRED` | TV2 đã trả lời Q1–Q7 và yêu cầu đồng bộ pseudo-types, error semantics, immutability, contract version và ranh giới gate/test tại [`18_pr3_e4_shared_transition_contract_draft.md`](18_pr3_e4_shared_transition_contract_draft.md) | TV4 cập nhật contract; TV2 recheck trước khi E4 đóng lại |
 | E5 — Corpus integrity | `PASS` | Acceptance specimens chỉ lấy từ DEV; Holdout guard đã có | Cấm `--corpus holdout/all` và `--allow-holdout` trong PR3 |
 
-**Quy tắc mở PR3:** Toàn bộ 5 Entry Gate E1–E5 đã đạt `PASS`. Trạng thái chính thức chuyển sang `READY_TO_IMPLEMENT`. PR3 bắt đầu thực thi từ Slice 0.
+**Quy tắc mở PR3:** E1, E2, E3 và E5 vẫn `PASS`; E4 đang mở lại. PR3 không ở trạng thái `READY_TO_IMPLEMENT` cho tới khi TV4 xử lý contract và TV2 ký recheck.
 
 ## 3. Checklist nhận bàn giao PR2
 
@@ -225,12 +225,12 @@ Không tạo test `xfail` chỉ để làm dashboard trông đầy đủ. Trư�
 PR3 được phép bắt đầu khi toàn bộ mục sau đạt:
 
 - [x] E3 đóng: B1/B2/B3 đã merge và test pass (PR #32, `bcc1a7a`; full suite 136 passed).
-- [x] E4 đóng: shared transition contract được TV2 và TV4 xác nhận ([`Docs 18`](18_pr3_e4_shared_transition_contract_draft.md)).
+- [ ] E4 đóng lại: TV4 xử lý contract và TV2 xác nhận recheck ([`Docs 18`](18_pr3_e4_shared_transition_contract_draft.md)).
 - [x] Working tree PR3 không chứa thay đổi chưa review của PR2.
 - [x] 48 ASCII baseline và toàn bộ suite hiện hành pass trên commit nền (136/136 tests PASS).
 - [x] DEV/holdout guard vẫn hoạt động.
 - [x] File ownership và danh sách symbol shared đã được ghi rõ.
 - [x] Không có yêu cầu mở rộng phạm vi sang PR4/P2/hardware.
 
-Toàn bộ checklist trên đã hoàn tất. TV4 đổi trạng thái tài liệu thành `READY_TO_IMPLEMENT` và chính thức khởi động Slice 0.
+Definition of Ready hiện **chưa đạt** vì E4 đang `CHANGES_REQUIRED`. Các dấu `[x]` còn lại chỉ ghi nhận dependency đã đạt và không thay thế chữ ký E4 mới.
 

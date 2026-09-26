@@ -29,6 +29,8 @@ Không có file hardware hoặc calibration nào được sửa trong review nà
 5. Bộ góc danh nghĩa `60°/90°/120°/150°` phù hợp về mặt thiết kế thí nghiệm, nhưng geometry hiện tại trong fixture không tạo đúng các thay đổi hướng được ghi nhãn.
 6. Trước khi chạy máy thật cần sửa specimen, khóa định nghĩa góc, bổ sung estimate breakdown và metadata calibration/motion vào output.
 
+Review motion `TV2-HW-R01–R06` là lớp kiểm tra bổ sung. Nó không thay thế contract CSV mở rộng hoặc quyết định `pause_supported` mà TV3 đã gửi TV4; hai hạng mục đó vẫn `CHANGES_REQUIRED` và do TV3/TV4 xử lý.
+
 ## 3. Findings
 
 | ID | Severity | Bằng chứng | Finding | Thay đổi yêu cầu |
@@ -38,7 +40,7 @@ Không có file hardware hoặc calibration nào được sửa trong review nà
 | TV2-HW-R03 | MAJOR | `tests/fixtures/rq3_clearance_calibration_specimen.svg`, block B; `tests/test_hardware_adapter.py::test_rq3_benchmark_simulator_run` | Các path được gắn nhãn 60/90/120/150 nhưng hướng segment thực tế không khớp; test chỉ kiểm tra danh sách nhãn hard-code, không kiểm tra geometry. | Tạo lại path theo một định nghĩa góc duy nhất (`heading_change_deg` hoặc interior angle) và thêm test parse geometry để tính lại từng góc. |
 | TV2-HW-R04 | MAJOR | Fixture block C; `docs/hardware/07_physical_calibration_protocol.md` §3.3 | Protocol mô tả chu kỳ 2 mm pen-down / 2 mm pen-up ở 20/40/60 mm/s, nhưng fixture hiện dùng các nét khoảng 5 mm, khoảng nhấc khoảng 4 mm và không tách ba dải tốc độ. | Đồng bộ fixture với protocol hoặc sửa protocol theo specimen thực; mỗi dải tốc độ phải có ID/metadata riêng và được chạy với profile tương ứng. |
 | TV2-HW-R05 | MINOR | `record_metric()` và `docs/hardware/measurement-protocol.md` §3 | CSV 7 cột chưa đủ tái lập mô hình chuyển động. | Trước physical benchmark, thêm tối thiểu `profile_version`, device/model, pen-down/up speed, `accel_pct`, delays, draw/pen-up distances, lift count và model flags. |
-| TV2-HW-R06 | INFO | `measurement-protocol.md` §1; adapter source tags | Phân tách dữ liệu simulator/fake/real là phù hợp và không thấy việc tráo số mô phỏng thành số đo máy thật. | Giữ nguyên invariant; chỉ số vật lý hợp lệ khi `source_tag=axidraw_real`, `is_simulated=false`, `actual_hardware_measured=true`. |
+| TV2-HW-R06 | MAJOR — OPEN | `backend/hardware_adapter.py::AxiDrawAdapter.start_job()` và `get_status()` | Job gán `actual_hardware_measured=is_real` ngay khi vừa tạo, trước khi physical `plot_run()` thành công; terminal status lại tính cờ từ kết nối hiện tại thay vì provenance bất biến của chính lượt chạy. Vì vậy chưa thể kết luận provenance đo vật lý đã an toàn. | Khởi tạo `actual_hardware_measured=false`; chỉ chuyển thành `true` sau khi physical job hoàn tất thành công và `actual_draw_time_sec` hữu hạn/không âm. `get_status()` phải trả cờ đã lưu trong job, không tính lại từ trạng thái kết nối. Error/cancel/pause giữ `false`; bổ sung test ngắt kết nối sau job và physical failure. |
 
 ## 4. Công thức đề xuất
 
@@ -68,4 +70,4 @@ Phần góc cua dùng $t_{corner}(\theta)$ hoặc speed cap được fit từ c�
 - **Reviewer:** `Khải (TV2)`
 - **Ngày:** `2026-09-25`
 - **Commit đã review:** `7d1c1d3b7388ce3ff76dd823c19bd8607f994d19`
-- **Điều kiện recheck:** TV3 xử lý TV2-HW-R01–R05 hoặc ghi disposition rõ ràng; TV2 recheck trước khi dùng kết quả physical benchmark cho RQ3.
+- **Điều kiện recheck:** TV3 xử lý TV2-HW-R01–R06 hoặc ghi disposition rõ ràng; TV2 recheck trước khi dùng kết quả physical benchmark cho RQ3. Contract CSV mở rộng và `pause_supported` vẫn là các hạng mục `CHANGES_REQUIRED` riêng của TV3/TV4.
