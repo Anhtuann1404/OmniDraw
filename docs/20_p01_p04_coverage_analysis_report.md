@@ -37,7 +37,7 @@ Mục tiêu chính:
 │       │ Collection Sheet              │ (SENT_001, 002, 003)      │ baseline, nhịp câu │
 ├───────┼───────────────────────────────┼───────────────────────────┼────────────────────┤
 │  P04  │ Natural Paragraph Writing     │ 1 đoạn văn xuôi liên tục  │ Độ trôi baseline,  │
-│       │ Collection Sheet              │ (32 từ, 5 dòng kẻ)        │ mật độ & mỏi cơ    │
+│       │ Collection Sheet              │ (32 từ, 5 dòng kẻ)        │ mật độ & tính ổn định nét dài │
 └───────┴───────────────────────────────┴───────────────────────────┴────────────────────┘
 ```
 
@@ -63,7 +63,7 @@ Trang P01 gồm 24 ô viết định chuẩn ($43.50 \times 31.00\,\text{mm}$), 
 - **Nguyên âm cơ sở**: Đạt $5/6$ nguyên âm cơ sở (`a, e, o, u, ư`), còn thiếu nguyên âm `i` và bán nguyên âm `y`.
 - **Dấu thanh điệu**: Đã khảo sát 4/5 thanh điệu trên ô đơn (`sắc, huyền, hỏi, nặng`). **Thiếu dấu ngã (`~`)** trên P01.
 - **Tổ hợp 2 tầng phức hợp**: Đã chọn lọc 4 trường hợp điển hình nhất (`ắ, ấ, ố, ở`), đặc biệt có 2 cặp lặp lại `ế` (mũ + sắc) và `ử` (móc + hỏi) giúp kiểm chứng tính ổn định hình học khi người viết đặt dấu 2 tầng.
-- **Tỷ lệ bao phủ so với ma trận 67 nguyên âm**: $18 / 67 \approx 26.87\%$. Đây là tỷ lệ được thiết kế có chủ đích cho **Representative Subset** nhằm bảo đảm kích thước ô đủ lớn cho người viết tự nhiên mà không gây ức chế thị giác.
+- **Tỷ lệ bao phủ so với ma trận 67 nguyên âm**: $18 / 67 \approx 26.87\%$. Phương pháp đếm: kiểm tra trực tiếp 18 hình thái nguyên âm độc lập xuất hiện trong 24 ô prompt mẫu của template thiết kế P01 đối chiếu với danh mục 67 nguyên âm chuẩn; đây là tỷ lệ đếm thuần túy trên bản thiết kế có thể tái lập 100%, tuyệt đối không suy rộng thành kết quả hay độ bao phủ thực nghiệm của giai đoạn pilot (vốn phụ thuộc vào bản quét thực tế từ người viết). Representative Subset này bảo đảm kích thước ô đủ lớn cho người viết tự nhiên mà không gây ức chế thị giác.
 
 ---
 

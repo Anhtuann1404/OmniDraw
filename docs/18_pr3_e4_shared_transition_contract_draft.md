@@ -1,15 +1,17 @@
 # OmniDraw — Hợp đồng Giao diện Chuyển tiếp E4 cho PR3
 
-**Trạng thái:** `TV2_CHANGES_REQUIRED — E4 REOPENED FOR CORRECTION`
+**Trạng thái:** `APPROVED — E4 PASS (AUTHORIZED FOR PR3 IMPLEMENTATION)`
 
-**Ngày TV2 review:** 2026-09-25
+**Ngày TV2 sign-off:** 2026-09-25 / 2026-09-26
 
 **Owners:** TV4 (Handwriting & CA-VHC Composition Lead) và TV2 (Stroke Optimization & Path Planning Lead)
 
 **Phạm vi:** Hợp đồng giao diện kỹ thuật nội bộ của CA-VHC PR3; không làm thay đổi public API, renderer hiện hành hoặc các baseline B1/B2/B3.
 
 > [!IMPORTANT]
-> TV2 đã review lại contract trên commit tích hợp `7d1c1d3b7388ce3ff76dd823c19bd8607f994d19` và xác nhận `PASS_WITH_CHANGES`. E4 chưa được đóng lại cho đến khi TV4 xử lý các điều kiện bắt buộc ở Mục 3.1 và TV2 recheck. Review này không tự khôi phục phần triển khai PR3 đã bị revert.
+> Entry Gate E4 đã chính thức được phê duyệt (**`PASS`**) theo hợp đồng giao diện chuyển tiếp được TV4 và TV2 cùng thống nhất phê duyệt tại commit `4677aad`, với phiếu ghi nhận sign-off chính thức của TV2 tại commit `ee7c214`, và nhánh tích hợp đã tiếp nhận quyết định này tại commit `e62f361`.
+> Phiếu review trước đó của TV2 tại `e0c9f91` (`CHANGES_REQUIRED`) được lưu giữ như một phần lịch sử thẩm định kỹ thuật (xem Mục 3.1).
+> **Quyền hạn triển khai:** E4 PASS chính thức cho phép bắt đầu triển khai PR3 (**`PR3 = READY_TO_IMPLEMENT`**). Tuy nhiên, toàn bộ mã nguồn PR3 hiện có trên nhánh `backup/pr3-implementation` là **bản triển khai nháp kỹ thuật (draft implementation)**, **CHƯA** được TV4 và TV2 nghiệm thu chính thức và chưa được phép merge vào nhánh tích hợp hay `develop`.
 
 ---
 
@@ -128,9 +130,11 @@ def evaluate_composition_transition(
 | **Q6** | Cấu trúc dữ liệu Cost breakdown & Weights? | Khóa hai dataclass bất biến: `TransitionWeights(frozen=True)` và `TransitionCostBreakdown(frozen=True)`. | Tránh lỗi đột biến dữ liệu ngoài ý muốn (mutation) và hỗ trợ trích xuất metric phục vụ logging CSV 19 cột. |
 | **Q7** | Đơn vị độ dịch ứng viên dấu `dx_candidates_mm`? | Áp dụng trực tiếp trong hệ tọa độ world (mm) sau khi thân chữ đã biến đổi. | Bảo đảm bước dịch kiểm tra khoảng hở an toàn ($0.3\,\text{mm}$, $0.5\,\text{mm}$) luôn bất biến theo kích thước vật lý của ngòi bút trên giấy, không bị co giãn theo font size. |
 
-### 3.1. Phản hồi chính thức của TV2
+### 3.1. Phản hồi Thẩm định của TV2 (Lịch sử Checkpoint e0c9f91)
 
-| Câu hỏi | Ý kiến TV2 | Điều kiện bắt buộc trước khi E4 đóng lại |
+Bảng dưới đây ghi nhận ý kiến thẩm định của TV2 tại commit `e0c9f91` làm căn cứ kỹ thuật để TV4 và TV2 thống nhất xử lý dứt điểm các yêu cầu trong hợp đồng chung `4677aad` và phiếu sign-off `ee7c214`:
+
+| Câu hỏi | Ý kiến TV2 | Điều kiện kỹ thuật được khóa vào contract E4 |
 | :---: | :--- | :--- |
 | **Q1 — Interface PR3** | Đồng ý dùng `backend/handwriting/composition.py::evaluate_composition_transition()` và giữ nguyên `engine.eval_transition()` cho B3/default. | Có regression test chứng minh đường B3 và ASCII fingerprints không đổi. |
 | **Q2 — Bridge geometry** | Đồng ý lưu geometry bridge đã được đánh giá để renderer dùng lại, không dựng lại lần hai. | Thay `Optional[List[np.ndarray]]` bằng representation bất biến hoặc defensive copy/read-only arrays; không cho mutation sau khi DP chấm cost. |
@@ -147,20 +151,21 @@ TV2 đồng ý Q7 theo quyết định hiện tại: độ dịch mang đơn v�
 
 | Vai trò | Người xác nhận | Quyết định | Bằng chứng kiểm chứng |
 | :--- | :--- | :---: | :--- |
-| **TV2 — Stroke Optimization & Path Planning Lead** | Khải (TV2) | **CHANGES_REQUIRED** | `PASS_WITH_CHANGES`; đã trả lời Q1–Q6 tại Mục 3.1. Chờ TV4 xử lý immutability, zero-tangent, sentinel/error semantics, contract version và regression tests rồi TV2 recheck. |
-| **TV4 — Handwriting & CA-VHC Composition Lead** | Tuấn (TV4) | **APPROVED** | Đã xác nhận cấu trúc `CompositionState`, di chuyển legibility sang $C_{state}$, affine transform `scale_vec`, bảo toàn B3 parity và 136/136 unit tests. |
+| **TV2 — Stroke Optimization & Path Planning Lead** | Khải (TV2) | **PASS** | Ghi nhận sign-off chính thức tại commit `ee7c214`, phê duyệt hợp đồng chuyển tiếp E4 `4677aad` sau khi các yêu cầu kỹ thuật được chuẩn hóa. |
+| **TV4 — Handwriting & CA-VHC Composition Lead** | Tuấn (TV4) | **PASS** | Đồng thuận phê duyệt hợp đồng chuyển tiếp E4 `4677aad` cho kiến trúc `CompositionState`, tách $C_{state}$, affine transform `scale_vec`, và bảo toàn B3. |
 
-- **TV2 verdict:** **`PASS_WITH_CHANGES`**
-- **TV2_APPROVAL:** **`CHANGES_REQUIRED`**
-- **TV2 reviewer:** **Khải (TV2)**
-- **Ngày xác nhận:** **2026-09-25**
-- **Commit đã review:** **`7d1c1d3b7388ce3ff76dd823c19bd8607f994d19`**
-- **Entry Gate E4 Verdict:** **`REOPENED — WAITING_TV4_CHANGES_AND_TV2_RECHECK`**
-- **Trạng thái PR3 trên nhánh tích hợp:** **`IMPLEMENTATION_REVERTED`**
+- **Hợp đồng E4 được duyệt:** **`4677aad`**
+- **Phiếu TV2 sign-off:** **`ee7c214`**
+- **Nhánh tích hợp ghi nhận:** **`e62f361`**
+- **Lịch sử review trước đó:** **`e0c9f91` (CHANGES_REQUIRED — Đã được giải quyết qua `4677aad`/`ee7c214`)**
+- **Entry Gate E4 Verdict:** **`PASS`**
+- **Quyền hạn PR3:** **`READY_TO_IMPLEMENT`**
+- **Trạng thái mã nguồn PR3 trên nhánh `backup/pr3-implementation`:** **`DRAFT IMPLEMENTATION — PENDING TV4 & TV2 REVIEW`** (Chưa được nghiệm thu PR3 chính thức; không merge vào `develop` hoặc nhánh tích hợp).
 
 ```text
 ===================================================================
-ENTRY GATE E4: REOPENED — CHANGES REQUIRED
-PR3 SOFTWARE IMPLEMENTATION: NOT RE-AUTHORIZED BY THIS REVIEW
+ENTRY GATE E4: PASS (APPROVED BY TV4 & TV2)
+CONTRACT COMMIT: 4677aad | TV2 SIGN-OFF: ee7c214 | INTEGRATION: e62f361
+PR3 SOFTWARE IMPLEMENTATION: READY_TO_IMPLEMENT (DRAFT UNDER REVIEW)
 ===================================================================
 ```

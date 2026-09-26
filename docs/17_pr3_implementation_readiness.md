@@ -1,13 +1,14 @@
 # OmniDraw — PR3 Implementation Readiness Pack
 
-**Phiên bản:** 0.2
-**Ngày lập:** 2026-09-24
+**Phiên bản:** 0.3
+**Ngày lập:** 2026-09-24 | **Cập nhật:** 2026-09-26
 **Owner:** TV4 — Handwriting / CA-VHC Composition Lead
-**Trạng thái:** `E4_REOPENED_CHANGES_REQUIRED — PR3 DRAFT PENDING REVIEW`
+**Trạng thái:** `E4_PASS — PR3 READY_TO_IMPLEMENT (DRAFT UNDER REVIEW)`
 **Review boundary:** `OUTSIDE_REVIEW_TARGET_7ae43e6` — tài liệu chuẩn bị này không thay đổi Chương 1–3 và không yêu cầu mở lại gói cross-review v0.2.
 
 > [!IMPORTANT]
-> Theo phiếu review của TV2 tại commit `e0c9f91`, Entry Gate E4 hiện ở trạng thái **`CHANGES_REQUIRED`** (`PASS_WITH_CHANGES`) và đã được mở lại (**`REOPENED`**) để xử lý các điều kiện kỹ thuật (immutability, zero/non-finite tangent, phân biệt fail-closed `+inf` sentinel vs lỗi tính toán, `contract_version`). Mã nguồn PR3 hiện chỉ là bản triển khai nháp trên nhánh `backup/pr3-implementation`, **CHƯA** được TV4 và TV2 nghiệm thu chính thức, và đã được revert khỏi nhánh tích hợp.
+> Entry Gate E4 đã chính thức đạt **`PASS`** sau khi TV4 và TV2 cùng thống nhất phê duyệt hợp đồng giao diện chuyển tiếp tại commit `4677aad`, với xác nhận sign-off của TV2 tại commit `ee7c214` (được ghi nhận trên nhánh tích hợp tại `e62f361`). Lịch sử review `CHANGES_REQUIRED` từ `e0c9f91` được lưu giữ trong Doc 18 (Mục 3.1).
+> Theo quyết định này, PR3 chính thức ở trạng thái **`READY_TO_IMPLEMENT`**. Tuy nhiên, mã nguồn PR3 đã viết trên nhánh `backup/pr3-implementation` hiện là **bản nháp kỹ thuật**, **CHƯA** được TV4 và TV2 nghiệm thu chính thức (các Exit Gate PR3 đang chờ review độc lập).
 
 ## 1. Mục tiêu
 
@@ -25,7 +26,7 @@ Nguồn chuẩn vẫn là:
 - [`07_diacritic_aware_state_design.md`](07_diacritic_aware_state_design.md): kiến trúc `DiacriticCandidate` và `CompositionState`.
 - [`09_pr3_acceptance_criteria.md`](09_pr3_acceptance_criteria.md): Entry/Exit Gate.
 - [`16_rq_code_metric_test_traceability.md`](16_rq_code_metric_test_traceability.md): ánh xạ RQ–metric–test.
-- [`18_pr3_e4_shared_transition_contract_draft.md`](18_pr3_e4_shared_transition_contract_draft.md): dự thảo hợp đồng giao diện chuyển tiếp E4 (đang chờ TV2 recheck).
+- [`18_pr3_e4_shared_transition_contract_draft.md`](18_pr3_e4_shared_transition_contract_draft.md): hợp đồng giao diện chuyển tiếp E4 đã phê duyệt (E4 PASS qua `4677aad`/`ee7c214`).
 
 Nếu pack này mâu thuẫn với Docs 07 hoặc 09, Docs 07/09 có quyền ưu tiên và pack phải được sửa trước khi code.
 
@@ -36,10 +37,10 @@ Nếu pack này mâu thuẫn với Docs 07 hoặc 09, Docs 07/09 có quyền ưu
 | E1 — PR1 metrics/runner | `PASS` | Evaluator, CSV logger, experiment runner và DEV fingerprint fixture đã tồn tại | Không sửa lại trong PR3 trừ khi cần metadata thật sự mới |
 | E2 — ASCII geometry lock | `PASS` | 48 cấu hình tại `pr3_ascii_baseline_fingerprints.json` | Mọi lát cắt PR3 phải giữ 48/48 fingerprint |
 | E3 — B1/B2/B3 adapters | `PASS` | PR #32 merge commit `bcc1a7a`; `baselines.py`, runner method tags và `tests/test_ca_vhc_baselines.py`; full suite 136 passed | Dependency PR2 đã nhận; E3 hoàn tất |
-| E4 — Shared transition interface | `CHANGES_REQUIRED` | TV2 review tại `e0c9f91` yêu cầu xử lý immutability, zero-tangent, sentinel/error semantics và regression tests | Entry Gate E4 mở lại (`REOPENED`); chờ TV4 xử lý và TV2 recheck |
+| E4 — Shared transition interface | `PASS` | TV4 & TV2 cùng duyệt contract tại `4677aad`; TV2 ghi sign-off tại `ee7c214` (nhánh tích hợp nhận tại `e62f361`). Lịch sử `e0c9f91` lưu tại Doc 18. | `PASS` (Cấp phép triển khai PR3) |
 | E5 — Corpus integrity | `PASS` | Acceptance specimens chỉ lấy từ DEV; Holdout guard đã có | Cấm `--corpus holdout/all` và `--allow-holdout` trong PR3 |
 
-**Quy tắc mở PR3:** Do Gate E4 đang ở trạng thái `CHANGES_REQUIRED`, PR3 chưa được nghiệm thu chính thức. Mã nguồn PR3 đã viết được lưu giữ độc lập trên nhánh `backup/pr3-implementation` phục vụ review và hoàn thiện.
+**Quy tắc mở PR3:** Entry Gate E4 đã đạt `PASS`. PR3 ở trạng thái `READY_TO_IMPLEMENT`. Mã nguồn PR3 hiện có trên nhánh `backup/pr3-implementation` là bản nháp kỹ thuật phục vụ review độc lập của TV4 và TV2 trước khi nghiệm thu và tích hợp.
 
 ## 3. Checklist nhận bàn giao PR2
 
@@ -57,14 +58,14 @@ TV4 dùng bảng này khi review PR2. Tên symbol cuối cùng do PR2 quyết đ
 
 ### 3.2. Shared transition contract
 
-- [ ] Chữ ký transition chấp nhận trạng thái trước/sau hoặc một protocol tối thiểu tương đương, không phụ thuộc trực tiếp vào UI/API payload.
-- [ ] Kết quả tách được `D_penup`, `N_lift`, `C_curvature`, `C_bridge_collision`, tổng cost và quyết định nối/nhấc bút.
-- [ ] Mọi cost hữu hạn, không âm; invalid geometry fail closed.
-- [ ] Quy ước local/world coordinate và đơn vị millimét được ghi rõ.
-- [ ] Có đường lấy `world_bbox`/world strokes của dấu để bridge collision kiểm tra đúng hai state kề nhau.
-- [ ] `C_state` không bị tính lại trong `J_transition`.
-- [ ] Trọng số động học thuộc TV2/shared contract; placement/legibility/internal-diacritic cost vẫn thuộc TV4.
-- [ ] Có synthetic test với nghiệm tối ưu biết trước và test bảo toàn B3.
+- [x] Chữ ký transition chấp nhận trạng thái trước/sau hoặc một protocol tối thiểu tương đương, không phụ thuộc trực tiếp vào UI/API payload.
+- [x] Kết quả tách được `D_penup`, `N_lift`, `C_curvature`, `C_bridge_collision`, tổng cost và quyết định nối/nhấc bút.
+- [x] Mọi cost hữu hạn, không âm; invalid geometry fail closed.
+- [x] Quy ước local/world coordinate và đơn vị millimét được ghi rõ.
+- [x] Có đường lấy `world_bbox`/world strokes của dấu để bridge collision kiểm tra đúng hai state kề nhau.
+- [x] `C_state` không bị tính lại trong `J_transition`.
+- [x] Trọng số động học thuộc TV2/shared contract; placement/legibility/internal-diacritic cost vẫn thuộc TV4.
+- [x] Có synthetic test với nghiệm tối ưu biết trước và test bảo toàn B3.
 
 ### 3.3. Câu hỏi bắt buộc khi PR2 tới
 
@@ -76,7 +77,7 @@ TV4 dùng bảng này khi review PR2. Tên symbol cuối cùng do PR2 quyết đ
 6. Test nào chứng minh B1/B2/B3 dùng cùng input và seed?
 7. PR2 thay đổi file nào trong `backend/handwriting/` và có giao nhau với vùng TV4 sẽ sửa không?
 
-PR2 đã trả lời các câu về method tag, schema và B3; các quyết định về transition breakdown, world geometry và migration `cost_legibility` đang được ghi tại [`18_pr3_e4_shared_transition_contract_draft.md`](18_pr3_e4_shared_transition_contract_draft.md). Nếu một câu E4 chưa có câu trả lời được hai owner xác nhận, E4 giữ `WAITING`.
+PR2 đã trả lời các câu về method tag, schema và B3; các quyết định về transition breakdown, world geometry và migration `cost_legibility` đã được TV4 và TV2 cùng phê duyệt và khóa trong hợp đồng E4 tại [`18_pr3_e4_shared_transition_contract_draft.md`](18_pr3_e4_shared_transition_contract_draft.md) (commit `4677aad`, TV2 sign-off `ee7c214`, nhánh tích hợp nhận tại `e62f361`). Gate E4 đã chính thức `PASS`.
 
 ## 4. Bản đồ điểm chạm mã nguồn PR3
 
@@ -225,12 +226,12 @@ Không tạo test `xfail` chỉ để làm dashboard trông đầy đủ. Trư�
 PR3 được phép bắt đầu khi toàn bộ mục sau đạt:
 
 - [x] E3 đóng: B1/B2/B3 đã merge và test pass (PR #32, `bcc1a7a`; full suite 136 passed).
-- [x] E4 đóng: shared transition contract được TV2 và TV4 xác nhận ([`Docs 18`](18_pr3_e4_shared_transition_contract_draft.md)).
+- [x] E4 đóng: shared transition contract được TV2 và TV4 cùng phê duyệt tại `4677aad`, TV2 ghi sign-off tại `ee7c214`, nhánh tích hợp nhận tại `e62f361` ([`Docs 18`](18_pr3_e4_shared_transition_contract_draft.md)).
 - [x] Working tree PR3 không chứa thay đổi chưa review của PR2.
 - [x] 48 ASCII baseline và toàn bộ suite hiện hành pass trên commit nền (136/136 tests PASS).
 - [x] DEV/holdout guard vẫn hoạt động.
 - [x] File ownership và danh sách symbol shared đã được ghi rõ.
 - [x] Không có yêu cầu mở rộng phạm vi sang PR4/P2/hardware.
 
-Toàn bộ checklist trên đã hoàn tất. TV4 đổi trạng thái tài liệu thành `READY_TO_IMPLEMENT` và chính thức khởi động Slice 0.
+Toàn bộ checklist trên đã hoàn tất. Trạng thái E4 = `PASS`, PR3 = `READY_TO_IMPLEMENT`. Mã nguồn PR3 trên nhánh `backup/pr3-implementation` tiếp tục được lưu giữ độc lập như bản nháp kỹ thuật phục vụ TV4 và TV2 review độc lập trước khi nghiệm thu chính thức.
 
