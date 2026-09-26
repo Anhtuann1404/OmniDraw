@@ -45,6 +45,21 @@ Review motion `TV2-HW-R01–R06` là lớp kiểm tra bổ sung. Nó không thay
 
 ## 4. Công thức đề xuất
 
+### Recheck phần mềm trên `a138e58637d2accbdeb78d25ec22d1a4650dee72`
+
+Kết quả AI recheck ngày 2026-09-26: `PASS_WITH_CHANGES`; `TV2_APPROVAL: CHANGES_REQUIRED`. Giữ phần review gốc ở trên làm lịch sử. Bộ test `tests/test_hardware_adapter.py` chạy trên snapshot riêng: **42 passed in 16.70s**. Các test physical dùng mock driver; chưa có bằng chứng đo trên thiết bị thật.
+
+| Finding | Kết luận recheck | Bằng chứng và phần còn mở |
+| :--- | :--- | :--- |
+| TV2-HW-R01 | `VERIFIED_CLOSED` | `backend/hardware_adapter.py::calculate_svg_draw_breakdown()` dòng 923–1043; protocol §7 ghi `constant_speed_baseline`, hai model flags `false`, phân biệt `accel_pct` với gia tốc vật lý. Test `test_calculate_svg_draw_breakdown_contract` PASS. |
+| TV2-HW-R02 | `VERIFIED_CLOSED` | `MockSimulatorAdapter.start_job/get_status` và `AxiDrawAdapter.start_job/get_status` truyền draw/pen-up distances và lift count qua job/status; `run_rq3_calibration_benchmark()` dòng 2256–2258 đọc các trường này. Breakdown có các thành phần thời gian riêng. |
+| TV2-HW-R03 | `VERIFIED_CLOSED` | SVG Block B đã tạo heading change 60/90/120/150 độ, mỗi segment 20 mm; test `test_specimen_fixture_block_b_exact_angles` tính lại từ tọa độ và PASS. |
+| TV2-HW-R04 | `OPEN` | SVG Block C và test geometry đã xác nhận 3 ID tốc độ, 20 nét dài 2 mm và 19 khoảng pen-up dài 2 mm mỗi dải. Tuy nhiên `run_rq3_calibration_benchmark()` dòng 2238–2239 chỉ gọi một job cho toàn bộ SVG, dùng một profile; không chọn từng band hoặc đổi vận tốc 20/40/60 mm/s. Nhãn SVG không điều khiển tốc độ driver. Cần tách từng band thành job/specimen riêng với profile tốc độ tương ứng, hoặc ghi rõ đây chỉ là template geometry và cung cấp protocol chạy riêng từng band. Test cần chứng minh các band thực sự được gửi với 3 cấu hình tốc độ tương ứng. |
+| TV2-HW-R05 | `VERIFIED_CLOSED` | `HARDWARE_METRICS_FIELDNAMES` dòng 369–394 và protocol §3 cùng schema 22 trường: 9 trường core + 13 trường motion/profile/model. `record_metric()` ghi các trường mở rộng; migration và test CSV/provenance chạy PASS. Review này chưa thay thế phê duyệt contract tích hợp của TV4. |
+| TV2-HW-R06 | `VERIFIED_CLOSED` | `AxiDrawAdapter.get_status()` dòng 2038–2067 đọc cờ và source tag đã lưu trong job; khởi tạo vẫn false, worker chỉ chốt true cho physical success. Test `test_completed_physical_job_provenance_immutability_on_disconnect` và các test failure/cancel PASS. |
+
+TV3 cần xử lý residual R04; TV4 review contract CSV 22 trường và `pause_supported` trong PR hardware. Không đóng physical calibration hoặc formal experiment từ kết quả test này. Sign-off bên dưới là quyết định lịch sử, chưa phải human sign-off cho snapshot `a138e58`.
+
 ### Trước khi có dữ liệu hiệu chuẩn
 
 Giữ công thức hiện tại nhưng ghi rõ là lower-order baseline:
