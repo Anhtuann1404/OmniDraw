@@ -59,12 +59,18 @@ class TransitionResult:
     is_valid: bool                                       # False nếu vi phạm hard constraint
     decision: Literal["CONNECT", "LIFT", "REJECT"]
     total_cost: float                                    # min(J_conn, J_lift) hoặc +inf
-    breakdown: TransitionCostBreakdown
+    breakdown: Optional[TransitionCostBreakdown]         # None khi decision == "REJECT"
     reject_reason: Optional[str] = None                  # bắt buộc khi decision == "REJECT"
     bridge_strokes: Optional[Tuple[np.ndarray, ...]] = None
 ```
 
 `bridge_strokes` chứa defensive copies trong world frame; mỗi array phải được đánh dấu read-only trước khi đóng gói. `frozen=True` chỉ khóa phép gán field, không tự làm `np.ndarray` bất biến. `TransitionWeights` và `TransitionCostBreakdown` chỉ chứa scalar hữu hạn, không âm và được validate tại boundary.
+
+Invariant của `TransitionResult`:
+
+- Với `decision` là `CONNECT` hoặc `LIFT`: `is_valid=True`, `total_cost` hữu hạn/không âm, `breakdown` bắt buộc khác `None`, mọi scalar trong breakdown hữu hạn/không âm và `reject_reason=None`.
+- Với `decision="REJECT"`: `is_valid=False`, `total_cost=+inf`, `breakdown=None`, `bridge_strokes=None` và `reject_reason` bắt buộc là mã không rỗng. Không tạo breakdown giả chứa `+inf`.
+- NaN/Inf phát sinh do lỗi tính toán không tạo `TransitionResult`; evaluator raise `TransitionEvaluationError`.
 
 Chữ ký hàm chuyển tiếp chính thức:
 
@@ -119,7 +125,7 @@ def evaluate_composition_transition(
    - Nhánh `CONNECT`: $J_{conn} = w_3 C_{curvature} + w_4 C_{bridge\_collision}$ (nếu vi phạm hard collision thì $J_{conn} = +\infty$).
    - **Xóa bỏ `cost_legibility` khỏi $J_{transition}$:** Khác với `eval_transition()` cũ cộng `w5 * w.cost_legibility`, PR3 chuyển hoàn toàn legibility sang $C_{state}$. $J_{transition}$ chỉ thuần túy đo đạc chi phí chuyển động giữa hai ký tự.
 3. **Cơ chế Cắt tỉa Cứng (Fail-closed Hard Pruning):**
-   - Hard constraint đã biết được biểu diễn bằng `decision="REJECT"`, `is_valid=False`, `total_cost=+inf` và `reject_reason` có mã ổn định. Đây là trường hợp duy nhất `+inf` được phép xuất hiện trong `TransitionResult`.
+   - Hard constraint đã biết được biểu diễn bằng `decision="REJECT"`, `is_valid=False`, `total_cost=+inf`, `breakdown=None`, `bridge_strokes=None` và `reject_reason` có mã ổn định. Đây là trường hợp duy nhất `+inf` được phép xuất hiện trong `TransitionResult`.
    - Cost âm, NaN/Inf do phép tính, geometry sai shape và tangent suy biến là lỗi đánh giá; raise `TransitionEvaluationError` và giữ cause, không giả thành một cạnh `REJECT` bình thường.
    - Nếu toàn bộ các cạnh đến một layer đều bị REJECT ($+\infty$), thuật toán Viterbi DP kích hoạt cơ chế fail-closed trả ngoại lệ `NoValidPathError` thay vì xuất SVG lỗi.
 
@@ -127,7 +133,7 @@ def evaluate_composition_transition(
 
 E4 chỉ khóa **interface, semantics, đơn vị, ownership và test plan**. Đóng E4 không yêu cầu code PR3 hoặc toàn bộ test nghiệm thu implementation đã tồn tại/chạy PASS. Sau khi E4 được hai owner ký lại, PR3 mới được phép triển khai theo slice.
 
-Các test B3/ASCII parity, no-double-count, immutable bridge geometry, anisotropic transform, invalid geometry và `NoValidPathError` là **PR3 implementation/exit criteria**. Trước khi đóng E4, TV2 và TV4 chỉ cần duyệt tên test, assertion bắt buộc và owner; kết quả thực thi chỉ được ghi khi code tương ứng tồn tại.
+Các test B3/ASCII parity, no-double-count, immutable bridge geometry, anisotropic transform, invalid geometry và `NoValidPathError` là **PR3 implementation/exit criteria**. Test contract phải kiểm tra thêm: `CONNECT`/`LIFT` luôn có breakdown hữu hạn; `REJECT` luôn có `breakdown=None`, `bridge_strokes=None` và `total_cost=+inf`; lỗi tính toán phải raise thay vì bị đổi thành `REJECT`. Trước khi đóng E4, TV2 và TV4 chỉ cần duyệt tên test, assertion bắt buộc và owner; kết quả thực thi chỉ được ghi khi code tương ứng tồn tại.
 
 ---
 
@@ -139,7 +145,7 @@ Các test B3/ASCII parity, no-double-count, immutable bridge geometry, anisotrop
 | **Q2** | `TransitionResult` lưu bridge geometry trực tiếp hay dựng lại? | Lưu defensive copies dưới dạng `bridge_strokes: Optional[Tuple[np.ndarray, ...]]`; arrays được đặt read-only trước khi trả kết quả. | Bảo đảm hình học được đánh giá chính là hình học được vẽ và không bị mutation sau khi DP chấm cost. |
 | **Q3** | Di chuyển `cost_legibility` như thế nào để tránh double-count? | Chuyển trọn vẹn vào $C_{state}(s)$. Bãi bỏ hoàn toàn số hạng $w_5 \cdot cost\_legibility$ trong `evaluate_composition_transition()`. | Tuân thủ nghiêm ngặt công thức toán học tại Docs 07 và Chương 3; B3 cũ vẫn giữ đường chạy riêng nên không bị lệch điểm. |
 | **Q4** | Quy ước hệ tọa độ và chuẩn hóa tiếp tuyến? | Local là `glyph-local units`; World là `mm`. Điểm: $\mathbf{p}_w = \mathbf{p}_l \odot \mathbf{scale\_vec} + \mathbf{offset}$. Tiếp tuyến: $\mathbf{t}_w = \text{normalize}(\mathbf{t}_l \odot \mathbf{scale\_vec})$. | Hỗ trợ co giãn không đều X/Y; tangent zero-norm hoặc không hữu hạn gây `TransitionEvaluationError`, không dùng fallback vector. |
-| **Q5** | Biểu diễn cạnh chuyển tiếp không hợp lệ? | Hard constraint: `REJECT` + `is_valid=False` + `total_cost=+inf` + `reject_reason`. Lỗi tính toán: raise `TransitionEvaluationError`. | Viterbi bỏ cạnh `REJECT`; nếu không còn đường đi hợp lệ thì runner raise `NoValidPathError` và renderer/API chuyển thành lỗi có cấu trúc. |
+| **Q5** | Biểu diễn cạnh chuyển tiếp không hợp lệ? | Hard constraint: `REJECT` + `is_valid=False` + `total_cost=+inf` + `breakdown=None` + `bridge_strokes=None` + `reject_reason`. Lỗi tính toán: raise `TransitionEvaluationError`. | Breakdown chỉ tồn tại cho `CONNECT`/`LIFT` và chỉ chứa scalar hữu hạn; Viterbi bỏ cạnh `REJECT`; nếu không còn đường đi hợp lệ thì runner raise `NoValidPathError` và renderer/API chuyển thành lỗi có cấu trúc. |
 | **Q6** | Cấu trúc dữ liệu Cost breakdown & Weights? | Dùng frozen dataclass scalar, khóa `CONTRACT_VERSION="e4-v1"`, tên/đơn vị/thứ tự breakdown và defaults `0.5/4.0/2.0/15.0`. | Defaults là tham số kỹ thuật ban đầu, không phải kết quả thực nghiệm; mọi trọng số phải hữu hạn và không âm. |
 | **Q7** | Đơn vị độ dịch ứng viên dấu `dx_candidates_mm`? | Áp dụng trực tiếp trong hệ tọa độ world (mm) sau khi thân chữ đã biến đổi. | Bảo đảm bước dịch kiểm tra khoảng hở an toàn ($0.3\,\text{mm}$, $0.5\,\text{mm}$) luôn bất biến theo kích thước vật lý của ngòi bút trên giấy, không bị co giãn theo font size. |
 
@@ -151,7 +157,7 @@ Các test B3/ASCII parity, no-double-count, immutable bridge geometry, anisotrop
 | **Q2 — Bridge geometry** | Đồng ý lưu geometry bridge đã được đánh giá để renderer dùng lại, không dựng lại lần hai. | Contract đã đổi sang tuple của defensive copy/read-only arrays; PR3 phải có mutation test tại exit gate. |
 | **Q3 — `cost_legibility`** | Đồng ý chuyển toàn bộ legibility của PR3 vào `C_state`; `J_transition` mới không cộng lại khoản này. | Giữ đường B3 cũ riêng và có test no-double-count cho state đầu, state tiếp theo, nhánh `CONNECT` và nhánh `LIFT`. |
 | **Q4 — Tọa độ** | Đồng ý local là glyph units, world là mm; điểm dùng `scale_vec`/`offset`, tangent transform theo `scale_vec` rồi normalize. | Contract đã khóa `TransitionEvaluationError` cho tangent zero-norm/không hữu hạn; anisotropic test thuộc PR3 exit gate. |
-| **Q5 — Cạnh không hợp lệ** | Đồng ý dùng `REJECT/+inf/reject_reason` cho hard constraint; lỗi tính toán raise `TransitionEvaluationError`; hết đường đi raise `NoValidPathError` tại runner. | Renderer/API phải chuyển lỗi runner thành lỗi có cấu trúc; implementation test thuộc PR3 exit gate. |
+| **Q5 — Cạnh không hợp lệ** | Đồng ý dùng `REJECT/+inf/breakdown=None/reject_reason` cho hard constraint; lỗi tính toán raise `TransitionEvaluationError`; hết đường đi raise `NoValidPathError` tại runner. | Renderer/API phải chuyển lỗi runner thành lỗi có cấu trúc; implementation test phải phân biệt invariant của `CONNECT`/`LIFT`, `REJECT` và computational error tại PR3 exit gate. |
 | **Q6 — Cost/config** | Đồng ý dùng frozen dataclass scalar; defaults `0.5/4.0/2.0/15.0` chỉ là tham số kỹ thuật ban đầu. | Contract đã thêm `CONTRACT_VERSION="e4-v1"`, validation finite/non-negative và ranh giới immutability. |
 
 TV2 đồng ý Q7 theo quyết định hiện tại: độ dịch mang đơn vị mm được áp dụng đúng một lần trong world frame, kèm test scale X/Y không đều.
@@ -163,7 +169,7 @@ TV2 đồng ý Q7 theo quyết định hiện tại: độ dịch mang đơn v�
 | Vai trò | Người xác nhận | Quyết định | Bằng chứng kiểm chứng |
 | :--- | :--- | :---: | :--- |
 | **TV2 — Stroke Optimization & Path Planning Lead** | Khải (TV2) | **CHANGES_REQUIRED** | `PASS_WITH_CHANGES`; đã trả lời Q1–Q7. Các điều kiện về immutability, zero-tangent, sentinel/error semantics, contract version và ranh giới test plan đã được đưa vào bản contract này; chờ TV4 recheck và hai owner đồng thuận trước khi đóng E4. |
-| **TV4 — Handwriting & CA-VHC Composition Lead** | Tuấn (TV4) | **APPROVED** | Đã xác nhận cấu trúc `CompositionState`, di chuyển legibility sang $C_{state}$, affine transform `scale_vec`, bảo toàn B3 parity và 136/136 unit tests. |
+| **TV4 — Handwriting & CA-VHC Composition Lead** | Tuấn (TV4) | **PENDING_RECHECK** | `APPROVED` ngày 2026-09-24 chỉ áp dụng cho bản E4 cũ đã bị mở lại; đó là bản ghi lịch sử, không phải chữ ký cho contract hiện hành. TV4 chưa ký lại bản có các correction mới. |
 
 - **TV2 verdict:** **`PASS_WITH_CHANGES`**
 - **TV2_APPROVAL:** **`CHANGES_REQUIRED`**

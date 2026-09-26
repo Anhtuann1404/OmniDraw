@@ -84,8 +84,9 @@ PR2 đã trả lời các câu về method tag, schema và B3; các quyết đ�
 | :--- | :--- | :--- | :--- |
 | `backend/handwriting/engine.py:get_glyph_variants()` | Sinh `GlyphVariant` thân chữ | Tái sử dụng làm vế base của `CompositionState` | Không thay hình học Font Pack |
 | `engine.py:generate_accents()` | Sinh dấu hậu DAG | Giữ wrapper tương thích; tách hình học canonical để sinh candidate | Không xóa public behavior đột ngột |
-| `engine.py:eval_transition()` | Cost giữa hai `GlyphVariant` | Tích hợp shared PR2 contract và bridge-vs-diacritic world geometry sau E4 | Không tự định nghĩa lại cost TV2 |
-| `engine.py:optimize_word_dag()` | Viterbi trên `GlyphVariant` | Chuyển layer sang `CompositionState`, cộng `C_state + J_transition` | Không dùng beam/top-k heuristic chưa được duyệt |
+| `engine.py:eval_transition()` | Cost giữa hai `GlyphVariant` cho B3/default | Giữ nguyên implementation và đường gọi hiện hành | Không đưa shared PR3 contract vào hàm này; không làm đổi hành vi B3/default |
+| `engine.py:optimize_word_dag()` | Viterbi trên `GlyphVariant` cho B3/default | Giữ nguyên implementation và đường gọi hiện hành | Không chuyển layer B3/default sang `CompositionState` |
+| `composition.py::evaluate_composition_transition()` *(planned)* | Shared transition giữa hai `CompositionState` của PR3 | Triển khai contract Docs 18 và được gọi qua đường PR3 riêng | Không gọi vòng qua hoặc thay thế `engine.eval_transition()` |
 | `engine.py:_text_to_strokes_impl()` | Chuẩn bị `char_info`, gọi DAG, render dấu post-DAG | Truyền accents/context vào builder; render dấu từ state đã chọn | Không đặt lại dấu lần hai ở hậu xử lý |
 | `engine.py:text_to_strokes_structured()` | Public structured trace | Bảo toàn signature; bổ sung trace metadata theo hướng tương thích | Không đổi public API ngoài contract |
 | `backend/handwriting/metrics_evaluator.py` | Collision, clearance, curvature và fingerprint | Chỉ bổ sung producer/trace nếu metric thật sự thiếu | Không đổi ngưỡng đo thành tham số render |

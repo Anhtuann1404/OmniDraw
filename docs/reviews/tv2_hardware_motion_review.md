@@ -3,6 +3,7 @@
 ```text
 REVIEWER_ROLE: TV2 — Stroke Optimization & Path Planning Lead
 REVIEW_TARGET_COMMIT: 7d1c1d3b7388ce3ff76dd823c19bd8607f994d19
+HARDWARE_RECHECK_COMMIT: f41bb20 (integration snapshot containing 4f7c978980892bf8efc8e5d7664dca76db52d65e)
 REVIEW_DATE: 2026-09-25
 WORKFLOW_STATUS: CHANGES_REQUESTED
 VERDICT: PASS_WITH_CHANGES
@@ -40,7 +41,7 @@ Review motion `TV2-HW-R01–R06` là lớp kiểm tra bổ sung. Nó không thay
 | TV2-HW-R03 | MAJOR | `tests/fixtures/rq3_clearance_calibration_specimen.svg`, block B; `tests/test_hardware_adapter.py::test_rq3_benchmark_simulator_run` | Các path được gắn nhãn 60/90/120/150 nhưng hướng segment thực tế không khớp; test chỉ kiểm tra danh sách nhãn hard-code, không kiểm tra geometry. | Tạo lại path theo một định nghĩa góc duy nhất (`heading_change_deg` hoặc interior angle) và thêm test parse geometry để tính lại từng góc. |
 | TV2-HW-R04 | MAJOR | Fixture block C; `docs/hardware/07_physical_calibration_protocol.md` §3.3 | Protocol mô tả chu kỳ 2 mm pen-down / 2 mm pen-up ở 20/40/60 mm/s, nhưng fixture hiện dùng các nét khoảng 5 mm, khoảng nhấc khoảng 4 mm và không tách ba dải tốc độ. | Đồng bộ fixture với protocol hoặc sửa protocol theo specimen thực; mỗi dải tốc độ phải có ID/metadata riêng và được chạy với profile tương ứng. |
 | TV2-HW-R05 | MINOR | `record_metric()` và `docs/hardware/measurement-protocol.md` §3 | CSV 7 cột chưa đủ tái lập mô hình chuyển động. | Trước physical benchmark, thêm tối thiểu `profile_version`, device/model, pen-down/up speed, `accel_pct`, delays, draw/pen-up distances, lift count và model flags. |
-| TV2-HW-R06 | MAJOR — OPEN | `backend/hardware_adapter.py::AxiDrawAdapter.start_job()` và `get_status()` | Job gán `actual_hardware_measured=is_real` ngay khi vừa tạo, trước khi physical `plot_run()` thành công; terminal status lại tính cờ từ kết nối hiện tại thay vì provenance bất biến của chính lượt chạy. Vì vậy chưa thể kết luận provenance đo vật lý đã an toàn. | Khởi tạo `actual_hardware_measured=false`; chỉ chuyển thành `true` sau khi physical job hoàn tất thành công và `actual_draw_time_sec` hữu hạn/không âm. `get_status()` phải trả cờ đã lưu trong job, không tính lại từ trạng thái kết nối. Error/cancel/pause giữ `false`; bổ sung test ngắt kết nối sau job và physical failure. |
+| TV2-HW-R06 | MAJOR — OPEN (RESIDUAL) | `4f7c978:backend/hardware_adapter.py::AxiDrawAdapter.start_job()` khoảng dòng 1670–1718; `get_status()` khoảng dòng 1889–1931 | Recheck snapshot tích hợp `f41bb20` chứa `4f7c978`: phần khởi tạo đã được sửa đúng — job bắt đầu với `actual_hardware_measured=false` và worker chỉ ghi `true` trong payload `done` của lượt chạy physical thành công. Phần còn mở là `get_status()` vẫn tự tính lại cờ từ `_use_fake_driver`, terminal status và actual time, đồng thời lấy `source_tag` từ trạng thái adapter hiện tại, thay vì đọc provenance đã lưu trong job. Vì vậy provenance trả về chưa được bảo đảm bất biến theo chính lượt chạy. | Cho `get_status()` trả nguyên `job["actual_hardware_measured"]` và `job["source_tag"]` đã chốt khi job hoàn tất. Bổ sung test terminal physical job có provenance đã lưu, sau đó thay đổi/ngắt trạng thái kết nối và xác nhận status vẫn trả đúng provenance của job; giữ test physical failure/cancel luôn `false`. Không đóng toàn bộ R06 cho tới khi test này PASS. |
 
 ## 4. Công thức đề xuất
 
