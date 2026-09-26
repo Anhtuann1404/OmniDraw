@@ -1,10 +1,10 @@
 # Báo cáo Phân tích Độ phủ Ký tự, Dấu và Ngữ cảnh Bộ Phiếu Thu thập P01–P04 (Coverage Analysis Report)
 
 **Mã tài liệu:** `DOC-REP-20-COVERAGE-ANALYSIS`  
-**Phiên bản:** `v1.0.0` (Báo cáo thẩm định trước thử nghiệm Pilot)  
-**Ngày lập:** 25/09/2026 | **Chủ trì thẩm định:** TV1 (AI Data & Writer Profile Lead)  
+**Phiên bản:** `v1.0.0` (Báo cáo phân tích kỹ thuật trước thử nghiệm Pilot)  
+**Ngày lập:** 25/09/2026 | **Chủ trì soạn thảo:** TV1 (AI Data & Writer Profile Lead)  
 **Đơn vị phối hợp:** TV4 (Project Lead & Handwriting / CA-VHC Composition Lead)  
-**Trạng thái tài liệu:** `APPROVED FOR PILOT PHASE — AWAITING 600 DPI BENCH SCAN VALIDATION`
+**Trạng thái tài liệu:** `PILOT CANDIDATE — PENDING 600 DPI BENCH PRINT/SCAN AND TV4 REVIEW`
 
 ---
 
@@ -118,7 +118,7 @@ Trang P04 gồm 1 khối đoạn văn xuôi liên tục 32 từ (172 ký tự kh
 - Đây là cơ sở thực nghiệm duy nhất để đo:
   1. **Độ trôi baseline dài hạn (Cumulative Baseline Drift)** qua nhiều dòng.
   2. **Góc nghiêng toàn cục (Global Slant Consistency)** của người viết khi viết tự do.
-  3. **Tác động mỏi cơ bàn tay (Ergonomic Fatigue Effect)** đối với người viết.
+  3. **Tính nhất quán hình học và mật độ chữ (Writing Density & Flow Consistency)** qua văn cảnh dài hạn.
 
 ---
 
@@ -150,10 +150,10 @@ Trang P04 gồm 1 khối đoạn văn xuôi liên tục 32 từ (172 ký tự kh
 
 ### 5.2. Khuyến nghị Điều chỉnh & Lộ trình Thực hiện
 - **Trong Giai đoạn Pilot (3–5 người viết)**:
-  - **GIỮ NGUYÊN 100% thiết kế hiện tại của P01–P04**. Không thay đổi bố cục vector vì toàn bộ `scan_validator` pipeline, tọa độ bounding box (`bbox_mm`, `writing_bbox_mm`) và fixture kiểm thử đã được đóng băng khớp với các template này.
-  - Tập trung pilot để kiểm chứng: (a) Độ thoải mái công thái học của người viết; (b) Tỷ lệ nét viết tràn ra ngoài ô; (c) Khả năng tách lọc quang học của đường guide line `#d0d0d0`.
+   - **GIỮ NGUYÊN 100% thiết kế hiện tại của P01–P04**. Không thay đổi bố cục vector vì toàn bộ `scan_validator` pipeline, tọa độ bounding box (`bbox_mm`, `writing_bbox_mm`) và fixture kiểm thử đã được đóng băng khớp với các template này.
+   - Tập trung pilot để kiểm chứng: (a) Độ thoải mái công thái học của người viết; (b) Tỷ lệ nét viết tràn ra ngoài ô; (c) Khả năng tách lọc quang học của đường guide line `#d0d0d0`.
 - **Trong Giai đoạn Thu thập Mở rộng (Full Collection ~40 người viết)**:
-  - Xem xét thiết kế bổ sung trang **P01B** (Isolated Extension) nếu hội đồng nghiệm thu yêu cầu phủ trọn vẹn 67 nguyên âm và 26 chữ hoa độc lập.
+   - Xem xét thiết kế bổ sung trang **P01B** (Isolated Extension) nếu hội đồng nghiệm thu yêu cầu phủ trọn vẹn 67 nguyên âm và 26 chữ hoa độc lập.
 
 ---
 
@@ -162,7 +162,6 @@ Trang P04 gồm 1 khối đoạn văn xuôi liên tục 32 từ (172 ký tự kh
 Bộ phiếu **OmniDraw Handwriting Collection Sheet Pack v1 (P01–P04)**:
 1. Đã đạt độ phủ ngữ cảnh và âm vị học **toàn diện và cân đối**, đại diện xuất sắc cho đặc thù chữ viết tay tiếng Việt.
 2. Thiết kế hình học phân tầng rõ ràng, có mốc định vị chuẩn mực, cách ly hoàn toàn chữ in và chữ viết tay.
-3. **ĐỦ ĐIỀU KIỆN KỸ THUẬT ĐỂ BƯỚC VÀO THỬ NGHIỆM PILOT (PILOT APPROVED)** ngay sau khi hoàn tất in thử và quét bench test 600 DPI.
+3. **ĐỦ TIÊU CHÍ ỨNG VIÊN ĐỂ BƯỚC VÀO THỬ NGHIỆM PILOT (PILOT CANDIDATE)** sau khi hoàn tất in thử, quét bench test 600 DPI và được TV4 phê duyệt.
 
-*Người lập báo cáo:* **TV1 — AI Data & Writer Profile Lead**  
-*Ký duyệt chuyên môn:* **TV4 — Project Lead & Handwriting / CA-VHC Composition Lead**
+*Người lập báo cáo:* **TV1 — AI Data & Writer Profile Lead** (Bản dự thảo đề xuất; chờ TV4 nghiệm thu)

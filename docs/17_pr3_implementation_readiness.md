@@ -3,11 +3,11 @@
 **Phiên bản:** 0.2
 **Ngày lập:** 2026-09-24
 **Owner:** TV4 — Handwriting / CA-VHC Composition Lead
-**Trạng thái:** `READY_TO_IMPLEMENT (E4 APPROVED AND LOCKED)`
+**Trạng thái:** `E4_REOPENED_CHANGES_REQUIRED — PR3 DRAFT PENDING REVIEW`
 **Review boundary:** `OUTSIDE_REVIEW_TARGET_7ae43e6` — tài liệu chuẩn bị này không thay đổi Chương 1–3 và không yêu cầu mở lại gói cross-review v0.2.
 
 > [!IMPORTANT]
-> Entry Gate E4 đã chính thức được TV2 và TV4 ký duyệt tại [`18_pr3_e4_shared_transition_contract_draft.md`](18_pr3_e4_shared_transition_contract_draft.md). Toàn bộ 5 Entry Gate E1–E5 đã đạt `PASS`. Mã nguồn phần mềm PR3 chính thức được cấp phép triển khai (Slice 0–6).
+> Theo phiếu review của TV2 tại commit `e0c9f91`, Entry Gate E4 hiện ở trạng thái **`CHANGES_REQUIRED`** (`PASS_WITH_CHANGES`) và đã được mở lại (**`REOPENED`**) để xử lý các điều kiện kỹ thuật (immutability, zero/non-finite tangent, phân biệt fail-closed `+inf` sentinel vs lỗi tính toán, `contract_version`). Mã nguồn PR3 hiện chỉ là bản triển khai nháp trên nhánh `backup/pr3-implementation`, **CHƯA** được TV4 và TV2 nghiệm thu chính thức, và đã được revert khỏi nhánh tích hợp.
 
 ## 1. Mục tiêu
 
@@ -25,7 +25,7 @@ Nguồn chuẩn vẫn là:
 - [`07_diacritic_aware_state_design.md`](07_diacritic_aware_state_design.md): kiến trúc `DiacriticCandidate` và `CompositionState`.
 - [`09_pr3_acceptance_criteria.md`](09_pr3_acceptance_criteria.md): Entry/Exit Gate.
 - [`16_rq_code_metric_test_traceability.md`](16_rq_code_metric_test_traceability.md): ánh xạ RQ–metric–test.
-- [`18_pr3_e4_shared_transition_contract_draft.md`](18_pr3_e4_shared_transition_contract_draft.md): hợp đồng giao diện chuyển tiếp E4 đã được ký duyệt.
+- [`18_pr3_e4_shared_transition_contract_draft.md`](18_pr3_e4_shared_transition_contract_draft.md): dự thảo hợp đồng giao diện chuyển tiếp E4 (đang chờ TV2 recheck).
 
 Nếu pack này mâu thuẫn với Docs 07 hoặc 09, Docs 07/09 có quyền ưu tiên và pack phải được sửa trước khi code.
 
@@ -36,10 +36,10 @@ Nếu pack này mâu thuẫn với Docs 07 hoặc 09, Docs 07/09 có quyền ưu
 | E1 — PR1 metrics/runner | `PASS` | Evaluator, CSV logger, experiment runner và DEV fingerprint fixture đã tồn tại | Không sửa lại trong PR3 trừ khi cần metadata thật sự mới |
 | E2 — ASCII geometry lock | `PASS` | 48 cấu hình tại `pr3_ascii_baseline_fingerprints.json` | Mọi lát cắt PR3 phải giữ 48/48 fingerprint |
 | E3 — B1/B2/B3 adapters | `PASS` | PR #32 merge commit `bcc1a7a`; `baselines.py`, runner method tags và `tests/test_ca_vhc_baselines.py`; full suite 136 passed | Dependency PR2 đã nhận; E3 hoàn tất |
-| E4 — Shared transition interface | `PASS` | Hợp đồng giao diện chuyển tiếp đã được TV2 và TV4 ký duyệt tại [`18_pr3_e4_shared_transition_contract_draft.md`](18_pr3_e4_shared_transition_contract_draft.md) | Entry Gate E4 hoàn tất; cho phép bắt đầu Slice 0 |
+| E4 — Shared transition interface | `CHANGES_REQUIRED` | TV2 review tại `e0c9f91` yêu cầu xử lý immutability, zero-tangent, sentinel/error semantics và regression tests | Entry Gate E4 mở lại (`REOPENED`); chờ TV4 xử lý và TV2 recheck |
 | E5 — Corpus integrity | `PASS` | Acceptance specimens chỉ lấy từ DEV; Holdout guard đã có | Cấm `--corpus holdout/all` và `--allow-holdout` trong PR3 |
 
-**Quy tắc mở PR3:** Toàn bộ 5 Entry Gate E1–E5 đã đạt `PASS`. Trạng thái chính thức chuyển sang `READY_TO_IMPLEMENT`. PR3 bắt đầu thực thi từ Slice 0.
+**Quy tắc mở PR3:** Do Gate E4 đang ở trạng thái `CHANGES_REQUIRED`, PR3 chưa được nghiệm thu chính thức. Mã nguồn PR3 đã viết được lưu giữ độc lập trên nhánh `backup/pr3-implementation` phục vụ review và hoàn thiện.
 
 ## 3. Checklist nhận bàn giao PR2
 

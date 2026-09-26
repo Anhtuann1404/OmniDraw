@@ -1,9 +1,10 @@
 # Quy trình Vận hành Thu thập Mẫu Chữ viết tay và Chính sách Xử lý Lỗi (Collection Protocol & Error Handling Policy)
 
 **Mã tài liệu:** `DOC-POL-21-COLLECTION-PROTOCOL`  
-**Phiên bản:** `v1.0.0` (Chính sách chuẩn hóa vận hành trước thử nghiệm Pilot)  
-**Ngày ban hành:** 25/09/2026 | **Chủ trì quản trị:** TV1 (AI Data & Writer Profile Lead)  
-**Đồng thẩm định & Phê duyệt:** TV4 (Project Lead & Handwriting / CA-VHC Composition Lead)  
+**Phiên bản:** `v1.0.0` (Dự thảo quy trình vận hành trước thử nghiệm Pilot)  
+**Ngày cập nhật:** 25/09/2026 | **Chủ trì soạn thảo:** TV1 (AI Data & Writer Profile Lead)  
+**Đơn vị phối hợp:** TV4 (Project Lead & Handwriting / CA-VHC Composition Lead)  
+**Trạng thái tài liệu:** `PILOT CANDIDATE — PENDING 600 DPI BENCH PRINT/SCAN AND TV4 REVIEW`  
 **Đơn vị áp dụng:** Toàn bộ thành viên điều phối thu thập dữ liệu đề tài NCKH OmniDraw
 
 ---
@@ -210,7 +211,7 @@ Mỗi tệp quét tương ứng một bản ghi JSON có cấu trúc tối thi�
 2. **Quy trình thực hiện:**
    - Mỗi người viết thực hiện trọn vẹn 1 bộ 4 trang (`P01`, `P02`, `P03`, `P04`).
    - Tổng số trang cần số hóa: $4 \times 5 = 20$ trang.
-   - Ghi nhận thời gian hoàn thành từng trang (`completion_time_minutes`) để đánh giá độ mỏi cơ tay.
+   - Ghi nhận thời gian hoàn thành từng trang (`completion_time_minutes`) để theo dõi tiến độ và nhịp độ viết tự nhiên.
 3. **Tiêu chí Nghiệm thu Pilot (Pilot Exit Gate):**
    - Tỷ lệ phát hiện mốc fiducial tự động thành công: $\ge 95\%$.
    - Tỷ lệ sai số thước đo kiểm chuẩn đạt chuẩn pilot: $100\%$ các bản quét đạt $\pm 0.20\,\text{mm}$.
@@ -219,6 +220,5 @@ Mỗi tệp quét tương ứng một bản ghi JSON có cấu trúc tối thi�
 
 ---
 
-*Văn bản có hiệu lực thi hành kể từ ngày ký.*  
-**Trưởng ban Quản trị Dữ liệu (TV1):** *Đã ký*  
-**Chủ trì Dự án & Kiến trúc (TV4):** *Đã phê duyệt*
+*Dự thảo quy trình do TV1 đề xuất; chờ TV4 phê duyệt và hoàn tất bench scan 600 DPI trước khi áp dụng.*  
+**Chủ trì soạn thảo (TV1):** *Bản dự thảo đề xuất*
