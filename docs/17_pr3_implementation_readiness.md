@@ -1,13 +1,13 @@
 # OmniDraw — PR3 Implementation Readiness Pack
 
-**Phiên bản:** 0.1
-**Ngày lập:** 2026-09-22
+**Phiên bản:** 0.2
+**Ngày lập:** 2026-09-24
 **Owner:** TV4 — Handwriting / CA-VHC Composition Lead
-**Trạng thái:** `PREPARATION COMPLETE — IMPLEMENTATION BLOCKED BY E4`
+**Trạng thái:** `READY_TO_IMPLEMENT — E1–E5 PASS`
 **Review boundary:** `OUTSIDE_REVIEW_TARGET_7ae43e6` — tài liệu chuẩn bị này không thay đổi Chương 1–3 và không yêu cầu mở lại gói cross-review v0.2.
 
 > [!IMPORTANT]
-> Đây là bản đồ sẵn sàng triển khai, không phải mã PR3 và không phải bằng chứng PR3 đã bắt đầu. E3 đã đóng nhờ PR2; không sửa production engine, không tạo test giả PASS và không chạy Holdout trước khi E4 được đóng.
+> Quyết định ngày 2026-09-24 từng bị mở lại sau TV2 review ngày 2026-09-25. TV4 và TV2 đã recheck, cùng phê duyệt phiên bản contract `4677aad` ngày 2026-09-26; E4 hiện `PASS` và PR3 trở lại `READY_TO_IMPLEMENT`. Phần triển khai cũ vẫn đã revert tại `7d1c1d3`; mọi triển khai mới phải đi theo contract đã khóa và qua exit criteria PR3.
 
 ## 1. Mục tiêu
 
@@ -25,7 +25,7 @@ Nguồn chuẩn vẫn là:
 - [`07_diacritic_aware_state_design.md`](07_diacritic_aware_state_design.md): kiến trúc `DiacriticCandidate` và `CompositionState`.
 - [`09_pr3_acceptance_criteria.md`](09_pr3_acceptance_criteria.md): Entry/Exit Gate.
 - [`16_rq_code_metric_test_traceability.md`](16_rq_code_metric_test_traceability.md): ánh xạ RQ–metric–test.
-- [`18_pr3_e4_shared_transition_contract_draft.md`](18_pr3_e4_shared_transition_contract_draft.md): dự thảo hợp đồng E4 để TV2/TV4 ký duyệt; chưa phải sign-off.
+- [`18_pr3_e4_shared_transition_contract_draft.md`](18_pr3_e4_shared_transition_contract_draft.md): nguồn trạng thái hiện hành của E4; `PASS` trên phiên bản hai owner cùng ký `4677aad`.
 
 Nếu pack này mâu thuẫn với Docs 07 hoặc 09, Docs 07/09 có quyền ưu tiên và pack phải được sửa trước khi code.
 
@@ -35,11 +35,11 @@ Nếu pack này mâu thuẫn với Docs 07 hoặc 09, Docs 07/09 có quyền ưu
 | :--- | :--- | :--- | :--- |
 | E1 — PR1 metrics/runner | `PASS` | Evaluator, CSV logger, experiment runner và DEV fingerprint fixture đã tồn tại | Không sửa lại trong PR3 trừ khi cần metadata thật sự mới |
 | E2 — ASCII geometry lock | `PASS` | 48 cấu hình tại `pr3_ascii_baseline_fingerprints.json` | Mọi lát cắt PR3 phải giữ 48/48 fingerprint |
-| E3 — B1/B2/B3 adapters | `PASS` | PR #32 merge commit `bcc1a7a`; `baselines.py`, runner method tags và `tests/test_ca_vhc_baselines.py`; full suite 115 passed ngày 2026-09-23 | Dependency PR2 đã nhận; E4 vẫn chặn production PR3 |
-| E4 — Shared transition interface | `WAITING_TV2_TV4_SIGNOFF` | Chữ ký transition, `world_bbox`, `DiacriticConfig` và ownership | Chưa sửa `eval_transition()`/`optimize_word_dag()` |
+| E3 — B1/B2/B3 adapters | `PASS` | PR #32 merge commit `bcc1a7a`; `baselines.py`, runner method tags và `tests/test_ca_vhc_baselines.py`; full suite 136 passed | Dependency PR2 đã nhận; E3 hoàn tất |
+| E4 — Shared transition interface | `PASS` | TV4 và TV2 cùng phê duyệt contract `4677aad`; Q1–Q7, pseudo-types, error semantics, immutability, contract version và test plan đã khóa tại [`18_pr3_e4_shared_transition_contract_draft.md`](18_pr3_e4_shared_transition_contract_draft.md) | Cho phép bắt đầu PR3 theo contract; test implementation vẫn thuộc exit gate |
 | E5 — Corpus integrity | `PASS` | Acceptance specimens chỉ lấy từ DEV; Holdout guard đã có | Cấm `--corpus holdout/all` và `--allow-holdout` trong PR3 |
 
-**Quy tắc mở PR3:** chỉ chuyển trạng thái sang `READY_TO_IMPLEMENT` khi E4 được TV2 và TV4 xác nhận bằng hợp đồng cụ thể trong repository, các quyết định còn mở được xử lý và regression trên commit nền vẫn PASS. PR2 đã merge không tự động đóng E4.
+**Quy tắc mở PR3:** E1–E5 đều `PASS`. PR3 ở trạng thái `READY_TO_IMPLEMENT`; trạng thái này không đồng nghĩa implementation hoặc các gate thực nghiệm đã hoàn tất.
 
 ## 3. Checklist nhận bàn giao PR2
 
@@ -84,8 +84,9 @@ PR2 đã trả lời các câu về method tag, schema và B3; các quyết đ�
 | :--- | :--- | :--- | :--- |
 | `backend/handwriting/engine.py:get_glyph_variants()` | Sinh `GlyphVariant` thân chữ | Tái sử dụng làm vế base của `CompositionState` | Không thay hình học Font Pack |
 | `engine.py:generate_accents()` | Sinh dấu hậu DAG | Giữ wrapper tương thích; tách hình học canonical để sinh candidate | Không xóa public behavior đột ngột |
-| `engine.py:eval_transition()` | Cost giữa hai `GlyphVariant` | Tích hợp shared PR2 contract và bridge-vs-diacritic world geometry sau E4 | Không tự định nghĩa lại cost TV2 |
-| `engine.py:optimize_word_dag()` | Viterbi trên `GlyphVariant` | Chuyển layer sang `CompositionState`, cộng `C_state + J_transition` | Không dùng beam/top-k heuristic chưa được duyệt |
+| `engine.py:eval_transition()` | Cost giữa hai `GlyphVariant` cho B3/default | Giữ nguyên implementation và đường gọi hiện hành | Không đưa shared PR3 contract vào hàm này; không làm đổi hành vi B3/default |
+| `engine.py:optimize_word_dag()` | Viterbi trên `GlyphVariant` cho B3/default | Giữ nguyên implementation và đường gọi hiện hành | Không chuyển layer B3/default sang `CompositionState` |
+| `composition.py::evaluate_composition_transition()` *(planned)* | Shared transition giữa hai `CompositionState` của PR3 | Triển khai contract Docs 18 và được gọi qua đường PR3 riêng | Không gọi vòng qua hoặc thay thế `engine.eval_transition()` |
 | `engine.py:_text_to_strokes_impl()` | Chuẩn bị `char_info`, gọi DAG, render dấu post-DAG | Truyền accents/context vào builder; render dấu từ state đã chọn | Không đặt lại dấu lần hai ở hậu xử lý |
 | `engine.py:text_to_strokes_structured()` | Public structured trace | Bảo toàn signature; bổ sung trace metadata theo hướng tương thích | Không đổi public API ngoài contract |
 | `backend/handwriting/metrics_evaluator.py` | Collision, clearance, curvature và fingerprint | Chỉ bổ sung producer/trace nếu metric thật sự thiếu | Không đổi ngưỡng đo thành tham số render |
@@ -224,12 +225,12 @@ Không tạo test `xfail` chỉ để làm dashboard trông đầy đủ. Trư�
 
 PR3 được phép bắt đầu khi toàn bộ mục sau đạt:
 
-- [x] E3 đóng: B1/B2/B3 đã merge và test pass (PR #32, `bcc1a7a`; full suite 115 passed ngày 2026-09-23).
-- [ ] E4 đóng: shared transition contract được TV2 và TV4 xác nhận.
-- [ ] Working tree PR3 không chứa thay đổi chưa review của PR2.
-- [ ] 48 ASCII baseline và toàn bộ suite hiện hành pass trên commit nền.
-- [ ] DEV/holdout guard vẫn hoạt động.
-- [ ] File ownership và danh sách symbol shared đã được ghi rõ.
-- [ ] Không có yêu cầu mở rộng phạm vi sang PR4/P2/hardware.
+- [x] E3 đóng: B1/B2/B3 đã merge và test pass (PR #32, `bcc1a7a`; full suite 136 passed).
+- [x] E4 đóng lại: TV4 và TV2 cùng phê duyệt contract `4677aad` ([`Docs 18`](18_pr3_e4_shared_transition_contract_draft.md)).
+- [x] Working tree PR3 không chứa thay đổi chưa review của PR2.
+- [x] 48 ASCII baseline và toàn bộ suite hiện hành pass trên commit nền (136/136 tests PASS).
+- [x] DEV/holdout guard vẫn hoạt động.
+- [x] File ownership và danh sách symbol shared đã được ghi rõ.
+- [x] Không có yêu cầu mở rộng phạm vi sang PR4/P2/hardware.
 
-Khi checklist trên hoàn tất, TV4 đổi trạng thái tài liệu thành `READY_TO_IMPLEMENT`, ghi commit PR2 làm dependency và bắt đầu Slice 0. Trước thời điểm đó, mọi hoạt động chỉ là preparation.
+Definition of Ready hiện **đã đạt** vì E1–E5 đều `PASS` và hai owner đã ký cùng phiên bản E4. Việc triển khai PR3 vẫn phải đáp ứng toàn bộ exit criteria trước khi được coi là hoàn thành.

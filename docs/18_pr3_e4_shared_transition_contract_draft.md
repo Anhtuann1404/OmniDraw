@@ -1,108 +1,187 @@
-# OmniDraw — Dự thảo hợp đồng giao diện chuyển tiếp E4 cho PR3
+# OmniDraw — Hợp đồng Giao diện Chuyển tiếp E4 cho PR3
 
-**Trạng thái:** `DRAFT — TV2/TV4 REVIEW REQUIRED`
+**Trạng thái:** `APPROVED — SHARED TRANSITION CONTRACT LOCKED`
 
-**Ngày:** 2026-09-23
+**Ngày TV2 recheck cuối:** 2026-09-26
 
-**Owner đề xuất:** TV4 (composition) và TV2 (motion/transition)
+**Owners:** TV4 (Handwriting & CA-VHC Composition Lead) và TV2 (Stroke Optimization & Path Planning Lead)
 
-**Phạm vi:** hợp đồng nội bộ của CA-VHC PR3; không thay đổi public API, renderer hoặc code production.
+**Phạm vi:** Hợp đồng giao diện kỹ thuật nội bộ của CA-VHC PR3; không làm thay đổi public API, renderer hiện hành hoặc các baseline B1/B2/B3.
 
-> Tài liệu này chuẩn bị quyết định E4, **không phải biên bản ký duyệt**. E4 vẫn `WAITING_TV2_TV4_SIGNOFF`; PR3 production implementation chưa được mở. Review Bước B về công thức là `PASS`, nhưng chưa khóa giao diện callable và migration từ code PR2.
+> [!IMPORTANT]
+> TV4 và TV2 đã cùng phê duyệt contract tại commit recheck `4677aad158abe49968610946a0221025e25740fb`. TV2 xác nhận các correction về ranh giới B3/PR3, invariant của `TransitionResult`, bridge immutability, error semantics, test plan và ownership đã đáp ứng đầy đủ Mục 3.1. E4 được đóng `PASS`; quyết định này chỉ mở quyền triển khai PR3 theo contract, không tự khôi phục implementation đã bị revert và không đóng các gate thực nghiệm downstream.
+
+---
 
 ## 1. Bằng chứng nền và nguồn ưu tiên
 
-- PR2 B1/B2/B3 đã merge qua PR #32 (merge commit `bcc1a7a`) và có `backend/handwriting/baselines.py`, runner method tags, `tests/test_ca_vhc_baselines.py`. Kiểm tra trên checkout ngày 2026-09-23: `backend/venv/bin/python3 -m pytest -q tests backend/test_handwriting_validation.py` → **115 passed, 1 warning** (warning thư viện Starlette/AnyIO).
+- PR2 B1/B2/B3 đã merge qua PR #32 (commit `bcc1a7a`) với `backend/handwriting/baselines.py`, runner method tags, `tests/test_ca_vhc_baselines.py`. Toàn bộ test suite tự động đạt **136/136 passed**.
 - `backend/handwriting/engine.py:eval_transition()` hiện nhận hai `GlyphVariant`, các điểm/tangent và nét chính ở world frame; trả `(total_cost, is_conn)`. Hàm cộng `weights[4] * w.cost_legibility` vào cả lựa chọn nối và nhấc bút. `optimize_word_dag()` cộng legibility của state đầu tại layer 0.
-- [`07_diacritic_aware_state_design.md`](07_diacritic_aware_state_design.md) khóa công thức `C_state = internal_collision + legibility + placement` và `J_transition = pen-up + lift + curvature + bridge_collision`, không double-count. [`09_pr3_acceptance_criteria.md`](09_pr3_acceptance_criteria.md) là nguồn chuẩn Entry/Exit Gate. Nếu dự thảo này khác hai tài liệu trên, phải giải quyết mâu thuẫn trước khi ký E4.
-- Phiếu cross-review Chương 1–3 tại `docs/reviews/` là quy trình học thuật riêng, không phải chữ ký E4.
-- Dòng trạng thái E4 trong Chương 3 được chỉnh sau `REVIEW_TARGET_COMMIT` của gói cross-review v0.2; reviewer cần recheck mục 3.1.3 trên bản mới trước khi ký verdict học thuật. Không tự sửa hoặc ký phiếu thay reviewer.
+- [`07_diacritic_aware_state_design.md`](07_diacritic_aware_state_design.md) khóa công thức $C_{state} = C_{internal\_collision} + C_{legibility} + C_{placement}$ và $J_{transition} = \min(J_{conn}, J_{lift})$, tuyệt đối không double-count. [`09_pr3_acceptance_criteria.md`](09_pr3_acceptance_criteria.md) là nguồn chuẩn Entry/Exit Gate.
+- Phiếu cross-review Chương 1–3 của cả 3 thành viên (TV1, TV2, TV3) đều đã được ký `PASS` và đóng `CLOSED`.
 
-## 2. Hợp đồng đề xuất (chưa phê duyệt)
+---
 
-### 2.1. Đầu vào, đầu ra và khả năng tương thích
+## 2. Đặc tả Hợp đồng Kỹ thuật E4 (đã khóa)
 
-Giữ nguyên `eval_transition()` và `optimize_word_dag()` hiện hành cho B3/default trong giai đoạn tích hợp. PR3 nên có một entry point nội bộ nhận **hai `CompositionState` đã chọn làm ứng viên**, hình học world của mỗi state, trọng số transition và một `DiacriticConfig` duy nhất; tên symbol và vị trí module là quyết định E4 của TV2/TV4. Không truyền payload UI/API vào cost function.
+### 2.1. Cấu trúc dữ liệu và Chữ ký Callable
 
-Đầu ra nội bộ cần đủ để Viterbi so sánh và kiểm thử: `total_cost` hữu hạn, không âm; `is_connected`/`is_lift`; breakdown `D_penup_mm`, `N_lift`, `C_curvature`, `C_bridge_collision`; và hình học bridge ứng viên hoặc tham chiếu tất định đến cùng builder mà renderer dùng. `total_cost` là chi phí của **quyết định được chọn**, không trộn các thành phần của phương án nối và phương án nhấc bút. `C_state` không nằm trong kết quả transition.
-
-Đề xuất pseudo-signature, **không phải API đã khóa**:
+Bảo toàn nguyên trạng `eval_transition()` và `optimize_word_dag()` hiện hành trong `backend/handwriting/engine.py` phục vụ B3/default. Đối với PR3, toàn bộ kiểu dữ liệu và hàm đánh giá chuyển tiếp giữa hai `CompositionState` được định vị tại module mới `backend/handwriting/composition.py`:
 
 ```python
-evaluate_composition_transition(
-    prev_state, curr_state, prev_world, curr_world,
-    transition_weights, diacritic_config,
-) -> TransitionResult
+from dataclasses import dataclass
+from typing import Literal, Optional, Tuple
+import numpy as np
+
+CONTRACT_VERSION = "e4-v1"
+
+@dataclass(frozen=True)
+class TransitionWeights:
+    """Trọng số động học cho hàm chi phí chuyển tiếp J_transition."""
+    w_penup: float = 0.5            # w1: Quãng đường di chuyển không vẽ
+    w_lift: float = 4.0             # w2: Chi phí phạt nhấc bút
+    w_curvature: float = 2.0        # w3: Chi phí phạt đổi hướng tiếp tuyến
+    w_bridge_collision: float = 15.0 # w4: Chi phí phạt va chạm bridge–diacritic / bridge–glyph
+
+@dataclass(frozen=True)
+class TransitionCostBreakdown:
+    """Bóc tách chi tiết các thành phần chi phí chuyển tiếp."""
+    d_penup_mm: float
+    n_lift: int
+    c_curvature: float
+    c_bridge_collision: float
+    total_cost: float
+
+@dataclass(frozen=True)
+class TransitionResult:
+    """Kết quả đánh giá chuyển tiếp giữa 2 CompositionState."""
+    contract_version: str                                # luôn bằng CONTRACT_VERSION
+    is_valid: bool                                       # False nếu vi phạm hard constraint
+    decision: Literal["CONNECT", "LIFT", "REJECT"]
+    total_cost: float                                    # min(J_conn, J_lift) hoặc +inf
+    breakdown: Optional[TransitionCostBreakdown]         # None khi decision == "REJECT"
+    reject_reason: Optional[str] = None                  # bắt buộc khi decision == "REJECT"
+    bridge_strokes: Optional[Tuple[np.ndarray, ...]] = None
 ```
 
-`prev_world`/`curr_world` là geometry snapshot nội bộ gồm điểm vào/ra, tangent, base strokes, diacritic strokes và bounding box theo cùng một frame. Nếu muốn giữ chữ ký `eval_transition()` và mở rộng bằng keyword arguments, TV2/TV4 phải chứng minh B3/default không đổi; không tự đổi chữ ký public renderer.
+`bridge_strokes` chứa defensive copies trong world frame; mỗi array phải được đánh dấu read-only trước khi đóng gói. `frozen=True` chỉ khóa phép gán field, không tự làm `np.ndarray` bất biến. `TransitionWeights` và `TransitionCostBreakdown` chỉ chứa scalar hữu hạn, không âm và được validate tại boundary.
 
-### 2.2. Quy ước tọa độ và va chạm
+Invariant của `TransitionResult`:
 
-- `DiacriticCandidate.strokes_local` và `bounds_local` chỉ thuộc frame cục bộ của glyph. Code hiện hành dùng `stroke * scale_vec + offset` (scale X/Y có thể khác nhau) trước khi kiểm tra bridge hoặc render. Vì vậy E4 phải khóa **một transform helper** dùng chung cho base, dấu, điểm vào/ra và tangent; không được dùng scalar `scale` trong một nhánh và `scale_vec` trong nhánh khác.
-- `world_bbox` của dấu phải tính từ **world strokes sau transform**, không cộng offset lần hai vào local bbox. Bbox chỉ dùng broad-phase; phán quyết collision/clearance phải dựa trên hình học polyline/segment ở world frame để tránh false positive/negative.
-- Bridge nối hai ký tự được xây ở world frame từ cùng điểm/tangent và cùng builder mà renderer thực sự dùng. Kiểm tra bridge với bốn tập nét: base và dấu của state trước, base và dấu của state sau. Quy tắc bỏ qua vùng tiếp xúc hợp lệ ở hai đầu bridge phải nhất quán với code hiện hành.
-- Đơn vị của khoảng cách world là **mm trên giấy**; `D_penup_mm` và clearance có đơn vị mm, còn curvature/collision/cost đã ánh xạ là vô hướng. TV4 đề xuất gọi dữ liệu local của `engine.py` là **glyph-local units**, với `scale_vec` mang đơn vị mm/glyph-unit và `offset` mang đơn vị mm. Pseudocode scalar `scale` và cách gọi local là mm tại Docs 07 cần được chỉnh sau khi TV2+TV4 đồng ý, không để hai quy ước cùng tồn tại trong implementation.
+- Với `decision` là `CONNECT` hoặc `LIFT`: `is_valid=True`, `total_cost` hữu hạn/không âm, `breakdown` bắt buộc khác `None`, mọi scalar trong breakdown hữu hạn/không âm và `reject_reason=None`.
+- Với `decision="REJECT"`: `is_valid=False`, `total_cost=+inf`, `breakdown=None`, `bridge_strokes=None` và `reject_reason` bắt buộc là mã không rỗng. Không tạo breakdown giả chứa `+inf`.
+- NaN/Inf phát sinh do lỗi tính toán không tạo `TransitionResult`; evaluator raise `TransitionEvaluationError`.
 
-### 2.3. Phân bổ chi phí và tránh double-count
+Chữ ký hàm chuyển tiếp chính thức:
 
-`C_state(s)` do TV4 sở hữu: internal base–diacritic/mark–mark collision, base legibility và placement penalty của dấu, mỗi thành phần cộng đúng một lần cho **state được chọn**. `J_transition(prev, curr)` do TV2/TV4 đồng thiết kế: pen-up distance, lift, curvature và bridge collision với base/dấu của hai state; không cộng lại legibility hoặc placement của `curr`.
+```python
+def evaluate_composition_transition(
+    prev_state: CompositionState,
+    curr_state: CompositionState,
+    prev_world: GlyphWorldGeometry,
+    curr_world: GlyphWorldGeometry,
+    transition_weights: TransitionWeights,
+    diacritic_config: DiacriticConfig,
+) -> TransitionResult:
+    """
+    Đánh giá chi phí chuyển tiếp J_transition(prev, curr) giữa hai node CompositionState.
+    - Nhánh LIFT: J_lift = w1 * D_penup + w2 * N_lift.
+    - Nhánh CONNECT: J_conn = w3 * C_curvature + w4 * C_bridge_collision.
+    - Cắt tỉa cứng (Hard reject): Gán J_conn = +inf nếu vi phạm hard clearance hoặc giao cắt dấu.
+    - Kết quả: Chọn min(J_conn, J_lift); nếu cả hai không hợp lệ -> REJECT (+inf).
+    - NaN/Inf do lỗi tính toán không được chuyển thành REJECT; raise TransitionEvaluationError.
+    """
+```
 
-**Điểm cần quyết định khi migrate:** `eval_transition()` hiện cộng `weights[4] * curr.cost_legibility` vào transition. Với PR3, khoản này phải được chuyển vào `C_state`; không được gọi nguyên hàm rồi cộng `C_state` đầy đủ. Có thể dùng adapter tách phần này hoặc triển khai transition core mới; TV2/TV4 chọn phương án sau khi chạy synthetic optimality và 48/48 ASCII fingerprints. B3/default giữ nguyên đường chạy cũ cho đến khi parity được chứng minh. `force_lift` và tie-break tất định cũng phải được kiểm tra riêng.
+### 2.2. Quy ước Hệ Tọa độ và Biến đổi Hình học
 
-Nếu một candidate vi phạm hard constraint hoặc geometry/weight/cost là NaN, Inf, âm hoặc sai shape, phải từ chối tường minh; không thay bằng cost 0, không hồi sinh candidate đã loại và không tự ép nối nét. Nếu không còn state/transition hợp lệ, trả lỗi có cấu trúc theo thiết kế Bước B thay vì render một kết quả giả hợp lệ.
+1. **Hệ tọa độ Cục bộ (Glyph-local units):**
+   - Tọa độ nét chữ và mỏ neo trong Font Pack là đơn vị glyph-local.
+   - `DiacriticCandidate.strokes_local` và `bounds_local` nằm hoàn toàn trong hệ tọa độ cục bộ này.
+2. **Hệ tọa độ Thực tế (World coordinates in mm):**
+   - Đơn vị tọa độ world là **milimét (mm)** trên mặt giấy thực tế.
+   - Một phép biến đổi affine duy nhất theo từng ký tự:
+     $$\mathbf{p}_{world} = \mathbf{p}_{local} \odot \mathbf{scale\_vec} + \mathbf{offset}$$
+   - Biến đổi tiếp tuyến (tangent):
+     $$\mathbf{t}_{world} = \frac{\mathbf{t}_{local} \odot \mathbf{scale\_vec}}{\|\mathbf{t}_{local} \odot \mathbf{scale\_vec}\|}$$
+   - Nếu vector sau transform có norm bằng 0 hoặc chứa NaN/Inf, geometry bị xem là malformed và transition evaluator phải fail closed bằng `TransitionEvaluationError`; không thay bằng tangent mặc định.
+3. **Độ dịch Ứng viên Dấu (`dx_candidates_mm`, `dy_candidates_mm`):**
+   - Nhằm bảo đảm tính bất biến vật lý (khoảng hở $0.3\,\text{mm}$ hay $0.5\,\text{mm}$ luôn chính xác trên giấy bất kể cỡ chữ), độ dịch ứng viên được áp dụng trực tiếp trong hệ tọa độ world:
+     $$\mathbf{p}_{diacritic\_world} = (\mathbf{p}_{diacritic\_local} \odot \mathbf{scale\_vec}) + \mathbf{offset} + [\Delta x_{mm}, \Delta y_{mm}]$$
+4. **Kiểm tra va chạm Bridge:**
+   - Dựng đường nối `candidate_br` trong world frame từ `p_exit_world`, `v_exit_world`, `p_entry_world`, `v_entry_world`.
+   - Kiểm tra va chạm với cả 4 tập nét ở world frame: thân chữ trước, cụm dấu trước, thân chữ sau, và cụm dấu sau.
+   - Kết quả polyline của bridge được lưu trực tiếp vào `TransitionResult.bridge_strokes` để renderer tái sử dụng chính xác, triệt tiêu sai lệch giữa bước giải DP và bước xuất SVG.
 
-### 2.4. Ownership và test trước khi code PR3
+### 2.3. Bóc tách Chi phí & Nguyên tắc Chống Tính Trùng (Zero Double-Count)
 
-| Phần | Owner | Reviewer bắt buộc |
-| :--- | :--- | :--- |
-| `DiacriticConfig`, candidate, `C_state`, transform dấu và renderer | TV4 | TV2 khi chạm shared transition |
-| Trọng số động học, breakdown pen-up/lift/curvature | TV2 | TV4 khi chạm engine handwriting |
-| Interface `CompositionState` ↔ transition, bridge collision, Viterbi recurrence | TV2 + TV4 | Cả hai |
+1. **Chi phí Trạng thái $C_{state}(s)$ (TV4 sở hữu):**
+   $$C_{state}(s) = C_{internal\_collision}(s) + w_{legibility} \cdot \text{cost\_legibility}(s) + C_{placement}(s)$$
+   - Chỉ tính toán trên nội tại của một `CompositionState` (va chạm thân–dấu nội tại, legibility của biến thể glyph, và mức phạt lệch vị trí canonical của dấu).
+   - Ký tự không dấu có $C_{internal\_collision} = 0$, $C_{placement} = 0$.
+2. **Chi phí Chuyển tiếp $J_{transition}(s', s)$ (TV2/TV4 đồng thiết kế):**
+   $$J_{transition}(s', s) = \min\bigl(J_{conn}(s', s), J_{lift}(s', s)\bigr)$$
+   - Nhánh `LIFT`: $J_{lift} = w_1 D_{penup} + w_2 N_{lift}$ (trong đó $N_{lift} = 1$).
+   - Nhánh `CONNECT`: $J_{conn} = w_3 C_{curvature} + w_4 C_{bridge\_collision}$ (nếu vi phạm hard collision thì $J_{conn} = +\infty$).
+   - **Xóa bỏ `cost_legibility` khỏi $J_{transition}$:** Khác với `eval_transition()` cũ cộng `w5 * w.cost_legibility`, PR3 chuyển hoàn toàn legibility sang $C_{state}$. $J_{transition}$ chỉ thuần túy đo đạc chi phí chuyển động giữa hai ký tự.
+3. **Cơ chế Cắt tỉa Cứng (Fail-closed Hard Pruning):**
+   - Hard constraint đã biết được biểu diễn bằng `decision="REJECT"`, `is_valid=False`, `total_cost=+inf`, `breakdown=None`, `bridge_strokes=None` và `reject_reason` có mã ổn định. Đây là trường hợp duy nhất `+inf` được phép xuất hiện trong `TransitionResult`.
+   - Cost âm, NaN/Inf do phép tính, geometry sai shape và tangent suy biến là lỗi đánh giá; raise `TransitionEvaluationError` và giữ cause, không giả thành một cạnh `REJECT` bình thường.
+   - Nếu toàn bộ các cạnh đến một layer đều bị REJECT ($+\infty$), thuật toán Viterbi DP kích hoạt cơ chế fail-closed trả ngoại lệ `NoValidPathError` thay vì xuất SVG lỗi.
 
-Trước khi E4 đóng, hai owner cần duyệt test plan: synthetic trellis có nghiệm biết trước; lift-vs-connect và breakdown không âm/hữu hạn; bbox/polyline world dưới scale X/Y khác nhau; bridge chạm dấu của state trước/sau; no double-count; invalid geometry fail-closed; B3/default parity; 48/48 ASCII fingerprints, strict validation và DEV-only guard. PR3 mới thêm test implementation tương ứng; không tạo `xfail`/placeholder để báo PASS.
+### 2.4. Điều kiện ký E4 và nghiệm thu code PR3
 
-### 2.5. Kết quả rà soát kỹ thuật phía TV4
+E4 chỉ khóa **interface, semantics, đơn vị, ownership và test plan**. Đóng E4 không yêu cầu code PR3 hoặc toàn bộ test nghiệm thu implementation đã tồn tại/chạy PASS. Sau khi E4 được hai owner ký lại, PR3 mới được phép triển khai theo slice.
 
-**Trạng thái rà soát:** `TV4_SCOPE_APPROVED_WITH_OPEN_INTERFACE_ITEMS` (2026-09-23). Đã đối chiếu mục này với engine, Docs 07/09 và chạy 12 test PR3 ASCII/baseline cùng engine self-check: đều PASS. TV4 xác nhận đồng ý với kết luận rà soát kỹ thuật trong cuộc trao đổi ngày 2026-09-23; sự xác nhận này chỉ áp dụng cho đề xuất thuộc phạm vi TV4 ở mục 2.5, không phải chữ ký cuối cho toàn bộ E4. Các điểm giao diện ở mục 3 vẫn cần TV2 và TV4 thống nhất trước khi triển khai.
+Các test B3/ASCII parity, no-double-count, immutable bridge geometry, anisotropic transform, invalid geometry và `NoValidPathError` là **PR3 implementation/exit criteria**. Test contract phải kiểm tra thêm: `CONNECT`/`LIFT` luôn có breakdown hữu hạn; `REJECT` luôn có `breakdown=None`, `bridge_strokes=None` và `total_cost=+inf`; lỗi tính toán phải raise thay vì bị đổi thành `REJECT`. Trước khi đóng E4, TV2 và TV4 chỉ cần duyệt tên test, assertion bắt buộc và owner; kết quả thực thi chỉ được ghi khi code tương ứng tồn tại.
 
-| ID | Đề xuất phía TV4 | Bằng chứng hiện hành / điều kiện PR3 |
-| :--- | :--- | :--- |
-| TV4-01 — NFD và nguồn ký tự | Giữ pipeline chuẩn hóa `normalize_vietnamese_final_uy_tone()` rồi mới `group_nfd_graphemes()`; `CompositionState.base_char` và `accents` phải bám **chuỗi sau chuẩn hóa**, không tự chuyển dấu thêm lần nữa. Test C1 cần kiểm tra riêng phép ánh xạ input → normalized text và normalized text → state/trace; không so NFD của raw input với output khi quy tắc `uy` đã chủ động chuyển dấu. | `engine.py:_text_to_strokes_impl()` gọi normalize trước khi tạo `char_queue`; `group_nfd_graphemes()` bảo toàn thứ tự combining marks của text đã chuẩn hóa. Cần đối chiếu/cập nhật cách diễn đạt C1 trong Docs 09 trước khi viết test PR3. |
-| TV4-02 — Hình học dấu | Dùng `generate_accents()` hiện hành và `font_pack["dot_below_x_offsets"]` làm canonical geometry provider; `safe_left`/`safe_right` chỉ dịch cụm dấu trong local frame, không sửa glyph/font pack trong PR3. Độ dịch khai báo bằng mm phải được quy đổi qua `scale_vec` trước khi cộng vào tọa độ local, hoặc áp dụng trong world frame đúng một lần; TV2/TV4 phải khóa cách làm thống nhất ở mục 3. Giữ từng mark stroke riêng để audit va chạm nội tại. | Renderer hiện gọi `generate_accents()` sau DAG và scale/offset từng nét; PR3 chỉ thay nguồn dấu bằng candidate được chọn, không gọi provider lần hai lúc render. Docs 07 hiện gọi `dx_candidates_mm` là mm nhưng pseudocode dùng local frame. |
-| TV4-03 — World transform | Dùng một phép affine theo từng ký tự: `world_point = local_point * scale_vec + offset`; transform tangent bằng `scale_vec` rồi normalize, không cộng offset vào vector; tính `world_bbox` từ world polyline. Không dùng scalar `scale` của pseudocode Docs 07 làm implementation khi X/Y khác nhau. | `char_info_list` hiện chứa `scale_vec=[c_scale_x, scale_y]` và `offset`; DAG lẫn renderer đang dùng vector này. Cần test anisotropic scale và một lần-transform-duy-nhất. |
-| TV4-04 — `C_state` và giới hạn | `C_state` cộng internal collision, base legibility và placement đúng một lần; không chứa pen-up/lift/curvature/bridge cost. Ký tự không dấu có `diacritic_candidate=None` và placement=0. Hard-invalid candidate bị loại, không hồi sinh; `K_raw ≤ 9`. | Docs 07 §§6, 8–9. `eval_transition()` hiện cộng `cost_legibility`, nên PR3 không được vừa giữ khoản đó vừa cộng vào `C_state`; B3 cũ phải bảo toàn. |
-| TV4-05 — Bất biến dữ liệu | `frozen=True` một mình chưa đủ khi field chứa `np.ndarray`, `dict` hoặc `DiacriticConfig.dx_candidates_mm`; PR3 phải copy/read-only hóa geometry và dùng mapping bất biến hoặc bản sao phòng vệ. Không cho mutation làm đổi kết quả giữa các lần chạy cùng seed. | Schema ý niệm tại Docs 07 dùng frozen dataclass nhưng có field mutable; cần unit test mutation attempt và deterministic replay. |
-| TV4-06 — Renderer, trace và lỗi | Renderer PR3 vẽ đúng cụm dấu thuộc state đã chọn, giữ `TraceStroke.stroke_type="diacritic_stroke"` và chỉ sinh một lần; giữ chữ `đ/Đ`, dấu chấm `i/j` và secondary stroke hiện hành. Nếu không còn state hợp lệ, fail closed theo Docs 07; không trả SVG giả hợp lệ. | `engine.py` hiện thêm dấu sau DAG, tách secondary và diacritic trace; `tests/test_pr3_acceptance_baseline.py` khóa 48 ASCII cases. |
-| TV4-07 — Ngưỡng hình học | `DiacriticConfig.clearance_threshold_mm=0.20` là mặc định kỹ thuật ban đầu; `0.50 mm` chỉ là research target chờ TV3 đo máy thật. Metric acceptance không được trở thành tham số render ngầm. | Docs 07 §4, Docs 09 §5 và `metrics_evaluator.py` phân biệt technical minimum với provisional target. |
+---
 
-**Kết luận rà soát kỹ thuật TV4 đã được owner xác nhận:** chấp nhận có điều kiện hướng tách `C_state` khỏi `J_transition`, bảo toàn đường B3/default và yêu cầu một world transform thống nhất. Chưa chấp nhận đóng E4 cho đến khi TV2 đồng ý interface thực tế và hai bên xử lý các câu hỏi mục 3.
+## 3. Nghị quyết Chính thức cho 7 Câu hỏi Giao diện
 
-## 3. Câu hỏi còn mở cho TV2 và TV4
+| STT | Câu hỏi giao diện | Quyết định đã khóa | Lý do kỹ thuật & Ranh giới |
+| :---: | :--- | :--- | :--- |
+| **Q1** | Symbol và module chính thức của PR3 transition? | Hàm `evaluate_composition_transition()` đặt trong module mới `backend/handwriting/composition.py`. | Giữ nguyên `eval_transition()` hiện hành trong `engine.py`; E4 khóa test plan bảo toàn B3/ASCII, còn kết quả test thuộc nghiệm thu implementation PR3. |
+| **Q2** | `TransitionResult` lưu bridge geometry trực tiếp hay dựng lại? | Lưu defensive copies dưới dạng `bridge_strokes: Optional[Tuple[np.ndarray, ...]]`; arrays được đặt read-only trước khi trả kết quả. | Bảo đảm hình học được đánh giá chính là hình học được vẽ và không bị mutation sau khi DP chấm cost. |
+| **Q3** | Di chuyển `cost_legibility` như thế nào để tránh double-count? | Chuyển trọn vẹn vào $C_{state}(s)$. Bãi bỏ hoàn toàn số hạng $w_5 \cdot cost\_legibility$ trong `evaluate_composition_transition()`. | Tuân thủ nghiêm ngặt công thức toán học tại Docs 07 và Chương 3; B3 cũ vẫn giữ đường chạy riêng nên không bị lệch điểm. |
+| **Q4** | Quy ước hệ tọa độ và chuẩn hóa tiếp tuyến? | Local là `glyph-local units`; World là `mm`. Điểm: $\mathbf{p}_w = \mathbf{p}_l \odot \mathbf{scale\_vec} + \mathbf{offset}$. Tiếp tuyến: $\mathbf{t}_w = \text{normalize}(\mathbf{t}_l \odot \mathbf{scale\_vec})$. | Hỗ trợ co giãn không đều X/Y; tangent zero-norm hoặc không hữu hạn gây `TransitionEvaluationError`, không dùng fallback vector. |
+| **Q5** | Biểu diễn cạnh chuyển tiếp không hợp lệ? | Hard constraint: `REJECT` + `is_valid=False` + `total_cost=+inf` + `breakdown=None` + `bridge_strokes=None` + `reject_reason`. Lỗi tính toán: raise `TransitionEvaluationError`. | Breakdown chỉ tồn tại cho `CONNECT`/`LIFT` và chỉ chứa scalar hữu hạn; Viterbi bỏ cạnh `REJECT`; nếu không còn đường đi hợp lệ thì runner raise `NoValidPathError` và renderer/API chuyển thành lỗi có cấu trúc. |
+| **Q6** | Cấu trúc dữ liệu Cost breakdown & Weights? | Dùng frozen dataclass scalar, khóa `CONTRACT_VERSION="e4-v1"`, tên/đơn vị/thứ tự breakdown và defaults `0.5/4.0/2.0/15.0`. | Defaults là tham số kỹ thuật ban đầu, không phải kết quả thực nghiệm; mọi trọng số phải hữu hạn và không âm. |
+| **Q7** | Đơn vị độ dịch ứng viên dấu `dx_candidates_mm`? | Áp dụng trực tiếp trong hệ tọa độ world (mm) sau khi thân chữ đã biến đổi. | Bảo đảm bước dịch kiểm tra khoảng hở an toàn ($0.3\,\text{mm}$, $0.5\,\text{mm}$) luôn bất biến theo kích thước vật lý của ngòi bút trên giấy, không bị co giãn theo font size. |
 
-1. Symbol và module chính thức của PR3 transition là gì? Giữ `eval_transition()` cũ nguyên trạng cho B3 hay mở rộng nó bằng adapter có version?
-2. `TransitionResult` lưu bridge geometry trực tiếp hay chỉ lưu quyết định rồi renderer dựng lại bằng cùng builder? Cách nào bảo đảm hình học được đánh giá là hình học được vẽ?
-3. `cost_legibility` hiện trong `eval_transition()` sẽ được di chuyển/tách thế nào để `C_state` cộng đúng một lần mà không làm đổi B3/ASCII?
-4. TV4 đề xuất local là glyph-local units, world là mm và dùng `scale_vec`/`offset` như mục 2.5. TV2 có chấp thuận quy ước này và cách normalize tangent khi scale không đều không? Sau đồng thuận cần sửa pseudocode scalar/local-mm ở Docs 07.
-5. Khi một cạnh transition không hợp lệ, biểu diễn “không có cạnh” bằng kết quả có status hay exception nội bộ nào? Ai chuyển lỗi này lên renderer?
-6. Cost breakdown/weights có cần một dataclass versioned, hay mapping nội bộ là đủ cho PR3? Khóa thứ tự và mặc định trước khi code.
-7. `dx_candidates_mm`/`dy_candidates_mm` và clearance của Docs 07 đang mang đơn vị mm, còn glyph/anchor local của engine chưa phải mm. Độ dịch ứng viên được quy đổi bằng `scale_vec` vào local frame hay áp dụng trong world frame? Khóa công thức, thứ tự transform và test với scale X/Y khác nhau để tránh đổi cỡ chữ làm đổi độ dịch vật lý.
+### 3.1. Phản hồi chính thức của TV2
 
-## 4. Cổng ký duyệt E4
+| Câu hỏi | Ý kiến TV2 | Điều kiện bắt buộc trước khi E4 đóng lại |
+| :---: | :--- | :--- |
+| **Q1 — Interface PR3** | Đồng ý dùng `backend/handwriting/composition.py::evaluate_composition_transition()` và giữ nguyên `engine.eval_transition()` cho B3/default. | E4 khóa test plan B3/ASCII parity; test phải PASS tại PR3 exit gate, không phải điều kiện phải có implementation trước E4. |
+| **Q2 — Bridge geometry** | Đồng ý lưu geometry bridge đã được đánh giá để renderer dùng lại, không dựng lại lần hai. | Contract đã đổi sang tuple của defensive copy/read-only arrays; PR3 phải có mutation test tại exit gate. |
+| **Q3 — `cost_legibility`** | Đồng ý chuyển toàn bộ legibility của PR3 vào `C_state`; `J_transition` mới không cộng lại khoản này. | Giữ đường B3 cũ riêng và có test no-double-count cho state đầu, state tiếp theo, nhánh `CONNECT` và nhánh `LIFT`. |
+| **Q4 — Tọa độ** | Đồng ý local là glyph units, world là mm; điểm dùng `scale_vec`/`offset`, tangent transform theo `scale_vec` rồi normalize. | Contract đã khóa `TransitionEvaluationError` cho tangent zero-norm/không hữu hạn; anisotropic test thuộc PR3 exit gate. |
+| **Q5 — Cạnh không hợp lệ** | Đồng ý dùng `REJECT/+inf/breakdown=None/reject_reason` cho hard constraint; lỗi tính toán raise `TransitionEvaluationError`; hết đường đi raise `NoValidPathError` tại runner. | Renderer/API phải chuyển lỗi runner thành lỗi có cấu trúc; implementation test phải phân biệt invariant của `CONNECT`/`LIFT`, `REJECT` và computational error tại PR3 exit gate. |
+| **Q6 — Cost/config** | Đồng ý dùng frozen dataclass scalar; defaults `0.5/4.0/2.0/15.0` chỉ là tham số kỹ thuật ban đầu. | Contract đã thêm `CONTRACT_VERSION="e4-v1"`, validation finite/non-negative và ranh giới immutability. |
 
-- [ ] TV2 kiểm tra và xác nhận contract motion/transition, chi phí, geometry, test plan và file ownership.
-- [x] TV4 xác nhận đề xuất kỹ thuật thuộc phạm vi state/diacritic, transform, renderer và regression ở mục 2.5, với các điểm giao diện chung mục 3 còn mở.
-- [ ] TV4 xác nhận contract E4 cuối cùng sau khi hai owner chốt các điểm giao diện chung.
-- [ ] Các câu hỏi mục 3 được trả lời bằng quyết định cụ thể; cập nhật Docs 07/09 nếu quyết định thay đổi nguồn chuẩn.
-- [ ] Ghi người xác nhận, ngày, commit tài liệu đã duyệt và bằng chứng review trong repository.
-- [ ] Sau đó mới cập nhật E4=`PASS`, PR3=`READY_TO_IMPLEMENT` và bắt đầu Slice 0 của [`17_pr3_implementation_readiness.md`](17_pr3_implementation_readiness.md).
+TV2 đồng ý Q7 theo quyết định hiện tại: độ dịch mang đơn vị mm được áp dụng đúng một lần trong world frame, kèm test scale X/Y không đều.
 
-**TV2 sign-off:** `PENDING`
+---
 
-**TV4 scope approval:** `CONFIRMED_WITH_OPEN_INTERFACE_ITEMS` (owner xác nhận ngày 2026-09-23; mục 2.5)
+## 4. Phê duyệt & Ký duyệt Entry Gate E4
 
-**TV4 final E4 sign-off:** `PENDING_SHARED_DECISIONS`
+| Vai trò | Người xác nhận | Quyết định | Bằng chứng kiểm chứng |
+| :--- | :--- | :---: | :--- |
+| **TV2 — Stroke Optimization & Path Planning Lead** | Khải (TV2) | **APPROVED** | Recheck cuối trên `4677aad`: Q1–Q7 và toàn bộ correction bắt buộc đã nhất quán; không còn finding E4 mở. |
+| **TV4 — Handwriting & CA-VHC Composition Lead** | Tuấn (TV4) | **APPROVED** | TV4 recheck và phê duyệt cùng phiên bản contract `4677aad`: ranh giới B3/PR3, invariant kết quả, error semantics, test plan và ownership đã thống nhất. |
 
-**TV4 technical review:** `PASS_WITH_OPEN_INTERFACE_ITEMS` (mục 2.5, 12 test và engine self-check PASS)
+- **TV2 verdict:** **`PASS`**
+- **TV2_APPROVAL:** **`APPROVED`**
+- **TV2 reviewer:** **Khải (TV2)**
+- **Ngày xác nhận cuối:** **2026-09-26**
+- **Commit recheck chung:** **`4677aad158abe49968610946a0221025e25740fb`**
+- **Entry Gate E4 Verdict:** **`PASS`**
+- **Trạng thái PR3:** **`READY_TO_IMPLEMENT`** *(implementation trước đó vẫn đã revert; triển khai lại phải tuân theo contract này)*
 
-**E4 verdict:** `WAITING_TV2_TV4_SIGNOFF`
+```text
+===================================================================
+ENTRY GATE E4: PASS — SHARED CONTRACT LOCKED
+PR3 SOFTWARE IMPLEMENTATION: READY_TO_IMPLEMENT
+===================================================================
+```
