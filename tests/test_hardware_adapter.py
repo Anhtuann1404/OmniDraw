@@ -52,6 +52,7 @@ from hardware_adapter import (
     _FakeAxiDrawDriver,
     get_hardware_adapter,
     reset_hardware_adapter,
+    calculate_svg_draw_breakdown,
     estimate_svg_draw_time,
     parse_svg_path_length_mm,
     parse_svg_path_geometry,
@@ -1023,6 +1024,216 @@ class TestTV4IntegrationContracts(unittest.IsolatedAsyncioTestCase):
             self.assertGreaterEqual(len(rows), 1)
             self.assertEqual(rows[-1]["hardware_status"], "error")
             self.assertEqual(rows[-1]["actual_hardware_measured"], "False")
+
+    def test_specimen_fixture_block_b_exact_angles(self):
+        """
+        TV2-HW-R03:
+        Kiểm tra độ chính xác hình học của Khối B trong rq3_clearance_calibration_specimen.svg:
+        - Các góc bẻ hướng (heading change) theta_turn in {60.0, 90.0, 120.0, 150.0} deg.
+        - Chiều dài mỗi đoạn L = 20.0 mm.
+        - Góc trong (interior angle) = 180 - theta_turn in {120.0, 90.0, 60.0, 30.0} deg.
+        """
+        import xml.etree.ElementTree as ET
+        import math
+
+        specimen_path = os.path.join(_repo_root, "tests", "fixtures", "rq3_clearance_calibration_specimen.svg")
+        self.assertTrue(os.path.isfile(specimen_path))
+        tree = ET.parse(specimen_path)
+        root = tree.getroot()
+
+        turns = {}
+        for elem in root.iter():
+            elem_id = elem.attrib.get("id", "")
+            if elem_id.startswith("turn_"):
+                d = elem.attrib.get("d", "")
+                parts = d.split()
+                pts = []
+                idx = 0
+                while idx < len(parts):
+                    cmd = parts[idx]
+                    if cmd in ("M", "L"):
+                        pts.append((float(parts[idx + 1]), float(parts[idx + 2])))
+                        idx += 3
+                    else:
+                        idx += 1
+                turns[elem_id] = pts
+
+        self.assertIn("turn_60deg", turns)
+        self.assertIn("turn_90deg", turns)
+        self.assertIn("turn_120deg", turns)
+        self.assertIn("turn_150deg", turns)
+
+        expected_angles = {
+            "turn_60deg": 60.0,
+            "turn_90deg": 90.0,
+            "turn_120deg": 120.0,
+            "turn_150deg": 150.0,
+        }
+
+        for turn_id, expected_theta in expected_angles.items():
+            pts = turns[turn_id]
+            self.assertEqual(len(pts), 3, f"{turn_id} must have 3 points (P0, P1, P2)")
+            p0, p1, p2 = pts
+            v1 = (p1[0] - p0[0], p1[1] - p0[1])
+            v2 = (p2[0] - p1[0], p2[1] - p1[1])
+            len1 = math.hypot(v1[0], v1[1])
+            len2 = math.hypot(v2[0], v2[1])
+            self.assertAlmostEqual(len1, 20.0, delta=0.01, msg=f"{turn_id} segment 1 length must be 20mm")
+            self.assertAlmostEqual(len2, 20.0, delta=0.01, msg=f"{turn_id} segment 2 length must be 20mm")
+
+            dot = v1[0] * v2[0] + v1[1] * v2[1]
+            cos_heading = dot / (len1 * len2)
+            heading_deg = math.degrees(math.acos(max(-1.0, min(1.0, cos_heading))))
+            self.assertAlmostEqual(
+                heading_deg,
+                expected_theta,
+                delta=0.05,
+                msg=f"{turn_id} heading change angle must be {expected_theta} deg",
+            )
+            interior_deg = 180.0 - heading_deg
+            self.assertAlmostEqual(
+                interior_deg,
+                180.0 - expected_theta,
+                delta=0.05,
+                msg=f"{turn_id} interior angle must be {180.0 - expected_theta} deg",
+            )
+
+    def test_specimen_fixture_block_c_speed_bands_and_cycles(self):
+        """
+        TV2-HW-R04:
+        Kiểm tra Khối C trong rq3_clearance_calibration_specimen.svg:
+        - Gồm 3 dải vận tốc: 20 mm/s, 40 mm/s, 60 mm/s.
+        - Mỗi dải có chu kỳ 2.0mm vẽ / 2.0mm nhấc bút (20 nhịp lift/draw).
+        """
+        import xml.etree.ElementTree as ET
+
+        specimen_path = os.path.join(_repo_root, "tests", "fixtures", "rq3_clearance_calibration_specimen.svg")
+        tree = ET.parse(specimen_path)
+        root = tree.getroot()
+
+        bands = ["rapid_pen_lift_20mms", "rapid_pen_lift_40mms", "rapid_pen_lift_60mms"]
+        for band_id in bands:
+            path_elem = None
+            for elem in root.iter():
+                if elem.attrib.get("id") == band_id:
+                    path_elem = elem
+                    break
+            self.assertIsNotNone(path_elem, f"Missing speed band {band_id} in Block C")
+            d = path_elem.attrib.get("d", "")
+            tokens = d.split()
+            draw_segments = []
+            penup_segments = []
+            idx = 0
+            prev_end = None
+            while idx < len(tokens):
+                cmd = tokens[idx]
+                if cmd == "M":
+                    x1 = float(tokens[idx + 1])
+                    y1 = float(tokens[idx + 2])
+                    idx += 3
+                    if idx < len(tokens) and tokens[idx] == "L":
+                        x2 = float(tokens[idx + 1])
+                        y2 = float(tokens[idx + 2])
+                        draw_len = abs(x2 - x1)
+                        draw_segments.append(draw_len)
+                        if prev_end is not None:
+                            penup_len = abs(x1 - prev_end)
+                            penup_segments.append(penup_len)
+                        prev_end = x2
+                        idx += 3
+                else:
+                    idx += 1
+
+            self.assertEqual(len(draw_segments), 20, f"{band_id} must have 20 draw segments")
+            self.assertEqual(len(penup_segments), 19, f"{band_id} must have 19 penup intervals")
+            for seg in draw_segments:
+                self.assertAlmostEqual(seg, 2.0, delta=0.001, msg=f"{band_id} draw segment must be 2.0mm")
+            for seg in penup_segments:
+                self.assertAlmostEqual(seg, 2.0, delta=0.001, msg=f"{band_id} penup segment must be 2.0mm")
+
+    def test_calculate_svg_draw_breakdown_contract(self):
+        """
+        TV2-HW-R01, TV2-HW-R02 & TV2-HW-R05:
+        Hàm calculate_svg_draw_breakdown trả về cấu trúc breakdown đầy đủ,
+        định danh rõ ràng mô hình constant_speed_baseline,
+        các cờ accel_model_applied=False, corner_model_applied=False,
+        và các khoảng cách draw_distance_mm, penup_distance_mm, pen_lift_count.
+        """
+        breakdown = calculate_svg_draw_breakdown(self.fixture)
+        self.assertIsInstance(breakdown, dict)
+        self.assertIn("total_time_sec", breakdown)
+        self.assertIn("total_time_sec_float", breakdown)
+        self.assertIn("draw_distance_mm", breakdown)
+        self.assertIn("penup_distance_mm", breakdown)
+        self.assertIn("pen_lift_count", breakdown)
+        self.assertIn("model_type", breakdown)
+        self.assertIn("accel_model_applied", breakdown)
+        self.assertIn("corner_model_applied", breakdown)
+
+        self.assertEqual(breakdown["model_type"], "constant_speed_baseline")
+        self.assertFalse(breakdown["accel_model_applied"])
+        self.assertFalse(breakdown["corner_model_applied"])
+        self.assertGreater(breakdown["draw_distance_mm"], 0.0)
+        self.assertGreater(breakdown["pen_lift_count"], 0)
+
+    async def test_completed_physical_job_provenance_immutability_on_disconnect(self):
+        """
+        TV2-HW-R06:
+        Khi physical job đã hoàn thành thành công (status='done', actual_hardware_measured=True),
+        nếu adapter bị disconnect sau đó:
+        - get_status(req_id) vẫn bảo toàn nguyên vẹn provenance gốc:
+          status='done', actual_hardware_measured=True, source_tag='axidraw_real', is_simulated=False.
+        - Không bị reset hoặc suy diễn sai theo trạng thái disconnected hiện tại của adapter.
+        - Kiểm tra các trường mở rộng trong CSV: profile_version, speed_pendown_mm_s, model_type.
+        """
+        adapter = AxiDrawAdapter(use_fake_driver=False, metrics_csv_path=self.csv_path)
+        adapter._ad = MockRealAxiDrawDriver()
+        adapter._connected = True
+
+        req_id = f"test-provenance-immut-{int(time.time() * 1000)}"
+        start_res = await adapter.start_job(req_id, self.fixture)
+        self.assertEqual(start_res["status"], "printing")
+
+        for _ in range(50):
+            await asyncio.sleep(0.05)
+            st = adapter.get_status(req_id)
+            if st["status"] == "done":
+                break
+
+        st_done = adapter.get_status(req_id)
+        self.assertEqual(st_done["status"], "done")
+        self.assertTrue(st_done["actual_hardware_measured"])
+        self.assertFalse(st_done["is_simulated"])
+        self.assertEqual(st_done["source_tag"], "axidraw_real")
+        self.assertEqual(st_done["model_type"], "constant_speed_baseline")
+        self.assertFalse(st_done["accel_model_applied"])
+        self.assertFalse(st_done["corner_model_applied"])
+        self.assertGreater(st_done["draw_distance_mm"], 0.0)
+
+        # Ngắt kết nối adapter sau khi job đã hoàn tất
+        adapter.disconnect()
+        self.assertFalse(adapter.is_connected)
+
+        # Trạng thái job đã hoàn thành KHÔNG bị biến thành error hay mất provenance
+        st_after_disc = adapter.get_status(req_id)
+        self.assertEqual(st_after_disc["status"], "done")
+        self.assertTrue(
+            st_after_disc["actual_hardware_measured"],
+            "Provenance actual_hardware_measured must remain True after disconnect!",
+        )
+        self.assertFalse(st_after_disc["is_simulated"])
+        self.assertEqual(st_after_disc["source_tag"], "axidraw_real")
+
+        # Kiểm tra hàng CSV ghi nhận đầy đủ telemetry mở rộng
+        rows = self._get_csv_rows_for_request(req_id)
+        self.assertGreaterEqual(len(rows), 1)
+        last_row = rows[-1]
+        self.assertEqual(last_row["hardware_status"], "done")
+        self.assertEqual(last_row["actual_hardware_measured"], "True")
+        self.assertEqual(last_row["model_type"], "constant_speed_baseline")
+        self.assertEqual(last_row["accel_model_applied"], "False")
+        self.assertEqual(last_row["corner_model_applied"], "False")
+        self.assertEqual(last_row["source_tag"], "axidraw_real")
 
 
 if __name__ == "__main__":

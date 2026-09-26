@@ -34,7 +34,7 @@ import shutil
 import sys
 import threading
 import time
-from typing import Dict, Any, Optional, List, Tuple
+from typing import Dict, Any, Optional, List, Tuple, Union
 import xml.etree.ElementTree as ET
 
 # ---------------------------------------------------------------------------
@@ -367,6 +367,7 @@ def apply_origin_offset_to_svg(svg_content: str, offset_x_mm: float = 5.0, offse
 # ---------------------------------------------------------------------------
 
 HARDWARE_METRICS_FIELDNAMES: List[str] = [
+    # Core Contract (9 columns) - Hợp đồng tích hợp TV3 / TV4
     "request_id",
     "timestamp",
     "actual_draw_time_sec",
@@ -376,12 +377,26 @@ HARDWARE_METRICS_FIELDNAMES: List[str] = [
     "hardware_status",
     "error_code",
     "source_tag",
+    # TV2 Motion & Calibration Reproducibility Extension (TV2-HW-R05)
+    "profile_version",
+    "device_model",
+    "speed_pendown_mm_s",
+    "speed_penup_mm_s",
+    "accel_pct",
+    "pen_delay_down_ms",
+    "pen_delay_up_ms",
+    "draw_distance_mm",
+    "penup_distance_mm",
+    "pen_lift_count",
+    "model_type",
+    "accel_model_applied",
+    "corner_model_applied",
 ]
 
 
 def migrate_hardware_metrics_csv(csv_path: str, force: bool = False) -> bool:
     """
-    Migrate và chuẩn hóa file CSV metrics phần cứng theo schema chuẩn 9 cột.
+    Migrate và chuẩn hóa file CSV metrics phần cứng theo schema chuẩn.
 
     Quy tắc an toàn (NCKH Research Data Integrity):
     1. Không tin giá trị actual_hardware_measured có sẵn (kể cả đã gán True trước đó).
@@ -538,6 +553,20 @@ def record_metric(job: Dict[str, Any], csv_path: Optional[str] = None) -> None:
         "hardware_status": hw_status,
         "error_code": err_code,
         "source_tag": src_tag,
+        # TV2-HW-R05 Extended Motion & Calibration Metadata
+        "profile_version": job.get("profile_version", ""),
+        "device_model": job.get("device_model", ""),
+        "speed_pendown_mm_s": job.get("speed_pendown_mm_s", ""),
+        "speed_penup_mm_s": job.get("speed_penup_mm_s", ""),
+        "accel_pct": job.get("accel_pct", ""),
+        "pen_delay_down_ms": job.get("pen_delay_down_ms", ""),
+        "pen_delay_up_ms": job.get("pen_delay_up_ms", ""),
+        "draw_distance_mm": job.get("draw_distance_mm", ""),
+        "penup_distance_mm": job.get("penup_distance_mm", ""),
+        "pen_lift_count": job.get("pen_lift_count", ""),
+        "model_type": job.get("model_type", "constant_speed_baseline"),
+        "accel_model_applied": job.get("accel_model_applied", False),
+        "corner_model_applied": job.get("corner_model_applied", False),
     }
 
     with _metrics_file_lock:
@@ -891,22 +920,38 @@ def _parse_transform_scale(transform_str: Optional[str]) -> Tuple[float, float]:
     return scale_x, scale_y
 
 
-def estimate_svg_draw_time(
+def calculate_svg_draw_breakdown(
     svg_content_or_path: str,
     speed_mm_per_sec: float = ASSUMED_PEN_SPEED_MM_PER_SEC,
     speed_penup_mm_per_sec: float = ASSUMED_PEN_UP_SPEED_MM_PER_SEC,
     pen_down_delay_ms: float = ASSUMED_PEN_DOWN_DELAY_MS,
     pen_up_delay_ms: float = ASSUMED_PEN_UP_DELAY_MS,
     request_id: Optional[str] = None,
-) -> int:
+) -> Dict[str, Any]:
     """
-    Ước lượng thời gian thi công chuẩn xác (giây) cho bản vẽ SVG:
-    Công thức: T = L_pendown / v_down + L_penup_real / v_up + N_lifts * (t_down + t_up)
-    
-    HỖ TRỢ PHÂN CẤP NHÓM LỒNG NHAU (Hierarchical DOM Traversal):
-    Duyệt đệ quy qua các thẻ <g transform="scale(...)"> để tích lũy hệ số scale chính xác
-    lên từng thẻ <path>. Giải quyết triệt để lỗi đường 10mm trong nhóm scale(2) bị tính thành 10s thay vì 20s.
+    Ước lượng thời gian thi công và bóc tách chi tiết động học (breakdown) cho bản vẽ SVG:
+    Công thức: T_const = L_pendown / v_down + L_penup_real / v_up + N_lifts * (t_down + t_up)
+
+    Định danh học thuật & NCKH Research Rigor (TV2-HW-R01 & TV2-HW-R02):
+    - Constant-speed baseline: Mô hình dùng vận tốc không đổi, chưa mô phỏng gia tốc vật lý theo mm/s^2
+      hay suy giảm vận tốc góc cua (corner slowdown).
+    - Cờ mô hình bắt buộc: accel_model_applied=False, corner_model_applied=False.
+    - Gia tốc driver (accel_pct) là thông số cấu hình firmware, không tương đương gia tốc mm/s^2.
     """
+    default_breakdown = {
+        "total_time_sec": 15,
+        "total_time_sec_float": 15.0,
+        "draw_distance_mm": 0.0,
+        "penup_distance_mm": 0.0,
+        "pen_lift_count": 0,
+        "t_pendown_sec": 0.0,
+        "t_penup_sec": 0.0,
+        "t_delays_sec": 0.0,
+        "model_type": "constant_speed_baseline",
+        "accel_model_applied": False,
+        "corner_model_applied": False,
+    }
+
     content = ""
     if svg_content_or_path:
         if os.path.isfile(svg_content_or_path):
@@ -914,17 +959,17 @@ def estimate_svg_draw_time(
                 with open(svg_content_or_path, "r", encoding="utf-8") as f:
                     content = f.read()
             except OSError:
-                return 15
+                return default_breakdown
         else:
             content = svg_content_or_path
 
     if not content.strip() or "<svg" not in content.lower():
-        return 15
+        return default_breakdown
 
     try:
         root = ET.fromstring(content)
     except ET.ParseError:
-        return 15
+        return default_breakdown
 
     base_scale_x, base_scale_y = extract_svg_viewbox_scale(content)
 
@@ -960,7 +1005,7 @@ def estimate_svg_draw_time(
     traverse_node(root, 1.0, 1.0)
 
     if total_pendown_mm <= 0:
-        return 15
+        return default_breakdown
 
     # Tính quãng đường nhấc bút (pen-up distance) thực tế
     real_penup_mm = 0.0
@@ -979,7 +1024,51 @@ def estimate_svg_draw_time(
     t_delays = n_lifts * (pen_down_delay_ms + pen_up_delay_ms) / 1000.0
 
     total_sec = t_pendown + t_penup + t_delays
-    return max(2, int(round(total_sec)))
+    final_int_sec = max(2, int(round(total_sec)))
+
+    return {
+        "total_time_sec": final_int_sec,
+        "total_time_sec_float": round(total_sec, 3),
+        "draw_distance_mm": round(total_pendown_mm, 2),
+        "penup_distance_mm": round(real_penup_mm, 2),
+        "pen_lift_count": n_lifts,
+        "t_pendown_sec": round(t_pendown, 3),
+        "t_penup_sec": round(t_penup, 3),
+        "t_delays_sec": round(t_delays, 3),
+        "model_type": "constant_speed_baseline",
+        "accel_model_applied": False,
+        "corner_model_applied": False,
+    }
+
+
+def estimate_svg_draw_time(
+    svg_content_or_path: str,
+    speed_mm_per_sec: float = ASSUMED_PEN_SPEED_MM_PER_SEC,
+    speed_penup_mm_per_sec: float = ASSUMED_PEN_UP_SPEED_MM_PER_SEC,
+    pen_down_delay_ms: float = ASSUMED_PEN_DOWN_DELAY_MS,
+    pen_up_delay_ms: float = ASSUMED_PEN_UP_DELAY_MS,
+    request_id: Optional[str] = None,
+    return_breakdown: bool = False,
+) -> Union[int, Dict[str, Any]]:
+    """
+    Ước lượng thời gian thi công chuẩn xác (giây) cho bản vẽ SVG:
+    Công thức: T = L_pendown / v_down + L_penup_real / v_up + N_lifts * (t_down + t_up)
+
+    HỖ TRỢ PHÂN CẤP NHÓM LỒNG NHAU (Hierarchical DOM Traversal):
+    Duyệt đệ quy qua các thẻ <g transform="scale(...)"> để tích lũy hệ số scale chính xác
+    lên từng thẻ <path>. Giải quyết triệt để lỗi đường 10mm trong nhóm scale(2) bị tính thành 10s thay vì 20s.
+    """
+    breakdown = calculate_svg_draw_breakdown(
+        svg_content_or_path,
+        speed_mm_per_sec=speed_mm_per_sec,
+        speed_penup_mm_per_sec=speed_penup_mm_per_sec,
+        pen_down_delay_ms=pen_down_delay_ms,
+        pen_up_delay_ms=pen_up_delay_ms,
+        request_id=request_id,
+    )
+    if return_breakdown:
+        return breakdown
+    return breakdown["total_time_sec"]
 
 
 # ---------------------------------------------------------------------------
@@ -1189,12 +1278,13 @@ class MockSimulatorAdapter(HardwareAdapterInterface):
                 "pause_supported": self.pause_supported,
             }
 
-        speed_pendown = self._profile.get("motion", {}).get("speed_pendown_mm_s", ASSUMED_PEN_SPEED_MM_PER_SEC)
-        speed_penup = self._profile.get("motion", {}).get("speed_penup_mm_s", ASSUMED_PEN_UP_SPEED_MM_PER_SEC)
-        delay_down = self._profile.get("pen", {}).get("delay_down_ms", ASSUMED_PEN_DOWN_DELAY_MS)
-        delay_up = self._profile.get("pen", {}).get("delay_up_ms", ASSUMED_PEN_UP_DELAY_MS)
+        speed_pendown = float(self._profile.get("motion", {}).get("speed_pendown_mm_s", ASSUMED_PEN_SPEED_MM_PER_SEC))
+        speed_penup = float(self._profile.get("motion", {}).get("speed_penup_mm_s", ASSUMED_PEN_UP_SPEED_MM_PER_SEC))
+        delay_down = float(self._profile.get("pen", {}).get("delay_down_ms", ASSUMED_PEN_DOWN_DELAY_MS))
+        delay_up = float(self._profile.get("pen", {}).get("delay_up_ms", ASSUMED_PEN_UP_DELAY_MS))
+        accel_pct = float(self._profile.get("motion", {}).get("accel_pct", 75))
 
-        total_time = estimate_svg_draw_time(
+        breakdown = calculate_svg_draw_breakdown(
             resolved or svg_content_or_path,
             speed_mm_per_sec=speed_pendown,
             speed_penup_mm_per_sec=speed_penup,
@@ -1202,6 +1292,7 @@ class MockSimulatorAdapter(HardwareAdapterInterface):
             pen_up_delay_ms=delay_up,
             request_id=request_id,
         )
+        total_time = breakdown["total_time_sec"]
 
         self.jobs[request_id] = {
             "request_id": request_id,
@@ -1210,6 +1301,19 @@ class MockSimulatorAdapter(HardwareAdapterInterface):
             "estimated_time_remaining_sec": total_time,
             "total_draw_time_sec": total_time,
             "actual_draw_time_sec": None,
+            "draw_distance_mm": breakdown["draw_distance_mm"],
+            "penup_distance_mm": breakdown["penup_distance_mm"],
+            "pen_lift_count": breakdown["pen_lift_count"],
+            "model_type": breakdown["model_type"],
+            "accel_model_applied": breakdown["accel_model_applied"],
+            "corner_model_applied": breakdown["corner_model_applied"],
+            "profile_version": self._profile.get("version", "1.0"),
+            "device_model": self._profile.get("device", {}).get("model", "AxiDraw V3/SE A4"),
+            "speed_pendown_mm_s": speed_pendown,
+            "speed_penup_mm_s": speed_penup,
+            "accel_pct": accel_pct,
+            "pen_delay_down_ms": delay_down,
+            "pen_delay_up_ms": delay_up,
             "error": None,
             "started_at": time.monotonic(),
             "elapsed_before_pause": 0.0,
@@ -1327,12 +1431,19 @@ class MockSimulatorAdapter(HardwareAdapterInterface):
             "status": job["status"],
             "progress_percent": job["progress_percent"],
             "estimated_time_remaining_sec": job["estimated_time_remaining_sec"],
+            "total_draw_time_sec": job.get("total_draw_time_sec"),
+            "draw_distance_mm": job.get("draw_distance_mm"),
+            "penup_distance_mm": job.get("penup_distance_mm"),
+            "pen_lift_count": job.get("pen_lift_count"),
+            "model_type": job.get("model_type", "constant_speed_baseline"),
+            "accel_model_applied": job.get("accel_model_applied", False),
+            "corner_model_applied": job.get("corner_model_applied", False),
             "error": job["error"],
             "pause_supported": self.pause_supported,
         }
         if job["status"] in ("done", "cancelled", "error"):
-            res["actual_draw_time_sec"] = job.get("actual_draw_time_sec")
-            res["is_simulated"] = job.get("is_simulated", True)
+            res["actual_draw_time_sec"] = job.get("actual_draw_time_sec") if job["status"] == "done" else None
+            res["is_simulated"] = True
             res["actual_hardware_measured"] = False
             res["source_tag"] = "simulator"
 
@@ -1650,14 +1761,21 @@ class AxiDrawAdapter(HardwareAdapterInterface):
 
         motion = self._profile.get("motion", {})
         pen = self._profile.get("pen", {})
-        total_est = estimate_svg_draw_time(
+        speed_pendown = float(motion.get("speed_pendown_mm_s", ASSUMED_PEN_SPEED_MM_PER_SEC))
+        speed_penup = float(motion.get("speed_penup_mm_s", ASSUMED_PEN_UP_SPEED_MM_PER_SEC))
+        delay_down = float(pen.get("delay_down_ms", ASSUMED_PEN_DOWN_DELAY_MS))
+        delay_up = float(pen.get("delay_up_ms", ASSUMED_PEN_UP_DELAY_MS))
+        accel_pct = float(motion.get("accel_pct", 75))
+
+        breakdown = calculate_svg_draw_breakdown(
             final_svg_path,
-            speed_mm_per_sec=motion.get("speed_pendown_mm_s", ASSUMED_PEN_SPEED_MM_PER_SEC),
-            speed_penup_mm_per_sec=motion.get("speed_penup_mm_s", ASSUMED_PEN_UP_SPEED_MM_PER_SEC),
-            pen_down_delay_ms=pen.get("delay_down_ms", ASSUMED_PEN_DOWN_DELAY_MS),
-            pen_up_delay_ms=pen.get("delay_up_ms", ASSUMED_PEN_UP_DELAY_MS),
+            speed_mm_per_sec=speed_pendown,
+            speed_penup_mm_per_sec=speed_penup,
+            pen_down_delay_ms=delay_down,
+            pen_up_delay_ms=delay_up,
             request_id=request_id,
         )
+        total_est = breakdown["total_time_sec"]
 
         is_real = self._is_real_physical_measurement()
         pause_evt = threading.Event()
@@ -1671,6 +1789,19 @@ class AxiDrawAdapter(HardwareAdapterInterface):
             "estimated_time_remaining_sec": total_est,
             "total_draw_time_sec": total_est,
             "actual_draw_time_sec": None,
+            "draw_distance_mm": breakdown["draw_distance_mm"],
+            "penup_distance_mm": breakdown["penup_distance_mm"],
+            "pen_lift_count": breakdown["pen_lift_count"],
+            "model_type": breakdown["model_type"],
+            "accel_model_applied": breakdown["accel_model_applied"],
+            "corner_model_applied": breakdown["corner_model_applied"],
+            "profile_version": self._profile.get("version", "1.0"),
+            "device_model": self._profile.get("device", {}).get("model", "AxiDraw V3/SE A4"),
+            "speed_pendown_mm_s": speed_pendown,
+            "speed_penup_mm_s": speed_penup,
+            "accel_pct": accel_pct,
+            "pen_delay_down_ms": delay_down,
+            "pen_delay_up_ms": delay_up,
             "error": None,
             "started_at": time.monotonic(),
             "svg_path": final_svg_path,
@@ -1904,15 +2035,13 @@ class AxiDrawAdapter(HardwareAdapterInterface):
                 "error": {"code": simulate_error, "message": msg},
             })
 
-        is_real = (not self._use_fake_driver)
         status = job["status"]
-
         actual_time = job.get("actual_draw_time_sec") if status == "done" else None
         actual_hw_measured = bool(
-            is_real
-            and status == "done"
+            status == "done"
             and actual_time is not None
             and actual_time > 0
+            and job.get("actual_hardware_measured", False)
         )
 
         res: Dict[str, Any] = {
@@ -1920,15 +2049,22 @@ class AxiDrawAdapter(HardwareAdapterInterface):
             "status": status,
             "progress_percent": job.get("progress_percent", 0),
             "estimated_time_remaining_sec": job.get("estimated_time_remaining_sec", 0),
+            "total_draw_time_sec": job.get("total_draw_time_sec"),
+            "draw_distance_mm": job.get("draw_distance_mm"),
+            "penup_distance_mm": job.get("penup_distance_mm"),
+            "pen_lift_count": job.get("pen_lift_count"),
+            "model_type": job.get("model_type", "constant_speed_baseline"),
+            "accel_model_applied": job.get("accel_model_applied", False),
+            "corner_model_applied": job.get("corner_model_applied", False),
             "error": job.get("error"),
             "progress_is_estimated": True,
             "pause_supported": self.pause_supported,
         }
         if status in ("done", "cancelled", "error"):
             res["actual_draw_time_sec"] = actual_time
-            res["is_simulated"] = not is_real
+            res["is_simulated"] = job.get("is_simulated", self._use_fake_driver)
             res["actual_hardware_measured"] = actual_hw_measured
-            res["source_tag"] = self._get_source_tag()
+            res["source_tag"] = job.get("source_tag", self._get_source_tag())
 
         return res
 

@@ -105,7 +105,7 @@ File cấu hình hiệu chuẩn: `config/calibration_profile.yaml`
 
 File log: `logs/hardware_metrics.csv`
 
-Columns: `request_id, timestamp, actual_draw_time_sec, estimated_draw_time_sec, is_simulated, actual_hardware_measured, hardware_status, error_code, source_tag`
+Columns (Extended 22 fields): `request_id, timestamp, actual_draw_time_sec, estimated_draw_time_sec, is_simulated, actual_hardware_measured, hardware_status, error_code, source_tag, profile_version, device_model, speed_pendown_mm_s, speed_penup_mm_s, accel_pct, pen_delay_down_ms, pen_delay_up_ms, draw_distance_mm, penup_distance_mm, pen_lift_count, model_type, accel_model_applied, corner_model_applied`
 
 **Quy tắc sử dụng trong báo cáo NCKH (Data Integrity):**
 
@@ -123,7 +123,7 @@ Columns: `request_id, timestamp, actual_draw_time_sec, estimated_draw_time_sec, 
 > ⚠️ **Cảnh báo:** `python backend/camera_inspector.py --self-check` dùng ảnh tổng hợp
 > (synthetic image). Lệnh này **KHÔNG xác nhận webcam thật hoạt động.**
 
-### Quy trình kiểm tra camera thực tế (blocked by hardware):
+### Quy trình kiểm tra camera thực tế (BLOCKED BY HARDWARE):
 ```powershell
 # Bước 1: Kiểm tra nhận diện OS
 python -c "import cv2; cap=cv2.VideoCapture(0); print('Camera OK:', cap.isOpened()); cap.release()"
@@ -136,13 +136,16 @@ python backend/camera_inspector.py --capture --output logs/camera_test.jpg
 
 ---
 
-## 9. Phối hợp TV3 → TV4 (Trạng thái Hợp đồng Tích hợp)
+## 9. Phối hợp TV3 → TV2 & TV4 (Trạng thái Hợp đồng Tích hợp)
 
 | Mục | Nội dung hợp đồng | Trạng thái kỹ thuật TV3 |
 |-----|-------------------|--------------------------|
-| `pause_supported` | Simulator/fake: `true`; Physical: `false`. Kiểm tra capability trước khi đổi trạng thái; từ chối với lỗi `HARDWARE_PAUSE_UNSUPPORTED` (HTTP 400), job status giữ nguyên `printing`. | ✅ Đã hoàn tất và pass unit test |
+| `pause_supported` | Simulator/fake: `true`; Physical: `false`. Kiểm tra capability trước khi đổi trạng thái; từ chối với lỗi `HARDWARE_PAUSE_UNSUPPORTED` (HTTP 400), job status giữ nguyên `printing`. | ✅ Đã hoàn tất và pass test |
 | `actual_hardware_measured` | Chỉ `true` khi physical hoàn tất thành công (`status == "done"` và timing $> 0$); thất bại/mất kết nối ghi `false` và để trống timing. | ✅ Đã chuẩn hóa trong HAL & CSV |
-| Hardware CSV Schema | Schema chuẩn 9 cột độc lập, dùng `request_id` làm khóa liên kết. | ✅ Đã implement `record_metric()` |
+| Hardware CSV Schema | Schema chuẩn 22 cột mở rộng (tương thích ngược 9 cột cũ qua auto-migration), lưu telemetry chuyển động chi tiết. | ✅ Đã implement `record_metric()` & migration |
+| Provenance Immutability | Khi job physical hoàn tất, ngắt kết nối adapter không làm biến đổi provenance `done` / `actual_hardware_measured=True`. | ✅ Đã kiểm chứng test tự động |
+| Tiêu bản RQ3 | Khối B chuẩn hóa góc bẻ hướng (60°, 90°, 120°, 150°); Khối C chia 3 dải tốc độ (20, 40, 60 mm/s) với chu kỳ 2mm draw / 2mm lift. | ✅ Đã chuẩn hóa fixture SVG |
+| Constant-speed Baseline | Định danh rõ ràng `constant_speed_baseline`, cờ `accel_model_applied=False`, `corner_model_applied=False`. | ✅ Đã chuẩn hóa trong API & tài liệu |
 | Progress trung gian | `"progress_is_estimated": true` trong status response. | ✅ Đã implement |
 | Không fallback ngầm | Physical mode thiếu thiết bị/driver trả về 503 `HARDWARE_NOT_CONNECTED`, tuyệt đối không chạy ngầm sang simulator. | ✅ Đã implement & verify test |
 

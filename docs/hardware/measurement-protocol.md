@@ -35,24 +35,37 @@
 
 ---
 
-## 3. Schema Chuẩn Ghi Kết quả Thực nghiệm (9 Cột)
+## 3. Schema Chuẩn Ghi Kết quả Thực nghiệm (Extended 22 Cột)
 
-File: `logs/hardware_metrics.csv` (lưu riêng, không gộp schema vào experiment CSV; dùng `request_id` làm khóa liên kết).
+File: `logs/hardware_metrics.csv` (lưu riêng, không gộp schema vào experiment CSV; dùng `request_id` làm khóa liên kết). Tương thích ngược với các file CSV 9 cột thông qua cơ chế tự động chuyển dịch `migrate_hardware_metrics_csv()`.
 
 ```csv
-request_id,timestamp,actual_draw_time_sec,estimated_draw_time_sec,is_simulated,actual_hardware_measured,hardware_status,error_code,source_tag
+request_id,timestamp,actual_draw_time_sec,estimated_draw_time_sec,is_simulated,actual_hardware_measured,hardware_status,error_code,source_tag,profile_version,device_model,speed_pendown_mm_s,speed_penup_mm_s,accel_pct,pen_delay_down_ms,pen_delay_up_ms,draw_distance_mm,penup_distance_mm,pen_lift_count,model_type,accel_model_applied,corner_model_applied
 ```
 
 Chi tiết các trường:
 1. `request_id`: Mã định danh duy nhất của tác vụ in (khóa liên kết dữ liệu với pipeline thí nghiệm).
 2. `timestamp`: Thời gian ghi nhận theo chuẩn ISO 8601 UTC.
-3. `actual_draw_time_sec`: Thời gian thi công thực tế (giây). Chỉ có giá trị khi `status == "done"`; nếu thất bại để rỗng (`""`), không thay bằng 0.
-4. `estimated_draw_time_sec`: Thời gian dự tính từ mô hình hình học SVG (giây).
+3. `actual_draw_time_sec`: Thời gian thi công thực tế (giây, float). Chỉ có giá trị khi `status == "done"`; nếu thất bại để rỗng (`""`), không thay bằng 0.
+4. `estimated_draw_time_sec`: Thời gian dự tính từ mô hình hình học SVG (giây, float).
 5. `is_simulated`: `True` nếu chạy qua simulator hoặc fake driver; `False` nếu chạy trên driver vật lý thật.
 6. `actual_hardware_measured`: `True` duy nhất khi physical job hoàn tất thành công và có số đo thực tế $> 0$; tất cả các trường hợp khác (kể cả lỗi physical) đều bằng `False`.
 7. `hardware_status`: Trạng thái kết thúc của thiết bị (`done`, `error`, `cancelled`).
-8. `error_code`: Mã lỗi chuẩn (ví dụ: `HARDWARE_NOT_CONNECTED`, `HARDWARE_ERROR`, `HARDWARE_PAUSE_UNSUPPORTED`), để rỗng nếu thành công.
+8. `error_code`: Mã lỗi chuẩn (ví dụ: `HARDWARE_NOT_CONNECTED`, `HARDWARE_ERROR`, `HARDWARE_PAUSE_UNSUPPORTED`, `LOG_WRITE_ERROR`), để rỗng nếu thành công.
 9. `source_tag`: Gắn nhãn nguồn thiết bị (`simulator`, `axidraw_fake_driver`, `axidraw_real`).
+10. `profile_version`: Phiên bản cấu hình máy in/calibration profile (ví dụ: `1.0`).
+11. `device_model`: Tên dòng máy vẽ (ví dụ: `AxiDraw V3/SE A4`).
+12. `speed_pendown_mm_s`: Vận tốc hạ bút cấu hình (mm/s).
+13. `speed_penup_mm_s`: Vận tốc nhấc bút cấu hình (mm/s).
+14. `accel_pct`: Thông số gia tốc phần cứng đặt trong firmware driver (% xung bước max).
+15. `pen_delay_down_ms`: Độ trễ cơ học khi hạ bút (ms).
+16. `pen_delay_up_ms`: Độ trễ cơ học khi nâng bút (ms).
+17. `draw_distance_mm`: Tổng quãng đường vẽ thực tế khi ngòi bút chạm giấy ($L_{pendown}$, mm).
+18. `penup_distance_mm`: Tổng quãng đường di chuyển không tải trên không ($L_{penup}$, mm).
+19. `pen_lift_count`: Tổng số lần nhấc/hạ ngòi bút ($N_{lifts}$).
+20. `model_type`: Định danh mô hình thời gian (hiện hành: `constant_speed_baseline`).
+21. `accel_model_applied`: Cờ mô phỏng gia tốc mm/s^2 (`False` đối với mô hình baseline).
+22. `corner_model_applied`: Cờ mô phỏng suy giảm vận tốc góc cua (`False` đối với mô hình baseline).
 
 ---
 
@@ -136,13 +149,32 @@ python backend/camera_inspector.py --capture --output logs/camera_test.jpg
 ### Mô hình thời gian (TV3 → TV2 & TV4):
 
 ```
-T_est = L_pendown / v_pendown + L_penup_real / v_penup + N_lifts × (delay_down + delay_up) / 1000
+T_baseline = L_pendown / v_pendown + L_penup_real / v_penup + N_lifts × (delay_down + delay_up) / 1000
 ```
 
 Trong đó:
 - $L_{\text{pendown}}$: Tổng chiều dài hình học nét vẽ (Bézier cubic/quadratic, Arc A/a, đường thẳng L/H/V, ClosePath Z).
 - $L_{\text{penup\_real}}$: Quãng đường di chuyển nhấc bút thực tế nối giữa điểm kết thúc của nét trước tới điểm bắt đầu của nét sau (và từ gốc $(0,0)$ tới nét đầu, từ nét cuối về $(0,0)$).
 - $N_{\text{lifts}}$: Số lần nhấc/hạ ngòi bút thực tế.
+
+#### Định danh học thuật & Giới hạn mô hình (TV2-HW-R01 & TV2-HW-R02):
+- **Constant-speed baseline:** Mô hình thời gian hiện tại là mô hình vận tốc không đổi (constant speed baseline).
+- **Cờ mô hình (Model Flags):** Cung cấp tường minh trong API status và CSV telemetry:
+  - `model_type = "constant_speed_baseline"`
+  - `accel_model_applied = False` (chưa áp dụng mô hình gia tốc vật lý $a$ theo $\text{mm/s}^2$).
+  - `corner_model_applied = False` (chưa áp dụng mô hình suy giảm vận tốc góc cua centripetal/junction deviation).
+- **Phân biệt gia tốc driver:** Giá trị `accel_pct = 75` trong profile là thông số cấu hình firmware driver (% xung bước max của vi điều khiển EBB), **không tương đương** với gia tốc vật lý $\text{mm/s}^2$. Tuyệt đối không trích dẫn sai trong bài báo NCKH.
+- Hàm `calculate_svg_draw_breakdown()` bóc tách chi tiết: `draw_distance_mm`, `penup_distance_mm`, `pen_lift_count`, `t_pendown_sec`, `t_penup_sec`, `t_delays_sec`.
+
+### Tiêu bản Kiểm chuẩn RQ3 (`rq3_clearance_calibration_specimen.svg`):
+- **Khối B (Góc cua nhọn & Rung giật - TV2-HW-R03):**
+  - Chiều dài mỗi đoạn thẳng: $L = 20.00\,\text{mm}$.
+  - Góc bẻ hướng tiếp tuyến (heading change): $\theta_{turn} \in \{60.00^\circ, 90.00^\circ, 120.00^\circ, 150.00^\circ\}$.
+  - Góc trong hình học (interior angle): $\theta_{interior} \in \{120.00^\circ, 90.00^\circ, 60.00^\circ, 30.00^\circ\}$.
+  - Ngưỡng kiểm định giả thuyết H3.2: `turn_120deg` ($\theta_{turn} = 120^\circ$, góc trong $60^\circ$).
+- **Khối C (Kích hoạt Nâng Hạ Bút Nhanh - TV2-HW-R04):**
+  - Chu kỳ: $2.00\,\text{mm}$ nét vẽ / $2.00\,\text{mm}$ nhấc bút (Pitch $= 4.00\,\text{mm}$), 20 nhịp lift/draw.
+  - Phân tách thành 3 dải vận tốc độc lập: $20\,\text{mm/s}$ (Band 1), $40\,\text{mm/s}$ (Band 2), $60\,\text{mm/s}$ (Band 3) nhằm đánh giá độ trễ servo trục Z và hiện tượng vẹt đuôi mực.
 
 ### Giới hạn phần cứng TV3 & Hợp đồng Tích hợp TV4:
 - **Tính năng tạm dừng (pause_supported):**
@@ -161,17 +193,23 @@ Trong đó:
     }
     ```
   - Đồng nhất trường `pause_supported` trong toàn bộ response của `start_job`, `get_status`, `pause_job`, `resume_job`.
+- **Bất biến nguồn gốc đo đạc (Provenance Immutability - TV2-HW-R06):**
+  - Khi một physical job đã hoàn thành thành công (`status == "done"`, `actual_hardware_measured == True`), các trường provenance (`actual_hardware_measured`, `source_tag`, `is_simulated`) được cố định bất biến trong bản ghi job.
+  - Kể cả khi adapter bị ngắt kết nối (`disconnect()`) sau khi job đã hoàn tất, `get_status(request_id)` vẫn bảo lưu chính xác trạng thái `done` và `actual_hardware_measured = True`, không bị suy diễn sai lệch theo trạng thái kết nối tức thời của adapter.
 - **Tiến độ giữa chừng (progress_percent):**
   - Trên máy thật là ước lượng dựa trên thời gian hình học.
   - Luôn đi kèm cờ `"progress_is_estimated": true` trong response của `GET /api/print/status/{request_id}`.
-- **Phát hiện lỗi phần cứng:**
-  - Chưa có cảm biến phần cứng (kẹt giấy, hết mực), không giả lập dữ liệu sai lệch. Khi mất kết nối hoặc ngoại lệ, trả mã lỗi chuẩn `HARDWARE_NOT_CONNECTED` hoặc `HARDWARE_ERROR`.
+- **Phát hiện lỗi phần cứng & Ghi log đồng bộ:**
+  - Job physical tuyệt đối không công bố `done` trước khi dòng CSV telemetry được ghi thành công vào đĩa.
+  - Nếu gặp lỗi ghi log (`LOG_WRITE_ERROR`), job chuyển sang trạng thái lỗi, không công bố `done`.
+  - Cơ chế đồng bộ khóa luồng đảm bảo trạng thái đã `cancelled` hoặc `error` không bao giờ bị worker ghi đè thành `done`.
 
-### Trạng thái review chéo & Bàn giao TV4:
-- [x] Schema `logs/hardware_metrics.csv` 9 cột chuẩn hóa với `actual_hardware_measured` và `error_code`.
-- [x] Quy tắc toàn vẹn dữ liệu: `actual_hardware_measured=True` chỉ khi máy thật hoàn tất thành công; lỗi ghi nhận trống timing và mã lỗi rõ ràng.
-- [x] Capability `pause_supported` đồng nhất; từ chối an toàn với mã `HARDWARE_PAUSE_UNSUPPORTED`, không đổi sai trạng thái job.
-- [x] Bộ testsuite tích hợp 32 test unit/integration PASS 100%.
+### Trạng thái review chéo & Bàn giao TV2 / TV4:
+- [x] Đã giải quyết triệt để TV2-HW-R01 đến TV2-HW-R06 (`docs/reviews/tv2_hardware_motion_review.md`).
+- [x] Schema `logs/hardware_metrics.csv` 22 cột mở rộng với đầy đủ telemetry chuyển động và cờ mô hình.
+- [x] Tiêu bản `rq3_clearance_calibration_specimen.svg` chuẩn hóa góc bẻ Khối B và 3 dải tốc độ Khối C.
+- [x] Bất biến provenance đo lường vật lý đã được kiểm chứng bằng test tự động.
+- [x] Bộ testsuite tích hợp 42 test unit/integration PASS 100%.
 
 ---
 

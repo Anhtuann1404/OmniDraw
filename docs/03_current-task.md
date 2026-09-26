@@ -13,7 +13,7 @@
 | -------------------------- |----------------------------------------| --------------------------------------- | ----------- |
 | TV1 — AI Core              | Đã hoàn tất Cross-review Chương 1–3 (Phiếu TV1: PASS) & đóng băng Benchmark Corpus v1.0 | *(điền, hoặc để trống nếu không nghẽn)* | Sprint 1–2  |
 | TV2 — AI Ứng dụng/CV       | *(điền)*                               | *(điền)*                                | *(điền)*    |
-| TV3 — Phần cứng            | Hoàn tất ký duyệt cross-review Chương 1–3 (PASS trên commit 031d198), ban hành Protocol kiểm chuẩn và tích hợp RQ3 Benchmark CLI | Blocked by hardware: chờ máy vẽ AxiDraw & cáp USB vật lý để chạy thực nghiệm trên giấy thật | Sprint 1–2  |
+| TV3 — Phần cứng            | Hoàn tất xử lý TV2-HW-R01 đến TV2-HW-R06, chuẩn hóa schema CSV 22 trường mở rộng, hoàn thiện tiêu bản RQ3 (Khối B góc bẻ & Khối C 3 dải tốc độ), khóa bất biến provenance, bộ test 42/42 PASS | Blocked by hardware: chờ máy vẽ AxiDraw & cáp USB vật lý để chạy thực nghiệm trên giấy thật | Sprint 1–2  |
 | TV4 — Giao diện & Tích hợp | (điền)                                 | *(điền)*                                | *(điền)*    |
 
 
@@ -32,7 +32,7 @@
 | **TV4 — Project Lead & Handwriting / CA-VHC Composition Lead** | Hoàn tất Strict Validation, BƯỚC A/B, PR1, Pre-PR3 Acceptance Contract, khóa Hợp đồng E4 cùng TV2; chuẩn bị triển khai PR3 (Diacritic-Aware Trellis DAG) | Không | 🟡 Đang làm |
 | **TV2 — Stroke Optimization & Path Planning Lead** | Step B technical cross-review đã PASS; PR2 baseline adapters B1/B2/B3 đã triển khai; đã cùng TV4 ký duyệt Hợp đồng Giao diện Chuyển tiếp E4 (Docs 18) khóa hàm mục tiêu $J$ | Không | 🟢 Hoàn tất E4 |
 | **TV1 — AI Data & Writer Profile Lead** | Hoàn tất Phân tích độ phủ P01–P04 (Báo cáo 20) và Ban hành Quy trình Vận hành Thu thập & Xử lý lỗi (Chính sách 21); Hoàn thành Scan-Validation Pipeline (11/11 tests pass); Benchmark Corpus v1.0 đã đóng băng; Đang chờ thiết bị máy in/máy quét để thực hiện bench scan 600 DPI và chạy Pilot 3–5 writers | Blocked by hardware: chờ máy in & máy quét 600 DPI để bench scan P01–P04 | 🟡 Đang chờ thiết bị |
-| **TV3 — Hardware, Calibration & Physical Validation Lead** | Đã hoàn tất HAL/Simulator (PR #29); phiếu cross-review Chương 1–3 đã ký `PASS` (hoàn tất scoped recheck trên `031d198`); ban hành Giao thức Kiểm chuẩn Vật lý (`07_physical_calibration_protocol.md`), tiêu bản RQ3 SVG và tích hợp CLI `--benchmark-rq3` (27/27 tests pass) | *Blocked by hardware:* chờ setup cáp & máy vẽ thực tế (hoàn tất 100% nền tảng phần mềm; chờ máy thật để chạy calibration) | 🟡 Đang làm |
+| **TV3 — Hardware, Calibration & Physical Validation Lead** | Đã hoàn tất HAL/Simulator; xử lý toàn diện TV2-HW-R01 đến TV2-HW-R06; chuẩn hóa schema CSV 22 trường telemetry động học; chuẩn hóa tiêu bản RQ3 Khối B góc bẻ & Khối C 3 dải tốc độ; hoàn tất cơ chế bất biến provenance; hoàn thiện contract pause_supported; toàn bộ 42/42 tests pass | *Blocked by hardware:* chờ setup cáp & máy vẽ thực tế (hoàn tất 100% nền tảng phần mềm; chờ máy thật để chạy calibration) | 🟢 Hoàn tất phần mềm & Hợp đồng tích hợp |
 
 ---
 
