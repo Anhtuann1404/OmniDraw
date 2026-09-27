@@ -44,6 +44,23 @@ ASSUMED_PEN_SPEED_MM_PER_SEC: float = 40.0     # Art Mode mặc định (mm/s)
 ASSUMED_PEN_UP_SPEED_MM_PER_SEC: float = 75.0    # Tốc độ nhấc bút rapid travel (mm/s)
 ASSUMED_PEN_DOWN_DELAY_MS: float = 120.0         # Độ trễ hạ bút (ms)
 ASSUMED_PEN_UP_DELAY_MS: float = 100.0           # Độ trễ nâng bút (ms)
+AXIDRAW_DEFAULT_MAX_SPEED_MM_S: float = 250.0   # Tốc độ tối đa danh định (100%) của AxiDraw V3/SE
+
+
+def mm_s_to_axidraw_speed_pct(speed_mm_s: float, max_speed_mm_s: float = AXIDRAW_DEFAULT_MAX_SPEED_MM_S) -> int:
+    """
+    Quy đổi vận tốc mm/s sang % tốc độ tối đa (1-100%) của driver AxiDraw.
+    LƯU Ý QUAN TRỌNG VỀ ĐƠN VỊ (TV4 Unit Contract):
+    - pyaxidraw.options.speed_pendown nhận % (1..100), KHÔNG NHẬN mm/s.
+    - Ánh xạ tuyến tính danh định: pct = round((speed_mm_s / max_speed_mm_s) * 100).
+    - Tốc độ vật lý thực tế trên giấy cần được hiệu chuẩn bằng thiết bị quang học/tachometer;
+      khi chưa có thực nghiệm thì trạng thái vật lý bắt buộc là 'UNVERIFIED'.
+    """
+    if speed_mm_s <= 0:
+        raise ValueError(f"Vận tốc yêu cầu phải là số dương: {speed_mm_s}")
+    pct = int(round((float(speed_mm_s) / float(max_speed_mm_s)) * 100.0))
+    return max(1, min(100, pct))
+
 
 # Mapping model AxiDraw sang mã số pyaxidraw
 AXIDRAW_MODEL_CODES: Dict[str, int] = {
@@ -391,6 +408,10 @@ HARDWARE_METRICS_FIELDNAMES: List[str] = [
     "model_type",
     "accel_model_applied",
     "corner_model_applied",
+    # Speed Unit & Calibration Contract Extension (TV4 Review)
+    "requested_speed_mm_s",
+    "driver_speed_pct",
+    "physical_speed_status",
 ]
 
 
@@ -543,6 +564,14 @@ def record_metric(job: Dict[str, Any], csv_path: Optional[str] = None) -> None:
     if est_time is None:
         est_time = job.get("estimated_draw_time_sec")
 
+    speed_status = job.get("physical_speed_status", "UNVERIFIED")
+    raw_pendown_mm_s = job.get("speed_pendown_mm_s", "")
+    # TV4 Unit Contract: Nếu là job physical nhưng tốc độ vật lý chưa hiệu chuẩn thì không ghi nhận là đã đạt mm/s
+    if (not is_sim) and (src_tag == "axidraw_real") and (speed_status == "UNVERIFIED"):
+        reported_speed_mm_s = ""
+    else:
+        reported_speed_mm_s = raw_pendown_mm_s
+
     row = {
         "request_id": job.get("request_id", ""),
         "timestamp": now,
@@ -556,7 +585,7 @@ def record_metric(job: Dict[str, Any], csv_path: Optional[str] = None) -> None:
         # TV2-HW-R05 Extended Motion & Calibration Metadata
         "profile_version": job.get("profile_version", ""),
         "device_model": job.get("device_model", ""),
-        "speed_pendown_mm_s": job.get("speed_pendown_mm_s", ""),
+        "speed_pendown_mm_s": reported_speed_mm_s,
         "speed_penup_mm_s": job.get("speed_penup_mm_s", ""),
         "accel_pct": job.get("accel_pct", ""),
         "pen_delay_down_ms": job.get("pen_delay_down_ms", ""),
@@ -567,6 +596,10 @@ def record_metric(job: Dict[str, Any], csv_path: Optional[str] = None) -> None:
         "model_type": job.get("model_type", "constant_speed_baseline"),
         "accel_model_applied": job.get("accel_model_applied", False),
         "corner_model_applied": job.get("corner_model_applied", False),
+        # Speed Unit & Calibration Contract Extension (TV4 Review)
+        "requested_speed_mm_s": job.get("requested_speed_mm_s", ""),
+        "driver_speed_pct": job.get("driver_speed_pct", ""),
+        "physical_speed_status": speed_status,
     }
 
     with _metrics_file_lock:
@@ -1125,8 +1158,15 @@ class HardwareAdapterInterface(ABC):
         pass
 
     @abstractmethod
-    def set_speed(self, speed_pendown_mm_s: float, speed_penup_mm_s: Optional[float] = None) -> None:
-        """Thiết lập vận tốc thi công động học (mm/s) cho adapter."""
+    def set_speed(
+        self,
+        speed_pendown_mm_s: Optional[float] = None,
+        speed_penup_mm_s: Optional[float] = None,
+        driver_speed_pct: Optional[int] = None,
+        driver_speed_penup_pct: Optional[int] = None,
+        requested_speed_mm_s: Optional[float] = None,
+    ) -> None:
+        """Thiết lập vận tốc thi công động học (mm/s và % driver) cho adapter."""
         pass
 
 
@@ -1149,12 +1189,31 @@ class MockSimulatorAdapter(HardwareAdapterInterface):
     def load_profile(self, profile_path: Optional[str] = None) -> None:
         self._profile = load_calibration_profile(profile_path)
 
-    def set_speed(self, speed_pendown_mm_s: float, speed_penup_mm_s: Optional[float] = None) -> None:
+    def set_speed(
+        self,
+        speed_pendown_mm_s: Optional[float] = None,
+        speed_penup_mm_s: Optional[float] = None,
+        driver_speed_pct: Optional[int] = None,
+        driver_speed_penup_pct: Optional[int] = None,
+        requested_speed_mm_s: Optional[float] = None,
+    ) -> None:
         if "motion" not in self._profile:
             self._profile["motion"] = {}
-        self._profile["motion"]["speed_pendown_mm_s"] = float(speed_pendown_mm_s)
+        req_spd = requested_speed_mm_s if requested_speed_mm_s is not None else speed_pendown_mm_s
+        if req_spd is not None:
+            self._profile["motion"]["requested_speed_mm_s"] = float(req_spd)
+            self._profile["motion"]["speed_pendown_mm_s"] = float(req_spd)
+        max_spd = float(self._profile.get("motion", {}).get("max_speed_pendown_mm_s", AXIDRAW_DEFAULT_MAX_SPEED_MM_S))
+        if driver_speed_pct is not None:
+            self._profile["motion"]["driver_speed_pct"] = max(1, min(100, int(driver_speed_pct)))
+        elif req_spd is not None:
+            self._profile["motion"]["driver_speed_pct"] = mm_s_to_axidraw_speed_pct(float(req_spd), max_speed_mm_s=max_spd)
+        self._profile["motion"]["physical_speed_status"] = "UNVERIFIED"
         if speed_penup_mm_s is not None:
             self._profile["motion"]["speed_penup_mm_s"] = float(speed_penup_mm_s)
+        if driver_speed_penup_pct is not None:
+            self._profile["motion"]["driver_speed_penup_pct"] = max(1, min(100, int(driver_speed_penup_pct)))
+
 
     def connect(self, port: Optional[str] = None) -> bool:
         self._connected = True
@@ -1290,11 +1349,15 @@ class MockSimulatorAdapter(HardwareAdapterInterface):
                 "pause_supported": self.pause_supported,
             }
 
-        speed_pendown = float(self._profile.get("motion", {}).get("speed_pendown_mm_s", ASSUMED_PEN_SPEED_MM_PER_SEC))
-        speed_penup = float(self._profile.get("motion", {}).get("speed_penup_mm_s", ASSUMED_PEN_UP_SPEED_MM_PER_SEC))
+        motion = self._profile.get("motion", {})
+        speed_pendown = float(motion.get("speed_pendown_mm_s", ASSUMED_PEN_SPEED_MM_PER_SEC))
+        speed_penup = float(motion.get("speed_penup_mm_s", ASSUMED_PEN_UP_SPEED_MM_PER_SEC))
+        requested_speed = motion.get("requested_speed_mm_s", speed_pendown)
+        driver_speed_pct = motion.get("driver_speed_pct", mm_s_to_axidraw_speed_pct(speed_pendown))
+        physical_speed_status = motion.get("physical_speed_status", "UNVERIFIED")
         delay_down = float(self._profile.get("pen", {}).get("delay_down_ms", ASSUMED_PEN_DOWN_DELAY_MS))
         delay_up = float(self._profile.get("pen", {}).get("delay_up_ms", ASSUMED_PEN_UP_DELAY_MS))
-        accel_pct = float(self._profile.get("motion", {}).get("accel_pct", 75))
+        accel_pct = float(motion.get("accel_pct", 75))
 
         breakdown = calculate_svg_draw_breakdown(
             resolved or svg_content_or_path,
@@ -1326,6 +1389,9 @@ class MockSimulatorAdapter(HardwareAdapterInterface):
             "accel_pct": accel_pct,
             "pen_delay_down_ms": delay_down,
             "pen_delay_up_ms": delay_up,
+            "requested_speed_mm_s": requested_speed,
+            "driver_speed_pct": driver_speed_pct,
+            "physical_speed_status": physical_speed_status,
             "error": None,
             "started_at": time.monotonic(),
             "elapsed_before_pause": 0.0,
@@ -1451,6 +1517,10 @@ class MockSimulatorAdapter(HardwareAdapterInterface):
             "accel_model_applied": job.get("accel_model_applied", False),
             "corner_model_applied": job.get("corner_model_applied", False),
             "error": job["error"],
+            "speed_pendown_mm_s": job.get("speed_pendown_mm_s"),
+            "requested_speed_mm_s": job.get("requested_speed_mm_s"),
+            "driver_speed_pct": job.get("driver_speed_pct"),
+            "physical_speed_status": job.get("physical_speed_status", "UNVERIFIED"),
             "pause_supported": self.pause_supported,
         }
         if job["status"] in ("done", "cancelled", "error"):
@@ -1578,13 +1648,46 @@ class AxiDrawAdapter(HardwareAdapterInterface):
     def load_profile(self, profile_path: Optional[str] = None) -> None:
         self._profile = load_calibration_profile(profile_path)
 
-    def set_speed(self, speed_pendown_mm_s: float, speed_penup_mm_s: Optional[float] = None) -> None:
-        """Thiết lập vận tốc thi công động học (mm/s) cho adapter và driver."""
+    def set_speed(
+        self,
+        speed_pendown_mm_s: Optional[float] = None,
+        speed_penup_mm_s: Optional[float] = None,
+        driver_speed_pct: Optional[int] = None,
+        driver_speed_penup_pct: Optional[int] = None,
+        requested_speed_mm_s: Optional[float] = None,
+    ) -> None:
+        """
+        Thiết lập vận tốc thi công cho adapter và driver.
+        RÕ RÀNG VỀ ĐƠN VỊ (TV4 Unit Contract):
+        - requested_speed_mm_s: Vận tốc yêu cầu danh định (mm/s).
+        - driver_speed_pct: Tỷ lệ % tốc độ tối đa (1..100) nạp vào pyaxidraw.options.speed_pendown.
+        - physical_speed_status: Đánh dấu 'UNVERIFIED' khi chưa có thực nghiệm kiểm chuẩn vật lý.
+        """
         if "motion" not in self._profile:
             self._profile["motion"] = {}
-        self._profile["motion"]["speed_pendown_mm_s"] = float(speed_pendown_mm_s)
+
+        req_spd = requested_speed_mm_s if requested_speed_mm_s is not None else speed_pendown_mm_s
+        max_spd = float(self._profile.get("motion", {}).get("max_speed_pendown_mm_s", AXIDRAW_DEFAULT_MAX_SPEED_MM_S))
+
+        if driver_speed_pct is not None:
+            pct = int(driver_speed_pct)
+        elif req_spd is not None:
+            pct = mm_s_to_axidraw_speed_pct(float(req_spd), max_speed_mm_s=max_spd)
+        else:
+            pct = int(self._profile.get("motion", {}).get("driver_speed_pct", 25))
+
+        self._profile["motion"]["driver_speed_pct"] = max(1, min(100, pct))
+        self._profile["motion"]["requested_speed_mm_s"] = float(req_spd) if req_spd is not None else None
+        self._profile["motion"]["physical_speed_status"] = "UNVERIFIED"
+
+        if req_spd is not None:
+            self._profile["motion"]["speed_pendown_mm_s"] = float(req_spd)
+
         if speed_penup_mm_s is not None:
             self._profile["motion"]["speed_penup_mm_s"] = float(speed_penup_mm_s)
+        if driver_speed_penup_pct is not None:
+            self._profile["motion"]["driver_speed_penup_pct"] = max(1, min(100, int(driver_speed_penup_pct)))
+
         self._apply_profile_to_driver()
 
 
@@ -1622,8 +1725,22 @@ class AxiDrawAdapter(HardwareAdapterInterface):
             if hasattr(opts, "auto_rotate"):
                 opts.auto_rotate = (paper.get("orientation", "landscape") == "landscape")
 
-            opts.speed_pendown = int(motion.get("speed_pendown_mm_s", ASSUMED_PEN_SPEED_MM_PER_SEC))
-            opts.speed_penup = int(motion.get("speed_penup_mm_s", ASSUMED_PEN_UP_SPEED_MM_PER_SEC))
+            driver_pct = motion.get("driver_speed_pct")
+            if driver_pct is None:
+                req_spd = motion.get("requested_speed_mm_s", motion.get("speed_pendown_mm_s", ASSUMED_PEN_SPEED_MM_PER_SEC))
+                max_spd = float(motion.get("max_speed_pendown_mm_s", AXIDRAW_DEFAULT_MAX_SPEED_MM_S))
+                driver_pct = mm_s_to_axidraw_speed_pct(float(req_spd), max_speed_mm_s=max_spd)
+
+            # TV4 Unit Contract: options.speed_pendown nhận % (1-100), KHÔNG nhận mm/s
+            opts.speed_pendown = int(max(1, min(100, int(driver_pct))))
+
+            driver_penup_pct = motion.get("driver_speed_penup_pct")
+            if driver_penup_pct is None:
+                req_up_spd = motion.get("speed_penup_mm_s", ASSUMED_PEN_UP_SPEED_MM_PER_SEC)
+                max_up_spd = float(motion.get("max_speed_penup_mm_s", AXIDRAW_DEFAULT_MAX_SPEED_MM_S))
+                driver_penup_pct = mm_s_to_axidraw_speed_pct(float(req_up_spd), max_speed_mm_s=max_up_spd)
+
+            opts.speed_penup = int(max(1, min(100, int(driver_penup_pct))))
             opts.accel = int(motion.get("accel_pct", 75))
 
             opts.pen_pos_up = int(pen.get("pos_up_pct", 60))
@@ -1785,6 +1902,9 @@ class AxiDrawAdapter(HardwareAdapterInterface):
         pen = self._profile.get("pen", {})
         speed_pendown = float(motion.get("speed_pendown_mm_s", ASSUMED_PEN_SPEED_MM_PER_SEC))
         speed_penup = float(motion.get("speed_penup_mm_s", ASSUMED_PEN_UP_SPEED_MM_PER_SEC))
+        requested_speed = motion.get("requested_speed_mm_s", speed_pendown)
+        driver_speed_pct = motion.get("driver_speed_pct", mm_s_to_axidraw_speed_pct(speed_pendown))
+        physical_speed_status = motion.get("physical_speed_status", "UNVERIFIED")
         delay_down = float(pen.get("delay_down_ms", ASSUMED_PEN_DOWN_DELAY_MS))
         delay_up = float(pen.get("delay_up_ms", ASSUMED_PEN_UP_DELAY_MS))
         accel_pct = float(motion.get("accel_pct", 75))
@@ -1824,6 +1944,9 @@ class AxiDrawAdapter(HardwareAdapterInterface):
             "accel_pct": accel_pct,
             "pen_delay_down_ms": delay_down,
             "pen_delay_up_ms": delay_up,
+            "requested_speed_mm_s": requested_speed,
+            "driver_speed_pct": driver_speed_pct,
+            "physical_speed_status": physical_speed_status,
             "error": None,
             "started_at": time.monotonic(),
             "svg_path": final_svg_path,
@@ -2078,6 +2201,10 @@ class AxiDrawAdapter(HardwareAdapterInterface):
             "model_type": job.get("model_type", "constant_speed_baseline"),
             "accel_model_applied": job.get("accel_model_applied", False),
             "corner_model_applied": job.get("corner_model_applied", False),
+            "speed_pendown_mm_s": job.get("speed_pendown_mm_s"),
+            "requested_speed_mm_s": job.get("requested_speed_mm_s"),
+            "driver_speed_pct": job.get("driver_speed_pct"),
+            "physical_speed_status": job.get("physical_speed_status", "UNVERIFIED"),
             "error": job.get("error"),
             "progress_is_estimated": True,
             "pause_supported": self.pause_supported,
@@ -2213,20 +2340,26 @@ RQ3_SPEED_BANDS: List[Dict[str, Any]] = [
     {
         "band_id": "rapid_pen_lift_20mms",
         "speed_mm_s": 20.0,
-        "name": "Band 1: v=20 mm/s",
+        "driver_speed_pct": 8,
+        "name": "Band 1: v=20 mm/s (8%)",
         "nominal_frequency_hz": 5.0,
+        "physical_speed_status": "UNVERIFIED",
     },
     {
         "band_id": "rapid_pen_lift_40mms",
         "speed_mm_s": 40.0,
-        "name": "Band 2: v=40 mm/s",
+        "driver_speed_pct": 16,
+        "name": "Band 2: v=40 mm/s (16%)",
         "nominal_frequency_hz": 10.0,
+        "physical_speed_status": "UNVERIFIED",
     },
     {
         "band_id": "rapid_pen_lift_60mms",
         "speed_mm_s": 60.0,
-        "name": "Band 3: v=60 mm/s",
+        "driver_speed_pct": 24,
+        "name": "Band 3: v=60 mm/s (24%)",
         "nominal_frequency_hz": 15.0,
+        "physical_speed_status": "UNVERIFIED",
     },
 ]
 
@@ -2272,14 +2405,18 @@ async def run_rq3_calibration_benchmark(
     profile_path: Optional[str] = None,
     adapter: Optional[HardwareAdapterInterface] = None,
     band_id: Optional[str] = None,
+    timeout_cap_sec: float = 60.0,
 ) -> Dict[str, Any]:
     """
     Thực hiện quy trình benchmark kiểm chuẩn phần cứng phục vụ RQ3 (Physical Feasibility & Diacritic Clearance).
     - Sử dụng tiêu bản tests/fixtures/rq3_clearance_calibration_specimen.svg.
-    - TV2-HW-R04: Phân tách Khối C thành 3 jobs rời rạc tương ứng với 3 dải vận tốc (20, 40, 60 mm/s),
-      áp dụng tốc độ vật lý chuẩn xác qua adapter.set_speed() và ghi nhận độc lập vào CSV metrics.
-    - Hỗ trợ các mode: simulator, fake, physical.
-    - Thu thập telemetry đầy đủ (actual_draw_time_sec, estimated_draw_time_sec, draw_distance_mm, penup_distance_mm, pen_lift_count).
+    - TV2-HW-R04: Phân tách Khối C thành 3 jobs rời rạc tương ứng với 3 dải vận tốc (20, 40, 60 mm/s).
+    - TV4 Unit Contract: options.speed_pendown nhận % (1-100), không nhận mm/s. Tách rõ requested_speed_mm_s,
+      driver_speed_pct, và physical_speed_status='UNVERIFIED'.
+    - TV4 Dynamic Timeout: Timeout động dựa trên total_draw_time_sec + margin an toàn (time.monotonic()),
+      chủ động hủy job bằng cancel_job() nếu timeout để tránh motor chạy ngầm.
+    - TV4 Scope Accuracy: Ghi rõ fixture_clearance_ladder_available_mm và fixture_acute_turn_angles_available_deg
+      thay vì tuyên bố đã test các khối chưa chạy.
     - Phân định rõ ràng is_simulated vs actual_hardware_measured theo quy chuẩn học thuật NCKH.
     """
     repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -2335,6 +2472,7 @@ async def run_rq3_calibration_benchmark(
     for band_info in bands_to_run:
         cur_band_id = band_info["band_id"]
         cur_speed = float(band_info["speed_mm_s"])
+        cur_driver_pct = int(band_info.get("driver_speed_pct", mm_s_to_axidraw_speed_pct(cur_speed)))
 
         # Trích xuất SVG riêng cho từng dải vận tốc
         try:
@@ -2346,8 +2484,12 @@ async def run_rq3_calibration_benchmark(
                 "rq3_verified": False,
             }
 
-        # Cấu hình vận tốc profile trên adapter / driver
-        adapter.set_speed(speed_pendown_mm_s=cur_speed)
+        # Cấu hình vận tốc profile trên adapter / driver: phân định rõ mm/s và driver %
+        adapter.set_speed(
+            speed_pendown_mm_s=cur_speed,
+            driver_speed_pct=cur_driver_pct,
+            requested_speed_mm_s=cur_speed,
+        )
 
         band_req_id = f"rq3-bench-{cur_band_id}-{int(time.time() * 1000)}"
         start_res = await adapter.start_job(band_req_id, band_svg_content)
@@ -2360,10 +2502,18 @@ async def run_rq3_calibration_benchmark(
                 "rq3_verified": False,
             }
 
-        # Polling chờ hoàn tất job của từng dải
+        # Polling chờ hoàn tất job của từng dải với Dynamic Deadline
+        # TV4: Dynamic deadline dựa trên total_draw_time_sec + margin an toàn:
+        # min(max(15.0, est * 2.5 + 5.0), timeout_cap_sec) dùng time.monotonic().
+        # Nếu timeout, chủ động hủy job (cancel_job()) để motor không chạy ngầm.
+        init_st = adapter.get_status(band_req_id)
+        est_time_sec = float(init_st.get("total_draw_time_sec") or 5.0)
+        band_timeout_sec = min(max(15.0, est_time_sec * 2.5 + 5.0), timeout_cap_sec)
+        deadline = time.monotonic() + band_timeout_sec
+
         band_done = False
         last_st: Dict[str, Any] = {}
-        for _ in range(120):
+        while time.monotonic() < deadline:
             await asyncio.sleep(0.05)
             last_st = adapter.get_status(band_req_id)
             if last_st["status"] == "done":
@@ -2379,9 +2529,14 @@ async def run_rq3_calibration_benchmark(
                 }
 
         if not band_done:
+            # Chủ động hủy job trên adapter để bảo đảm an toàn phần cứng
+            try:
+                await adapter.cancel_job(band_req_id)
+            except Exception:
+                pass
             return {
                 "status": "timeout",
-                "error": f"Timeout quá hạn chờ hoàn thành band {cur_band_id}",
+                "error": f"Timeout quá hạn chờ hoàn thành band {cur_band_id} (sau {band_timeout_sec:.1f}s)",
                 "request_id": band_req_id,
                 "band_id": cur_band_id,
                 "rq3_verified": False,
@@ -2390,7 +2545,10 @@ async def run_rq3_calibration_benchmark(
         band_results[cur_band_id] = {
             "band_id": cur_band_id,
             "request_id": band_req_id,
-            "speed_pendown_mm_s": cur_speed,
+            "requested_speed_mm_s": cur_speed,
+            "driver_speed_pct": cur_driver_pct,
+            "physical_speed_status": last_st.get("physical_speed_status", "UNVERIFIED"),
+            "speed_pendown_mm_s": last_st.get("speed_pendown_mm_s", cur_speed),
             "actual_draw_time_sec": last_st.get("actual_draw_time_sec"),
             "estimated_draw_time_sec": last_st.get("total_draw_time_sec"),
             "draw_distance_mm": last_st.get("draw_distance_mm"),
@@ -2427,8 +2585,12 @@ async def run_rq3_calibration_benchmark(
         "is_simulated": all_simulated,
         "actual_hardware_measured": all_hw_measured,
         "source_tag": source_tag,
-        "clearance_ladder_tested_mm": [0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70],
-        "acute_turn_angles_tested_deg": [60, 90, 120, 150],
+        "physical_speed_status": "UNVERIFIED",
+        "fixture_clearance_ladder_available_mm": [0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70],
+        "fixture_acute_turn_angles_available_deg": [60, 90, 120, 150],
+        "block_a_clearance_ladder_tested": False,
+        "block_b_acute_turns_tested": False,
+        "block_c_rapid_pen_lift_tested": True,
         "rapid_pen_lift_actuation_tested": True,
         "rq3_telemetry_recorded": True,
         "bands_tested": [b["band_id"] for b in bands_to_run],

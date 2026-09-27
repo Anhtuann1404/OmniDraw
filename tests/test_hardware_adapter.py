@@ -68,6 +68,8 @@ from hardware_adapter import (
     extract_rq3_band_specimen_svg,
     RQ3_SPEED_BANDS,
     VALID_HARDWARE_ERRORS,
+    mm_s_to_axidraw_speed_pct,
+    AXIDRAW_DEFAULT_MAX_SPEED_MM_S,
 )
 
 _module_temp_csv = None
@@ -398,9 +400,13 @@ class TestRQ3CalibrationBenchmark(unittest.TestCase):
         self.assertTrue(res.get("is_simulated"))
         self.assertFalse(res.get("actual_hardware_measured"))
         self.assertEqual(res.get("source_tag"), "simulator")
-        self.assertEqual(res.get("clearance_ladder_tested_mm"), [0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70])
-        self.assertEqual(res.get("acute_turn_angles_tested_deg"), [60, 90, 120, 150])
+        self.assertEqual(res.get("fixture_clearance_ladder_available_mm"), [0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70])
+        self.assertEqual(res.get("fixture_acute_turn_angles_available_deg"), [60, 90, 120, 150])
+        self.assertFalse(res.get("block_a_clearance_ladder_tested"))
+        self.assertFalse(res.get("block_b_acute_turns_tested"))
+        self.assertTrue(res.get("block_c_rapid_pen_lift_tested"))
         self.assertTrue(res.get("rapid_pen_lift_actuation_tested"))
+        self.assertEqual(res.get("physical_speed_status"), "UNVERIFIED")
         self.assertEqual(res.get("bands_tested"), ["rapid_pen_lift_20mms", "rapid_pen_lift_40mms", "rapid_pen_lift_60mms"])
         self.assertEqual(len(res.get("band_results", {})), 3)
 
@@ -436,12 +442,38 @@ class TestRQ3CalibrationBenchmark(unittest.TestCase):
                 if other_band != band_id:
                     self.assertNotIn(f'id="{other_band}"', band_svg)
 
+    def test_axidraw_speed_unit_conversion_contract(self):
+        """
+        TV4 Blocker 1 Contract Test:
+        - pyaxidraw.options.speed_pendown nhận % (1-100), KHÔNG nhận mm/s trực tiếp.
+        - Kiểm tra hàm mm_s_to_axidraw_speed_pct quy đổi chuẩn xác:
+          20 mm/s = 8%, 40 mm/s = 16%, 60 mm/s = 24% trên thang chuẩn 250 mm/s.
+        - Kiểm tra cận biên: clamped trong khoảng [1, 100].
+        """
+        self.assertEqual(mm_s_to_axidraw_speed_pct(20.0, 250.0), 8)
+        self.assertEqual(mm_s_to_axidraw_speed_pct(40.0, 250.0), 16)
+        self.assertEqual(mm_s_to_axidraw_speed_pct(60.0, 250.0), 24)
+        with self.assertRaises(ValueError):
+            mm_s_to_axidraw_speed_pct(0.0, 250.0)
+        with self.assertRaises(ValueError):
+            mm_s_to_axidraw_speed_pct(-10.0, 250.0)
+        self.assertEqual(mm_s_to_axidraw_speed_pct(300.0, 250.0), 100)
+
+        # Kiểm tra qua AxiDrawAdapter.set_speed() nạp trực tiếp vào driver options
+        driver = _FakeAxiDrawDriver()
+        adapter = AxiDrawAdapter(use_fake_driver=True)
+        adapter._ad = driver
+        adapter.set_speed(speed_pendown_mm_s=40.0, driver_speed_pct=16, requested_speed_mm_s=40.0)
+        self.assertEqual(driver.options.speed_pendown, 16)
+
     def test_rq3_benchmark_dispatches_3_discrete_speed_jobs_with_driver_stub(self):
         """
-        TV2-HW-R04 Unit Test:
-        Sử dụng driver stub ghi nhận các lệnh được dispatch, chứng minh runner thực hiện
-        chính xác 3 jobs tương ứng với 3 dải tốc độ 20, 40, 60 mm/s.
-        Test này bắt buộc thất bại nếu runner gửi 1 job chung cho toàn bộ SVG.
+        TV2-HW-R04 & TV4 Unit Contract:
+        Sử dụng driver stub ghi nhận các lệnh được dispatch:
+        - Dispatch chính xác 3 jobs riêng biệt cho 3 dải tốc độ.
+        - Driver nhận đúng % vận tốc [8, 16, 24]%, KHÔNG nhận mm/s [20, 40, 60].
+        - Telemetry và CSV tách bạch requested_speed_mm_s, driver_speed_pct, và physical_speed_status='UNVERIFIED'.
+        - Không ghi nhận speed_pendown_mm_s bừa bãi khi physical job chưa được hiệu chuẩn vật lý.
         """
         class RecordingAxiDrawDriverStub:
             def __init__(self):
@@ -506,12 +538,13 @@ class TestRQ3CalibrationBenchmark(unittest.TestCase):
                 f"Runner MUST dispatch exactly 3 discrete jobs for the 3 speed bands! Got {len(driver_stub.dispatched_jobs)}"
             )
 
-            # KIỂM ĐỊNH BẮT BUỘC 2: Tốc độ áp dụng trên driver đúng thứ tự [20, 40, 60] mm/s
+            # KIỂM ĐỊNH BẮT BUỘC 2: Tốc độ áp dụng trên driver đúng theo % tối đa [8, 16, 24]% (TV4 Unit Contract)
+            # options.speed_pendown nhận % (1-100), KHÔNG nhận giá trị mm/s trực tiếp!
             applied_speeds = [job["speed_pendown"] for job in driver_stub.dispatched_jobs]
             self.assertEqual(
                 applied_speeds,
-                [20, 40, 60],
-                f"Dispatched driver speeds must be exactly [20, 40, 60] mm/s! Got {applied_speeds}"
+                [8, 16, 24],
+                f"Dispatched driver speeds must be percentage [8, 16, 24]! Got {applied_speeds}"
             )
 
             # KIỂM ĐỊNH BẮT BUỘC 3: Mỗi job chỉ gửi tiêu bản dải đó, không gửi toàn bộ SVG specimen
@@ -522,32 +555,204 @@ class TestRQ3CalibrationBenchmark(unittest.TestCase):
                 self.assertNotIn("boundary_frame", job_svg, "Isolated band SVG must not include boundary_frame")
                 self.assertNotIn("block_a_clearance_ladder", job_svg, "Isolated band SVG must not include block A")
 
-            # KIỂM ĐỊNH BẮT BUỘC 4: Telemetry trả về ghi nhận đầy đủ 3 dải
+            # KIỂM ĐỊNH BẮT BUỘC 4: Telemetry trả về ghi nhận đầy đủ 3 dải, tách bạch mm/s và driver %
             self.assertEqual(res.get("bands_tested"), expected_bands)
             band_res = res.get("band_results", {})
             self.assertEqual(len(band_res), 3)
-            for b_id, b_speed in zip(expected_bands, [20.0, 40.0, 60.0]):
+            for b_id, b_speed, b_pct in zip(expected_bands, [20.0, 40.0, 60.0], [8, 16, 24]):
                 self.assertIn(b_id, band_res)
-                self.assertEqual(band_res[b_id]["speed_pendown_mm_s"], b_speed)
+                self.assertEqual(band_res[b_id]["requested_speed_mm_s"], b_speed)
+                self.assertEqual(band_res[b_id]["driver_speed_pct"], b_pct)
+                self.assertEqual(band_res[b_id]["physical_speed_status"], "UNVERIFIED")
                 self.assertTrue(band_res[b_id]["actual_hardware_measured"])
                 self.assertFalse(band_res[b_id]["is_simulated"])
                 self.assertEqual(band_res[b_id]["source_tag"], "axidraw_real")
 
-            # KIỂM ĐỊNH BẮT BUỘC 5: File CSV ghi nhận đúng 3 rows với các vận tốc tương ứng
+            # KIỂM ĐỊNH BẮT BUỘC 5: File CSV ghi nhận đúng 3 rows với các vận tốc tương ứng và speed_pendown_mm_s rỗng
             with open(tmp_csv_path, "r", encoding="utf-8") as f:
                 reader = csv.DictReader(f)
                 rows = list(reader)
 
             self.assertEqual(len(rows), 3, "CSV must contain exactly 3 rows for the 3 speed bands")
-            for idx, (row, b_id, b_speed) in enumerate(zip(rows, expected_bands, ["20.0", "40.0", "60.0"])):
+            for idx, (row, b_id, b_speed, b_pct) in enumerate(zip(rows, expected_bands, ["20.0", "40.0", "60.0"], ["8", "16", "24"])):
                 self.assertIn(b_id, row["request_id"])
                 self.assertEqual(row["hardware_status"], "done")
                 self.assertEqual(row["actual_hardware_measured"], "True")
-                self.assertEqual(row["speed_pendown_mm_s"], b_speed)
+                self.assertEqual(row["requested_speed_mm_s"], b_speed)
+                self.assertEqual(row["driver_speed_pct"], b_pct)
+                self.assertEqual(row["physical_speed_status"], "UNVERIFIED")
+                # Do tốc độ vật lý chưa hiệu chuẩn, speed_pendown_mm_s không được ghi nhận bừa bãi
+                self.assertEqual(row["speed_pendown_mm_s"], "")
 
         finally:
             if os.path.exists(tmp_csv_path):
                 os.remove(tmp_csv_path)
+
+    def test_rq3_benchmark_job_longer_than_6s_completes_with_dynamic_deadline(self):
+        """
+        TV4 Blocker 2: Dynamic Timeout.
+        Trước đây runner hardcode 120 x 0.05s = 6.0s khiến các job thực tế >6s bị timeout giả tạo.
+        Test này xác minh với dynamic deadline, runner chờ vượt mốc 120 polling iterations
+        (mô phỏng 130 iterations hoàn tất) mà không bị timeout giả tạo.
+        """
+        class StubPollingAdapter(HardwareAdapterInterface):
+            def __init__(self):
+                self.poll_count = 0
+                self._connected = True
+
+            def load_profile(self, profile_path=None):
+                pass
+
+            def connect(self, port=None):
+                return True
+
+            def disconnect(self):
+                self._connected = False
+
+            @property
+            def is_connected(self):
+                return True
+
+            @property
+            def is_simulation(self):
+                return True
+
+            @property
+            def pause_supported(self):
+                return True
+
+            def set_speed(self, speed_pendown_mm_s=None, speed_penup_mm_s=None,
+                          driver_speed_pct=None, driver_speed_penup_pct=None, requested_speed_mm_s=None):
+                pass
+
+            async def start_job(self, request_id, svg_content_or_path, paper_size="a4"):
+                self.poll_count = 0
+                return {"request_id": request_id, "status": "printing"}
+
+            def get_status(self, request_id, simulate_error=None):
+                self.poll_count += 1
+                # Vượt mốc 120 iterations cũ: đến iteration 125 mới hoàn tất
+                if self.poll_count < 125:
+                    return {
+                        "request_id": request_id,
+                        "status": "printing",
+                        "total_draw_time_sec": 12.0,  # dynamic deadline >= 35s
+                        "actual_draw_time_sec": None,
+                        "is_simulated": True,
+                        "actual_hardware_measured": False,
+                        "source_tag": "simulator",
+                    }
+                return {
+                    "request_id": request_id,
+                    "status": "done",
+                    "total_draw_time_sec": 12.0,
+                    "actual_draw_time_sec": 6.8,
+                    "is_simulated": True,
+                    "actual_hardware_measured": False,
+                    "source_tag": "simulator",
+                }
+
+            async def pause_job(self, request_id):
+                return {"status": "paused"}
+
+            async def resume_job(self, request_id):
+                return {"status": "printing"}
+
+            async def cancel_job(self, request_id):
+                return {"status": "cancelled"}
+
+        adapter = StubPollingAdapter()
+
+        # Coroutine hoàn thành ngay lập tức để test chạy tức thì (< 0.05s) mà vẫn trải qua 125 vòng lặp
+        async def fast_sleep(_sec):
+            pass
+
+        import unittest.mock as mock
+        with mock.patch("asyncio.sleep", side_effect=fast_sleep):
+            res = asyncio.run(run_rq3_calibration_benchmark(
+                mode="simulator",
+                adapter=adapter,
+                band_id="rapid_pen_lift_20mms",
+                timeout_cap_sec=60.0
+            ))
+
+        self.assertEqual(res.get("status"), "done", f"Job taking >120 iterations must succeed with dynamic deadline! Got {res}")
+        self.assertGreaterEqual(adapter.poll_count, 125)
+
+    def test_rq3_benchmark_timeout_cancels_physical_job_safely(self):
+        """
+        TV4 Blocker 2: Timeout Active Cancellation.
+        Khi job bị timeout, runner bắt buộc gọi cancel_job() trên adapter
+        để motor máy vẽ thật không tiếp tục chạy ngầm trong background.
+        """
+        class HangingPhysicalAdapter(HardwareAdapterInterface):
+            def __init__(self):
+                self.cancel_called = False
+                self.cancelled_request_id = None
+
+            def load_profile(self, profile_path=None):
+                pass
+
+            def connect(self, port=None):
+                return True
+
+            def disconnect(self):
+                pass
+
+            @property
+            def is_connected(self):
+                return True
+
+            @property
+            def is_simulation(self):
+                return False
+
+            @property
+            def pause_supported(self):
+                return False
+
+            def set_speed(self, speed_pendown_mm_s=None, speed_penup_mm_s=None,
+                          driver_speed_pct=None, driver_speed_penup_pct=None, requested_speed_mm_s=None):
+                pass
+
+            async def start_job(self, request_id, svg_content_or_path, paper_size="a4"):
+                return {"request_id": request_id, "status": "printing"}
+
+            def get_status(self, request_id, simulate_error=None):
+                # Luôn luôn kẹt ở printing để gây timeout
+                return {
+                    "request_id": request_id,
+                    "status": "printing",
+                    "total_draw_time_sec": 1.0,
+                    "actual_draw_time_sec": None,
+                    "is_simulated": False,
+                    "actual_hardware_measured": False,
+                    "source_tag": "axidraw_real",
+                }
+
+            async def pause_job(self, request_id):
+                return {"status": "error"}
+
+            async def resume_job(self, request_id):
+                return {"status": "error"}
+
+            async def cancel_job(self, request_id):
+                self.cancel_called = True
+                self.cancelled_request_id = request_id
+                return {"request_id": request_id, "status": "cancelled"}
+
+        adapter = HangingPhysicalAdapter()
+        # Đặt timeout_cap_sec = 0.1s để gây timeout ngay lập tức
+        res = asyncio.run(run_rq3_calibration_benchmark(
+            mode="physical",
+            adapter=adapter,
+            band_id="rapid_pen_lift_20mms",
+            timeout_cap_sec=0.1
+        ))
+
+        self.assertEqual(res.get("status"), "timeout")
+        self.assertTrue(adapter.cancel_called, "Runner MUST actively call cancel_job() when timeout occurs!")
+        self.assertIsNotNone(adapter.cancelled_request_id)
 
 
 

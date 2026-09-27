@@ -35,12 +35,12 @@
 
 ---
 
-## 3. Schema Chuẩn Ghi Kết quả Thực nghiệm (Extended 22 Cột)
+## 3. Schema Chuẩn Ghi Kết quả Thực nghiệm (Extended 25 Cột)
 
-File: `logs/hardware_metrics.csv` (lưu riêng, không gộp schema vào experiment CSV; dùng `request_id` làm khóa liên kết). Tương thích ngược với các file CSV 9 cột thông qua cơ chế tự động chuyển dịch `migrate_hardware_metrics_csv()`.
+File: `logs/hardware_metrics.csv` (lưu riêng, không gộp schema vào experiment CSV; dùng `request_id` làm khóa liên kết). Tương thích ngược với các file CSV cũ thông qua cơ chế tự động chuyển dịch `migrate_hardware_metrics_csv()`.
 
 ```csv
-request_id,timestamp,actual_draw_time_sec,estimated_draw_time_sec,is_simulated,actual_hardware_measured,hardware_status,error_code,source_tag,profile_version,device_model,speed_pendown_mm_s,speed_penup_mm_s,accel_pct,pen_delay_down_ms,pen_delay_up_ms,draw_distance_mm,penup_distance_mm,pen_lift_count,model_type,accel_model_applied,corner_model_applied
+request_id,timestamp,actual_draw_time_sec,estimated_draw_time_sec,is_simulated,actual_hardware_measured,hardware_status,error_code,source_tag,profile_version,device_model,speed_pendown_mm_s,speed_penup_mm_s,accel_pct,pen_delay_down_ms,pen_delay_up_ms,draw_distance_mm,penup_distance_mm,pen_lift_count,model_type,accel_model_applied,corner_model_applied,requested_speed_mm_s,driver_speed_pct,physical_speed_status
 ```
 
 Chi tiết các trường:
@@ -55,7 +55,7 @@ Chi tiết các trường:
 9. `source_tag`: Gắn nhãn nguồn thiết bị (`simulator`, `axidraw_fake_driver`, `axidraw_real`).
 10. `profile_version`: Phiên bản cấu hình máy in/calibration profile (ví dụ: `1.0`).
 11. `device_model`: Tên dòng máy vẽ (ví dụ: `AxiDraw V3/SE A4`).
-12. `speed_pendown_mm_s`: Vận tốc hạ bút cấu hình (mm/s).
+12. `speed_pendown_mm_s`: Vận tốc hạ bút thực nghiệm đã hiệu chuẩn (mm/s). **LƯU Ý:** Nếu `physical_speed_status == "UNVERIFIED"`, trường này bắt buộc để rỗng (`""`) để tránh tuyên bố sai lệch số liệu khi chưa có cảm biến kiểm chuẩn.
 13. `speed_penup_mm_s`: Vận tốc nhấc bút cấu hình (mm/s).
 14. `accel_pct`: Thông số gia tốc phần cứng đặt trong firmware driver (% xung bước max).
 15. `pen_delay_down_ms`: Độ trễ cơ học khi hạ bút (ms).
@@ -66,6 +66,9 @@ Chi tiết các trường:
 20. `model_type`: Định danh mô hình thời gian (hiện hành: `constant_speed_baseline`).
 21. `accel_model_applied`: Cờ mô phỏng gia tốc mm/s^2 (`False` đối với mô hình baseline).
 22. `corner_model_applied`: Cờ mô phỏng suy giảm vận tốc góc cua (`False` đối với mô hình baseline).
+23. `requested_speed_mm_s`: Vận tốc yêu cầu danh định theo thiết kế thí nghiệm (ví dụ: 20.0, 40.0, 60.0 mm/s).
+24. `driver_speed_pct`: Giá trị phần trăm vận tốc tối đa (1–100%) thực sự nạp vào `pyaxidraw.options.speed_pendown` (TV4 Unit Contract).
+25. `physical_speed_status`: Trạng thái kiểm chuẩn tốc độ vật lý (`UNVERIFIED` khi chưa có cảm biến quang học/tachometer kiểm chứng; `CALIBRATED` khi đã qua hiệu chuẩn thực tế).
 
 ---
 
