@@ -82,7 +82,7 @@ VALID_HARDWARE_ERRORS: Dict[str, str] = {
     "HARDWARE_PAPER_JAM": "Phát hiện kẹt giấy tại bàn vẽ",
     "HARDWARE_OUT_OF_INK": "Hết mực hoặc ngòi không tiếp xúc giấy",
     "HARDWARE_PAUSE_UNSUPPORTED": "AxiDraw phần cứng chưa hỗ trợ hoặc chưa xác minh tính năng tạm dừng (pause) an toàn giữa chừng",
-    "HARDWARE_CANCEL_UNSUPPORTED": "Driver phần cứng không có API dừng (thiếu stop/disconnect). Không thể xác nhận thiết bị đã dừng",
+    "HARDWARE_CANCEL_UNSUPPORTED": "Driver pyaxidraw không hỗ trợ API dừng phần mềm trong Plot context (disconnect() chỉ thuộc Interactive context và không bảo đảm motor đã dừng). Vui lòng nhấn nút Dừng/Pause vật lý trên máy vẽ để ngắt chuyển động an toàn",
     "DRIVER_STOP_FAILED": "Lệnh dừng driver phần cứng thất bại",
     "JOB_NOT_FOUND": "Không tìm thấy ID bản vẽ",
     "JOB_ALREADY_EXISTS": "Bản vẽ này đang chạy",
@@ -1593,19 +1593,23 @@ class _FakeAxiDrawDriver:
         self._stop_event.clear()
 
     def plot_run(self) -> None:
-        steps = 10
-        step_duration = self.total_plot_time / steps
+        self._is_stopped = False
+        try:
+            steps = 10
+            step_duration = self.total_plot_time / steps
 
-        for _ in range(steps):
-            if self._stop_event.is_set():
-                break
-
-            while not self._pause_event.is_set():
+            for _ in range(steps):
                 if self._stop_event.is_set():
-                    return
-                time.sleep(0.01)
+                    break
 
-            time.sleep(step_duration)
+                while not self._pause_event.is_set():
+                    if self._stop_event.is_set():
+                        return
+                    time.sleep(0.01)
+
+                time.sleep(step_duration)
+        finally:
+            self._is_stopped = True
 
     def pause(self):
         self._is_paused = True
@@ -1619,6 +1623,10 @@ class _FakeAxiDrawDriver:
         self._is_stopped = True
         self._stop_event.set()
         self._pause_event.set()
+
+    @property
+    def plot_running(self) -> bool:
+        return not self._is_stopped and not self._stop_event.is_set()
 
     def penup(self):
         pass
@@ -2172,30 +2180,62 @@ class AxiDrawAdapter(HardwareAdapterInterface):
                 has_stop = hasattr(self._ad, 'stop') and callable(getattr(self._ad, 'stop'))
                 has_disconnect = hasattr(self._ad, 'disconnect') and callable(getattr(self._ad, 'disconnect'))
 
-                if not (has_stop or has_disconnect):
-                    err_code = "HARDWARE_CANCEL_UNSUPPORTED"
-                    err_msg = VALID_HARDWARE_ERRORS.get(
-                        err_code,
-                        "Driver phần cứng không có API dừng (thiếu stop/disconnect). Không thể xác nhận thiết bị đã dừng."
-                    )
-                    stop_err = {"code": err_code, "message": err_msg}
-                else:
+                if has_stop:
                     try:
-                        if has_stop:
-                            self._ad.stop()
-                            driver_stopped = True
-                            driver_stop_confirmed = True
-                        elif has_disconnect:
-                            self._ad.disconnect()
+                        self._ad.stop()
+                        # Kiểm tra xem driver có báo trạng thái plot_run còn đang chạy hay không
+                        is_still_running = False
+                        if hasattr(self._ad, 'is_running') and callable(getattr(self._ad, 'is_running')):
+                            is_still_running = bool(self._ad.is_running())
+                        elif hasattr(self._ad, 'is_running') and not callable(getattr(self._ad, 'is_running')):
+                            is_still_running = bool(self._ad.is_running)
+                        elif hasattr(self._ad, 'plot_running'):
+                            is_still_running = bool(self._ad.plot_running)
+
+                        if is_still_running:
+                            err_code = "DRIVER_STOP_FAILED"
+                            err_msg = (
+                                "Đã gọi stop() nhưng tiến trình vẽ của driver (plot_run) vẫn đang chạy; "
+                                "chưa thể xác nhận motor đã dừng. Vui lòng nhấn nút Dừng/Pause vật lý trên máy vẽ."
+                            )
+                            stop_err = {"code": err_code, "message": err_msg}
+                            driver_stopped = False
+                            driver_stop_confirmed = False
+                        else:
                             driver_stopped = True
                             driver_stop_confirmed = True
                     except Exception as exc:
                         # Tuyệt đối không nuốt lỗi driver
                         err_code = "DRIVER_STOP_FAILED"
-                        err_msg = f"Lỗi khi dừng driver phần cứng: {exc}"
+                        err_msg = f"Lỗi khi dừng driver phần cứng: {exc}. Vui lòng nhấn nút Dừng/Pause vật lý trên máy vẽ."
                         stop_err = {"code": err_code, "message": err_msg}
                         driver_stopped = False
                         driver_stop_confirmed = False
+                elif has_disconnect:
+                    # TV4 Blocker: disconnect() thuộc Interactive context, trong khi job chạy bằng plot_run()
+                    # ở Plot context. Việc đóng kết nối chưa chứng minh motor đã dừng.
+                    try:
+                        self._ad.disconnect()
+                    except Exception:
+                        pass
+                    err_code = "HARDWARE_CANCEL_UNSUPPORTED"
+                    err_msg = (
+                        "Driver pyaxidraw không hỗ trợ API dừng phần mềm trong Plot context "
+                        "(disconnect() thuộc Interactive context và không bảo đảm motor đã dừng; plot có thể vẫn đang chạy). "
+                        "Cảnh báo an toàn: Vui lòng nhấn nút Dừng/Pause vật lý trên máy vẽ để ngắt chuyển động cơ học an toàn!"
+                    )
+                    stop_err = {"code": err_code, "message": err_msg}
+                    driver_stopped = False
+                    driver_stop_confirmed = False
+                else:
+                    err_code = "HARDWARE_CANCEL_UNSUPPORTED"
+                    err_msg = (
+                        "Driver phần cứng không có API dừng cho Plot context. Không thể dừng bằng phần mềm. "
+                        "Cảnh báo an toàn: Vui lòng nhấn nút Dừng/Pause vật lý trên máy vẽ để ngắt chuyển động cơ học an toàn!"
+                    )
+                    stop_err = {"code": err_code, "message": err_msg}
+                    driver_stopped = False
+                    driver_stop_confirmed = False
             else:
                 driver_stopped = True
                 driver_stop_confirmed = True

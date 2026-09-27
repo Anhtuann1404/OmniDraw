@@ -322,16 +322,21 @@ class TestAxiDrawAdapterModes(unittest.IsolatedAsyncioTestCase):
 
     async def test_axidraw_cancel_job_stops_via_stop_api(self):
         """
-        AxiDrawAdapter.cancel_job:
-        Driver có phương thức stop(). Gọi cancel_job() phải kích hoạt stop()
-        và trả về status='cancelled', driver_stopped=True, driver_stop_confirmed=True.
+        TV4 Requirement - Đường dừng hợp lệ:
+        Driver có phương thức stop(). Gọi cancel_job() kích hoạt stop()
+        và xác nhận driver đã dừng thực sự (plot_running = False),
+        trả về status='cancelled', driver_stopped=True, driver_stop_confirmed=True.
         """
         class DriverWithStop:
             def __init__(self):
                 self.stopped = False
+                self.plot_running = True
                 self.options = type("opts", (), {"speed_pendown": 25})()
             def stop(self):
                 self.stopped = True
+                self.plot_running = False
+            def is_running(self):
+                return self.plot_running
             def plot_setup(self, path):
                 pass
             def plot_run(self):
@@ -355,6 +360,7 @@ class TestAxiDrawAdapterModes(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(res["driver_stopped"])
             self.assertTrue(res["driver_stop_confirmed"])
             self.assertTrue(driver.stopped, "Driver stop() method MUST be called!")
+            self.assertFalse(driver.plot_running)
 
             st = adapter.get_status(req_id)
             self.assertEqual(st["status"], "cancelled")
@@ -362,18 +368,81 @@ class TestAxiDrawAdapterModes(unittest.IsolatedAsyncioTestCase):
             if os.path.exists(tmp_csv_path):
                 os.remove(tmp_csv_path)
 
-    async def test_axidraw_cancel_job_stops_via_disconnect_api(self):
+    async def test_axidraw_cancel_job_with_disconnect_only_and_plot_running_rejects_confirmation(self):
         """
-        AxiDrawAdapter.cancel_job:
-        Driver không có stop(), nhưng có disconnect(). Gọi cancel_job() phải ngắt kết nối
-        và trả về status='cancelled', driver_stopped=True, driver_stop_confirmed=True.
+        TV4 Blocker Finding:
+        Theo tài liệu pyaxidraw, disconnect() thuộc Interactive context, trong khi job
+        đang chạy bằng plot_run() ở Plot context.
+        Việc gọi disconnect() thành công trong khi plot vẫn chạy KHÔNG ĐƯỢC COI LÀ DỪNG:
+        - driver_stopped = False
+        - driver_stop_confirmed = False
+        - status = 'error' (TUYỆT ĐỐI không báo 'cancelled' như đã dừng an toàn)
+        - code = 'HARDWARE_CANCEL_UNSUPPORTED'
+        - error message chứa cảnh báo người vận hành nhấn nút dừng/pause vật lý trên máy vẽ.
         """
-        class DriverWithDisconnectOnly:
+        class DriverWithDisconnectOnlyAndPlotRunning:
             def __init__(self):
                 self.disconnected = False
+                self.plot_running = True
                 self.options = type("opts", (), {"speed_pendown": 25})()
             def disconnect(self):
                 self.disconnected = True
+                # disconnect() chỉ thuộc Interactive context, plot_run() vẫn tiếp tục chạy!
+            def plot_setup(self, path):
+                pass
+            def plot_run(self):
+                time.sleep(0.5)
+                self.plot_running = False
+
+        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp_csv:
+            tmp_csv_path = tmp_csv.name
+
+        try:
+            adapter = AxiDrawAdapter(use_fake_driver=False, metrics_csv_path=tmp_csv_path)
+            driver = DriverWithDisconnectOnlyAndPlotRunning()
+            adapter._ad = driver
+            adapter._connected = True
+
+            req_id = "test-disconnect-not-stopped-req"
+            await adapter.start_job(req_id, self.fixture)
+            await asyncio.sleep(0.02)
+
+            res = await adapter.cancel_job(req_id)
+            # Khẳng định: disconnect() thành công KHÔNG chứng minh motor đã dừng
+            self.assertTrue(driver.disconnected, "disconnect() có thể được gọi để giải phóng tài nguyên cổng")
+            self.assertEqual(res["status"], "error", "TUYỆT ĐỐI không báo 'cancelled' khi chưa thể xác nhận dừng an toàn!")
+            self.assertFalse(res["driver_stopped"])
+            self.assertFalse(res["driver_stop_confirmed"])
+            self.assertEqual(res["error"]["code"], "HARDWARE_CANCEL_UNSUPPORTED")
+            self.assertIn("vật lý", res["error"]["message"].lower())
+
+            st = adapter.get_status(req_id)
+            self.assertEqual(st["status"], "error")
+            self.assertFalse(st.get("actual_hardware_measured"))
+        finally:
+            if os.path.exists(tmp_csv_path):
+                os.remove(tmp_csv_path)
+
+    async def test_axidraw_cancel_job_fails_when_stop_called_but_plot_still_running(self):
+        """
+        TV4 Requirement:
+        Driver có stop(), stop() được gọi nhưng plot_run() vẫn đang chạy (không có bằng chứng dừng):
+        - driver_stopped = False
+        - driver_stop_confirmed = False
+        - status = 'error'
+        - code = 'DRIVER_STOP_FAILED'
+        - error message chứa cảnh báo người vận hành nhấn nút dừng vật lý.
+        """
+        class UnresponsivePlotDriver:
+            def __init__(self):
+                self.stopped = False
+                self.plot_running = True
+                self.options = type("opts", (), {"speed_pendown": 25})()
+            def stop(self):
+                self.stopped = True
+                # plot_running vẫn là True!
+            def is_running(self):
+                return self.plot_running
             def plot_setup(self, path):
                 pass
             def plot_run(self):
@@ -384,22 +453,23 @@ class TestAxiDrawAdapterModes(unittest.IsolatedAsyncioTestCase):
 
         try:
             adapter = AxiDrawAdapter(use_fake_driver=False, metrics_csv_path=tmp_csv_path)
-            driver = DriverWithDisconnectOnly()
+            driver = UnresponsivePlotDriver()
             adapter._ad = driver
             adapter._connected = True
 
-            req_id = "test-disconnect-api-req"
+            req_id = "test-unresponsive-plot-req"
             await adapter.start_job(req_id, self.fixture)
             await asyncio.sleep(0.02)
 
             res = await adapter.cancel_job(req_id)
-            self.assertEqual(res["status"], "cancelled")
-            self.assertTrue(res["driver_stopped"])
-            self.assertTrue(res["driver_stop_confirmed"])
-            self.assertTrue(driver.disconnected, "Driver disconnect() method MUST be called!")
+            self.assertEqual(res["status"], "error")
+            self.assertFalse(res["driver_stopped"])
+            self.assertFalse(res["driver_stop_confirmed"])
+            self.assertEqual(res["error"]["code"], "DRIVER_STOP_FAILED")
+            self.assertIn("vật lý", res["error"]["message"].lower())
 
             st = adapter.get_status(req_id)
-            self.assertEqual(st["status"], "cancelled")
+            self.assertEqual(st["status"], "error")
         finally:
             if os.path.exists(tmp_csv_path):
                 os.remove(tmp_csv_path)
@@ -1027,7 +1097,7 @@ class TestRQ3CalibrationBenchmark(unittest.TestCase):
                     "driver_stop_confirmed": False,
                     "error": {
                         "code": "HARDWARE_CANCEL_UNSUPPORTED",
-                        "message": "Driver phần cứng không có API dừng (thiếu stop/disconnect). Không thể xác nhận thiết bị đã dừng.",
+                        "message": "Driver pyaxidraw không hỗ trợ API dừng phần mềm trong Plot context. Vui lòng nhấn nút Dừng/Pause vật lý trên máy vẽ để ngắt chuyển động an toàn.",
                     },
                 }
 
@@ -1046,6 +1116,51 @@ class TestRQ3CalibrationBenchmark(unittest.TestCase):
         self.assertFalse(res.get("driver_stop_confirmed"))
         self.assertIn("cancel_result", res)
         self.assertEqual(res["cancel_result"]["error"]["code"], "HARDWARE_CANCEL_UNSUPPORTED")
+
+    def test_rq3_benchmark_timeout_when_driver_only_has_disconnect_fails_cancellation(self):
+        """
+        TV4 Blocker: Khi timeout xảy ra và adapter bọc driver chỉ có disconnect() (Interactive context):
+        AxiDrawAdapter.cancel_job() trả về status='error', driver_stopped=False.
+        Runner RQ3 benchmark KHÔNG được báo 'timeout' thành công giả tạo,
+        mà phải trả về status='timeout_cancellation_failed', driver_stopped=False,
+        và đính kèm cảnh báo người vận hành nhấn nút dừng vật lý.
+        """
+        class DisconnectOnlyDriver:
+            def __init__(self):
+                self.options = type("opts", (), {"speed_pendown": 25})()
+                self.disconnected = False
+            def disconnect(self):
+                self.disconnected = True
+            def plot_setup(self, path): pass
+            def plot_run(self): time.sleep(0.5)
+
+        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp_csv:
+            tmp_csv_path = tmp_csv.name
+
+        try:
+            adapter = AxiDrawAdapter(use_fake_driver=False, metrics_csv_path=tmp_csv_path)
+            driver = DisconnectOnlyDriver()
+            adapter._ad = driver
+            adapter._connected = True
+
+            res = asyncio.run(run_rq3_calibration_benchmark(
+                mode="physical",
+                adapter=adapter,
+                band_id="rapid_pen_lift_20mms",
+                timeout_cap_sec=0.1
+            ))
+
+            self.assertEqual(res.get("status"), "timeout_cancellation_failed")
+            self.assertTrue(res.get("timeout"))
+            self.assertFalse(res.get("driver_stopped"))
+            self.assertFalse(res.get("driver_stop_confirmed"))
+            self.assertTrue(driver.disconnected)
+            self.assertIn("cancel_result", res)
+            self.assertEqual(res["cancel_result"]["error"]["code"], "HARDWARE_CANCEL_UNSUPPORTED")
+            self.assertIn("vật lý", res["cancel_result"]["error"]["message"].lower())
+        finally:
+            if os.path.exists(tmp_csv_path):
+                os.remove(tmp_csv_path)
 
     def test_rq3_benchmark_timeout_when_cancel_job_raises_exception(self):
         """
