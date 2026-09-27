@@ -3,25 +3,25 @@
 ```text
 INTEGRATION_OWNER: TV4
 REVIEW_TARGET_COMMIT: 7ae43e6994506928cb6be8bd61e936b4f5e3857e
-DISPOSITION_STATUS: FINDINGS_RECONCILED_AWAITING_VERSION_BINDING_AND_SCOPED_RECHECK
+DISPOSITION_STATUS: FINDINGS_RECONCILED_AWAITING_CROSS_DOC_CONSISTENCY_CHECK
 RQ_FREEZE_RECOMMENDATION: PENDING
 ```
 
 Đọc [`README.md`](README.md) trước khi cập nhật. File này là sổ xử lý finding; không thay thế chữ ký độc lập của TV1–TV3.
 
-**Nguồn TV2:** phiếu hiện ghi `WORKFLOW_STATUS: CLOSED`, `HUMAN_VERDICT: PASS` và TV2-R01–R06 `VERIFIED_CLOSED` sau khi recheck commit `e26af4fd2559c2e28672fff1a11865bf427683a8` ngày 2026-09-23. Phiếu vẫn để `REVIEW_TARGET_COMMIT` là commit review gốc `5e9c857e42021f8a48d45b1fdaefcfdb87e82ff3`, khác checkpoint gói v0.2 `7ae43e6994506928cb6be8bd61e936b4f5e3857e`. TV2 cần tự chỉnh metadata của phiếu để trường này khớp checkpoint, giữ commit gốc và commit recheck ở các trường riêng; TV4 không sửa chữ ký hoặc verdict của reviewer.
+**Nguồn TV2:** phiếu ghi `WORKFLOW_STATUS: CLOSED`, `HUMAN_VERDICT: PASS`, TV2-R01–R06 `VERIFIED_CLOSED`, và đã đồng bộ `REVIEW_TARGET_COMMIT` với checkpoint v0.2. Commit gốc, recheck `e26af4f` và xác minh tích hợp `031d198` được ghi riêng trong phiếu; TV4 không sửa chữ ký hoặc verdict của reviewer.
 
-**Thay đổi sau checkpoint:** commit `e26af4f` sửa Docs 10, 13, 14 và 15, trong đó có các mục thuộc phạm vi phiếu TV1/TV3. Cả TV1 và TV3 đều đã hoàn tất scoped recheck trên `031d198` với verdict PASS (phiếu TV1 tại `e4f0dfd`, phiếu TV3 tại `30f36b5`). Đây là recheck tài liệu, không phải mở lại corpus freeze hay hardware gate.
+**Thay đổi sau checkpoint:** commit `e26af4f` sửa Docs 10, 13, 14 và 15, trong đó có các mục thuộc phạm vi phiếu TV1/TV3. Cả TV1 và TV3 đã PASS scoped recheck trên `031d198`, lần lượt trong phiếu tại commit `e4f0dfd` và `30f36b5`. Việc chốt `RQ FREEZE` vẫn chờ version binding của TV2 và đối chiếu checklist chung. Đây là recheck tài liệu, không phải mở lại corpus freeze hay hardware gate.
 
 - TV1 đã recheck các thay đổi trong Docs 10 (trạng thái PR2/E4 và công thức H1.2), Docs 14 §1.9, Docs 15 §§3.1/3.7/3.8 trên `031d198`; không mở lại corpus freeze.
-- TV3 đã recheck các thay đổi trong Docs 10 liên quan RQ3, Docs 14 §1.9 và Docs 15 §§3.1/3.7/3.8 trên `031d198`; xác nhận tài liệu tuyệt đối phân tách mô phỏng khỏi `actual_draw_time_sec` và không gọi ngưỡng clearance $0.20/0.50\,\text{mm}$ là an toàn vật lý khi chưa calibration.
+- TV3 đã recheck các thay đổi trong Docs 10 liên quan RQ3, Docs 14 §1.9 và Docs 15 §§3.1/3.7/3.8 trên `031d198`; xác nhận chúng không biến simulation hay ngưỡng clearance thành claim máy thật.
 
 ## 1. Tổng hợp verdict
 
 | Reviewer | Workflow status | Human verdict | Commit đã review | Finding mở | Ngày xác nhận |
 | :--- | :--- | :--- | :--- | ---: | :--- |
 | TV1 | `CLOSED`; scoped recheck đã hoàn tất | `PASS` trên `031d198` | Checkpoint `7ae43e6994506928cb6be8bd61e936b4f5e3857e`; recheck `031d1983f07895306a0cf31b72300ad4d9e5ee50` (phiếu tại `e4f0dfd`) | 0; TV1-R01–R03 tiếp tục đóng | 23/09/2026 |
-| TV2 | `CLOSED`; còn lệch metadata `REVIEW_TARGET_COMMIT` | `PASS` sau recheck | Gốc `5e9c857e42021f8a48d45b1fdaefcfdb87e82ff3`; checkpoint `7ae43e6`; recheck `e26af4f` | 0; TV2-R01–R06 đã đóng | 23/09/2026 |
+| TV2 | `CLOSED`; version binding đã đồng bộ | `PASS` sau recheck | Gốc `5e9c857e42021f8a48d45b1fdaefcfdb87e82ff3`; checkpoint `7ae43e6`; recheck `e26af4f`; tích hợp `031d198` (phiếu tại `f2c0cc6`) | 0; TV2-R01–R06 đã đóng | 24/09/2026 |
 | TV3 | `CLOSED`; scoped recheck đã hoàn tất | `PASS` trên `031d198` | Checkpoint `7ae43e6994506928cb6be8bd61e936b4f5e3857e`; recheck `031d1983f07895306a0cf31b72300ad4d9e5ee50` (phiếu tại `30f36b5`) | 0; TV3-R01–R02 tiếp tục đóng | 24/09/2026 |
 
 ## 2. Master finding log
@@ -50,22 +50,22 @@ Không xóa finding sau khi xử lý. Giữ nguyên ID để tạo audit trail.
 
 ## 3. Checklist đóng gói
 
-- [ ] `REVIEW_TARGET_COMMIT` giống nhau trong README, ba phiếu và file này.
-- [x] Đã nhận đủ human verdict của TV1, TV2 và TV3; cả TV1 và TV3 đã hoàn tất scoped recheck trên `031d198`, TV2 đã recheck trên `e26af4f`.
+- [x] `REVIEW_TARGET_COMMIT` giống nhau trong README, ba phiếu và file này (`7ae43e6`).
+- [x] Đã nhận đủ human verdict của TV1, TV2 và TV3; TV1/TV2/TV3 đều đã scoped recheck hoặc xác minh tích hợp trên `031d198`.
 - [x] Mọi finding TV1-R01–R03, TV2-R01–R06 và TV3-R01–R02 được chép vào master log và có disposition.
 - [x] Không còn finding `CRITICAL` hoặc `MAJOR` ở trạng thái mở trong các phiếu hiện tại.
 - [x] Không có finding `DEFERRED_WITH_OWNER` trong vòng này; điều kiện owner/gate không phát sinh.
-- [x] Reviewer đã recheck thay đổi liên quan và đóng finding (TV1, TV2, TV3 đều đã hoàn tất).
+- [x] Reviewer đã recheck thay đổi liên quan và đóng finding.
 - [ ] Docs 02/03/05/07/08/09/10–15 không còn mâu thuẫn trạng thái.
 - [x] Không biến review tài liệu thành bằng chứng PR2/PR3, corpus freeze, formal experiment hoặc hardware validation; các gate này có bằng chứng và trạng thái riêng.
 - [ ] TV4 chỉ chuyển `RQ_FREEZE_RECOMMENDATION` khỏi `PENDING` sau khi các điều kiện trên đạt.
 
 ## 4. Kết luận tích hợp
 
-- Thay đổi đã thực hiện: TV1-R01–R03 (đóng trên `031d198`), TV3-R01–R02 (đóng trên `031d198`), và TV2-R01–R06 (đóng trên `e26af4f`) đều đã được các reviewer độc lập hoàn tất scoped recheck và xác nhận `VERIFIED_CLOSED`. Toàn bộ 11/11 finding trong đợt cross-review Chương 1–3 đã được xử lý trọn vẹn. Code metric của TV2-R02 vẫn là dependency trước PR5, không được ghi là kết quả đo.
+- Thay đổi đã thực hiện: TV1-R01–R03 và TV3-R01–R02 đã được reviewer tương ứng scoped recheck và giữ `VERIFIED_CLOSED` tại `031d198`; TV2-R01–R06 đã được TV2 recheck tại `e26af4f` và xác minh không bị ảnh hưởng trên `031d198`. Code metric của TV2-R02 vẫn là dependency trước PR5, không được ghi là kết quả đo.
 - Finding bị bác bỏ và lý do: không có.
 - Finding hoãn và gate tiếp theo: không có finding tài liệu bị hoãn; phần code metric H3.2 thuộc PR5 và E4 vẫn là gate kỹ thuật riêng.
-- Rủi ro còn lại: metadata `REVIEW_TARGET_COMMIT` trong phiếu TV2 khác checkpoint v0.2; E4, PR3 và formal benchmark chưa đóng.
-- `RQ_FREEZE_RECOMMENDATION`: `PENDING` (chờ đồng bộ metadata checkpoint TV2 trước khi khuyến nghị APPROVED)
-- TV4 xác nhận: `TV4 — Project Lead & Integration Owner`
-- Ngày: `24/09/2026`
+- Rủi ro còn lại: checklist nhất quán chéo Docs 02/03/05/07/08/09/10–15 chưa được hoàn tất; E4, PR3 và formal benchmark chưa đóng.
+- `RQ_FREEZE_RECOMMENDATION`: `PENDING`
+- TV4 xác nhận: `PENDING`
+- Ngày: `PENDING`
