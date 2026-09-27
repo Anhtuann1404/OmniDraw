@@ -3,12 +3,16 @@
 **Phiên bản:** 0.3
 **Ngày lập:** 2026-09-24 | **Cập nhật:** 2026-09-26
 **Owner:** TV4 — Handwriting / CA-VHC Composition Lead
-**Trạng thái:** `E4_PASS — PR3 READY_TO_IMPLEMENT (DRAFT UNDER REVIEW)`
+**Trạng thái:** `E4_PASS — PR3 READY_TO_IMPLEMENT (TV1 DRAFT RETAINED AS REFERENCE)`
 **Review boundary:** `OUTSIDE_REVIEW_TARGET_7ae43e6` — tài liệu chuẩn bị này không thay đổi Chương 1–3 và không yêu cầu mở lại gói cross-review v0.2.
 
 > [!IMPORTANT]
 > Entry Gate E4 đã chính thức đạt **`PASS`** sau khi TV4 và TV2 cùng thống nhất phê duyệt hợp đồng giao diện chuyển tiếp tại commit `4677aad`, với xác nhận sign-off của TV2 tại commit `ee7c214` (được ghi nhận trên nhánh tích hợp tại `e62f361`). Lịch sử review `CHANGES_REQUIRED` từ `e0c9f91` được lưu giữ trong Doc 18 (Mục 3.1).
-> Theo quyết định này, PR3 chính thức ở trạng thái **`READY_TO_IMPLEMENT`**. Tuy nhiên, mã nguồn PR3 đã viết trên nhánh `backup/pr3-implementation` hiện là **bản nháp kỹ thuật**, **CHƯA** được TV4 và TV2 nghiệm thu chính thức (các Exit Gate PR3 đang chờ review độc lập).
+> 
+> **Quyết định Triển khai PR3 (TV4 & TV2):**
+> - **Entry Gate E4:** `PASS`
+> - **Trạng thái PR3:** `READY_TO_IMPLEMENT`
+> - **Mã nguồn nháp TV1 trên nhánh backup:** TV4 đã quyết định không dùng bản code PR3 nháp trên nhánh `backup/pr3-implementation` để tích hợp. Bản code nháp của TV1 trên nhánh này **không phải bản triển khai được chọn** và **chưa từng được nghiệm thu** (các Exit Gate của PR3 chưa bao giờ được đánh dấu PASS). TV4 sẽ tự triển khai lại PR3 từ nhánh tích hợp theo đúng contract E4 `4677aad`, phối hợp cùng TV2 ở phần transition. Toàn bộ nhánh `backup/pr3-implementation` và lịch sử commit được giữ nguyên làm tài liệu tham khảo kỹ thuật; tuyệt đối không xóa, không rewrite, không merge vào `feature/frontend-intergration` hay `develop`.
 
 ## 1. Mục tiêu
 
@@ -40,7 +44,7 @@ Nếu pack này mâu thuẫn với Docs 07 hoặc 09, Docs 07/09 có quyền ưu
 | E4 — Shared transition interface | `PASS` | TV4 & TV2 cùng duyệt contract tại `4677aad`; TV2 ghi sign-off tại `ee7c214` (nhánh tích hợp nhận tại `e62f361`). Lịch sử `e0c9f91` lưu tại Doc 18. | `PASS` (Cấp phép triển khai PR3) |
 | E5 — Corpus integrity | `PASS` | Acceptance specimens chỉ lấy từ DEV; Holdout guard đã có | Cấm `--corpus holdout/all` và `--allow-holdout` trong PR3 |
 
-**Quy tắc mở PR3:** Entry Gate E4 đã đạt `PASS`. PR3 ở trạng thái `READY_TO_IMPLEMENT`. Mã nguồn PR3 hiện có trên nhánh `backup/pr3-implementation` là bản nháp kỹ thuật phục vụ review độc lập của TV4 và TV2 trước khi nghiệm thu và tích hợp.
+**Quy tắc mở PR3:** Entry Gate E4 đã đạt `PASS`. PR3 ở trạng thái `READY_TO_IMPLEMENT`. TV4 sẽ trực tiếp triển khai lại PR3 từ nhánh tích hợp theo đúng contract E4 `4677aad`, phối hợp cùng TV2 ở phần transition. Bản mã nguồn nháp của TV1 trên nhánh `backup/pr3-implementation` **không phải bản triển khai được chọn** và **chưa từng được nghiệm thu** (các Exit Gate của PR3 chưa bao giờ được đánh dấu PASS), được giữ nguyên độc lập làm tài liệu tham khảo kỹ thuật.
 
 ## 3. Checklist nhận bàn giao PR2
 
@@ -233,5 +237,5 @@ PR3 được phép bắt đầu khi toàn bộ mục sau đạt:
 - [x] File ownership và danh sách symbol shared đã được ghi rõ.
 - [x] Không có yêu cầu mở rộng phạm vi sang PR4/P2/hardware.
 
-Toàn bộ checklist trên đã hoàn tất. Trạng thái E4 = `PASS`, PR3 = `READY_TO_IMPLEMENT`. Mã nguồn PR3 trên nhánh `backup/pr3-implementation` tiếp tục được lưu giữ độc lập như bản nháp kỹ thuật phục vụ TV4 và TV2 review độc lập trước khi nghiệm thu chính thức.
+Toàn bộ checklist trên đã hoàn tất. Trạng thái E4 = `PASS`, PR3 = `READY_TO_IMPLEMENT`. TV4 sẽ trực tiếp triển khai lại PR3 từ nhánh tích hợp theo đúng contract E4 `4677aad`. Bản code nháp của TV1 trên nhánh `backup/pr3-implementation` không phải bản triển khai được chọn, chưa từng được nghiệm thu chính thức, và tiếp tục được lưu giữ độc lập làm tài liệu tham khảo kỹ thuật.
 

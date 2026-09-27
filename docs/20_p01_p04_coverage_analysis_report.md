@@ -63,7 +63,34 @@ Trang P01 gồm 24 ô viết định chuẩn ($43.50 \times 31.00\,\text{mm}$), 
 - **Nguyên âm cơ sở**: Đạt $5/6$ nguyên âm cơ sở (`a, e, o, u, ư`), còn thiếu nguyên âm `i` và bán nguyên âm `y`.
 - **Dấu thanh điệu**: Đã khảo sát 4/5 thanh điệu trên ô đơn (`sắc, huyền, hỏi, nặng`). **Thiếu dấu ngã (`~`)** trên P01.
 - **Tổ hợp 2 tầng phức hợp**: Đã chọn lọc 4 trường hợp điển hình nhất (`ắ, ấ, ố, ở`), đặc biệt có 2 cặp lặp lại `ế` (mũ + sắc) và `ử` (móc + hỏi) giúp kiểm chứng tính ổn định hình học khi người viết đặt dấu 2 tầng.
-- **Tỷ lệ bao phủ so với ma trận 67 nguyên âm**: $18 / 67 \approx 26.87\%$. Phương pháp đếm: kiểm tra trực tiếp 18 hình thái nguyên âm độc lập xuất hiện trong 24 ô prompt mẫu của template thiết kế P01 đối chiếu với danh mục 67 nguyên âm chuẩn; đây là tỷ lệ đếm thuần túy trên bản thiết kế có thể tái lập 100%, tuyệt đối không suy rộng thành kết quả hay độ bao phủ thực nghiệm của giai đoạn pilot (vốn phụ thuộc vào bản quét thực tế từ người viết). Representative Subset này bảo đảm kích thước ô đủ lớn cho người viết tự nhiên mà không gây ức chế thị giác.
+- **Tỷ lệ bao phủ so với ma trận 67 nguyên âm chuẩn tiếng Việt**: $19 / 67 \approx 28.36\%$.
+  - **Phương pháp đếm tái lập (Reproducible Count Methodology):**
+    - Bảng lưới P01 gồm 24 ô định chuẩn (4 cột $\times$ 6 hàng).
+    - **Quy tắc loại trừ phụ âm:** Loại trừ 3 ô chứa phụ âm khỏi tập đếm nguyên âm, gồm `SEC_001` (phụ âm nét ngang `đ`), `BASE_005` (phụ âm cơ bản `n`), và `BASE_006` (phụ âm cơ bản `m`).
+    - **Quy tắc loại trừ lượt thử lặp lại:** Loại trừ 2 ô là lượt thử thứ hai đo biến thiên lặp lại nội tại người viết (intra-writer repetition trials), gồm `REP_002` (lặp lại `ế` Trial B) và `REP_004` (lặp lại `ử` Trial B).
+    - **Số dạng nguyên âm phân biệt:** $24 - 3\text{ (phụ âm)} - 2\text{ (lặp lại)} = 19\text{ dạng nguyên âm độc lập}$.
+    - **Danh mục 19 dạng nguyên âm thực tế trên P01:**
+      1. `BASE_001`: `a`
+      2. `BASE_002`: `e`
+      3. `BASE_003`: `o`
+      4. `BASE_004`: `u`
+      5. `STR_001`: `ă`
+      6. `STR_002`: `â`
+      7. `STR_003`: `ê`
+      8. `STR_004`: `ơ`
+      9. `TONE_001`: `á`
+      10. `TONE_002`: `à`
+      11. `TONE_003`: `ả`
+      12. `TONE_004`: `ạ`
+      13. `STR_005`: `ư`
+      14. `CMP_001`: `ắ`
+      15. `CMP_002`: `ấ`
+      16. `CMP_003`: `ố`
+      17. `CMP_004`: `ở`
+      18. `REP_001`: `ế` (Trial A)
+      19. `REP_003`: `ử` (Trial A)
+    - Tỷ lệ chuẩn xác: $19 / 67 \approx 28.36\%$ (hiệu đính từ con số $18/67 \approx 26.87\%$ ghi nhận nhầm trước đó).
+    - Nhấn mạnh: Đây là tỷ lệ đếm thuần túy trên bản thiết kế template P01 có thể tái lập 100%, tuyệt đối không suy rộng thành kết quả hay độ bao phủ thực nghiệm của giai đoạn pilot (vốn phụ thuộc vào bản quét thực tế từ người viết). Representative Subset này bảo đảm kích thước ô đủ lớn cho người viết tự nhiên mà không gây ức chế thị giác.
 
 ---
 
@@ -143,7 +170,7 @@ Trang P04 gồm 1 khối đoạn văn xuôi liên tục 32 từ (172 ký tự kh
    - Dấu ngã (`~`) không có mặt trong 24 ô của P01 (chỉ có tại P02, P03, P04).
    - *Đánh giá rủi ro*: **Thấp đối với pha Pilot**. Do P01 chỉ đóng vai trò kiểm tra tính tương thích quang học ô viết và trích xuất anchor đơn, trong khi tương tác dấu ngã phức tạp nhất đã được đo đạc kỹ tại P02 (`nguyễn`).
 2. **Độ phủ nguyên âm có dấu độc lập (Isolated Diacritic Coverage)**:
-   - P01 hiện bao phủ 18/67 dạng nguyên âm ($\sim 26.87\%$).
+   - P01 hiện bao phủ 19/67 dạng nguyên âm ($\sim 28.36\%$, đã hiệu đính chuẩn xác theo phương pháp đếm loại trừ phụ âm `đ, n, m` và 2 lượt thử lặp lại `REP_002, REP_004`).
    - *Đánh giá rủi ro*: **Chấp nhận được cho Pilot**. Việc nhồi nhét đủ 67 ô vào 1 trang A4 sẽ khiến kích thước ô bị thu hẹp xuống dưới $20 \times 15\,\text{mm}$, gây gò bó nét viết của người tham gia.
 3. **Chữ số và ký tự hoa độc lập**:
    - P01 chưa có ô riêng cho chữ số `0–9` và bảng chữ hoa độc lập `A–Z`.
