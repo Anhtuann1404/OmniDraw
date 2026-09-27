@@ -112,7 +112,8 @@ class CompositionState:
         object.__setattr__(self, "metadata", MappingProxyType(dict(self.metadata)))
 
 
-def generate_diacritic_candidates(base_char, accents, anchor_x, config=None):
+def generate_diacritic_candidates(base_char, accents, anchor_x, config=None,
+                                  dot_below_x_offset=None):
     """Build P0 placement choices from the current canonical accent geometry.
 
     This slice records world-mm offsets without prematurely mixing them into
@@ -129,7 +130,8 @@ def generate_diacritic_candidates(base_char, accents, anchor_x, config=None):
             len(marks) != len(set(marks))):
         return ()
     config = config or DiacriticConfig()
-    strokes = generate_accents(base_char, marks, anchor_x)
+    strokes = generate_accents(base_char, marks, anchor_x,
+                               dot_below_x_offset=dot_below_x_offset)
     try:
         immutable = _strokes_copy(strokes)
     except (TypeError, ValueError):
@@ -153,13 +155,15 @@ def generate_diacritic_candidates(base_char, accents, anchor_x, config=None):
 
 
 def build_composition_states(base_char, accents, base_variants, anchor_x, config=None,
-                             context=None):
+                             context=None, dot_below_x_offset=None):
     """Combine existing glyph variants with valid placements, at most 9 states."""
     marks = tuple(accents)
     variants = tuple(base_variants)
     if len(variants) > 3:
         raise ValueError("P0 supports at most three base variants")
-    candidates = generate_diacritic_candidates(base_char, marks, anchor_x, config) if marks else (None,)
+    candidates = (generate_diacritic_candidates(base_char, marks, anchor_x, config,
+                                                dot_below_x_offset)
+                  if marks else (None,))
     states = tuple(CompositionState(
         variant, candidate, base_char, marks, context or {},
         f"{variant.tag}_{candidate.placement_tag if candidate else 'none'}",
