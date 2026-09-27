@@ -15,7 +15,10 @@ import os
 import sys
 import tempfile
 import time
+import xml.etree.ElementTree as ET
 from pathlib import Path
+
+import numpy as np
 
 # Đảm bảo đường dẫn import tương thích khi chạy trực tiếp script
 CURRENT_DIR = Path(__file__).resolve().parent
@@ -69,6 +72,57 @@ WRAP_SAMPLE_TEXT = (
 FONTS = ["oly", "omni_casual", "thanhdam", "thuphap", "cursive"]
 STYLES = ["hand_hocsinh", "hand_nguoilon", "hand_thuphap", "hand_chukinhanh"]
 LEGACY_FONTS = ["oly", "thanhdam", "thuphap", "cursive"]
+PR3_DIAGNOSTIC_WORDS = ("lụy", "thụy", "quỹ", "nguyễn", "nghiễm")
+
+
+def build_pr3_diagnostics(out_dir, seed):
+    """Render opt-in PR3 visual specimens; these are not acceptance corpus data."""
+    from backend.handwriting.engine import text_to_strokes_structured
+    from backend.handwriting.metrics_evaluator import evaluate_ca_vhc_metrics
+    from backend.path_optimizer import build_svg
+
+    cards = []
+    for index, word in enumerate(PR3_DIAGNOSTIC_WORDS):
+        rendered = text_to_strokes_structured(
+            word, font="cursive", seed=seed, _algorithm_mode="pr3_composition")
+        strokes = rendered.strokes
+        svg, in_bounds = build_svg(
+            strokes, list(range(len(strokes))), [False] * len(strokes),
+            1.0, (0., 0.), TARGET_PAPER_SIZE_MM,
+        )
+        if not in_bounds:
+            raise ValueError(f"PR3 diagnostic '{word}' exceeds paper bounds")
+        # Crop the preview to the written word so individual accents remain visible.
+        points = np.vstack(strokes)
+        lo = points.min(axis=0) - 2.0
+        hi = points.max(axis=0) + 2.0
+        root = ET.fromstring(svg)
+        root.set("viewBox", f"{lo[0]} {lo[1]} {hi[0] - lo[0]} {hi[1] - lo[1]}")
+        root.set("width", f"{hi[0] - lo[0]}mm")
+        root.set("height", f"{hi[1] - lo[1]}mm")
+        svg = ET.tostring(root, encoding="unicode")
+        filename = f"pr3_diagnostic_{index + 1}.svg"
+        (out_dir / filename).write_text(svg, encoding="utf-8")
+        metrics = evaluate_ca_vhc_metrics(rendered)
+        cards.append(
+            f'<article><h2>{html.escape(word)}</h2>'
+            f'<object data="{filename}" type="image/svg+xml"></object>'
+            f'<p>Bridge–dấu: {metrics["collision_count"]} va chạm; '
+            f'clearance: {metrics["minimum_diacritic_clearance_mm"]:.2f} mm</p></article>'
+        )
+    page = (
+        '<!doctype html><html lang="vi"><meta charset="utf-8">'
+        '<title>OmniDraw PR3 visual diagnostics</title>'
+        '<style>body{font:16px system-ui;max-width:900px;margin:2rem auto}'
+        'article{border:1px solid #ddd;padding:1rem;margin:1rem 0}'
+        'object{width:100%;height:160px;background:#fff}</style>'
+        '<h1>PR3 visual diagnostics</h1>'
+        '<p>Mẫu soi hình học riêng, không thuộc tập nghiệm thu DEV.</p>'
+        + ''.join(cards) + '</html>'
+    )
+    index = out_dir / "pr3_diagnostics.html"
+    index.write_text(page, encoding="utf-8")
+    return index
 
 
 def run_specimen(text, font, style, letter_type, seed, target_paper_size_mm):
@@ -553,6 +607,10 @@ def main():
         default=DEFAULT_SEED,
         help=f"Seed cố định cho tất cả các lần render (mặc định: {DEFAULT_SEED})",
     )
+    parser.add_argument(
+        "--pr3-diagnostics", action="store_true",
+        help="Chỉ xuất 5 mẫu soi hình học PR3, tách khỏi tập nghiệm thu DEV",
+    )
     args = parser.parse_args()
 
     # -------------------------------------------------------------------------
@@ -574,6 +632,10 @@ def main():
     else:
         temp_dir_str = tempfile.mkdtemp(prefix="omnidraw-handwriting-qa-")
         out_dir = Path(temp_dir_str).resolve()
+
+    if args.pr3_diagnostics:
+        print(build_pr3_diagnostics(out_dir, args.seed))
+        return
 
     print("=" * 70)
     print("OMNIDRAW HANDWRITING VISUAL QA SPECIMENS")
