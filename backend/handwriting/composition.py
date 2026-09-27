@@ -14,6 +14,7 @@ from .engine import GlyphVariant, build_ligature_bridge, bridge_collision_cost, 
 from .metrics_evaluator import compute_diacritic_clearance
 
 CONTRACT_VERSION = "e4-v1"
+PROPOSED_METHOD_TAG = "pr3_composition"
 
 
 class NoValidCompositionState(ValueError):
