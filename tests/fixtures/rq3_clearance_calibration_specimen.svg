@@ -57,36 +57,47 @@
 
   <!-- ====================================================================== -->
   <!-- KHOI B: Kiem tra goc be cua ngat net (Kinematic Turn & Acute Angles)    -->
-  <!-- Cac goc bẻ: 60 deg, 90 deg, 120 deg, 150 deg                           -->
+  <!-- Cac goc bẻ theo heading change theta_turn in {60, 90, 120, 150} deg    -->
+  <!-- Do dai moi doan L = 20.0 mm                                            -->
   <!-- ====================================================================== -->
   <g id="block_b_acute_turns">
-    <text x="20" y="105" font-family="sans-serif" font-size="3.5" font-weight="bold" fill="#000000">BLOCK B: ACUTE TURNS &amp; CORNERING VIBRATION</text>
+    <text x="20" y="105" font-family="sans-serif" font-size="3.5" font-weight="bold" fill="#000000">BLOCK B: ACUTE TURNS &amp; CORNERING VIBRATION (L=20.0mm)</text>
 
-    <!-- Goc 60 do -->
-    <path d="M 25 140 L 40 115 L 55 140" fill="none" stroke="#000000" stroke-width="0.5" id="turn_60deg" />
-    <text x="35" y="145" font-family="sans-serif" font-size="2.5" fill="#000000">Turn 60°</text>
+    <!-- Goc be 60 do: P0(20, 135) -> P1(40, 135) -> P2(50.00, 117.68) [Heading: 60.00 deg, Interior: 120.00 deg] -->
+    <path d="M 20 135 L 40 135 L 50.00 117.68" fill="none" stroke="#000000" stroke-width="0.5" id="turn_60deg" />
+    <text x="20" y="142" font-family="sans-serif" font-size="2.2" fill="#000000">Turn 60° (Heading 60°, Interior 120°)</text>
 
-    <!-- Goc 90 do -->
-    <path d="M 75 140 L 90 115 L 115 115" fill="none" stroke="#000000" stroke-width="0.5" id="turn_90deg" />
-    <text x="85" y="145" font-family="sans-serif" font-size="2.5" fill="#000000">Turn 90°</text>
+    <!-- Goc be 90 do: P0(75, 135) -> P1(95, 135) -> P2(95.00, 115.00) [Heading: 90.00 deg, Interior: 90.00 deg] -->
+    <path d="M 75 135 L 95 135 L 95.00 115.00" fill="none" stroke="#000000" stroke-width="0.5" id="turn_90deg" />
+    <text x="75" y="142" font-family="sans-serif" font-size="2.2" fill="#000000">Turn 90° (Heading 90°, Interior 90°)</text>
 
-    <!-- Goc 120 do (Nguong kiem tra H3.2) -->
-    <path d="M 135 140 L 155 120 L 180 135" fill="none" stroke="#000000" stroke-width="0.5" id="turn_120deg" />
-    <text x="145" y="145" font-family="sans-serif" font-size="2.5" fill="#000000">Turn 120° (H3.2)</text>
+    <!-- Goc be 120 do (Nguong kiem tra H3.2): P0(130, 135) -> P1(150, 135) -> P2(140.00, 117.68) [Heading: 120.00 deg, Interior: 60.00 deg] -->
+    <path d="M 130 135 L 150 135 L 140.00 117.68" fill="none" stroke="#000000" stroke-width="0.5" id="turn_120deg" />
+    <text x="130" y="142" font-family="sans-serif" font-size="2.2" fill="#000000">Turn 120° (Heading 120°, Interior 60° - H3.2)</text>
 
-    <!-- Goc 150 do -->
-    <path d="M 200 135 L 225 122 L 255 125" fill="none" stroke="#000000" stroke-width="0.5" id="turn_150deg" />
-    <text x="215" y="145" font-family="sans-serif" font-size="2.5" fill="#000000">Turn 150°</text>
+    <!-- Goc be 150 do: P0(185, 135) -> P1(205, 135) -> P2(187.68, 125.00) [Heading: 150.00 deg, Interior: 30.00 deg] -->
+    <path d="M 185 135 L 205 135 L 187.68 125.00" fill="none" stroke="#000000" stroke-width="0.5" id="turn_150deg" />
+    <text x="185" y="142" font-family="sans-serif" font-size="2.2" fill="#000000">Turn 150° (Heading 150°, Interior 30°)</text>
   </g>
 
   <!-- ====================================================================== -->
   <!-- KHOI C: Tan suat nhac ha but truc Z (Rapid Pen-Lift Actuation)          -->
+  <!-- 20 chu ky: 2.0mm ve / 2.0mm nhac but (Pitch = 4.0mm)                   -->
+  <!-- 3 dai van toc: 20 mm/s, 40 mm/s, 60 mm/s                               -->
   <!-- ====================================================================== -->
   <g id="block_c_rapid_pen_lift">
-    <text x="20" y="165" font-family="sans-serif" font-size="3.5" font-weight="bold" fill="#000000">BLOCK C: RAPID PEN-LIFT ACTUATION (Z-AXIS LATENCY)</text>
+    <text x="20" y="165" font-family="sans-serif" font-size="3.5" font-weight="bold" fill="#000000">BLOCK C: RAPID PEN-LIFT ACTUATION (2.0mm Draw / 2.0mm Lift - 3 Speed Bands)</text>
 
-    <!-- Dãy nét đứt 2mm vẽ, 2mm nhấc bút -->
-    <path d="M 25 175 L 30 175 M 34 175 L 39 175 M 43 175 L 48 175 M 52 175 L 57 175 M 61 175 L 66 175 M 70 175 L 75 175 M 79 175 L 84 175 M 88 175 L 93 175 M 97 175 L 102 175 M 106 175 L 111 175 M 115 175 L 120 175 M 124 175 L 129 175 M 133 175 L 138 175 M 142 175 L 147 175 M 151 175 L 156 175 M 160 175 L 165 175 M 169 175 L 174 175 M 178 175 L 183 175 M 187 175 L 192 175 M 196 175 L 201 175 M 205 175 L 210 175 M 214 175 L 219 175 M 223 175 L 228 175 M 232 175 L 237 175 M 241 175 L 246 175 M 250 175 L 255 175 M 259 175 L 264 175 M 268 175 L 273 175" fill="none" stroke="#000000" stroke-width="0.4" id="rapid_pen_lift_series" />
-    <text x="25" y="185" font-family="sans-serif" font-size="2.2" fill="#000000">28 Pen Lifts / Rapid actuation test (2mm draw / 4mm pitch)</text>
+    <!-- Band 1: 20 mm/s tai Y = 172 -->
+    <path d="M 25 172 L 27 172 M 29 172 L 31 172 M 33 172 L 35 172 M 37 172 L 39 172 M 41 172 L 43 172 M 45 172 L 47 172 M 49 172 L 51 172 M 53 172 L 55 172 M 57 172 L 59 172 M 61 172 L 63 172 M 65 172 L 67 172 M 69 172 L 71 172 M 73 172 L 75 172 M 77 172 L 79 172 M 81 172 L 83 172 M 85 172 L 87 172 M 89 172 L 91 172 M 93 172 L 95 172 M 97 172 L 99 172 M 101 172 L 103 172" fill="none" stroke="#000000" stroke-width="0.4" id="rapid_pen_lift_20mms" />
+    <text x="110" y="173" font-family="sans-serif" font-size="2.2" fill="#000000">Band 1: v=20 mm/s (20 lifts, 2mm draw / 2mm lift)</text>
+
+    <!-- Band 2: 40 mm/s tai Y = 180 -->
+    <path d="M 25 180 L 27 180 M 29 180 L 31 180 M 33 180 L 35 180 M 37 180 L 39 180 M 41 180 L 43 180 M 45 180 L 47 180 M 49 180 L 51 180 M 53 180 L 55 180 M 57 180 L 59 180 M 61 180 L 63 180 M 65 180 L 67 180 M 69 180 L 71 180 M 73 180 L 75 180 M 77 180 L 79 180 M 81 180 L 83 180 M 85 180 L 87 180 M 89 180 L 91 180 M 93 180 L 95 180 M 97 180 L 99 180 M 101 180 L 103 180" fill="none" stroke="#000000" stroke-width="0.4" id="rapid_pen_lift_40mms" />
+    <text x="110" y="181" font-family="sans-serif" font-size="2.2" fill="#000000">Band 2: v=40 mm/s (20 lifts, 2mm draw / 2mm lift)</text>
+
+    <!-- Band 3: 60 mm/s tai Y = 188 -->
+    <path d="M 25 188 L 27 188 M 29 188 L 31 188 M 33 188 L 35 188 M 37 188 L 39 188 M 41 188 L 43 188 M 45 188 L 47 188 M 49 188 L 51 188 M 53 188 L 55 188 M 57 188 L 59 188 M 61 188 L 63 188 M 65 188 L 67 188 M 69 188 L 71 188 M 73 188 L 75 188 M 77 188 L 79 188 M 81 188 L 83 188 M 85 188 L 87 188 M 89 188 L 91 188 M 93 188 L 95 188 M 97 188 L 99 188 M 101 188 L 103 188" fill="none" stroke="#000000" stroke-width="0.4" id="rapid_pen_lift_60mms" />
+    <text x="110" y="189" font-family="sans-serif" font-size="2.2" fill="#000000">Band 3: v=60 mm/s (20 lifts, 2mm draw / 2mm lift)</text>
   </g>
 </svg>

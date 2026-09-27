@@ -329,18 +329,18 @@ Nghiên cứu               Song song                 & Đánh giá             
 - [ ] Mở rộng kiểm thử hình học và QA trực quan cho toàn bộ bảng chữ cái, chữ hoa và tổ hợp dấu tiếng Việt phức tạp [P1] (TV4)
 
 #### 2.5 Phần cứng — Firmware & Điều khiển chuyển động (Đường chạy TV3)
-**Trạng thái:** ⬜ Chưa bắt đầu | **Phụ trách:** TV3 | **Mức ưu tiên:** P0
-- [ ] Chuẩn hóa interface chung giữa hardware simulator và máy vẽ thật [P0]
-- [ ] Điều khiển máy vẽ AxiDraw qua `pyaxidraw` thực thi đúng file SVG chuẩn [P0]
-- [ ] Xử lý an toàn các lệnh tạm dừng (`pause`), tiếp tục (`resume`), hủy vẽ (`cancel`) [P1]
-- [ ] Xây dựng quy trình và checklist hiệu chuẩn tọa độ, vận tốc, gia tốc và độ nảy ngòi bút [P0]
+**Trạng thái:** 🟢 Hoàn thành nền tảng phần mềm | **Phụ trách:** TV3 | **Mức ưu tiên:** P0
+- [x] Chuẩn hóa interface chung giữa hardware simulator và máy vẽ thật (`HardwareAdapterInterface`, `MockSimulatorAdapter`, `AxiDrawAdapter`) [P0]
+- [x] Điều khiển máy vẽ AxiDraw qua `pyaxidraw` thực thi đúng file SVG chuẩn (tích hợp chuẩn bị origin offset 5mm, xử lý tỷ lệ viewBox) [P0]
+- [x] Xử lý an toàn các lệnh tạm dừng (`pause`), tiếp tục (`resume`), hủy vẽ (`cancel`) với kiểm tra capability `pause_supported` và khóa trạng thái luồng [P1]
+- [x] Xây dựng quy trình và checklist hiệu chuẩn tọa độ, vận tốc, gia tốc và độ nảy ngòi bút (`07_physical_calibration_protocol.md`, `measurement-protocol.md`) [P0]
 
 #### 2.6 Phần cứng — Đo đạc thực tế & Trạng thái (Đường chạy TV3)
-**Trạng thái:** ⬜ Chưa bắt đầu | **Phụ trách:** TV3 | **Mức ưu tiên:** P0 / P2
-- [ ] Thu thập số đo thời gian vẽ thực tế `actual_draw_time_sec` trên máy vẽ vật lý [P0]
-- [ ] Báo cáo đo lường sai số quỹ đạo vật lý so với tọa độ SVG thiết kế [P0]
-- [ ] Gửi trạng thái/tiến độ thi công về đúng chuẩn JSON ở mục 5 trong API Spec [P1]
-- [ ] Phát hiện lỗi cơ bản (kẹt giấy, hết mực) và trả đúng mã lỗi chuẩn [P1]
+**Trạng thái:** 🟡 Hoàn tất hợp đồng & pipeline / Chờ thiết bị vật lý | **Phụ trách:** TV3 | **Mức ưu tiên:** P0 / P2
+- [ ] Thu thập số đo thời gian vẽ thực tế `actual_draw_time_sec` trên máy vẽ vật lý [P0] *(Blocked by hardware: chờ máy AxiDraw và cáp USB)*
+- [ ] Báo cáo đo lường sai số quỹ đạo vật lý so với tọa độ SVG thiết kế [P0] *(Blocked by hardware: chờ máy thật và camera)*
+- [x] Gửi trạng thái/tiến độ thi công về đúng chuẩn JSON ở mục 5 trong API Spec (bao gồm `pause_supported`, `progress_is_estimated`, các cờ mô hình động học) [P1]
+- [x] Phát hiện lỗi cơ bản (mất kết nối, ngoại lệ driver, lỗi ghi log) và trả đúng mã lỗi chuẩn (`HARDWARE_NOT_CONNECTED`, `HARDWARE_ERROR`, `HARDWARE_PAUSE_UNSUPPORTED`, `LOG_WRITE_ERROR`) [P1]
 - [ ] Telemetry phản hồi trạng thái đầu bút theo thời gian thực (hướng mở rộng) [P2]
 
 #### 2.7 Giao diện, Strict Validation & Tích hợp (Đường chạy TV4)
