@@ -6,11 +6,11 @@ world millimetres and are applied only by the later world transform slice.
 
 from dataclasses import dataclass, field
 from types import MappingProxyType
-from typing import Any, Mapping, Optional, Tuple
+from typing import Any, Literal, Mapping, Optional, Tuple
 import math
 import numpy as np
 
-from .engine import GlyphVariant, generate_accents
+from .engine import GlyphVariant, build_ligature_bridge, bridge_collision_cost, generate_accents
 from .metrics_evaluator import compute_diacritic_clearance
 
 CONTRACT_VERSION = "e4-v1"
@@ -305,3 +305,190 @@ def prune_composition_states(states, scale_vec, offset, config=None, page_bounds
     if not valid:
         raise NoValidCompositionState("no candidate satisfies world geometry constraints")
     return tuple(valid)
+
+
+class TransitionEvaluationError(ValueError):
+    """The transition calculation encountered malformed or non-finite data."""
+
+
+class NoValidPathError(ValueError):
+    """No complete path remains through the PR3 trellis."""
+
+
+@dataclass(frozen=True)
+class TransitionWeights:
+    w_penup: float = 0.5
+    w_lift: float = 4.0
+    w_curvature: float = 2.0
+    w_bridge_collision: float = 15.0
+
+    def __post_init__(self):
+        if not all(math.isfinite(v) and v >= 0 for v in
+                   (self.w_penup, self.w_lift, self.w_curvature, self.w_bridge_collision)):
+            raise ValueError("transition weights must be finite and nonnegative")
+
+
+@dataclass(frozen=True)
+class TransitionCostBreakdown:
+    d_penup_mm: float
+    n_lift: int
+    c_curvature: float
+    c_bridge_collision: float
+    total_cost: float
+
+    def __post_init__(self):
+        if self.n_lift not in (0, 1) or not all(math.isfinite(v) and v >= 0 for v in
+                (self.d_penup_mm, self.c_curvature, self.c_bridge_collision, self.total_cost)):
+            raise ValueError("transition breakdown must be finite and nonnegative")
+
+
+@dataclass(frozen=True)
+class TransitionResult:
+    contract_version: str
+    is_valid: bool
+    decision: Literal["CONNECT", "LIFT", "REJECT"]
+    total_cost: float
+    breakdown: Optional[TransitionCostBreakdown]
+    reject_reason: Optional[str] = None
+    bridge_strokes: Optional[Tuple[np.ndarray, ...]] = None
+
+    def __post_init__(self):
+        if self.contract_version != CONTRACT_VERSION:
+            raise ValueError("wrong transition contract version")
+        if self.decision == "REJECT":
+            if (self.is_valid or self.total_cost != float("inf") or self.breakdown is not None or
+                    self.bridge_strokes is not None or not self.reject_reason):
+                raise ValueError("invalid rejected transition")
+        elif self.decision in ("CONNECT", "LIFT"):
+            if (not self.is_valid or not math.isfinite(self.total_cost) or self.total_cost < 0 or
+                    self.breakdown is None or self.breakdown.total_cost != self.total_cost or
+                    self.reject_reason is not None):
+                raise ValueError("invalid accepted transition")
+            if self.decision == "CONNECT":
+                if not self.bridge_strokes or self.breakdown.n_lift != 0:
+                    raise ValueError("connect requires a bridge and no lift")
+                object.__setattr__(self, "bridge_strokes", _strokes_copy(self.bridge_strokes))
+            elif self.bridge_strokes is not None or self.breakdown.n_lift != 1:
+                raise ValueError("lift must not carry a bridge")
+        else:
+            raise ValueError("unknown transition decision")
+
+
+def _reject(reason):
+    return TransitionResult(CONTRACT_VERSION, False, "REJECT", float("inf"), None, reason)
+
+
+def evaluate_composition_transition(prev_state, curr_state, prev_world, curr_world,
+                                    transition_weights, diacritic_config):
+    """Evaluate the E4 transition without changing the frozen B3 solver."""
+    weights = transition_weights
+    config = diacritic_config
+    try:
+        for world in (prev_world, curr_world):
+            for vector in (world.entry_pt, world.exit_pt, world.v_entry, world.v_exit):
+                if np.asarray(vector).shape != (2,) or not np.isfinite(vector).all():
+                    raise TransitionEvaluationError("invalid world vector")
+            if np.linalg.norm(world.v_entry) <= 0 or np.linalg.norm(world.v_exit) <= 0:
+                raise TransitionEvaluationError("zero world tangent")
+        if (evaluate_composition_state(prev_state, prev_world, config).c_internal_collision >
+                config.max_internal_collision_cost or
+                evaluate_composition_state(curr_state, curr_world, config).c_internal_collision >
+                config.max_internal_collision_cost):
+            return _reject("HARD_INTERNAL_COLLISION")
+        delta = curr_world.entry_pt - prev_world.exit_pt
+        distance = float(np.linalg.norm(delta))
+        if not math.isfinite(distance):
+            raise TransitionEvaluationError("non-finite pen-up distance")
+        lift_cost = weights.w_penup * distance + weights.w_lift
+        if not math.isfinite(lift_cost):
+            raise TransitionEvaluationError("non-finite lift cost")
+        lift = TransitionResult(CONTRACT_VERSION, True, "LIFT", lift_cost,
+                                TransitionCostBreakdown(distance, 1, 0.0, 0.0, lift_cost))
+        if not (prev_state.base_variant.can_out and curr_state.base_variant.can_in):
+            return lift
+        # Preserve B3's geometric eligibility rule while keeping its cost path separate.
+        if delta[0] <= -0.2 or distance >= 12.0:
+            return lift
+        direction = delta / distance if distance > 1e-4 else None
+        curvature = 0.0 if direction is None else (
+            1.0 - float(np.clip(np.dot(prev_world.v_exit, direction), -1., 1.)) +
+            1.0 - float(np.clip(np.dot(direction, curr_world.v_entry), -1., 1.)))
+        bridge = build_ligature_bridge(prev_world.exit_pt, prev_world.v_exit,
+                                      curr_world.entry_pt, curr_world.v_entry, n=6)
+        if not np.isfinite(bridge).all():
+            raise TransitionEvaluationError("non-finite bridge")
+        # A bridge may meet the two base glyphs at its endpoints. The existing
+        # heuristic handles those anchor contacts; marks have no such exemption.
+        mark_clearance = compute_diacritic_clearance(
+            (bridge,), prev_world.diacritic_strokes + curr_world.diacritic_strokes)
+        if mark_clearance < config.clearance_threshold_mm:
+            return lift
+        collision = bridge_collision_cost(bridge, prev_world.base_strokes,
+                                          curr_world.base_strokes, scale_hint=1.0)
+        if not math.isfinite(collision) or collision < 0:
+            raise TransitionEvaluationError("non-finite bridge collision cost")
+        connect_cost = weights.w_curvature * curvature + weights.w_bridge_collision * collision
+        if not math.isfinite(connect_cost):
+            raise TransitionEvaluationError("non-finite connect cost")
+        if connect_cost >= lift_cost:
+            return lift
+        return TransitionResult(CONTRACT_VERSION, True, "CONNECT", connect_cost,
+                                TransitionCostBreakdown(0.0, 0, curvature, collision, connect_cost),
+                                bridge_strokes=(bridge,))
+    except (ValueError, TypeError, OverflowError, FloatingPointError) as exc:
+        if isinstance(exc, TransitionEvaluationError):
+            raise
+        raise TransitionEvaluationError(str(exc)) from exc
+
+
+def optimize_composition_dag(layers, transition_weights=None, diacritic_config=None):
+    """Viterbi over (state, world) layers with state cost counted once per node."""
+    if not layers:
+        return {"states": (), "transitions": (), "total_cost": 0.0}
+    weights = transition_weights or TransitionWeights()
+    config = diacritic_config or DiacriticConfig()
+    if any(not layer or len(layer) > 9 for layer in layers):
+        raise NoValidPathError("empty or oversized composition layer")
+    initial = [evaluate_composition_state(state, world, config) for state, world in layers[0]]
+    costs = [cost.total_cost if cost.c_internal_collision <= config.max_internal_collision_cost
+             else float("inf") for cost in initial]
+    back = []
+    for prev_layer, layer in zip(layers, layers[1:]):
+        next_costs = []
+        layer_back = []
+        for state, world in layer:
+            state_cost = evaluate_composition_state(state, world, config)
+            if state_cost.c_internal_collision > config.max_internal_collision_cost:
+                next_costs.append(float("inf"))
+                layer_back.append(None)
+                continue
+            own_cost = state_cost.total_cost
+            options = []
+            for index, (prev_state, prev_world) in enumerate(prev_layer):
+                if not math.isfinite(costs[index]):
+                    continue
+                result = evaluate_composition_transition(prev_state, state, prev_world, world,
+                                                         weights, config)
+                if result.is_valid:
+                    options.append((costs[index] + result.total_cost + own_cost, index, result))
+            if options:
+                score, index, result = min(options, key=lambda item: (item[0], item[1]))
+                next_costs.append(score)
+                layer_back.append((index, result))
+            else:
+                next_costs.append(float("inf"))
+                layer_back.append(None)
+        costs = next_costs
+        back.append(layer_back)
+    if not any(math.isfinite(cost) for cost in costs):
+        raise NoValidPathError("no valid path through composition layers")
+    index = min(range(len(costs)), key=lambda i: (costs[i], i))
+    total = costs[index]
+    chosen = [layers[-1][index][0]]
+    transitions = []
+    for layer_index in range(len(back) - 1, -1, -1):
+        index, result = back[layer_index][index]
+        transitions.append(result)
+        chosen.append(layers[layer_index][index][0])
+    return {"states": tuple(reversed(chosen)), "transitions": tuple(reversed(transitions)),
+            "total_cost": total}
