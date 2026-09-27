@@ -170,7 +170,12 @@ def generate_diacritic_candidates(base_char, accents, anchor_x, config=None,
         return ()
     structural = {"\u0302", "\u0306", "\u031b"}
     tones = {"\u0301", "\u0300", "\u0309", "\u0303", "\u0323"}
+    vowel = base_char.lower()
+    structural_bases = {"\u0302": {"a", "e", "o"},
+                        "\u0306": {"a"}, "\u031b": {"o", "u"}}
     if (not set(marks) <= structural | tones or
+            vowel not in {"a", "e", "i", "o", "u", "y"} or
+            any(vowel not in structural_bases[mark] for mark in marks if mark in structural) or
             sum(mark in structural for mark in marks) > 1 or
             sum(mark in tones for mark in marks) > 1 or
             len(marks) != len(set(marks))):

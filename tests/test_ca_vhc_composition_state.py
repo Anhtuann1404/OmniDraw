@@ -23,12 +23,12 @@ def test_composition_state_without_accent():
     assert all(s.diacritic_candidate is None for s in states)
 
 
-@pytest.mark.parametrize("marks", [("\u0301",), ("\u0302", "\u0301"),
-                                    ("\u031b", "\u0309"), ("\u0323",)])
-def test_candidate_generation_uses_existing_accent_geometry(marks):
-    candidates = generate_diacritic_candidates("e", marks, 2.0)
+@pytest.mark.parametrize("base,marks", [("e", ("\u0301",)), ("e", ("\u0302", "\u0301")),
+                                         ("o", ("\u031b", "\u0309")), ("e", ("\u0323",))])
+def test_candidate_generation_uses_existing_accent_geometry(base, marks):
+    candidates = generate_diacritic_candidates(base, marks, 2.0)
     assert [c.placement_tag for c in candidates] == ["canonical", "safe_left", "safe_right"]
-    canonical = generate_accents("e", marks, 2.0)
+    canonical = generate_accents(base, marks, 2.0)
     assert len(candidates[0].strokes_local) == len(canonical)
     for actual, expected in zip(candidates[0].strokes_local, canonical):
         np.testing.assert_array_equal(actual, expected)
@@ -72,6 +72,20 @@ def test_candidate_pruning_never_revives_hard_invalid():
     assert [c.placement_tag for c in generate_diacritic_candidates("e", ("\u0301",), 2., config)] == ["canonical"]
     with pytest.raises(NoValidCompositionState):
         build_composition_states("e", ("\u034f",), _variants(), 2.)
+
+
+@pytest.mark.parametrize("base,marks", [
+    ("b", ("\u0301",)), ("e", ("\u031b",)),
+    ("u", ("\u0302",)), ("o", ("\u0306",)),
+])
+def test_invalid_vietnamese_base_mark_pairs_have_no_fallback(base, marks):
+    assert generate_diacritic_candidates(base, marks, 2.) == ()
+    with pytest.raises(NoValidCompositionState):
+        build_composition_states(base, marks, _variants(base), 2.)
+
+
+def test_nfd_dot_below_before_structural_mark_is_allowed():
+    assert generate_diacritic_candidates("a", ("\u0323", "\u0306"), 2.)
 
 
 def test_transform_state_to_world_uses_single_frame_contract():
