@@ -3,7 +3,7 @@
 **Phiên bản:** 0.2
 **Ngày lập:** 2026-09-24
 **Owner:** TV4 — Handwriting / CA-VHC Composition Lead
-**Trạng thái:** `READY_TO_IMPLEMENT — E1–E5 PASS`
+**Trạng thái:** `IMPLEMENTATION_IN_PROGRESS — E1–E5 PASS; EXIT REVIEW PENDING`
 **Review boundary:** `OUTSIDE_REVIEW_TARGET_7ae43e6` — tài liệu chuẩn bị này không thay đổi Chương 1–3 và không yêu cầu mở lại gói cross-review v0.2.
 
 > [!IMPORTANT]
@@ -234,3 +234,20 @@ PR3 được phép bắt đầu khi toàn bộ mục sau đạt:
 - [x] Không có yêu cầu mở rộng phạm vi sang PR4/P2/hardware.
 
 Definition of Ready hiện **đã đạt** vì E1–E5 đều `PASS` và hai owner đã ký cùng phiên bản E4. Việc triển khai PR3 vẫn phải đáp ứng toàn bộ exit criteria trước khi được coi là hoàn thành.
+
+## 10. Tiến độ triển khai mới của TV4 (2026-09-27)
+
+Nhánh local `codex/tv4-pr3-slices` được tạo từ nhánh tích hợp tại `e62f361`. Nhánh `backup/pr3-implementation` chỉ làm tham khảo; không lấy lại diff từ nhánh đó.
+
+| Slice | Commit | Bằng chứng hiện tại |
+| :--- | :--- | :--- |
+| 1 — State và ứng viên dấu | `369db23` | Kiểu dữ liệu, ba vị trí P0, test immutability và invalid candidate |
+| 2 — World geometry và state cost | `b01bd8c` | Transform scale X/Y, offset mm, `C_state`, hard pruning |
+| 3 — Transition và Viterbi | `2556672` | Đường PR3 riêng, test `CONNECT`/`LIFT`/`REJECT` và trellis synthetic |
+| 4 — Renderer opt-in | `e2cc4cd` | Dấu lấy từ state đã chọn, bridge lấy từ transition; B3/default giữ đường cũ |
+| 5 — Acceptance/visual diagnostics | `a5b0c17` | 10/10 DEV specimens đạt test NFD, collision 0, clearance ≥ 0.20 mm, layer ≤ 9; báo cáo soi hình học riêng cho 5 từ ngoài acceptance |
+| 6 — Proposed runner | `4428045` | `pr3_composition` chỉ chạy DEV; technical dry-run 20 dòng, không mở Holdout |
+
+Suite hiện tại: **199 passed** (bao gồm `backend/test_handwriting_validation.py`). Đây là bằng chứng software technical dry-run, chưa phải benchmark chính thức hay kết luận RQ.
+
+**Còn mở trước exit sign-off:** TV2 review thành phần động học của shared transition, đặc biệt bridge–glyph hard collision so với tiếp xúc hợp lệ ở mút nối; xác nhận xử lý biến thiên sinh học của PR3. Chế độ PR3 hiện không áp dụng biến thiên ngẫu nhiên sau DAG để geometry được chấm và geometry được render trùng nhau. Cần chốt cách giữ đặc tính style mà vẫn tuân E4 trước khi coi renderer integration hoàn tất. Không thay đổi TV2 baseline adapters hoặc hardware trong các slice trên.
