@@ -60,6 +60,21 @@ Kết quả AI recheck ngày 2026-09-26: `PASS_WITH_CHANGES`; `TV2_APPROVAL: CHA
 
 TV3 cần xử lý residual R04; TV4 review contract CSV 22 trường và `pause_supported` trong PR hardware. Không đóng physical calibration hoặc formal experiment từ kết quả test này. Sign-off bên dưới là quyết định lịch sử, chưa phải human sign-off cho snapshot `a138e58`.
 
+### Recheck tiếp theo trên `cac8626` (2026-09-28)
+
+Đối chiếu chuỗi sửa `74c394f` (ba job cho R04), `2439472` (đơn vị tốc độ driver và timeout), `3f1a05a` và `cac8626` (xác nhận dừng máy). Bộ `tests/test_hardware_adapter.py` trên snapshot `cac8626` đạt **56 passed in 9.95s**. Bảng recheck ở trên phản ánh snapshot `a138e58` và được giữ làm lịch sử.
+
+| ID | Kết luận mới | Bằng chứng |
+| :--- | :--- | :--- |
+| TV2-HW-R01 | `VERIFIED_CLOSED` | `calculate_svg_draw_breakdown()` tiếp tục gắn `constant_speed_baseline`, `accel_model_applied=False`, `corner_model_applied=False`; chưa suy diễn gia tốc từ firmware setting. |
+| TV2-HW-R02 | `VERIFIED_CLOSED` | Breakdown và các trường khoảng cách/lift tiếp tục đi qua job, status và benchmark result. |
+| TV2-HW-R03 | `VERIFIED_CLOSED` | Test hình học Block B tiếp tục kiểm tra bốn góc và chiều dài segment. |
+| TV2-HW-R04 | `VERIFIED_CLOSED` **ở mức dispatch phần mềm** | `backend/hardware_adapter.py::RQ3_SPEED_BANDS` và `run_rq3_calibration_benchmark()` khoảng dòng 2450–2475, 2570–2610 trích SVG riêng từng band, gọi `set_speed()` với yêu cầu danh định 20/40/60 mm/s và driver 8/16/24%, rồi gửi ba job riêng. `tests/test_hardware_adapter.py` khoảng dòng 770–825 kiểm tra ba dispatch, ba SVG cô lập và ba dòng CSV. `physical_speed_status=UNVERIFIED`: chưa xác nhận máy thật đạt tốc độ danh định. |
+| TV2-HW-R05 | `VERIFIED_CLOSED` **cho yêu cầu telemetry TV2** | Schema hiện tại đã mở rộng từ 22 lên **25 trường**, thêm `requested_speed_mm_s`, `driver_speed_pct`, `physical_speed_status`; protocol §3 và test CSV đối chiếu các giá trị. `docs/hardware/measurement-protocol.md` mục checklist gần dòng 213 vẫn ghi “22 cột”; TV3 cần sửa thành 25 để đồng bộ tài liệu. Contract tích hợp vẫn cần TV4 review. |
+| TV2-HW-R06 | `VERIFIED_CLOSED` **ở mức test phần mềm** | `get_status()` vẫn dùng provenance lưu trong job; test physical mock sau disconnect và failure/cancel tiếp tục PASS. Không suy ra đã đo trên máy thật. |
+
+**AI_DRAFT_VERDICT:** `PASS_WITH_CHANGES` — sáu finding TV2-HW-R01–R06 đã được xác minh đóng ở phạm vi phần mềm, còn một lỗi nhất quán tài liệu 22/25 cột để TV3 sửa. **HUMAN_VERDICT / TV2_APPROVAL cho snapshot `cac8626`: PENDING**; người TV2 xác nhận sau khi xem bằng chứng. Physical calibration, tốc độ thực và formal experiment vẫn chờ máy thật. Review bổ sung này không ký thay TV4 cho CSV/pause contract.
+
 ### Trước khi có dữ liệu hiệu chuẩn
 
 Giữ công thức hiện tại nhưng ghi rõ là lower-order baseline:
