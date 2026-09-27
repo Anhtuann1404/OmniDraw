@@ -60,9 +60,9 @@ Tiêu bản kiểm chuẩn được thiết kế trên khổ A4 ngang ($297 \tim
 - **Cơ chế thi công & Hợp đồng Đơn vị (TV2-HW-R04 & TV4 Review):**
   1. *Đúng đơn vị driver:* `pyaxidraw.options.speed_pendown` nhận giá trị phần trăm (1–100%) của tốc độ tối đa ($250\,\text{mm/s}$), KHÔNG nhận trực tiếp mm/s. Các dải $20, 40, 60\,\text{mm/s}$ được quy đổi tương ứng thành $8\%, 16\%, 24\%$.
   2. *Tách bạch dữ liệu nghiên cứu:* Hệ thống lưu trữ riêng rẽ `requested_speed_mm_s`, `driver_speed_pct`, và `physical_speed_status = "UNVERIFIED"`. Tuyệt đối không ghi nhận tốc độ cơ học đạt đúng $20/40/60\,\text{mm/s}$ vào CSV khi chưa có thiết bị đo độc lập.
-  3. *Timeout động & An toàn cơ học:* Runner tính toán dynamic deadline:
+  3. *Timeout động & Xác thực Dừng Cơ học:* Runner tính toán dynamic deadline:
      $$T_{timeout} = \min(\max(15.0, T_{est} \times 2.5 + 5.0), T_{cap})$$
-     bằng `time.monotonic()`. Nếu quá hạn, runner chủ động gọi `cancel_job()` để ngắt motor, không để máy vẽ kẹt hoặc chạy ngầm.
+     bằng `time.monotonic()`. Nếu quá hạn, runner chủ động gọi `cancel_job()`. Hệ thống bắt buộc xác nhận trạng thái dừng thực tế của driver qua `stop()` hoặc `disconnect()` (`driver_stopped: True`). Nếu driver báo lỗi hoặc thiếu API dừng, runner trả về `status = "timeout_cancellation_failed"` kèm mã lỗi chi tiết để cảnh báo nguy cơ trôi chuyển động cơ học ngầm, tuyệt đối không nuốt lỗi hay ngụy tạo trạng thái dừng.
   4. *Ranh giới giữa Kế hoạch và Thực nghiệm:* Runner benchmark chỉ thi công Khối C (`block_c_rapid_pen_lift_tested: True`). Các thông số của Khối A và Khối B được định danh chính xác là hình học sẵn có trên fixture (`fixture_clearance_ladder_available_mm`, `fixture_acute_turn_angles_available_deg`), với `block_a_clearance_ladder_tested: False`, `block_b_acute_turns_tested: False`.
 - **Mục tiêu:**
   1. Kiểm tra độ trễ thực tế của servo trục Z ($t_{down}, t_{up}$).

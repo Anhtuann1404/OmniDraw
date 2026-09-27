@@ -82,6 +82,8 @@ VALID_HARDWARE_ERRORS: Dict[str, str] = {
     "HARDWARE_PAPER_JAM": "Phát hiện kẹt giấy tại bàn vẽ",
     "HARDWARE_OUT_OF_INK": "Hết mực hoặc ngòi không tiếp xúc giấy",
     "HARDWARE_PAUSE_UNSUPPORTED": "AxiDraw phần cứng chưa hỗ trợ hoặc chưa xác minh tính năng tạm dừng (pause) an toàn giữa chừng",
+    "HARDWARE_CANCEL_UNSUPPORTED": "Driver phần cứng không có API dừng (thiếu stop/disconnect). Không thể xác nhận thiết bị đã dừng",
+    "DRIVER_STOP_FAILED": "Lệnh dừng driver phần cứng thất bại",
     "JOB_NOT_FOUND": "Không tìm thấy ID bản vẽ",
     "JOB_ALREADY_EXISTS": "Bản vẽ này đang chạy",
     "INVALID_STATE": "Trạng thái không hợp lệ cho thao tác",
@@ -1468,6 +1470,8 @@ class MockSimulatorAdapter(HardwareAdapterInterface):
                 "error": {"code": "JOB_NOT_FOUND", "message": VALID_HARDWARE_ERRORS["JOB_NOT_FOUND"]},
                 "status_code": 404,
                 "pause_supported": self.pause_supported,
+                "driver_stopped": False,
+                "driver_stop_confirmed": False,
             }
         if job["status"] in ("done", "cancelled"):
             return {
@@ -1477,6 +1481,8 @@ class MockSimulatorAdapter(HardwareAdapterInterface):
                 },
                 "status_code": 409,
                 "pause_supported": self.pause_supported,
+                "driver_stopped": False,
+                "driver_stop_confirmed": False,
             }
 
         task = job.get("task")
@@ -1489,7 +1495,13 @@ class MockSimulatorAdapter(HardwareAdapterInterface):
         job["task"] = None
         job["status"] = "cancelled"
         record_metric(job, csv_path=self._metrics_csv_path)
-        return {"request_id": request_id, "status": "cancelled", "pause_supported": self.pause_supported}
+        return {
+            "request_id": request_id,
+            "status": "cancelled",
+            "driver_stopped": True,
+            "driver_stop_confirmed": True,
+            "pause_supported": self.pause_supported,
+        }
 
     def get_status(self, request_id: str, simulate_error: Optional[str] = None) -> Dict[str, Any]:
         job = self.jobs.get(request_id)
@@ -2132,6 +2144,8 @@ class AxiDrawAdapter(HardwareAdapterInterface):
                     "error": {"code": "JOB_NOT_FOUND", "message": VALID_HARDWARE_ERRORS["JOB_NOT_FOUND"]},
                     "status_code": 404,
                     "pause_supported": self.pause_supported,
+                    "driver_stopped": False,
+                    "driver_stop_confirmed": False,
                 }
             if job["status"] in ("done", "cancelled"):
                 return {
@@ -2141,26 +2155,84 @@ class AxiDrawAdapter(HardwareAdapterInterface):
                     },
                     "status_code": 409,
                     "pause_supported": self.pause_supported,
+                    "driver_stopped": False,
+                    "driver_stop_confirmed": False,
                 }
 
-            job["status"] = "cancelled"
-            job["actual_draw_time_sec"] = None
-            job["actual_hardware_measured"] = False
+            # Đánh dấu tín hiệu hủy nội bộ để worker không công bố done
             job["_cancel_event"].set()
             job["_pause_event"].set()
 
-            # Ngắt driver thực sự
-            if self._ad:
-                try:
-                    if hasattr(self._ad, 'stop'):
-                        self._ad.stop()
-                    elif hasattr(self._ad, 'disconnect'):
-                        self._ad.disconnect()
-                except Exception:
-                    pass
+            # Kiểm tra và thực thi cơ chế dừng thực tế trên driver phần cứng
+            driver_stopped = False
+            driver_stop_confirmed = False
+            stop_err: Optional[Dict[str, Any]] = None
 
+            if self._ad is not None:
+                has_stop = hasattr(self._ad, 'stop') and callable(getattr(self._ad, 'stop'))
+                has_disconnect = hasattr(self._ad, 'disconnect') and callable(getattr(self._ad, 'disconnect'))
+
+                if not (has_stop or has_disconnect):
+                    err_code = "HARDWARE_CANCEL_UNSUPPORTED"
+                    err_msg = VALID_HARDWARE_ERRORS.get(
+                        err_code,
+                        "Driver phần cứng không có API dừng (thiếu stop/disconnect). Không thể xác nhận thiết bị đã dừng."
+                    )
+                    stop_err = {"code": err_code, "message": err_msg}
+                else:
+                    try:
+                        if has_stop:
+                            self._ad.stop()
+                            driver_stopped = True
+                            driver_stop_confirmed = True
+                        elif has_disconnect:
+                            self._ad.disconnect()
+                            driver_stopped = True
+                            driver_stop_confirmed = True
+                    except Exception as exc:
+                        # Tuyệt đối không nuốt lỗi driver
+                        err_code = "DRIVER_STOP_FAILED"
+                        err_msg = f"Lỗi khi dừng driver phần cứng: {exc}"
+                        stop_err = {"code": err_code, "message": err_msg}
+                        driver_stopped = False
+                        driver_stop_confirmed = False
+            else:
+                driver_stopped = True
+                driver_stop_confirmed = True
+
+            if not driver_stop_confirmed:
+                # KHÔNG THỂ XÁC NHẬN DRIVER ĐÃ DỪNG:
+                # Tuyệt đối không trả về status='cancelled'
+                job["status"] = "error"
+                job["actual_draw_time_sec"] = None
+                job["actual_hardware_measured"] = False
+                job["error"] = stop_err
+                record_metric(job, csv_path=self._metrics_csv_path)
+
+                return {
+                    "request_id": request_id,
+                    "status": "error",
+                    "driver_stopped": False,
+                    "driver_stop_confirmed": False,
+                    "error": stop_err,
+                    "status_code": 500 if stop_err and stop_err.get("code") == "DRIVER_STOP_FAILED" else 400,
+                    "pause_supported": self.pause_supported,
+                }
+
+            # XÁC NHẬN DRIVER ĐÃ DỪNG THÀNH CÔNG:
+            job["status"] = "cancelled"
+            job["actual_draw_time_sec"] = None
+            job["actual_hardware_measured"] = False
+            job["error"] = None
             record_metric(job, csv_path=self._metrics_csv_path)
-            return {"request_id": request_id, "status": "cancelled", "pause_supported": self.pause_supported}
+
+            return {
+                "request_id": request_id,
+                "status": "cancelled",
+                "driver_stopped": True,
+                "driver_stop_confirmed": True,
+                "pause_supported": self.pause_supported,
+            }
 
     def get_status(self, request_id: str, simulate_error: Optional[str] = None) -> Dict[str, Any]:
         job = self.jobs.get(request_id)
@@ -2529,17 +2601,53 @@ async def run_rq3_calibration_benchmark(
                 }
 
         if not band_done:
-            # Chủ động hủy job trên adapter để bảo đảm an toàn phần cứng
+            # Chủ động hủy job trên adapter và kiểm tra kết quả hủy (TV4 Blocker)
+            cancel_res: Dict[str, Any] = {}
+            cancel_err: Optional[str] = None
             try:
-                await adapter.cancel_job(band_req_id)
-            except Exception:
-                pass
+                cancel_res = await adapter.cancel_job(band_req_id)
+            except Exception as c_exc:
+                cancel_err = str(c_exc)
+
+            driver_stopped = bool(
+                (cancel_res.get("driver_stopped") is True or cancel_res.get("driver_stop_confirmed") is True)
+                and not cancel_err
+                and not cancel_res.get("error")
+                and cancel_res.get("status") == "cancelled"
+            )
+
+            if not driver_stopped:
+                err_detail = cancel_err or cancel_res.get("error") or "Không xác nhận được trạng thái dừng driver"
+                if isinstance(err_detail, dict):
+                    err_msg_text = err_detail.get("message", str(err_detail))
+                else:
+                    err_msg_text = str(err_detail)
+
+                return {
+                    "status": "timeout_cancellation_failed",
+                    "timeout": True,
+                    "error": (
+                        f"Timeout quá hạn chờ hoàn thành band {cur_band_id} (sau {band_timeout_sec:.1f}s) "
+                        f"và KHÔNG THỂ XÁC NHẬN driver đã dừng: {err_msg_text}"
+                    ),
+                    "request_id": band_req_id,
+                    "band_id": cur_band_id,
+                    "rq3_verified": False,
+                    "driver_stopped": False,
+                    "driver_stop_confirmed": False,
+                    "cancel_result": cancel_res if cancel_res else {"error": err_detail},
+                }
+
             return {
                 "status": "timeout",
-                "error": f"Timeout quá hạn chờ hoàn thành band {cur_band_id} (sau {band_timeout_sec:.1f}s)",
+                "timeout": True,
+                "error": f"Timeout quá hạn chờ hoàn thành band {cur_band_id} (sau {band_timeout_sec:.1f}s). Đã hủy job và xác nhận driver dừng.",
                 "request_id": band_req_id,
                 "band_id": cur_band_id,
                 "rq3_verified": False,
+                "driver_stopped": True,
+                "driver_stop_confirmed": True,
+                "cancel_result": cancel_res,
             }
 
         band_results[cur_band_id] = {
