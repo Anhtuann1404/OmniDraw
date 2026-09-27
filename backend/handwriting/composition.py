@@ -36,6 +36,50 @@ def _strokes_copy(strokes):
     return tuple(result)
 
 
+def _readonly_vector(value):
+    vector = np.array(value, dtype=float, copy=True)
+    if vector.shape != (2,) or not np.isfinite(vector).all():
+        raise ValueError("invalid glyph vector")
+    vector.setflags(write=False)
+    return vector
+
+
+def _freeze_context(value):
+    if isinstance(value, Mapping):
+        return MappingProxyType({key: _freeze_context(item) for key, item in value.items()})
+    if isinstance(value, (list, tuple)):
+        return tuple(_freeze_context(item) for item in value)
+    if isinstance(value, np.ndarray):
+        array = np.array(value, copy=True)
+        array.setflags(write=False)
+        return array
+    return value
+
+
+@dataclass(frozen=True)
+class _GlyphVariantSnapshot:
+    """Read-only PR3 view of a mutable B3 GlyphVariant."""
+    strokes: Tuple[np.ndarray, ...]
+    entry_pt: np.ndarray
+    exit_pt: np.ndarray
+    v_entry: np.ndarray
+    v_exit: np.ndarray
+    can_in: bool
+    can_out: bool
+    cost_legibility: float
+    tag: str
+
+    @classmethod
+    def from_variant(cls, variant):
+        return cls(
+            _strokes_copy(variant.strokes),
+            _readonly_vector(variant.entry_pt), _readonly_vector(variant.exit_pt),
+            _readonly_vector(variant.v_entry), _readonly_vector(variant.v_exit),
+            bool(variant.can_in), bool(variant.can_out),
+            float(variant.cost_legibility), str(variant.tag),
+        )
+
+
 @dataclass(frozen=True)
 class DiacriticConfig:
     internal_collision_tolerance_mm: float = 0.05
@@ -108,9 +152,10 @@ class CompositionState:
         if not all(math.isfinite(v) and v >= 0 for v in
                    (self.internal_collision_cost, self.legibility_cost)):
             raise ValueError("state costs must be finite and nonnegative")
+        object.__setattr__(self, "base_variant", _GlyphVariantSnapshot.from_variant(self.base_variant))
         object.__setattr__(self, "accents", tuple(self.accents))
-        object.__setattr__(self, "context", MappingProxyType(dict(self.context)))
-        object.__setattr__(self, "metadata", MappingProxyType(dict(self.metadata)))
+        object.__setattr__(self, "context", _freeze_context(self.context))
+        object.__setattr__(self, "metadata", _freeze_context(self.metadata))
 
 
 def generate_diacritic_candidates(base_char, accents, anchor_x, config=None,

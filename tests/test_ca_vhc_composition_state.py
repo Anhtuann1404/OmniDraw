@@ -50,6 +50,21 @@ def test_composition_state_is_immutable_at_placement_boundary():
         states[0].context["changed"] = True
     with pytest.raises(ValueError):
         states[0].diacritic_candidate.strokes_local[0][0, 0] = 99
+    with pytest.raises(FrozenInstanceError):
+        states[0].base_variant.tag = "changed"
+    with pytest.raises(ValueError):
+        states[0].base_variant.strokes[0][0, 0] = 99
+
+
+def test_composition_state_snapshots_mutable_b3_variant_and_context():
+    variant = _variants()[0]
+    context = {"nested": ["original"]}
+    state = build_composition_states("e", (), (variant,), 2., context=context)[0]
+    original = state.base_variant.strokes[0].copy()
+    variant.strokes[0][:] = 99.
+    context["nested"].append("changed")
+    np.testing.assert_array_equal(state.base_variant.strokes[0], original)
+    assert state.context["nested"] == ("original",)
 
 
 def test_candidate_pruning_never_revives_hard_invalid():
@@ -79,9 +94,11 @@ def test_transform_rejects_invalid_geometry_and_frame():
     state = build_composition_states("e", (), _variants(), 2.)[0]
     with pytest.raises(CompositionGeometryError):
         transform_state_to_world(state, [0., 1.], [0., 0.])
-    state.base_variant.v_entry[:] = 0.
+    malformed = _variants()[0]
+    malformed.v_entry[:] = 0.
+    bad_state = build_composition_states("e", (), (malformed,), 2.)[0]
     with pytest.raises(CompositionGeometryError):
-        transform_state_to_world(state, [1., 1.], [0., 0.])
+        transform_state_to_world(bad_state, [1., 1.], [0., 0.])
 
 
 def test_state_cost_separates_mm_clearance_from_dimensionless_penalties():
