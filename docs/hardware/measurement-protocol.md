@@ -210,7 +210,7 @@ Trong đó:
 
 ### Trạng thái review chéo & Bàn giao TV2 / TV4:
 - [x] Đã giải quyết triệt để TV2-HW-R01 đến TV2-HW-R06 (`docs/reviews/tv2_hardware_motion_review.md`).
-- [x] Schema `logs/hardware_metrics.csv` 22 cột mở rộng với đầy đủ telemetry chuyển động và cờ mô hình.
+- [x] Schema `logs/hardware_metrics.csv` 25 cột mở rộng với đầy đủ telemetry chuyển động, cờ mô hình và hợp đồng vận tốc driver.
 - [x] Tiêu bản `rq3_clearance_calibration_specimen.svg` chuẩn hóa góc bẻ Khối B và 3 dải tốc độ Khối C.
 - [x] Bất biến provenance đo lường vật lý đã được kiểm chứng bằng test tự động.
 - [x] Bộ testsuite tích hợp 44 test hardware PASS 100% (toàn repo 170 test PASS 100%).

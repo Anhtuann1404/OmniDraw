@@ -105,7 +105,7 @@ File cấu hình hiệu chuẩn: `config/calibration_profile.yaml`
 
 File log: `logs/hardware_metrics.csv`
 
-Columns (Extended 22 fields): `request_id, timestamp, actual_draw_time_sec, estimated_draw_time_sec, is_simulated, actual_hardware_measured, hardware_status, error_code, source_tag, profile_version, device_model, speed_pendown_mm_s, speed_penup_mm_s, accel_pct, pen_delay_down_ms, pen_delay_up_ms, draw_distance_mm, penup_distance_mm, pen_lift_count, model_type, accel_model_applied, corner_model_applied`
+Columns (Extended 25 fields): `request_id, timestamp, actual_draw_time_sec, estimated_draw_time_sec, is_simulated, actual_hardware_measured, hardware_status, error_code, source_tag, profile_version, device_model, speed_pendown_mm_s, speed_penup_mm_s, accel_pct, pen_delay_down_ms, pen_delay_up_ms, draw_distance_mm, penup_distance_mm, pen_lift_count, model_type, accel_model_applied, corner_model_applied, requested_speed_mm_s, driver_speed_pct, physical_speed_status`
 
 **Quy tắc sử dụng trong báo cáo NCKH (Data Integrity):**
 
@@ -142,7 +142,7 @@ python backend/camera_inspector.py --capture --output logs/camera_test.jpg
 |-----|-------------------|--------------------------|
 | `pause_supported` | Simulator/fake: `true`; Physical: `false`. Kiểm tra capability trước khi đổi trạng thái; từ chối với lỗi `HARDWARE_PAUSE_UNSUPPORTED` (HTTP 400), job status giữ nguyên `printing`. | ✅ Đã hoàn tất và pass test |
 | `actual_hardware_measured` | Chỉ `true` khi physical hoàn tất thành công (`status == "done"` và timing $> 0$); thất bại/mất kết nối ghi `false` và để trống timing. | ✅ Đã chuẩn hóa trong HAL & CSV |
-| Hardware CSV Schema | Schema chuẩn 22 cột mở rộng (tương thích ngược 9 cột cũ qua auto-migration), lưu telemetry chuyển động chi tiết. | ✅ Đã implement `record_metric()` & migration |
+| Hardware CSV Schema | Schema chuẩn 25 cột mở rộng (tương thích ngược 9 cột cũ qua auto-migration), lưu telemetry chuyển động và hợp đồng tốc độ driver chi tiết. | ✅ Đã implement `record_metric()` & migration |
 | Provenance Immutability | Khi job physical hoàn tất, ngắt kết nối adapter không làm biến đổi provenance `done` / `actual_hardware_measured=True`. | ✅ Đã kiểm chứng test tự động |
 | Tiêu bản RQ3 | Khối B chuẩn hóa góc bẻ hướng (60°, 90°, 120°, 150°); Khối C chia 3 dải tốc độ (20, 40, 60 mm/s) với chu kỳ 2mm draw / 2mm lift. | ✅ Đã chuẩn hóa fixture SVG |
 | Constant-speed Baseline | Định danh rõ ràng `constant_speed_baseline`, cờ `accel_model_applied=False`, `corner_model_applied=False`. | ✅ Đã chuẩn hóa trong API & tài liệu |

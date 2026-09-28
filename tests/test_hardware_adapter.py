@@ -2032,6 +2032,88 @@ class TestTV4IntegrationContracts(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(last_row["corner_model_applied"], "False")
         self.assertEqual(last_row["source_tag"], "axidraw_real")
 
+    async def test_tv2_art_mode_smoke_fixture_on_simulator_and_fake_driver(self):
+        """
+        TV2 Art Mode Handoff Verification (28/09/2026):
+        Kiểm tra fixture tests/fixtures/output_tv2_art_mode_smoke.svg trên adapter:
+        - Parse SVG thành công và job hoàn tất ở cả Simulator và Fake driver.
+        - Trả về metrics draw_distance_mm, penup_distance_mm, pen_lift_count và estimated time.
+        - Ghi đúng CSV schema 25 cột canonical.
+        - Provenance chuẩn: is_simulated=True, actual_hardware_measured=False,
+          source_tag='simulator' / 'axidraw_fake_driver'.
+        - Thời gian simulator không được coi là số đo trên máy thật.
+        """
+        art_fixture = os.path.join(_repo_root, "tests", "fixtures", "output_tv2_art_mode_smoke.svg")
+        self.assertTrue(os.path.isfile(art_fixture), "Art mode fixture must exist!")
+
+        is_valid, content, err = validate_svg_content_or_path(art_fixture)
+        self.assertTrue(is_valid, f"Art mode SVG must be valid XML: {err}")
+
+        # 1. Chạy trên MockSimulatorAdapter
+        sim_adapter = MockSimulatorAdapter(connected=True, speed_factor=100.0, metrics_csv_path=self.csv_path)
+        sim_req_id = f"test-art-sim-{int(time.time() * 1000)}"
+
+        start_res = await sim_adapter.start_job(sim_req_id, art_fixture)
+        self.assertEqual(start_res["status"], "printing")
+
+        for _ in range(50):
+            await asyncio.sleep(0.02)
+            st = sim_adapter.get_status(sim_req_id)
+            if st["status"] == "done":
+                break
+
+        sim_st = sim_adapter.get_status(sim_req_id)
+        self.assertEqual(sim_st["status"], "done")
+        self.assertTrue(sim_st["is_simulated"])
+        self.assertFalse(sim_st["actual_hardware_measured"], "Simulator run MUST NOT claim actual_hardware_measured=True!")
+        self.assertEqual(sim_st["source_tag"], "simulator")
+        self.assertGreater(sim_st["draw_distance_mm"], 1000.0)
+        self.assertGreater(sim_st["penup_distance_mm"], 100.0)
+        self.assertGreater(sim_st["pen_lift_count"], 0)
+        self.assertGreater(sim_st["total_draw_time_sec"], 0.0)
+
+        # 2. Chạy trên Fake driver (AxiDrawAdapter)
+        fake_adapter = AxiDrawAdapter(use_fake_driver=True, metrics_csv_path=self.csv_path)
+        fake_adapter.connect()
+        fake_adapter._ad.total_plot_time = 0.05
+        fake_req_id = f"test-art-fake-{int(time.time() * 1000)}"
+
+        f_start = await fake_adapter.start_job(fake_req_id, art_fixture)
+        self.assertEqual(f_start["status"], "printing")
+
+        for _ in range(50):
+            await asyncio.sleep(0.02)
+            st = fake_adapter.get_status(fake_req_id)
+            if st["status"] == "done":
+                break
+
+        fake_st = fake_adapter.get_status(fake_req_id)
+        self.assertEqual(fake_st["status"], "done")
+        self.assertTrue(fake_st["is_simulated"])
+        self.assertFalse(fake_st["actual_hardware_measured"], "Fake driver MUST NOT claim actual_hardware_measured=True!")
+        self.assertEqual(fake_st["source_tag"], "axidraw_fake_driver")
+
+        # 3. Kiểm tra CSV logging: ghi nhận đúng 25 cột cho cả 2 lượt chạy
+        with open(self.csv_path, "r", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            self.assertEqual(len(reader.fieldnames), 25, f"CSV header must have exactly 25 columns! Got {len(reader.fieldnames)}")
+            rows = list(reader)
+
+        sim_rows = [r for r in rows if r["request_id"] == sim_req_id]
+        fake_rows = [r for r in rows if r["request_id"] == fake_req_id]
+        self.assertGreaterEqual(len(sim_rows), 1)
+        self.assertGreaterEqual(len(fake_rows), 1)
+
+        self.assertEqual(sim_rows[-1]["hardware_status"], "done")
+        self.assertEqual(sim_rows[-1]["is_simulated"], "True")
+        self.assertEqual(sim_rows[-1]["actual_hardware_measured"], "False")
+        self.assertEqual(sim_rows[-1]["source_tag"], "simulator")
+
+        self.assertEqual(fake_rows[-1]["hardware_status"], "done")
+        self.assertEqual(fake_rows[-1]["is_simulated"], "True")
+        self.assertEqual(fake_rows[-1]["actual_hardware_measured"], "False")
+        self.assertEqual(fake_rows[-1]["source_tag"], "axidraw_fake_driver")
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
