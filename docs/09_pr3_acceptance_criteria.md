@@ -12,6 +12,8 @@
 ═══════════════════════════════════════════════════════════════════════════════════════════
 ```
 
+> **Cập nhật trạng thái 2026-09-29:** Khối trạng thái và cột `Trạng thái Hiện tại` bên dưới là snapshot lúc lập hợp đồng trước PR3. E4 đã PASS tại `4677aad`; implementation PR3 hiện ở `codex/tv4-pr3-slices`. Bằng chứng exit gate mới nhất, các mục còn mở và số test nằm tại [Docs 17 §11](17_pr3_implementation_readiness.md). Riêng E1 `PASS_CURRENT` bên dưới chỉ xác nhận runner/B1/B2 có sẵn, chưa xác nhận Proposed giảm pen-up distance so với cả hai baseline. Chưa ký PR3 exit.
+
 ## Material Passport
 
 - **Origin Skill:** `academic-research-suite / experiment-agent`

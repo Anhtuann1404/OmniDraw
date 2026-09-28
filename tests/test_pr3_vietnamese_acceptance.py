@@ -59,5 +59,5 @@ def test_pr3_dev_specimen_nfd_geometry_and_clearance(word, monkeypatch):
 def test_pr3_same_seed_is_deterministic():
     fingerprints = [compute_stroke_fingerprint(text_to_strokes_structured(
         "tiếng", font="cursive", seed=42,
-        _algorithm_mode="pr3_composition").strokes) for _ in range(3)]
+        _algorithm_mode="pr3_composition").strokes) for _ in range(5)]
     assert len(set(fingerprints)) == 1

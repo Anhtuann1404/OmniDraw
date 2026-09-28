@@ -248,6 +248,22 @@ Nhánh local `codex/tv4-pr3-slices` được tạo từ nhánh tích hợp tại
 | 5 — Acceptance/visual diagnostics | `a5b0c17` | 10/10 DEV specimens đạt test NFD, collision 0, clearance ≥ 0.20 mm, layer ≤ 9; báo cáo soi hình học riêng cho 5 từ ngoài acceptance |
 | 6 — Proposed runner | `4428045` | `pr3_composition` chỉ chạy DEV; technical dry-run 20 dòng, không mở Holdout |
 
-Suite hiện tại: **199 passed** (bao gồm `backend/test_handwriting_validation.py`). Đây là bằng chứng software technical dry-run, chưa phải benchmark chính thức hay kết luận RQ.
+Suite tại mốc slice 6: **199 passed** (bao gồm `backend/test_handwriting_validation.py`). Đây là bằng chứng software technical dry-run, chưa phải benchmark chính thức hay kết luận RQ.
 
 **Còn mở trước exit sign-off:** TV2 review thành phần động học của shared transition, đặc biệt bridge–glyph hard collision so với tiếp xúc hợp lệ ở mút nối; xác nhận xử lý biến thiên sinh học của PR3. Chế độ PR3 hiện không áp dụng biến thiên ngẫu nhiên sau DAG để geometry được chấm và geometry được render trùng nhau. Cần chốt cách giữ đặc tính style mà vẫn tuân E4 trước khi coi renderer integration hoàn tất. Không thay đổi TV2 baseline adapters hoặc hardware trong các slice trên.
+
+## 11. TV4 exit-gate evidence sau `d4ed1a4` (2026-09-29)
+
+Đây là kiểm tra phần mềm trên nhánh `codex/tv4-pr3-slices`, sau khi TV4 sửa ba finding `TV2-PR3-R01–R03` tại `d4ed1a4` và mở rộng test Proposed D1 lên 5 lượt. TV2 chưa recheck hoặc ký sign-off implementation. Lệnh `git ls-files -z 'tests/test*.py' | xargs -0 backend/venv/bin/python -m pytest -q backend/test_handwriting_validation.py` đạt **231 passed, 1 warning**. Các file hardware/CAD chưa commit trong checkout không nằm trong thay đổi TV4 này.
+
+| Exit criterion Docs 09 | Bằng chứng hiện có | Trạng thái TV4 |
+| :--- | :--- | :--- |
+| A1–A3; D2; G1 | 48/48 fingerprint ASCII, SVG/bounds, strict validation, batch-order parity; 10 acceptance specimens chỉ thuộc DEV; test Holdout guard ở runner | `PASS_SOFTWARE` |
+| B1–B3; E2 | State/world geometry, giới hạn layer ≤ 9, state cost cộng đúng một lần, trellis synthetic; `d4ed1a4` thêm hard-prune bridge–base/mark và test trọng số không mặc định | `PASS_TESTS; PENDING_TV2_RECHECK` |
+| C1–C3; E3 | `tests/test_pr3_vietnamese_acceptance.py`: 10/10 mẫu DEV qua NFD/mark, 0 bridge–mark collision, clearance tối thiểu 1.130866671 mm, không NaN metric và layer ≤ 9 (font `cursive`, seed 42) | `PASS_SOFTWARE` cho ma trận đã test |
+| D1 | ASCII/default và PR3 Proposed (`tiếng`, font `cursive`, seed 42) đều lặp 5 lần cùng seed và giữ fingerprint | `PASS_SOFTWARE` trên các ca đã test |
+| E1 | Runner có B1/B2/Proposed. Dry-run **10 mẫu DEV, font `cursive`, seed 42**: tổng pen-up B1 = 302.070 mm, B2 = 279.322 mm, Proposed = 288.056 mm; Proposed giảm 4.639% so B1 nhưng **tăng 3.127% so B2** | `NOT_PASSED`; chưa có bằng chứng giảm so với cả B1 và B2 trên DEV đầy đủ |
+
+E1 trong bảng lịch sử của Docs 09 ghi `PASS_CURRENT` vì runner và baseline adapters đã có. Trạng thái đó chỉ xác nhận **hạ tầng đo**, chưa xác nhận tiêu chí giảm quãng đường pen-up của Proposed. Số trên là chẩn đoán DEV một font/seed, không phải benchmark PR5 hoặc kết luận H1.1. Trước khi ký PR3 exit, TV4/TV2 cần thống nhất cách xử lý E1 theo contract và chạy ma trận DEV được khóa; không điều chỉnh thuật toán bằng HOLDOUT.
+
+**Gate còn mở:** (1) TV2 recheck `d4ed1a4` và ký verdict riêng R01–R03; (2) xử lý E1 như trên; (3) chốt biến thiên style của PR3 mà vẫn bảo đảm geometry được chấm khớp geometry render. Physical calibration và formal benchmark vẫn là downstream gates độc lập.
