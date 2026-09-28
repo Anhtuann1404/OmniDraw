@@ -10,7 +10,7 @@ from typing import Any, Literal, Mapping, Optional, Tuple
 import math
 import numpy as np
 
-from .engine import GlyphVariant, build_ligature_bridge, bridge_collision_cost, generate_accents
+from .engine import GlyphVariant, build_ligature_bridge, bridge_collision_cost, generate_accents, segments_intersect
 from .metrics_evaluator import compute_diacritic_clearance
 
 CONTRACT_VERSION = "e4-v1"
@@ -433,6 +433,36 @@ def _reject(reason):
     return TransitionResult(CONTRACT_VERSION, False, "REJECT", float("inf"), None, reason)
 
 
+def _bridge_touches_strokes(bridge, strokes, anchor_role=None):
+    """Detect hard intersections, exempting only a glyph's own join endpoint."""
+    for a, b in zip(bridge, bridge[1:]):
+        for stroke_index, stroke in enumerate(strokes):
+            for segment_index, (c, d) in enumerate(zip(stroke, stroke[1:])):
+                if not segments_intersect(a, b, c, d):
+                    continue
+                anchor = bridge[0] if anchor_role == "exit" else bridge[-1]
+                is_join_segment = (
+                    anchor_role == "exit" and stroke_index == len(strokes) - 1 and
+                    segment_index == len(stroke) - 2 and np.allclose(d, anchor, atol=1e-6)
+                ) or (
+                    anchor_role == "entry" and stroke_index == 0 and segment_index == 0 and
+                    np.allclose(c, anchor, atol=1e-6)
+                )
+                if is_join_segment and (
+                    (np.allclose(a, anchor, atol=1e-6) or
+                     np.allclose(b, anchor, atol=1e-6))
+                ):
+                    bridge_other = b if np.allclose(a, anchor, atol=1e-6) else a
+                    glyph_other = c if anchor_role == "exit" else d
+                    u, v = bridge_other - anchor, glyph_other - anchor
+                    # Collinear rays in the same direction overlap beyond the anchor.
+                    cross = float(u[0] * v[1] - u[1] * v[0])
+                    if abs(cross) > 1e-6 or float(np.dot(u, v)) <= 0:
+                        continue
+                return True
+    return False
+
+
 def evaluate_composition_transition(prev_state, curr_state, prev_world, curr_world,
                                     transition_weights, diacritic_config):
     """Evaluate the E4 transition without changing the frozen B3 solver."""
@@ -472,8 +502,12 @@ def evaluate_composition_transition(prev_state, curr_state, prev_world, curr_wor
                                       curr_world.entry_pt, curr_world.v_entry, n=6)
         if not np.isfinite(bridge).all():
             raise TransitionEvaluationError("non-finite bridge")
-        # A bridge may meet the two base glyphs at its endpoints. The existing
-        # heuristic handles those anchor contacts; marks have no such exemption.
+        # Hard geometry is independent of collision weights and soft clearance.
+        if (_bridge_touches_strokes(bridge, prev_world.base_strokes, "exit") or
+                _bridge_touches_strokes(bridge, curr_world.base_strokes, "entry") or
+                _bridge_touches_strokes(bridge, prev_world.diacritic_strokes) or
+                _bridge_touches_strokes(bridge, curr_world.diacritic_strokes)):
+            return lift
         mark_clearance = compute_diacritic_clearance(
             (bridge,), prev_world.diacritic_strokes + curr_world.diacritic_strokes)
         if mark_clearance < config.clearance_threshold_mm:

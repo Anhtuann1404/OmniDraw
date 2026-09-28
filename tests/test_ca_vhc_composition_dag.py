@@ -20,6 +20,59 @@ def _state(x, *, can_in=True, can_out=True, legibility=0.):
     return state, transform_state_to_world(state, [1., 1.], [0., 0.])
 
 
+def _with_stroke(world, stroke, *, mark=False, prepend=False):
+    return GlyphWorldGeometry(
+        world.base_strokes if mark else ((stroke,) + world.base_strokes if prepend
+                                         else world.base_strokes + (stroke,)),
+        world.diacritic_strokes + (stroke,) if mark else world.diacritic_strokes,
+        world.entry_pt, world.exit_pt, world.v_entry, world.v_exit,
+        world.diacritic_bbox,
+    )
+
+
+def _transition(prev_world, curr_world, *, clearance=0.2):
+    prev, _ = _state(0.)
+    curr, _ = _state(3.)
+    return evaluate_composition_transition(
+        prev, curr, prev_world, curr_world,
+        TransitionWeights(w_penup=0., w_lift=100., w_curvature=0., w_bridge_collision=0.),
+        DiacriticConfig(clearance_threshold_mm=clearance),
+    )
+
+
+def test_bridge_body_crossing_is_hard_invalid_even_with_zero_collision_weight():
+    _, prev = _state(0.)
+    _, curr = _state(3.)
+    crossing = np.array([[2., -1.], [2., 1.]])
+    assert _transition(_with_stroke(prev, crossing, prepend=True), curr).decision == "LIFT"
+    assert _transition(prev, _with_stroke(curr, crossing)).decision == "LIFT"
+
+
+def test_bridge_anchor_exemption_belongs_to_correct_glyph_only():
+    _, prev = _state(0.)
+    _, curr = _state(3.)
+    assert _transition(prev, curr).decision == "CONNECT"
+    wrong_exit = np.array([[1., 0.], [1., 1.]])
+    wrong_entry = np.array([[3., 0.], [3., 1.]])
+    assert _transition(prev, _with_stroke(curr, wrong_exit)).decision == "LIFT"
+    assert _transition(_with_stroke(prev, wrong_entry, prepend=True), curr).decision == "LIFT"
+
+
+@pytest.mark.parametrize("mark", [
+    np.array([[2., -1.], [2., 1.]]),
+    np.array([[2., 0.], [2., 1.]]),
+])
+@pytest.mark.parametrize("owner", ["prev", "curr"])
+def test_bridge_mark_cross_or_touch_is_hard_invalid_at_zero_clearance(mark, owner):
+    _, prev = _state(0.)
+    _, curr = _state(3.)
+    if owner == "prev":
+        prev = _with_stroke(prev, mark, mark=True)
+    else:
+        curr = _with_stroke(curr, mark, mark=True)
+    assert _transition(prev, curr, clearance=0.).decision == "LIFT"
+
+
 def test_transition_connect_has_finite_breakdown_and_immutable_bridge():
     prev, prev_world = _state(0.)
     curr, curr_world = _state(3.)
@@ -41,6 +94,25 @@ def test_transition_lift_does_not_count_legibility_again():
     assert result.decision == "LIFT" and result.bridge_strokes is None
     assert result.total_cost == pytest.approx(5.)
     assert result.breakdown.n_lift == 1
+
+
+@pytest.mark.parametrize("can_out, expected_decision", [(True, "CONNECT"), (False, "LIFT")])
+def test_nondefault_transition_weights_and_dag_count_each_state_once(can_out, expected_decision):
+    prev, prev_world = _state(0., can_out=can_out, legibility=7.)
+    curr, curr_world = _state(3., legibility=11.)
+    weights = TransitionWeights(w_penup=3., w_lift=17., w_curvature=5., w_bridge_collision=2.)
+    transition = evaluate_composition_transition(prev, curr, prev_world, curr_world,
+                                                 weights, DiacriticConfig())
+    assert transition.decision == expected_decision
+    if can_out:
+        expected = (weights.w_curvature * transition.breakdown.c_curvature +
+                    weights.w_bridge_collision * transition.breakdown.c_bridge_collision)
+    else:
+        expected = weights.w_penup * 2. + weights.w_lift
+    assert transition.total_cost == pytest.approx(expected)
+    path = optimize_composition_dag((((prev, prev_world),), ((curr, curr_world),)),
+                                    weights, DiacriticConfig())
+    assert path["total_cost"] == pytest.approx(7. + 11. + expected)
 
 
 def test_transition_reject_and_computational_error_are_distinct():
