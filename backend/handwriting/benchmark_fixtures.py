@@ -13,9 +13,12 @@ Defined per docs/05_ca_vhc_research_spec.md & docs/19_benchmark_corpus_freeze_re
 - load_benchmark_fonts(): loads 'oly' (omnidraw_legacy) and 'omni_casual' font packs
 """
 
+import json
+from pathlib import Path
 from typing import Dict, Any, List
 
 CORPUS_VERSION: str = "CA-VHC-CORPUS-v1.0-FROZEN"
+_CORPUS_JSON_PATH = Path(__file__).resolve().parent.parent.parent / "tests" / "fixtures" / "ca_vhc_corpus_v1_frozen.json"
 
 BENCHMARK_DEV_CORPUS_20: List[str] = [
     "tiếng", "việt", "nguyễn", "nước", "đường",
@@ -67,3 +70,19 @@ def load_benchmark_fonts() -> Dict[str, Dict[str, Any]]:
             "render_profile": profile,
         }
     return fonts
+
+
+def get_frozen_corpus_path() -> Path:
+    """Trả về đường dẫn tuyệt đối đến file fixture JSON của corpus đóng băng."""
+    return _CORPUS_JSON_PATH
+
+
+def load_frozen_corpus_metadata() -> Dict[str, Any]:
+    """
+    Nạp dữ liệu chi tiết của bộ ngữ liệu đối chuẩn đóng băng CA-VHC-CORPUS-v1.0-FROZEN
+    từ file fixture tests/fixtures/ca_vhc_corpus_v1_frozen.json.
+    """
+    if not _CORPUS_JSON_PATH.exists():
+        raise FileNotFoundError(f"Không tìm thấy file corpus frozen: {_CORPUS_JSON_PATH}")
+    with open(_CORPUS_JSON_PATH, "r", encoding="utf-8") as f:
+        return json.load(f)
