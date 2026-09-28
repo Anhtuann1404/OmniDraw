@@ -45,6 +45,9 @@ _backend_dir = os.path.join(_repo_root, "backend")
 if _backend_dir not in sys.path:
     sys.path.insert(0, _backend_dir)
 
+from fastapi.testclient import TestClient
+import main
+
 from hardware_adapter import (
     HardwareAdapterInterface,
     MockSimulatorAdapter,
@@ -1265,10 +1268,13 @@ class TestTV4IntegrationContracts(unittest.IsolatedAsyncioTestCase):
         self.csv_path = self._temp_csv_file.name
         self._prev_env = os.environ.get("OMNIDRAW_HARDWARE_METRICS_PATH")
         os.environ["OMNIDRAW_HARDWARE_METRICS_PATH"] = self.csv_path
+        self._orig_main_hardware = getattr(main, "hardware", None)
         reset_hardware_adapter()
 
     def tearDown(self):
         reset_hardware_adapter()
+        if hasattr(self, "_orig_main_hardware") and self._orig_main_hardware is not None:
+            main.hardware = self._orig_main_hardware
         if self._prev_env is not None:
             os.environ["OMNIDRAW_HARDWARE_METRICS_PATH"] = self._prev_env
         else:
@@ -1682,6 +1688,107 @@ class TestTV4IntegrationContracts(unittest.IsolatedAsyncioTestCase):
 
         phys = AxiDrawAdapter(use_fake_driver=False, metrics_csv_path=self.csv_path)
         self.assertFalse(phys.pause_supported)
+
+    async def test_http_pause_resume_rejected_on_physical(self):
+        """
+        TV4 HTTP Contract:
+        Khi gọi POST /api/print/pause hoặc POST /api/print/resume trên máy thật (physical):
+        - Endpoint trả về HTTP 400 Bad Request
+        - Response body chứa error (code HARDWARE_PAUSE_UNSUPPORTED), pause_supported=False, status=printing
+        - Trạng thái job trên adapter không bị chuyển sang paused, vẫn giữ printing
+        """
+        class LongRunningDriver(MockRealAxiDrawDriver):
+            def plot_run(self):
+                time.sleep(2.0)
+
+        adapter = AxiDrawAdapter(use_fake_driver=False, metrics_csv_path=self.csv_path)
+        adapter._ad = LongRunningDriver()
+        adapter._connected = True
+        main.hardware = adapter
+
+        req_id = f"test-http-phys-pause-{int(time.time() * 1000)}"
+        await adapter.start_job(req_id, self.fixture)
+
+        # Đảm bảo ban đầu job đang printing
+        self.assertEqual(adapter.jobs[req_id]["status"], "printing")
+
+        client = TestClient(main.app)
+
+        # 1. Gọi HTTP POST /api/print/pause
+        resp_pause = client.post("/api/print/pause", json={"request_id": req_id})
+        self.assertEqual(resp_pause.status_code, 400)
+        data_pause = resp_pause.json()
+        self.assertEqual(data_pause["error"]["code"], "HARDWARE_PAUSE_UNSUPPORTED")
+        self.assertIn("message", data_pause["error"])
+        self.assertFalse(data_pause["pause_supported"])
+        self.assertEqual(data_pause["status"], "printing")
+
+        # Job trên adapter tuyệt đối KHÔNG chuyển thành paused!
+        self.assertEqual(adapter.jobs[req_id]["status"], "printing")
+
+        # 2. Gọi HTTP POST /api/print/resume
+        resp_resume = client.post("/api/print/resume", json={"request_id": req_id})
+        self.assertEqual(resp_resume.status_code, 400)
+        data_resume = resp_resume.json()
+        self.assertEqual(data_resume["error"]["code"], "HARDWARE_PAUSE_UNSUPPORTED")
+        self.assertIn("message", data_resume["error"])
+        self.assertFalse(data_resume["pause_supported"])
+        self.assertEqual(data_resume["status"], "printing")
+
+        # Job trên adapter vẫn giữ printing!
+        self.assertEqual(adapter.jobs[req_id]["status"], "printing")
+
+    async def test_http_pause_resume_supported_on_simulator_and_fake_driver(self):
+        """
+        TV4 HTTP Contract:
+        Đảm bảo simulator và fake driver vẫn giữ nguyên hành vi pause/resume thành công (HTTP 200).
+        """
+        client = TestClient(main.app)
+
+        # 1. Simulator:
+        sim_adapter = MockSimulatorAdapter(speed_factor=0.01, metrics_csv_path=self.csv_path)
+        main.hardware = sim_adapter
+        sim_req = f"test-http-sim-pause-{int(time.time() * 1000)}"
+        await sim_adapter.start_job(sim_req, self.fixture)
+
+        # Pause trên simulator qua HTTP
+        res_p = client.post("/api/print/pause", json={"request_id": sim_req})
+        self.assertEqual(res_p.status_code, 200)
+        d_p = res_p.json()
+        self.assertEqual(d_p["status"], "paused")
+        self.assertTrue(d_p["pause_supported"])
+        self.assertEqual(sim_adapter.jobs[sim_req]["status"], "paused")
+
+        # Resume trên simulator qua HTTP
+        res_r = client.post("/api/print/resume", json={"request_id": sim_req})
+        self.assertEqual(res_r.status_code, 200)
+        d_r = res_r.json()
+        self.assertEqual(d_r["status"], "printing")
+        self.assertTrue(d_r["pause_supported"])
+        self.assertEqual(sim_adapter.jobs[sim_req]["status"], "printing")
+
+        # 2. Fake Driver:
+        fake_adapter = AxiDrawAdapter(use_fake_driver=True, metrics_csv_path=self.csv_path)
+        fake_adapter.connect()
+        main.hardware = fake_adapter
+        fake_req = f"test-http-fake-pause-{int(time.time() * 1000)}"
+        await fake_adapter.start_job(fake_req, self.fixture)
+
+        # Pause trên fake driver qua HTTP
+        res_fp = client.post("/api/print/pause", json={"request_id": fake_req})
+        self.assertEqual(res_fp.status_code, 200)
+        d_fp = res_fp.json()
+        self.assertEqual(d_fp["status"], "paused")
+        self.assertTrue(d_fp["pause_supported"])
+        self.assertEqual(fake_adapter.jobs[fake_req]["status"], "paused")
+
+        # Resume trên fake driver qua HTTP
+        res_fr = client.post("/api/print/resume", json={"request_id": fake_req})
+        self.assertEqual(res_fr.status_code, 200)
+        d_fr = res_fr.json()
+        self.assertEqual(d_fr["status"], "printing")
+        self.assertTrue(d_fr["pause_supported"])
+        self.assertEqual(fake_adapter.jobs[fake_req]["status"], "printing")
 
     async def test_cancel_during_record_metric_does_not_revert_to_done(self):
         """

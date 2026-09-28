@@ -1061,18 +1061,31 @@ async def start_print(body: StartPrintRequest):
 async def pause_print(body: PauseCancelRequest):
     res = await hardware.pause_job(body.request_id)
     if "error" in res:
-        err = res["error"]
-        return custom_error(err["code"], err["message"], res.get("status_code", 400))
+        status_code = res.get("status_code", 400)
+        content = {"error": res["error"]}
+        if "pause_supported" in res:
+            content["pause_supported"] = res["pause_supported"]
+        if "status" in res:
+            content["status"] = res["status"]
+        else:
+            content["status"] = "error"
+        return JSONResponse(status_code=status_code, content=content)
     return res
-
 
 
 @app.post("/api/print/resume")
 async def resume_print(body: PauseCancelRequest):
     res = await hardware.resume_job(body.request_id)
     if "error" in res:
-        err = res["error"]
-        return custom_error(err["code"], err["message"], res.get("status_code", 400))
+        status_code = res.get("status_code", 400)
+        content = {"error": res["error"]}
+        if "pause_supported" in res:
+            content["pause_supported"] = res["pause_supported"]
+        if "status" in res:
+            content["status"] = res["status"]
+        else:
+            content["status"] = "error"
+        return JSONResponse(status_code=status_code, content=content)
     return res
 
 

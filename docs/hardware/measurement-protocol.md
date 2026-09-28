@@ -216,7 +216,7 @@ Trong đó:
 - [x] Schema `logs/hardware_metrics.csv` 25 cột mở rộng với đầy đủ telemetry chuyển động, cờ mô hình và hợp đồng vận tốc driver.
 - [x] Tiêu bản `rq3_clearance_calibration_specimen.svg` chuẩn hóa góc bẻ Khối B và 3 dải tốc độ Khối C.
 - [x] Bất biến provenance đo lường vật lý đã được kiểm chứng bằng test tự động.
-- [x] Bộ testsuite tích hợp 57 test hardware PASS 100% (toàn repo 183 test PASS 100%).
+- [x] Bộ testsuite tích hợp 59 test hardware PASS 100% (toàn repo 185 test PASS 100%).
 
 
 ---
