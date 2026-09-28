@@ -1,0 +1,666 @@
+{
+  "corpus_id": "CA-VHC-CORPUS-v1.0-FROZEN",
+  "version": "1.0",
+  "approval_date": "2026-09-23",
+  "owner": "TV1 — AI Data & Writer Profile Lead",
+  "freeze_report": "docs/19_benchmark_corpus_freeze_report.md",
+  "leakage_guard": {
+    "status": "STRICTLY_DISJOINT_AND_ENFORCED",
+    "disjoint_condition": "DEV ∩ HOLDOUT = ∅",
+    "dev_count": 20,
+    "holdout_count": 20,
+    "intersection_count": 0
+  },
+  "standard_seeds": [
+    42,
+    100,
+    2026,
+    999999
+  ],
+  "benchmark_fonts": [
+    "oly",
+    "omni_casual"
+  ],
+  "acceptance_specimens_10": [
+    "tiếng",
+    "nước",
+    "đường",
+    "khuấy",
+    "thuở",
+    "nghỉ",
+    "trường",
+    "phượng",
+    "mượt",
+    "vẫy"
+  ],
+  "dev_corpus_20": [
+    {
+      "index": 1,
+      "word": "tiếng",
+      "tone": "acute",
+      "vowel_diacritics": [
+        "circumflex"
+      ],
+      "initial_consonant": "t",
+      "final_consonant": "ng",
+      "has_ascender": true,
+      "has_descender": true,
+      "stacking_diacritics": true,
+      "challenge": "Ascender t, descender g, dấu sắc xếp trên mũ ê, rủi ro va chạm bridge i-ê và ê-n.",
+      "unicode_nfc": "tiếng",
+      "unicode_nfd": "tiếng"
+    },
+    {
+      "index": 2,
+      "word": "việt",
+      "tone": "dot_below",
+      "vowel_diacritics": [
+        "circumflex"
+      ],
+      "initial_consonant": "v",
+      "final_consonant": "t",
+      "has_ascender": true,
+      "has_descender": false,
+      "stacking_diacritics": false,
+      "challenge": "Nét xuất phát v mid/high, dấu nặng nằm dưới mũ ê, kết thúc ascender t.",
+      "unicode_nfc": "việt",
+      "unicode_nfd": "việt"
+    },
+    {
+      "index": 3,
+      "word": "nguyễn",
+      "tone": "tilde",
+      "vowel_diacritics": [
+        "circumflex"
+      ],
+      "initial_consonant": "ng",
+      "final_consonant": "n",
+      "has_ascender": false,
+      "has_descender": true,
+      "stacking_diacritics": true,
+      "challenge": "Tổ hợp phụ âm đầu ng, descender y kéo sâu, dấu ngã đặt trên mũ ê.",
+      "unicode_nfc": "nguyễn",
+      "unicode_nfd": "nguyễn"
+    },
+    {
+      "index": 4,
+      "word": "nước",
+      "tone": "acute",
+      "vowel_diacritics": [
+        "horn_u",
+        "horn_o"
+      ],
+      "initial_consonant": "n",
+      "final_consonant": "c",
+      "has_ascender": false,
+      "has_descender": false,
+      "stacking_diacritics": true,
+      "challenge": "Nguyên âm đôi mang râu kép ươ, dấu sắc đặt trên ơ, rủi ro va chạm râu ơ.",
+      "unicode_nfc": "nước",
+      "unicode_nfd": "nước"
+    },
+    {
+      "index": 5,
+      "word": "đường",
+      "tone": "grave",
+      "vowel_diacritics": [
+        "stroke_d",
+        "horn_u",
+        "horn_o"
+      ],
+      "initial_consonant": "đ",
+      "final_consonant": "ng",
+      "has_ascender": true,
+      "has_descender": true,
+      "stacking_diacritics": true,
+      "challenge": "Nét gạch ngang thân đ (delayed stroke), cụm ươ, dấu huyền trên ơ, descender g.",
+      "unicode_nfc": "đường",
+      "unicode_nfd": "đường"
+    },
+    {
+      "index": 6,
+      "word": "khuấy",
+      "tone": "acute",
+      "vowel_diacritics": [
+        "circumflex"
+      ],
+      "initial_consonant": "kh",
+      "final_consonant": "y",
+      "has_ascender": true,
+      "has_descender": true,
+      "stacking_diacritics": true,
+      "challenge": "Tổ hợp ascender kép kh, nguyên âm 3 uây, mũ â và dấu sắc, descender y.",
+      "unicode_nfc": "khuấy",
+      "unicode_nfd": "khuấy"
+    },
+    {
+      "index": 7,
+      "word": "thuở",
+      "tone": "hook_above",
+      "vowel_diacritics": [
+        "horn_o"
+      ],
+      "initial_consonant": "th",
+      "final_consonant": null,
+      "has_ascender": true,
+      "has_descender": false,
+      "stacking_diacritics": true,
+      "challenge": "Tổ hợp th, nguyên âm đôi uơ, dấu hỏi đặt trên ơ ở vị trí kết thúc từ.",
+      "unicode_nfc": "thuở",
+      "unicode_nfd": "thuở"
+    },
+    {
+      "index": 8,
+      "word": "nghỉ",
+      "tone": "hook_above",
+      "vowel_diacritics": [],
+      "initial_consonant": "ngh",
+      "final_consonant": null,
+      "has_ascender": true,
+      "has_descender": true,
+      "stacking_diacritics": false,
+      "challenge": "Phụ âm đầu 3 ký tự ngh (kết hợp descender g và ascender h), dấu hỏi trên thân chữ hẹp i.",
+      "unicode_nfc": "nghỉ",
+      "unicode_nfd": "nghỉ"
+    },
+    {
+      "index": 9,
+      "word": "hoặc",
+      "tone": "dot_below",
+      "vowel_diacritics": [
+        "breve"
+      ],
+      "initial_consonant": "h",
+      "final_consonant": "c",
+      "has_ascender": true,
+      "has_descender": false,
+      "stacking_diacritics": false,
+      "challenge": "Ascender h, tổ hợp oă, dấu trăng ă, dấu nặng đặt dưới đáy ký tự ă.",
+      "unicode_nfc": "hoặc",
+      "unicode_nfd": "hoặc"
+    },
+    {
+      "index": 10,
+      "word": "chuẩn",
+      "tone": "hook_above",
+      "vowel_diacritics": [
+        "circumflex"
+      ],
+      "initial_consonant": "ch",
+      "final_consonant": "n",
+      "has_ascender": true,
+      "has_descender": false,
+      "stacking_diacritics": true,
+      "challenge": "Ascender h, cụm uân, mũ â, dấu hỏi đặt trên mũ â.",
+      "unicode_nfc": "chuẩn",
+      "unicode_nfd": "chuẩn"
+    },
+    {
+      "index": 11,
+      "word": "trường",
+      "tone": "grave",
+      "vowel_diacritics": [
+        "horn_u",
+        "horn_o"
+      ],
+      "initial_consonant": "tr",
+      "final_consonant": "ng",
+      "has_ascender": true,
+      "has_descender": true,
+      "stacking_diacritics": true,
+      "challenge": "Ascender t, nét uốn r, cụm râu kép ươ, dấu huyền trên ơ, descender g.",
+      "unicode_nfc": "trường",
+      "unicode_nfd": "trường"
+    },
+    {
+      "index": 12,
+      "word": "quyện",
+      "tone": "dot_below",
+      "vowel_diacritics": [
+        "circumflex"
+      ],
+      "initial_consonant": "q",
+      "final_consonant": "n",
+      "has_ascender": false,
+      "has_descender": true,
+      "stacking_diacritics": false,
+      "challenge": "Descender q và y, mũ ê, dấu nặng đặt dưới ê, liên kết nối nét phức tạp.",
+      "unicode_nfc": "quyện",
+      "unicode_nfd": "quyện"
+    },
+    {
+      "index": 13,
+      "word": "nghĩ",
+      "tone": "tilde",
+      "vowel_diacritics": [],
+      "initial_consonant": "ngh",
+      "final_consonant": null,
+      "has_ascender": true,
+      "has_descender": true,
+      "stacking_diacritics": false,
+      "challenge": "Cụm ngh thách thức nối nét qua ascender/descender, dấu ngã trên thân i.",
+      "unicode_nfc": "nghĩ",
+      "unicode_nfd": "nghĩ"
+    },
+    {
+      "index": 14,
+      "word": "phượng",
+      "tone": "dot_below",
+      "vowel_diacritics": [
+        "horn_u",
+        "horn_o"
+      ],
+      "initial_consonant": "ph",
+      "final_consonant": "ng",
+      "has_ascender": true,
+      "has_descender": true,
+      "stacking_diacritics": false,
+      "challenge": "Descender p, ascender h, cụm ươ, dấu nặng dưới ơ, descender g.",
+      "unicode_nfc": "phượng",
+      "unicode_nfd": "phượng"
+    },
+    {
+      "index": 15,
+      "word": "kiều",
+      "tone": "grave",
+      "vowel_diacritics": [
+        "circumflex"
+      ],
+      "initial_consonant": "k",
+      "final_consonant": null,
+      "has_ascender": true,
+      "has_descender": false,
+      "stacking_diacritics": true,
+      "challenge": "Ascender cao k, cụm nguyên âm iêu, dấu huyền trên mũ ê.",
+      "unicode_nfc": "kiều",
+      "unicode_nfd": "kiều"
+    },
+    {
+      "index": 16,
+      "word": "hướng",
+      "tone": "acute",
+      "vowel_diacritics": [
+        "horn_u",
+        "horn_o"
+      ],
+      "initial_consonant": "h",
+      "final_consonant": "ng",
+      "has_ascender": true,
+      "has_descender": true,
+      "stacking_diacritics": true,
+      "challenge": "Ascender h, cụm ươ, dấu sắc trên ơ, descender g.",
+      "unicode_nfc": "hướng",
+      "unicode_nfd": "hướng"
+    },
+    {
+      "index": 17,
+      "word": "mượt",
+      "tone": "dot_below",
+      "vowel_diacritics": [
+        "horn_u",
+        "horn_o"
+      ],
+      "initial_consonant": "m",
+      "final_consonant": "t",
+      "has_ascender": true,
+      "has_descender": false,
+      "stacking_diacritics": false,
+      "challenge": "Cụm ươ, dấu nặng dưới ơ, ascender t ở đuôi từ.",
+      "unicode_nfc": "mượt",
+      "unicode_nfd": "mượt"
+    },
+    {
+      "index": 18,
+      "word": "bước",
+      "tone": "acute",
+      "vowel_diacritics": [
+        "horn_u",
+        "horn_o"
+      ],
+      "initial_consonant": "b",
+      "final_consonant": "c",
+      "has_ascender": true,
+      "has_descender": false,
+      "stacking_diacritics": true,
+      "challenge": "Ascender b có vòng khép, cụm ươ, dấu sắc trên ơ.",
+      "unicode_nfc": "bước",
+      "unicode_nfd": "bước"
+    },
+    {
+      "index": 19,
+      "word": "vẫy",
+      "tone": "tilde",
+      "vowel_diacritics": [
+        "circumflex"
+      ],
+      "initial_consonant": "v",
+      "final_consonant": "y",
+      "has_ascender": false,
+      "has_descender": true,
+      "stacking_diacritics": true,
+      "challenge": "Điểm xuất phát cao của v, mũ â, dấu ngã trên â, descender y.",
+      "unicode_nfc": "vẫy",
+      "unicode_nfd": "vẫy"
+    },
+    {
+      "index": 20,
+      "word": "nhánh",
+      "tone": "acute",
+      "vowel_diacritics": [],
+      "initial_consonant": "nh",
+      "final_consonant": "nh",
+      "has_ascender": true,
+      "has_descender": false,
+      "stacking_diacritics": false,
+      "challenge": "Cặp phụ âm nh đầu và cuối, ascender h kép, dấu sắc trên thân a.",
+      "unicode_nfc": "nhánh",
+      "unicode_nfd": "nhánh"
+    }
+  ],
+  "holdout_corpus_20": [
+    {
+      "index": 1,
+      "word": "nghiêng",
+      "tone": "level",
+      "vowel_diacritics": [
+        "circumflex"
+      ],
+      "initial_consonant": "ngh",
+      "final_consonant": "ng",
+      "has_ascender": true,
+      "has_descender": true,
+      "stacking_diacritics": false,
+      "challenge": "Độ dài từ lớn (8 ký tự), cụm ngh và ng, mũ ê không dấu thanh.",
+      "unicode_nfc": "nghiêng",
+      "unicode_nfd": "nghiêng"
+    },
+    {
+      "index": 2,
+      "word": "khoác",
+      "tone": "acute",
+      "vowel_diacritics": [],
+      "initial_consonant": "kh",
+      "final_consonant": "c",
+      "has_ascender": true,
+      "has_descender": false,
+      "stacking_diacritics": false,
+      "challenge": "Ascender kép kh, cụm oa, dấu sắc trên a.",
+      "unicode_nfc": "khoác",
+      "unicode_nfd": "khoác"
+    },
+    {
+      "index": 3,
+      "word": "truyền",
+      "tone": "grave",
+      "vowel_diacritics": [
+        "circumflex"
+      ],
+      "initial_consonant": "tr",
+      "final_consonant": "n",
+      "has_ascender": true,
+      "has_descender": true,
+      "stacking_diacritics": true,
+      "challenge": "Tổ hợp uyê, descender y, dấu huyền trên mũ ê.",
+      "unicode_nfc": "truyền",
+      "unicode_nfd": "truyền"
+    },
+    {
+      "index": 4,
+      "word": "hoàng",
+      "tone": "grave",
+      "vowel_diacritics": [],
+      "initial_consonant": "h",
+      "final_consonant": "ng",
+      "has_ascender": true,
+      "has_descender": true,
+      "stacking_diacritics": false,
+      "challenge": "Ascender h, cụm oa, dấu huyền trên a, descender g.",
+      "unicode_nfc": "hoàng",
+      "unicode_nfd": "hoàng"
+    },
+    {
+      "index": 5,
+      "word": "nguyệt",
+      "tone": "dot_below",
+      "vowel_diacritics": [
+        "circumflex"
+      ],
+      "initial_consonant": "ng",
+      "final_consonant": "t",
+      "has_ascender": true,
+      "has_descender": true,
+      "stacking_diacritics": false,
+      "challenge": "Tổ hợp uyê, dấu nặng dưới ê, ascender t.",
+      "unicode_nfc": "nguyệt",
+      "unicode_nfd": "nguyệt"
+    },
+    {
+      "index": 6,
+      "word": "thoáng",
+      "tone": "acute",
+      "vowel_diacritics": [],
+      "initial_consonant": "th",
+      "final_consonant": "ng",
+      "has_ascender": true,
+      "has_descender": true,
+      "stacking_diacritics": false,
+      "challenge": "Ascender th, cụm oa, dấu sắc trên a, descender ng.",
+      "unicode_nfc": "thoáng",
+      "unicode_nfd": "thoáng"
+    },
+    {
+      "index": 7,
+      "word": "quỳnh",
+      "tone": "grave",
+      "vowel_diacritics": [],
+      "initial_consonant": "qu",
+      "final_consonant": "nh",
+      "has_ascender": true,
+      "has_descender": true,
+      "stacking_diacritics": false,
+      "challenge": "Descender q và y, dấu huyền trên y, ascender h ở đuôi.",
+      "unicode_nfc": "quỳnh",
+      "unicode_nfd": "quỳnh"
+    },
+    {
+      "index": 8,
+      "word": "nhuộm",
+      "tone": "dot_below",
+      "vowel_diacritics": [
+        "circumflex"
+      ],
+      "initial_consonant": "nh",
+      "final_consonant": "m",
+      "has_ascender": true,
+      "has_descender": false,
+      "stacking_diacritics": false,
+      "challenge": "Phụ âm nh, nguyên âm đôi uô, mũ ô, dấu nặng dưới ô.",
+      "unicode_nfc": "nhuộm",
+      "unicode_nfd": "nhuộm"
+    },
+    {
+      "index": 9,
+      "word": "duyệt",
+      "tone": "dot_below",
+      "vowel_diacritics": [
+        "circumflex"
+      ],
+      "initial_consonant": "d",
+      "final_consonant": "t",
+      "has_ascender": true,
+      "has_descender": true,
+      "stacking_diacritics": false,
+      "challenge": "Ascender d và t, descender y, mũ ê, dấu nặng.",
+      "unicode_nfc": "duyệt",
+      "unicode_nfd": "duyệt"
+    },
+    {
+      "index": 10,
+      "word": "khoảnh",
+      "tone": "hook_above",
+      "vowel_diacritics": [],
+      "initial_consonant": "kh",
+      "final_consonant": "nh",
+      "has_ascender": true,
+      "has_descender": false,
+      "stacking_diacritics": false,
+      "challenge": "Ascender kép kh đầu và h cuối, dấu hỏi trên a.",
+      "unicode_nfc": "khoảnh",
+      "unicode_nfd": "khoảnh"
+    },
+    {
+      "index": 11,
+      "word": "giường",
+      "tone": "grave",
+      "vowel_diacritics": [
+        "horn_u",
+        "horn_o"
+      ],
+      "initial_consonant": "gi",
+      "final_consonant": "ng",
+      "has_ascender": false,
+      "has_descender": true,
+      "stacking_diacritics": true,
+      "challenge": "Phụ âm gi, cụm râu kép ươ, dấu huyền trên ơ, descender g.",
+      "unicode_nfc": "giường",
+      "unicode_nfd": "giường"
+    },
+    {
+      "index": 12,
+      "word": "chuyện",
+      "tone": "dot_below",
+      "vowel_diacritics": [
+        "circumflex"
+      ],
+      "initial_consonant": "ch",
+      "final_consonant": "n",
+      "has_ascender": true,
+      "has_descender": true,
+      "stacking_diacritics": false,
+      "challenge": "Cụm uyê, descender y, mũ ê, dấu nặng dưới ê.",
+      "unicode_nfc": "chuyện",
+      "unicode_nfd": "chuyện"
+    },
+    {
+      "index": 13,
+      "word": "xoay",
+      "tone": "level",
+      "vowel_diacritics": [],
+      "initial_consonant": "x",
+      "final_consonant": "y",
+      "has_ascender": false,
+      "has_descender": true,
+      "stacking_diacritics": false,
+      "challenge": "Nét chéo x, cụm oay, descender y, không thanh điệu.",
+      "unicode_nfc": "xoay",
+      "unicode_nfd": "xoay"
+    },
+    {
+      "index": 14,
+      "word": "bỗng",
+      "tone": "tilde",
+      "vowel_diacritics": [
+        "circumflex"
+      ],
+      "initial_consonant": "b",
+      "final_consonant": "ng",
+      "has_ascender": true,
+      "has_descender": true,
+      "stacking_diacritics": true,
+      "challenge": "Ascender b, mũ ô, dấu ngã trên ô, descender g.",
+      "unicode_nfc": "bỗng",
+      "unicode_nfd": "bỗng"
+    },
+    {
+      "index": 15,
+      "word": "quét",
+      "tone": "acute",
+      "vowel_diacritics": [],
+      "initial_consonant": "qu",
+      "final_consonant": "t",
+      "has_ascender": true,
+      "has_descender": true,
+      "stacking_diacritics": false,
+      "challenge": "Descender q, ascender t, dấu sắc trên e.",
+      "unicode_nfc": "quét",
+      "unicode_nfd": "quét"
+    },
+    {
+      "index": 16,
+      "word": "khẽ",
+      "tone": "tilde",
+      "vowel_diacritics": [],
+      "initial_consonant": "kh",
+      "final_consonant": null,
+      "has_ascender": true,
+      "has_descender": false,
+      "stacking_diacritics": false,
+      "challenge": "Ascender kép kh, dấu ngã trên e, từ ngắn 3 ký tự.",
+      "unicode_nfc": "khẽ",
+      "unicode_nfd": "khẽ"
+    },
+    {
+      "index": 17,
+      "word": "nhặt",
+      "tone": "dot_below",
+      "vowel_diacritics": [
+        "breve"
+      ],
+      "initial_consonant": "nh",
+      "final_consonant": "t",
+      "has_ascender": true,
+      "has_descender": false,
+      "stacking_diacritics": false,
+      "challenge": "Ascender h và t, dấu trăng ă, dấu nặng dưới ă.",
+      "unicode_nfc": "nhặt",
+      "unicode_nfd": "nhặt"
+    },
+    {
+      "index": 18,
+      "word": "nguồn",
+      "tone": "grave",
+      "vowel_diacritics": [
+        "circumflex"
+      ],
+      "initial_consonant": "ng",
+      "final_consonant": "n",
+      "has_ascender": false,
+      "has_descender": true,
+      "stacking_diacritics": true,
+      "challenge": "Phụ âm ng, nguyên âm đôi uô, mũ ô, dấu huyền trên ô.",
+      "unicode_nfc": "nguồn",
+      "unicode_nfd": "nguồn"
+    },
+    {
+      "index": 19,
+      "word": "sưởi",
+      "tone": "hook_above",
+      "vowel_diacritics": [
+        "horn_u",
+        "horn_o"
+      ],
+      "initial_consonant": "s",
+      "final_consonant": null,
+      "has_ascender": false,
+      "has_descender": false,
+      "stacking_diacritics": true,
+      "challenge": "Ký tự s, cụm râu kép ươ, dấu hỏi trên ơ, nguyên âm kết thúc i.",
+      "unicode_nfc": "sưởi",
+      "unicode_nfd": "sưởi"
+    },
+    {
+      "index": 20,
+      "word": "vẹn",
+      "tone": "dot_below",
+      "vowel_diacritics": [],
+      "initial_consonant": "v",
+      "final_consonant": "n",
+      "has_ascender": false,
+      "has_descender": false,
+      "stacking_diacritics": false,
+      "challenge": "Nét xuất phát v, dấu nặng dưới e.",
+      "unicode_nfc": "vẹn",
+      "unicode_nfd": "vẹn"
+    }
+  ]
+}
