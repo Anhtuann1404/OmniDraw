@@ -1,0 +1,130 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "OmniDraw_Collection_Manifest_Schema",
+  "description": "Schema định nghĩa bản ghi nhật ký số hóa từng trang biểu mẫu chữ viết tay tiếng Việt P01–P04",
+  "type": "object",
+  "required": [
+    "scan_id",
+    "writer_id",
+    "session_id",
+    "page_id",
+    "is_spare",
+    "scan_timestamp",
+    "scanner_model",
+    "optical_dpi",
+    "calibration_metrics",
+    "qc_status",
+    "qc_operator"
+  ],
+  "properties": {
+    "scan_id": {
+      "type": "string",
+      "description": "Mã định danh duy nhất của bản quét, ví dụ: 'W001_S01_P01'"
+    },
+    "writer_id": {
+      "type": "string",
+      "description": "Mã định danh người viết ẩn danh (No-PII), ví dụ: 'W001'"
+    },
+    "session_id": {
+      "type": "string",
+      "description": "Mã phiên thu thập, ví dụ: 'S01'"
+    },
+    "page_id": {
+      "type": "string",
+      "enum": ["P01", "P02", "P03", "P04"],
+      "description": "Mã trang biểu mẫu thu thập"
+    },
+    "is_spare": {
+      "type": "boolean",
+      "description": "True nếu đây là phiếu dự phòng thay thế cho phiếu bị hủy"
+    },
+    "scan_timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Thời điểm quét số hóa ảnh theo chuẩn ISO 8601"
+    },
+    "scanner_model": {
+      "type": "string",
+      "description": "Tên dòng máy quét quang học phẳng sử dụng"
+    },
+    "optical_dpi": {
+      "type": "integer",
+      "minimum": 150,
+      "description": "Độ phân giải quang học quét ảnh (mặc định 600 DPI)"
+    },
+    "calibration_metrics": {
+      "type": "object",
+      "required": [
+        "ruler_length_mm",
+        "ruler_error_mm",
+        "square_aspect_ratio",
+        "deskew_angle_deg"
+      ],
+      "properties": {
+        "ruler_length_mm": {
+          "type": "number",
+          "minimum": 0.0,
+          "description": "Chiều dài đo được thực tế của thước kiểm chuẩn 50mm"
+        },
+        "ruler_error_mm": {
+          "type": "number",
+          "description": "Sai số tuyệt đối hoặc có dấu so với chuẩn 50.0mm"
+        },
+        "square_aspect_ratio": {
+          "type": "number",
+          "minimum": 0.5,
+          "maximum": 1.5,
+          "description": "Tỷ lệ cạnh W/H của ô vuông kiểm chuẩn 20x20mm (chuẩn 1.000 ± 0.005)"
+        },
+        "deskew_angle_deg": {
+          "type": "number",
+          "description": "Góc xoay bù nắn thẳng phối cảnh ước lượng từ mốc fiducial (độ)"
+        }
+      }
+    },
+    "qc_status": {
+      "type": "string",
+      "enum": [
+        "QC_RAW",
+        "QC_AUTO_PASS",
+        "QC_AUTO_FLAGGED",
+        "QC_VERIFIED_PASS",
+        "QC_REJECTED"
+      ],
+      "description": "Trạng thái thẩm định chất lượng quang học theo vòng đời 5 nấc"
+    },
+    "qc_operator": {
+      "type": "string",
+      "description": "Người điều phối hoặc thuật toán thực hiện gắn nhãn QC (ví dụ: 'TV1')"
+    },
+    "cell_anomalies": {
+      "type": "array",
+      "description": "Danh sách các dị thường được phát hiện tại từng ô viết hoặc dòng",
+      "items": {
+        "type": "object",
+        "required": ["cell_id", "status"],
+        "properties": {
+          "cell_id": {
+            "type": "string",
+            "description": "Mã định danh ô mẫu bị dị thường, ví dụ: 'TONE_002'"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "USER_MISWRITTEN",
+              "BOUNDARY_OVERFLOW",
+              "INK_STAIN_SMUDGE",
+              "CORRECTION_VIOLATION",
+              "OTHER_ANOMALY"
+            ],
+            "description": "Loại dị thường phát hiện"
+          },
+          "note": {
+            "type": "string",
+            "description": "Ghi chú mô tả chi tiết dị thường"
+          }
+        }
+      }
+    }
+  }
+}

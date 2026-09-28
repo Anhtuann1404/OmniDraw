@@ -1,0 +1,177 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "OmniDraw_CA_VHC_Annotation_Schema",
+  "description": "Schema định nghĩa bản ghi gán nhãn cấu trúc âm tiết, ký tự và mỏ neo dấu tiếng Việt",
+  "type": "object",
+  "required": [
+    "sample_id",
+    "writer_id",
+    "source_image_id",
+    "char_raw",
+    "unicode_nfd",
+    "base_char",
+    "diacritics",
+    "context_info",
+    "geometry",
+    "quality_flags"
+  ],
+  "properties": {
+    "sample_id": {
+      "type": "string",
+      "description": "Định danh duy nhất của mẫu ký tự/âm tiết trích xuất, ví dụ: 'SMP_W001_00421'"
+    },
+    "writer_id": {
+      "type": "string",
+      "description": "Mã định danh người viết tham chiếu, ví dụ: 'W001'"
+    },
+    "source_image_id": {
+      "type": "string",
+      "description": "Tên tệp ảnh gốc nguồn, ví dụ: 'W001_S01_P01.png'"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Thời điểm thực hiện trích xuất và gán nhãn"
+    },
+    "char_raw": {
+      "type": "string",
+      "description": "Ký tự hoặc âm tiết tiếng Việt nguyên bản (Unicode NFC), ví dụ: 'ế'"
+    },
+    "unicode_nfd": {
+      "type": "string",
+      "description": "Chuỗi phân rã chuẩn NFD, ví dụ: 'e\\u0302\\u0301'"
+    },
+    "base_char": {
+      "type": "string",
+      "description": "Ký tự gốc không dấu, ví dụ: 'e'"
+    },
+    "diacritics": {
+      "type": "array",
+      "description": "Danh sách các dấu cấu trúc và dấu thanh hiện diện trên ký tự",
+      "items": {
+        "type": "object",
+        "required": ["type", "unicode_codepoint"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "circumflex",
+              "breve",
+              "horn",
+              "acute",
+              "grave",
+              "hook_above",
+              "tilde",
+              "dot_below"
+            ]
+          },
+          "unicode_codepoint": {
+            "type": "string",
+            "description": "Mã Unicode của ký tự dấu, ví dụ: 'U+0302'"
+          },
+          "bounding_box": {
+            "type": "array",
+            "items": { "type": "number" },
+            "minItems": 4,
+            "maxItems": 4,
+            "description": "[x_min, y_min, x_max, y_max] tính bằng pixel trên ảnh gốc"
+          }
+        }
+      }
+    },
+    "tone_mark": {
+      "type": "string",
+      "enum": ["none", "acute", "grave", "hook_above", "tilde", "dot_below"],
+      "description": "Dấu thanh chính của âm tiết"
+    },
+    "context_info": {
+      "type": "object",
+      "required": ["position"],
+      "properties": {
+        "position": {
+          "type": "string",
+          "enum": ["isolated", "word_initial", "word_medial", "word_final"],
+          "description": "Vị trí ngữ cảnh trong từ"
+        },
+        "prev_char": { "type": ["string", "null"] },
+        "next_char": { "type": ["string", "null"] },
+        "syllable_text": { "type": ["string", "null"] },
+        "letter_type": { "type": "string", "default": "general" }
+      }
+    },
+    "geometry": {
+      "type": "object",
+      "required": [
+        "bounding_box",
+        "baseline_y",
+        "base_anchor",
+        "diacritic_offset"
+      ],
+      "properties": {
+        "bounding_box": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 4,
+          "maxItems": 4,
+          "description": "[x_min, y_min, x_max, y_max] của toàn bộ cụm glyph (pixel)"
+        },
+        "baseline_y": {
+          "type": "number",
+          "description": "Tung độ trục chân dòng định chuẩn (pixel)"
+        },
+        "base_anchor": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Tọa độ điểm mỏ neo trên đỉnh glyph cơ sở [x, y] tính bằng mm chuẩn hóa"
+        },
+        "diacritic_anchor": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Tọa độ tâm hình học của dấu [x, y] tính bằng mm chuẩn hóa"
+        },
+        "diacritic_offset": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Độ dịch tương đối giữa dấu và mỏ neo [dx, dy] (mm)"
+        },
+        "clearance_box": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 4,
+          "maxItems": 4,
+          "description": "Vùng bao an toàn chống va chạm xung quanh dấu [xmin, ymin, xmax, ymax]"
+        }
+      }
+    },
+    "quality_flags": {
+      "type": "object",
+      "required": ["legibility_score", "is_degenerate", "is_ambiguous"],
+      "properties": {
+        "legibility_score": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5,
+          "description": "Đánh giá độ đọc được định tính (1: rất tệ/mất nét, 5: hoàn hảo chuẩn mực)"
+        },
+        "is_degenerate": {
+          "type": "boolean",
+          "description": "True nếu nét bị đứt đoạn, chấm mực bẩn hoặc méo mó không thể phân tích"
+        },
+        "is_ambiguous": {
+          "type": "boolean",
+          "description": "True nếu dấu bị mập mờ giữa hỏi/ngã hoặc sắc/nặng"
+        },
+        "annotator_id": {
+          "type": "string",
+          "description": "Mã định danh người hoặc thuật toán gán nhãn"
+        }
+      }
+    }
+  }
+}

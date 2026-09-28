@@ -41,6 +41,14 @@ from backend.scan_validator.pipeline import (
     ScanValidationPipeline,
     ScanValidationReport,
 )
+from backend.scan_validator.schema_validator import (
+    load_schema,
+    validate_manifest_record,
+    validate_ca_vhc_annotation,
+    VALID_PAGE_IDS,
+    VALID_QC_STATUSES,
+    VALID_ANOMALY_STATUSES,
+)
 
 __all__ = [
     "A4_WIDTH_MM",
@@ -64,4 +72,11 @@ __all__ = [
     "ExtractedCrop",
     "ScanValidationPipeline",
     "ScanValidationReport",
+    "load_schema",
+    "validate_manifest_record",
+    "validate_ca_vhc_annotation",
+    "VALID_PAGE_IDS",
+    "VALID_QC_STATUSES",
+    "VALID_ANOMALY_STATUSES",
 ]
+
