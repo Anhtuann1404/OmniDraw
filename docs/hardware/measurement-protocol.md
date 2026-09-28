@@ -70,6 +70,9 @@ Chi tiết các trường:
 24. `driver_speed_pct`: Giá trị phần trăm vận tốc tối đa (1–100%) thực sự nạp vào `pyaxidraw.options.speed_pendown` (TV4 Unit Contract).
 25. `physical_speed_status`: Trạng thái kiểm chuẩn tốc độ vật lý (`UNVERIFIED` khi chưa có cảm biến quang học/tachometer kiểm chứng; `CALIBRATED` khi đã qua hiệu chuẩn thực tế).
 
+> [!NOTE] Lưu ý đối soát với TV2 Motion Research Handoff:
+> Trong văn bản handoff ban đầu của TV2 (`docs/tv2_motion_research_handoff.md`), tài liệu có đề cập "CSV 22 trường" (thời điểm trước khi bổ sung hợp đồng vận tốc driver). Hiện tại toàn bộ hệ thống (backend adapter, migration routine, runner và test suite) đã chuẩn hóa lên **25 trường canonical** (bổ sung các trường 23–25: `requested_speed_mm_s`, `driver_speed_pct`, `physical_speed_status`).
+
 ---
 
 ## 4. Protocol Đo Sai số Tọa độ
@@ -213,7 +216,7 @@ Trong đó:
 - [x] Schema `logs/hardware_metrics.csv` 25 cột mở rộng với đầy đủ telemetry chuyển động, cờ mô hình và hợp đồng vận tốc driver.
 - [x] Tiêu bản `rq3_clearance_calibration_specimen.svg` chuẩn hóa góc bẻ Khối B và 3 dải tốc độ Khối C.
 - [x] Bất biến provenance đo lường vật lý đã được kiểm chứng bằng test tự động.
-- [x] Bộ testsuite tích hợp 44 test hardware PASS 100% (toàn repo 170 test PASS 100%).
+- [x] Bộ testsuite tích hợp 57 test hardware PASS 100% (toàn repo 183 test PASS 100%).
 
 
 ---
