@@ -1,42 +1,42 @@
 # OmniDraw — Current Task & Sprint Backlog
 
-**Cập nhật lần cuối:** 22/09/2026
-**Chu kỳ hiện tại:** Sprint 1–2 (2 tuần tới: Khóa nền nghiên cứu CA-VHC & Thiết lập framework thực nghiệm)
+**Cập nhật lần cuối:** 29/09/2026
+**Chu kỳ hiện tại:** PR3 software slices và đồng bộ phạm vi nghiên cứu RQ1–RQ5
 **Nguyên tắc:** Mỗi người làm chủ một đường chạy độc lập, tuân thủ Definition of Done và review chéo định kỳ.
 
 ---
 
 ## 1. Trạng thái hiện tại theo 4 đường chạy (Current Sprint Status)
 
+**Ảnh chụp hiện hành:** TV4 đang triển khai PR3 từ nhánh tích hợp theo slice; E4 PASS trên `4677aad`. E1 DEV ở bản `072029b` có 160 ca/method và giảm pen-up 9,018% so B1, 7,701% so B2; chưa đạt ngưỡng PASS H1.1 và chưa phải PR3 exit/PR5 Holdout. TV2 đã ký E1 cho bản trước đó `adb0417`; bản có style cần recheck theo phiên bản. Corpus CA-VHC v1.0 đã frozen. TV3 còn chờ máy AxiDraw/cáp để calibration vật lý; TV1 còn chờ bench print/scan thật cho pilot. Xem [bằng chứng PR3 và liên kết phiếu TV2](17_pr3_implementation_readiness.md), [phạm vi nghiên cứu mới](22_nckh_extended_scope.md).
 
-| Thành viên                 | Đang làm gì                            | Bị nghẽ ở đâu (nếu có)                  | Dự kiến xong |
-| -------------------------- |----------------------------------------| --------------------------------------- | ----------- |
-| TV1 — AI Core              | Đã hoàn tất Cross-review Chương 1–3 (Phiếu TV1: PASS) & đóng băng Benchmark Corpus v1.0 | *(điền, hoặc để trống nếu không nghẽn)* | Sprint 1–2  |
-| TV2 — AI Ứng dụng/CV       | *(điền)*                               | *(điền)*                                | *(điền)*    |
-| TV3 — Phần cứng            | Hoàn tất ký duyệt cross-review Chương 1–3 (PASS trên commit 031d198), ban hành Protocol kiểm chuẩn và tích hợp RQ3 Benchmark CLI | Blocked by hardware: chờ máy vẽ AxiDraw & cáp USB vật lý để chạy thực nghiệm trên giấy thật | Sprint 1–2  |
-| TV4 — Giao diện & Tích hợp | (điền)                                 | *(điền)*                                | *(điền)*    |
+| Owner | Việc tiếp theo | Gate còn mở |
+| :--- | :--- | :--- |
+| TV4 | Hoàn thiện PR3 exit theo contract, hồi quy render/trace/style, chốt số liệu DEV có metadata; điều phối tài liệu RQ4/RQ5 | TV2 recheck bản PR3 cuối, PR5 formal sau các gate |
+| TV2 | Recheck transition, motion và E1 trên đúng commit PR3 sau style | PR3 human sign-off còn PENDING |
+| TV1 | Review protocol RQ4, chốt consent/anonymization, chuẩn bị pilot P01–P04 với 3–5 writers, kiểm tra profile_generator trên ảnh mẫu và báo cáo hiệu chỉnh protocol trước khi tích hợp | Chờ máy in & máy quét 600 DPI để bench scan; dữ liệu người thật chưa có |
+| TV3 | Calibration AxiDraw và phép đo máy thật | `PENDING_TV3_CALIBRATION` |
+
+### Công việc nghiên cứu mới của TV4
+
+- [x] Ghi rõ tên đề tài, RQ4 học thói quen viết và RQ5 pilot font thiết kế ở [Docs 22](22_nckh_extended_scope.md); chuẩn bị protocol reviewable cho [RQ4](23_rq4_writer_habit_study_protocol.md) và [RQ5](24_rq5_vietnamese_design_font_pilot.md), phân biệt thiết kế với kết quả.
+- [ ] Cùng TV1 chốt protocol RQ4 sau bench scan/pilot: split writer/text, baseline và rubric; chưa tích hợp profile vào engine khi chưa qua gate.
+- [ ] Chọn tập font lỗi tiếng Việt và baseline/rubric RQ5, xác nhận giấy phép; chỉ bắt đầu pilot khi P0 ổn định.
+- [ ] Yêu cầu scoped recheck nội dung Chương 1–3 và lộ trình sau thay đổi nghiên cứu; sign-off cũ không tự bao phủ RQ4/RQ5.
+
+**Các bảng sprint bên dưới là kế hoạch/lịch sử được giữ để truy vết; khi có khác biệt về trạng thái, dùng ảnh chụp ngày 29/09 ở trên và bằng chứng theo commit.**
 
 
-**Ngày 26/8**
-
-
-|                            |                                |         |           |
-| -------------------------- | ------------------------------ | ------- | --------- |
-| TV4 — Giao diện & Tích hợp | *Dựng khung UI UX( mock data)* | *Không* | *Đã Xong* |
-
-
----
-
-| Thành viên / Đường chạy | Nhiệm vụ trọng tâm Sprint 1–2 | Điểm nghẽn (Blocker) | Trạng thái |
+| Thành viên / Đường chạy (snapshot Sprint 1–2) | Nhiệm vụ trọng tâm thời điểm đó | Điểm nghẽn (Blocker) | Trạng thái lịch sử |
 | :--- | :--- | :--- | :--- |
-| **TV4 — Project Lead & Handwriting / CA-VHC Composition Lead** | E4 đã PASS (commit `4677aad`, TV2 sign-off `ee7c214`, tích hợp `e62f361`); PR3 = `READY_TO_IMPLEMENT`. TV4 quyết định không dùng bản code PR3 nháp trên nhánh backup để tích hợp; TV4 trực tiếp triển khai lại PR3 từ nhánh tích hợp theo đúng contract E4 `4677aad`, phối hợp cùng TV2 ở phần transition. Nhánh backup được giữ nguyên làm tài liệu tham khảo kỹ thuật | Đang triển khai lại PR3 trên nhánh tích hợp | 🟢 E4 PASS — PR3 READY_TO_IMPLEMENT |
-| **TV2 — Stroke Optimization & Path Planning Lead** | Đã ký duyệt sign-off E4 (commit `ee7c214` trên hợp đồng `4677aad`, tích hợp `e62f361`); phối hợp cùng TV4 triển khai PR3 theo contract E4 đã khóa (bảo đảm immutability, zero-tangent, fail-closed semantics, no-double-count) | Không | 🟢 E4 PASS — PR3 READY_TO_IMPLEMENT |
-| **TV1 — AI Data & Writer Profile Lead** | Hoàn tất Phân tích độ phủ P01–P04 (Báo cáo 20: 19/67 dạng nguyên âm $\sim 28.36\%$) và Đề xuất Quy trình Vận hành Thu thập & Xử lý lỗi (Chính sách 21) ở trạng thái Pilot Candidate; Chuẩn hóa bộ Dataset JSON Schemas và validator pure-Python; Gia cố validator fail-closed (bẫy lỗi kiểu unhashable, bắt buộc múi giờ ISO 8601/RFC 3339, chặn bool/NaN/Inf/OverflowError ở trường số; 18/18 tests pass); Chuẩn hóa Fixture Dữ liệu & Bộ Kiểm định Ngữ liệu CA-VHC Corpus v1.0 đóng băng, hiệu đính phân vai độ phủ thanh điệu DEV (5 thanh có dấu) và HOLDOUT (đủ 6 thanh) trong Doc 19; toàn repo 190/190 tests pass trên nhánh sạch feature/tv1-data-corpus (đối soát: 189 gốc + 1 regression test mới, không chứa 3 acceptance test của bản nháp PR3 cũ); đồng bộ Hợp đồng E4 canonical (`ee7c214`); duy trì ranh giới Writer Profile P2 độc lập; Đang chờ thiết bị máy in/máy quét để thực hiện bench scan 600 DPI và chạy Pilot 3–5 writers | Blocked by hardware: chờ máy in & máy quét 600 DPI để bench scan P01–P04 | 🟡 Đang chờ thiết bị |
-| **TV3 — Hardware, Calibration & Physical Validation Lead** | Đã hoàn tất HAL/Simulator (PR #29); phiếu cross-review Chương 1–3 đã ký `PASS` (hoàn tất scoped recheck trên `031d198`); ban hành Giao thức Kiểm chuẩn Vật lý (`07_physical_calibration_protocol.md`), tiêu bản RQ3 SVG và tích hợp CLI `--benchmark-rq3` (27/27 tests pass) | *Blocked by hardware:* chờ setup cáp & máy vẽ thực tế (hoàn tất 100% nền tảng phần mềm; chờ máy thật để chạy calibration) | 🟡 Đang làm |
+| **TV4 — Project Lead & Handwriting / CA-VHC Composition Lead** | Hoàn tất Strict Validation, BƯỚC A/B, PR1, Pre-PR3 Acceptance Contract, khóa Hợp đồng E4 cùng TV2; chuẩn bị triển khai PR3 (Diacritic-Aware Trellis DAG) | Không | 🟡 Đang làm |
+| **TV2 — Stroke Optimization & Path Planning Lead** | Step B technical cross-review đã PASS; PR2 baseline adapters B1/B2/B3 đã triển khai; đã cùng TV4 ký duyệt Hợp đồng Giao diện Chuyển tiếp E4 (Docs 18) khóa hàm mục tiêu $J$ | Không | 🟢 Hoàn tất E4 |
+| **TV1 — AI Data & Writer Profile Lead** | Hoàn tất Phân tích độ phủ P01–P04 (Báo cáo 20) và Ban hành Quy trình Vận hành Thu thập & Xử lý lỗi (Chính sách 21); Hoàn thành Dataset Schemas & Scan-Validation Pipeline (18/18 tests pass fail-closed, đồng bộ optical_dpi >= 150 theo JSON Schema tại commit 8b1f329); Benchmark Corpus v1.0 đã đóng băng (8/8 tests pass); Toàn repo 190/190 tests pass; Đang review protocol RQ4, thiết lập quy chế consent/ẩn danh No-PII và kiểm thử profile_generator bẫy lỗi tách dấu/dính chữ; Chờ thiết bị máy in/máy quét để thực hiện bench scan 600 DPI và chạy Pilot 3–5 writers | Blocked by hardware: chờ máy in & máy quét 600 DPI để bench scan P01–P04 | 🟡 Đang chờ thiết bị |
+| **TV3 — Hardware, Calibration & Physical Validation Lead** | Đã hoàn tất HAL/Simulator; xử lý toàn diện TV2-HW-R01 đến TV2-HW-R06; chuẩn hóa schema CSV 22 trường telemetry động học; chuẩn hóa tiêu bản RQ3 Khối B góc bẻ & Khối C 3 dải tốc độ; hoàn tất cơ chế bất biến provenance; hoàn thiện contract pause_supported; toàn bộ 42/42 tests pass | *Blocked by hardware:* chờ setup cáp & máy vẽ thực tế (hoàn tất 100% nền tảng phần mềm; chờ máy thật để chạy calibration) | 🟢 Hoàn tất phần mềm & Hợp đồng tích hợp |
 
 ---
 
-## 2. Backlog chi tiết Sprint 1–2 (Kế hoạch hành động 2 tuần tới)
+## 2. Backlog Sprint 1–2 lịch sử (giữ để truy vết)
 
 ### TV4 — Project Lead & Handwriting / CA-VHC Composition Lead
 - [ ] **Điều phối kỹ thuật & Khóa Research Questions (Project Lead):** TV4 đã hoàn tất bản hợp nhất RQ1–RQ3, giả thuyết, methodology blueprint và cross-review gate tại [`10_nckh_research_plan.md`](10_nckh_research_plan.md). Ba phiếu reviewer đã ký PASS, nhưng chưa khóa RQ vì phiếu TV2 còn lệch metadata checkpoint và TV1/TV3 cần scoped recheck các mục bị sửa sau checkpoint.
@@ -67,7 +67,7 @@
   - *Lưu ý phạm vi:* TV4 bắt đầu triển khai PR1 (Metrics & Experiment Infrastructure). Không bắt đầu PR3 (CompositionState) trước khi PR1 có test và metric baseline ổn định. TV1 corpus freeze và TV3 hardware calibration là downstream validation gates.
 - [x] **✅ BƯỚC C / PR1 — Hoàn thiện internal experiment metrics and CSV integration (Commit `daca566`):** Tích hợp hoàn tất CA-VHC internal metrics evaluator (`backend/handwriting/metrics_evaluator.py`), chuẩn hóa hệ thống ghi log CSV (`backend/logs/csv_logger.py`) theo schema 19 cột bất biến, hoàn thành automated experiment runner (`backend/handwriting/experiment_runner.py`), và khóa fixture kiểm chuẩn DEV 160 trường hợp (`tests/fixtures/ca_vhc_pr1_fingerprints.json`) với toàn bộ automated tests đạt PASS.
 - [x] **✅ Pre-PR3 Acceptance Contract & Khóa Snapshot ASCII (Docs 09):** Ban hành Hợp đồng Nghiệm thu Kỹ thuật trước PR3 ([`09_pr3_acceptance_criteria.md`](09_pr3_acceptance_criteria.md)); E1–E5 đã PASS sau sign-off E4 của TV2/TV4 trên contract `4677aad`; FORMAL EXPERIMENT READINESS: NO.
-- [ ] **BƯỚC C / PR3 — CA-VHC Diacritic-Aware Trellis DAG (TV4 lead, TV2 phối hợp):** Triển khai `CompositionState = (GlyphVariant, DiacriticCandidate)`, tích hợp kiểm tra va chạm dấu tiếng Việt vào Trellis DAG recurrence và dynamic diacritic placement.
+- [ ] **BƯỚC C / PR3 — CA-VHC Diacritic-Aware Trellis DAG (TV4 lead, TV2 phối hợp):** Đang triển khai `CompositionState` và kiểm tra va chạm dấu theo slice; E1 DEV đã đo, còn exit tests, TV2 recheck đúng bản và sign-off. Xem [Docs 17](17_pr3_implementation_readiness.md).
 - [ ] **Automated Experiment Matrix Execution:** Chạy tự động ma trận thực nghiệm sau khi PR2 và PR3 hoàn thành (không chạy holdout trước khi TV1 freeze corpus).
 - [ ] **Public Metric Schema:** Định nghĩa public metric schema chỉ cho các trường backend thực sự xuất ổn định; giữ API Spec cập nhật qua PR riêng.
 - [ ] **Backward Compatibility:** Bảo toàn tuyệt đối public API hiện tại (`generate_handwriting_svg`, `text_to_strokes`) và deterministic behavior.
@@ -99,11 +99,10 @@
 - [x] **✅ Nhiệm vụ 7 — Phân tích Độ phủ Ngữ âm & Ngữ cảnh (Coverage Analysis) hoàn thành:** Đã hoàn thành phân tích định lượng chi tiết độ phủ âm vị học, thanh điệu và ngữ cảnh cho cả 4 trang P01–P04, lập bảng ma trận tổng hợp và ban hành Báo cáo chính thức tại [`docs/20_p01_p04_coverage_analysis_report.md`](20_p01_p04_coverage_analysis_report.md) (`Trạng thái: APPROVED FOR PILOT PHASE`).
 - [x] **✅ Nhiệm vụ 8 — Ban hành Quy định Vận hành Thu thập & Xử lý Lỗi (Collection Protocol & Error Handling) hoàn thành:** Đã ban hành chính sách vận hành chuẩn hóa tại [`docs/21_handwriting_collection_protocol_and_error_handling.md`](21_handwriting_collection_protocol_and_error_handling.md) quy định: chính sách No-PII, nguyên tắc bảo toàn nét tự nhiên, phân loại 3 nhóm lỗi và biện pháp xử lý cấp ô/dòng/trang, định mức cấp phát và hủy phiếu dự phòng (Spare Sheet), vòng đời 5 trạng thái QC (`QC_RAW` $\rightarrow$ `QC_VERIFIED_PASS` / `QC_REJECTED`), và cấu trúc schema `collection_manifest.jsonl`.
 - [ ] **Nhiệm vụ 9 — Chuẩn bị & Triển khai Thử nghiệm Pilot (Limited Pilot 3–5 Writers):** Tuyển chọn 3–5 người tham gia viết thử nghiệm toàn bộ bộ phiếu P01–P04, rà soát tải thu thập (`completion time`, nhu cầu nghỉ giải lao) và nghiệm thu chất lượng ảnh quét trước khi mở rộng. *(Tiến hành ngay sau khi có máy in/máy quét để bench scan P01–P04)*.
-- [x] **✅ Chuẩn bị, rà soát độ phủ và đóng băng Benchmark Corpus CA-VHC v1.0:** Hoàn thành phân tích độ phủ ngôn ngữ học, độ phủ hình học (ascender/descender, diacritics stacking) và kiểm chứng tính rời nhau tuyệt đối ($DEV \cap HOLDOUT = \emptyset$) cho 20 từ DEV và 20 từ Holdout; chính thức đóng băng tại [`docs/19_benchmark_corpus_freeze_report.md`](19_benchmark_corpus_freeze_report.md) (hiệu đính chuẩn xác phân vai: DEV tập trung 5 thanh có dấu, HOLDOUT bao phủ trọn vẹn 6 thanh). Đã ban hành file dữ liệu có cấu trúc [`tests/fixtures/ca_vhc_corpus_v1_frozen.json`](../tests/fixtures/ca_vhc_corpus_v1_frozen.json), bổ sung helper loaders trong `backend/handwriting/benchmark_fixtures.py`, và lập trình bộ kiểm định tự động [`tests/test_ca_vhc_corpus_validation.py`](../tests/test_ca_vhc_corpus_validation.py) đạt 8/8 tests PASS.
+- [x] **✅ Chuẩn bị, rà soát độ phủ và đóng băng Benchmark Corpus CA-VHC v1.0:** Hoàn thành phân tích độ phủ ngôn ngữ học, độ phủ hình học (ascender/descender, diacritics stacking) và kiểm chứng tính rời nhau tuyệt đối ($DEV \cap HOLDOUT = \emptyset$) cho 20 từ DEV và 20 từ Holdout. Chính thức đóng băng phiên bản `CA-VHC-CORPUS-v1.0-FROZEN` tại [`docs/19_benchmark_corpus_freeze_report.md`](19_benchmark_corpus_freeze_report.md).
 - [x] **✅ Chuẩn bị nghiên cứu Writer Profile (P2 Preparation) hoàn thành:** Đã định nghĩa JSON Schema chính thức [`dataset/schemas/writer_profile.schema.json`](../dataset/schemas/writer_profile.schema.json) tuân thủ Section 8 của `08_handwriting_dataset_spec.md`, quy định cấu trúc versioned profile, metadata ẩn danh, miền giá trị nghiêm ngặt của `global_style`, `spacing`, và `diacritic_tendencies`.
 - [x] **✅ Prototype trích xuất đặc trưng độc lập (P2 Preparation) hoàn thành:** Lập trình module [`backend/writer_profile/extractor.py`](../backend/writer_profile/extractor.py) trích xuất đầy đủ 4 đặc trưng định lượng: độ nghiêng `mean_slant_deg`, tỷ lệ khung chữ `aspect_ratio_mean`, khoảng cách chữ/từ `char_spacing` / `word_spacing`, và độ dao động chân dòng `baseline_jitter_std`, kèm hàm kiểm định rule-based `validate_writer_profile`.
 - [x] **✅ Tạo fixture dữ liệu mẫu giả lập & Unit Test Suite hoàn thành:** Tạo synthetic fixture [`tests/fixtures/writer_profile_synthetic_samples.json`](../tests/fixtures/writer_profile_synthetic_samples.json) (3 hồ sơ mẫu: thẳng đứng, nghiêng 15 độ, chân dòng dao động) và bộ test [`tests/test_writer_profile_extractor.py`](../tests/test_writer_profile_extractor.py) đạt **7/7 tests PASS**; toàn bộ test suite dự án đạt **165/165 tests PASS** (100% PASS).
-- [x] **✅ Chuẩn hóa Dataset Schemas & Bộ Kiểm định Pure-Python Fail-Closed:** Đã định nghĩa 2 JSON schema chính thức chuẩn Draft `2020-12`: `dataset/schemas/collection_manifest.schema.json` (theo Doc 21 Mục 6.2) và `dataset/schemas/ca_vhc_annotation.schema.json` (theo Doc 08 Mục 7.2); lập trình bộ kiểm định rule-based pure-Python `backend/scan_validator/schema_validator.py` (tuân thủ Ponytail: không phụ thuộc thư viện ngoài `jsonschema`), gia cố cơ chế fail-closed toàn diện: chặn lỗi `TypeError` khi `page_id` là `list`, bắt buộc timezone cho date-time ISO 8601/RFC 3339, loại trừ `bool`, `NaN`, `Inf` và `OverflowError` (10**1000) ở các trường số; tạo bộ test tự động `tests/test_dataset_schemas.py` đạt **18/18 tests PASS**; nâng tổng test suite trên nhánh sạch `feature/tv1-data-corpus` lên **190/190 tests PASS** (100% GREEN, đối soát rõ ràng: 189 test ban đầu + 1 regression test, giải tỏa con số 192 vốn tính cả 3 test của bản nháp PR3 cũ).
 - [ ] *Lưu ý phạm vi:* Đây là công việc chuẩn bị P2; chưa tích hợp Writer Profile vào engine, chưa được xem là Writer Profile MVP hoàn thành; không huấn luyện mô hình học sâu (deep learning) phức tạp trong sprint này; ưu tiên hoàn thiện quy trình rule-based rõ ràng và có thể kiểm chứng (chi tiết xem [`08_handwriting_dataset_spec.md`](08_handwriting_dataset_spec.md)).
 
 ### TV3 — Hardware, Calibration & Physical Validation Lead
@@ -203,7 +202,7 @@
 - [x] TV1 formal corpus review/freeze (hoàn tất tại [`docs/19_benchmark_corpus_freeze_report.md`](19_benchmark_corpus_freeze_report.md))
 - [ ] TV3 clearance calibration
 - [x] PR2 baseline adapters (E3 đã PASS; E4 shared transition interface đã ký duyệt tại [`Docs 18`](18_pr3_e4_shared_transition_contract_draft.md))
-- [ ] PR3 CompositionState production implementation
+- [ ] PR3 CompositionState production implementation và exit sign-off (đang triển khai; E1 DEV đã có)
 - [ ] PR4 delayed-stroke P0
 - [ ] Formal CA-VHC experiment
 - [x] TV1 scan-validation pipeline (đã hoàn thiện gói `backend/scan_validator/` và CLI runner)

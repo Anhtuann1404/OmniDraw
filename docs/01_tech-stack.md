@@ -1,7 +1,9 @@
 # OmniDraw — Tech Stack
 
-**Cập nhật lần cuối:** 18/09/2026
+**Cập nhật lần cuối:** 29/09/2026 (ghi chú phạm vi; bảng công nghệ nền giữ nguyên)
 **Quy tắc:** Khi đổi công nghệ ở bất kỳ mảng nào, phải sửa file này TRƯỚC hoặc NGAY khi đổi — không để người khác code theo stack cũ đã lỗi thời.
+
+**Trạng thái nghiên cứu:** CA-VHC PR3 đang triển khai theo slice sau E4 PASS; Writer Profile mới có schema/extractor độc lập, chưa có học thói quen viết end-to-end. RQ5 pilot font thiết kế là phương pháp dự kiến, chưa có importer TTF/OTF hay pipeline centerline tự động. Xem [Docs 22](22_nckh_extended_scope.md) và [Docs 17](17_pr3_implementation_readiness.md); không coi hướng nghiên cứu là tech stack đã triển khai.
 
 ---
 
@@ -168,4 +170,3 @@
 - Định dạng dữ liệu trao đổi giữa các mảng: xem file riêng `OmniDraw_API_Spec-4.md` (không lặp lại ở đây, tránh 2 nơi lệch nhau).
 - Quản lý code: Git repo tập trung, nhánh tính năng theo đường chạy (feature branches), TV4 điều phối review và merge code.
 - Style code/naming convention: PEP 8 cho Python backend, ESLint/Prettier cho React frontend.
-

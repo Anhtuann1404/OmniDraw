@@ -6,6 +6,10 @@
 **Loại tổng quan:** Structured scoping review
 **Trạng thái:** `CITATION CHAINING ROUND 1 COMPLETE — TEAM SCREENING PENDING`
 
+**Bổ sung 29/09/2026:** Vòng 1 dưới đây phục vụ RQ1–RQ3. RQ4/RQ5 ở [Docs 22](22_nckh_extended_scope.md) cần vòng tìm kiếm riêng về cá nhân hóa từ ít mẫu, đánh giá writer-disjoint, glyph completion/dấu tiếng Việt, outline-to-centerline và khả năng đọc/giữ phong cách. Ghi chuỗi truy vấn, ngày tìm, tiêu chí chọn/loại và nguồn đã kiểm chứng trước khi mở rộng claim của [Chương 2](13_chapter_2_literature_review.md); chưa coi ma trận hiện hành là tổng quan đầy đủ cho RQ4/RQ5.
+
+**Nhật ký tìm nguồn mở rộng ban đầu (29/09/2026):** tìm trên kho bài của tác giả/CVPR/arXiv và trang tiêu chuẩn Microsoft/Unicode với các nhóm truy vấn `few-shot writer-specific handwriting unseen text`, `DeepWriting digital ink style content`, `few-shot font generation local style`, `OpenType MarkToBase MarkToMark Vietnamese`, `Unicode normalization Vietnamese combining marks`. Giữ lại nguồn sơ bộ ở [ma trận §6](12_literature_evidence_matrix.md); mới kiểm metadata và phần giới thiệu/đặc tả liên quan, chưa hoàn tất dual screening, full-text extraction hay citation chaining RQ4/RQ5.
+
 **Material Passport**
 
 - **Origin Skill:** `academic-research-suite/deep-research`

@@ -2,7 +2,7 @@
 
 **Bản thảo:** 0.2
 **Trạng thái:** `DRAFT — CITATION CHAINING ROUND 1 COMPLETE; TEAM REVIEW PENDING`
-**Phạm vi:** Handwriting Mode / CA-VHC; không trình bày kết quả thực nghiệm OmniDraw
+**Phạm vi:** Handwriting Mode / CA-VHC P0; RQ4/RQ5 mới có bản đồ khoảng trống cần mở rộng tìm nguồn, không trình bày kết quả thực nghiệm OmniDraw
 
 **Material Passport**
 
@@ -80,7 +80,13 @@ Khoảng trống tạm thời phải được giữ ở mức hẹp hơn: trong 
 
 Từ đó, CA-VHC được định vị là một phương pháp composition hình học có thể giải thích: mở rộng trạng thái Viterbi từ `GlyphVariant` sang `CompositionState`, đưa dấu vào quá trình chọn đường thay vì đặt hoàn toàn sau tối ưu, và đánh giá bằng metric tách biệt cho chất lượng nét, chuyển động và va chạm. Đây mới là **định vị tạm thời**, chưa phải tuyên bố độc quyền, “đầu tiên trên thế giới” hay mới tuyệt đối. Kết luận về tính mới chỉ được khóa sau team screening, citation chaining vòng 2 và kiểm tra prior art gần nhất.
 
-## 2.9. Kết luận chương
+## 2.9. Khoảng trống cần khảo sát cho RQ4 và RQ5
+
+Phạm vi đề tài mới bổ sung hai câu hỏi tại [Docs 22](22_nckh_extended_scope.md). Với **RQ4**, nguồn hiện có về sinh chữ viết tay theo phong cách [1], [16] giúp đặt bối cảnh, nhưng ma trận 16 nguồn chưa đủ để kết luận về học thói quen từ ít mẫu tiếng Việt, split theo người viết, khả năng giữ dấu đúng và độ giống phong cách khi xuất lên máy vẽ. Cần tìm nguồn chuyên biệt, kiểm tra phương pháp đối chứng và ghi bằng chứng vào [evidence matrix](12_literature_evidence_matrix.md) trước khi tuyên bố đóng góp mới.
+
+Với **RQ5**, Unicode normalization [4] và OpenType [5] giải thích biểu diễn ký tự/dấu và cơ chế định vị glyph, nhưng không chứng minh một quy trình chuyển font outline thành centerline hoặc phục hồi tiếng Việt cho mọi font thiết kế. Cần khảo sát riêng các nghiên cứu về glyph completion, diacritic placement, centerline extraction và đánh giá mức giữ phong cách/độ đọc. Vì chưa hoàn tất vòng tìm nguồn này, khoảng trống RQ5 là **giả thuyết khảo sát**, không phải claim novelty.
+
+## 2.10. Kết luận chương
 
 Tổng quan cho thấy OmniDraw cần kết hợp kiến thức từ nhiều miền nhưng phải giữ ranh giới bằng chứng. Unicode và OpenType cung cấp cơ sở biểu diễn dấu; nghiên cứu chữ viết tay tiếng Việt và delayed-stroke handling cung cấp bằng chứng để tách placement khỏi ordering; Viterbi cung cấp cấu trúc tối ưu chuỗi; handwriting generation hiện đại là đối chứng cho context/continuity; nghiên cứu robot vẽ cung cấp tiêu chí về path và thi công. Trên nền đó, Chương 3 sẽ mô tả `CompositionState`, hàm mục tiêu CA-VHC, pruning, recurrence và protocol đánh giá. Chương 4 chỉ điền kết quả khi các gate corpus, baseline, phần mềm và phần cứng đã hoàn tất.
 

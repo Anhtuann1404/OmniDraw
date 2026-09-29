@@ -1,6 +1,8 @@
 # OmniDraw — Tiêu Chí Nghiệm Thu Trước PR3 (Pre-PR3 Acceptance Contract)
 *(Hợp đồng Nghiệm thu Kỹ thuật cho CA-VHC Diacritic-Aware Trellis DAG)*
 
+> **Phạm vi:** Contract này chỉ nghiệm thu CA-VHC RQ1–RQ3/PR3. Hai hướng mở rộng RQ4 học thói quen viết và RQ5 pilot font thiết kế có gate riêng tại [Docs 22](22_nckh_extended_scope.md); không dùng PASS PR3 để suy ra hai hướng đó đã được triển khai.
+
 ```text
 ═══════════════════════════════════════════════════════════════════════════════════════════
                            PR3 PRE-IMPLEMENTATION ACCEPTANCE CONTRACT
@@ -11,6 +13,8 @@
 • FORMAL EXPERIMENT READINESS: NO (Acceptance suite uses DEV only; pending TV1 & TV3 gates)
 ═══════════════════════════════════════════════════════════════════════════════════════════
 ```
+
+> **Cập nhật trạng thái 2026-09-29:** Khối trạng thái và cột `Trạng thái Hiện tại` bên dưới là snapshot lúc lập hợp đồng trước PR3. E4 đã PASS tại `4677aad`; implementation PR3 hiện ở `codex/tv4-pr3-slices`. Bằng chứng DEV mới nhất, các mục còn mở và số test nằm tại [Docs 17 §12–13](17_pr3_implementation_readiness.md). Riêng E1 `PASS_CURRENT` bên dưới chỉ xác nhận runner/B1/B2 có sẵn; Proposed hiện giảm pen-up so với cả hai baseline ở DEV nhưng chưa đạt ngưỡng H1.1 và chưa là kết quả formal. Chưa ký PR3 exit.
 
 ## Material Passport
 

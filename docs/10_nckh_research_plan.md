@@ -1,5 +1,8 @@
 # OmniDraw — Research Freeze Pack & Khung Báo cáo NCKH
 
+**Tên đề tài làm việc:** *OmniDraw: Nghiên cứu tái tạo chữ Việt có dấu theo phong cách cá nhân và font thiết kế trên máy vẽ*.
+**Bổ sung phạm vi 29/09/2026:** RQ1–RQ3 là lõi CA-VHC P0 đang review; RQ4 (học thói quen viết, P2) và RQ5 (pilot font thiết kế lỗi tiếng Việt, P3) là hướng mở rộng có protocol/gate riêng tại [Docs 22](22_nckh_extended_scope.md). Nội dung mở rộng chưa được team sign-off và không đổi ngưỡng RQ1–RQ3.
+
 **Phiên bản:** TV4 consolidated draft v0.1  
 **Trạng thái:** `REVIEWED — VERSION BINDING AND SCOPED RECHECK PENDING`
 **Khóa RQ toàn nhóm:** `PENDING`  
@@ -49,11 +52,12 @@ Research Freeze Pack này hợp nhất các quyết định đã có thành mộ
 5. Đo thời gian giải Viterbi, chi phí đổi hướng và khả năng thi công trên máy vẽ.
 6. So sánh Proposed CA-VHC với B1, B2 và B3 bằng corpus, font và seed được kiểm soát.
 
-### 2.2. Ngoài phạm vi RQ hiện hành
+### 2.2. Ngoài phạm vi RQ1–RQ3 nhưng thuộc định hướng đề tài
 
-- Writer Profile, few-shot personalization và style transfer thuộc P2; không được dùng làm bằng chứng trả lời RQ1–RQ3 hiện tại.
-- Chuyển đổi TTF/OTF sang centerline, font pack mới hàng loạt và deep generative handwriting thuộc P3.
-- Art Mode có bộ baseline riêng; kết quả Art Mode không thay thế bằng chứng cho CA-VHC Handwriting Mode.
+- RQ4 nghiên cứu học thói quen viết từ mẫu có đồng ý, so với default/rule-based trên văn bản chưa thấy; TV1 mới có schema/extractor độc lập. Không dùng kết quả RQ4 làm bằng chứng cho RQ1–RQ3.
+- RQ5 là pilot trên **font thiết kế được chọn** có vấn đề chữ Việt. Chuyển outline sang centerline và bổ sung dấu là phương pháp cần thử; không cam kết tự động xử lý mọi TTF/OTF hoặc sản xuất hàng loạt font pack.
+- Deep generative handwriting và style transfer ảnh phác thảo nằm ngoài protocol ban đầu của RQ4/RQ5.
+- Art Mode vẫn thuộc sản phẩm OmniDraw và có bộ baseline/benchmark riêng (Naive, Greedy, OmniDraw) theo [roadmap](02_roadmap.md); trình bày như đánh giá hệ thống độc lập, không dùng kết quả đó thay bằng chứng cho CA-VHC Handwriting Mode hoặc RQ4/RQ5.
 - Hệ thống không tuyên bố hiểu ngữ nghĩa hoặc ngữ âm học; xử lý tiếng Việt dựa trên Unicode NFD và quy tắc hình học chính tả.
 - Không tuyên bố real-time, trơn $C^1$ toàn cục hay an toàn vật lý trước khi có metric và kiểm chứng tương ứng.
 
@@ -105,6 +109,14 @@ Nếu mẫu số bằng 0, ghi `NOT_APPLICABLE`, không tự gán PASS. Công th
 **Ranh giới tuyên bố:** Catmull–Rom sang Bézier không tự động chứng minh $C^1$ ở mọi junction. `c1_violation_count` và dữ liệu máy thật phải tồn tại trước khi đưa ra tuyên bố tương ứng.
 
 ---
+
+### 3.4. RQ4–RQ5 — Giả thuyết mở rộng chờ preregistration
+
+**RQ4:** Một profile học từ mẫu viết được phép sử dụng có tái tạo đặc trưng thói quen cá nhân trên văn bản chưa thấy tốt hơn default và rule-based, mà vẫn giữ chữ Việt đúng/dễ đọc không? Đơn vị phân tích là `(writer_id, held-out text, method, seed)`; tách writer và text để tránh rò rỉ. Metric/rubric dự kiến: sai khác slant, aspect ratio, spacing, baseline jitter, lỗi dấu/va chạm, độ đọc và đánh giá mù về phong cách. Cỡ mẫu, ngưỡng và phép thống kê phải khóa **trước** khi đánh giá; hiện chưa có human data đủ chuẩn hay kết quả.
+
+**RQ5:** Trên tập font thiết kế được chọn và ghi giấy phép, quy trình centerline + anchor/diacritic có cải thiện độ phủ/độ đọc tiếng Việt so với font gốc và cách gắn dấu quy tắc, trong khi giữ phong cách ở mức chấp nhận được không? Đơn vị phân tích là `(font, Vietnamese test item, method, reviewer)`; metric/rubric gồm độ phủ tổ hợp, lỗi hình học, độ đọc, mức giữ phong cách và công chỉnh tay. Tập font, baseline, reviewer và ngưỡng phải khóa trước pilot. Không suy rộng kết quả một font sang mọi TTF/OTF.
+
+Hai RQ này **không** dùng ngưỡng H1–H3 hay corpus Holdout CA-VHC để kết luận. Phạm vi ở [Docs 22](22_nckh_extended_scope.md), protocol đánh giá ở [Docs 23](23_rq4_writer_habit_study_protocol.md) và [Docs 24](24_rq5_vietnamese_design_font_pilot.md); mọi claim hiện ở mức thiết kế.
 
 ## 4. Methodology Blueprint
 
@@ -205,7 +217,7 @@ $$DP[i,j]=C_{state}(s_{i,j})+\min_p\left(DP[i-1,p]+J_{transition}(s_{i-1,p},s_{i
 - Số state theo layer và độ phức tạp Viterbi.
 - Không suy diễn semantic understanding.
 - Không đồng nhất geometric smoothness với mechanical performance.
-- Writer Profile và TTF conversion là future work.
+- Writer Profile (RQ4) và dựng font thiết kế (RQ5) là nhánh mở rộng có điều kiện, tách khỏi ma trận P0; xem [Docs 22](22_nckh_extended_scope.md).
 
 ---
 
@@ -282,7 +294,7 @@ H1.2 dùng tỷ lệ giảm từ **tổng tích lũy** `pen_lift_count` trên c�
 - Giải thích kết quả theo từng RQ, không chỉ theo metric riêng lẻ.
 - Báo cáo cả FAIL và INCONCLUSIVE.
 - Phân biệt design target, software evidence và physical evidence.
-- Future work: Writer Profile, exact delayed-stroke enumeration, nhiều font hơn và telemetry.
+- Nhánh mở rộng có điều kiện: RQ4 Writer Profile và RQ5 pilot font thiết kế; exact delayed-stroke enumeration, mở rộng font hàng loạt và telemetry vẫn là hướng tương lai.
 
 ---
 

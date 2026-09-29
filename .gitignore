@@ -73,6 +73,17 @@ logs/*.txt
 frontend/.vite/
 
 # =========================
+# OmniDraw - Dữ liệu chữ viết thật & PII (Tuyệt đối không push lên Git)
+# =========================
+dataset/raw/images/
+dataset/raw/consent/
+dataset/processed/ca_vhc/crops/
+*_pii.*
+*registry*.json
+*.tif
+*.tiff
+
+# =========================
 # Node / Frontend Build
 # =========================
 node_modules/

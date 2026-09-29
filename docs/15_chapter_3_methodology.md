@@ -2,17 +2,17 @@
 
 **Bản thảo:** 0.1
 
-**Ngày đối chiếu code và tài liệu:** 22/09/2026
+**Ngày đối chiếu code và tài liệu:** 29/09/2026 (trạng thái PR3; RQ4/RQ5 là protocol dự kiến)
 
-**Trạng thái:** `DRAFT — PR2 IMPLEMENTED; PR3 IMPLEMENTATION AND TEAM REVIEW PENDING`
+**Trạng thái:** `DRAFT — PR3 IN PROGRESS; E1 DEV ONLY; EXIT/FORMAL REVIEW PENDING`
 
-**Phạm vi:** Handwriting Mode / CA-VHC; không trình bày kết quả thực nghiệm
+**Phạm vi:** Handwriting Mode / CA-VHC P0 và phương pháp dự kiến RQ4–RQ5; không trình bày kết quả thực nghiệm chính thức
 
 **Nguồn thiết kế chính:** [`05_ca_vhc_research_spec.md`](05_ca_vhc_research_spec.md), [`07_diacritic_aware_state_design.md`](07_diacritic_aware_state_design.md)
 **Nguồn đối chiếu hiện trạng:** [`06_audit_trellis_dag_report.md`](06_audit_trellis_dag_report.md), [`09_pr3_acceptance_criteria.md`](09_pr3_acceptance_criteria.md), mã nguồn `backend/handwriting/`
 
 > [!IMPORTANT]
-> Chương này phân biệt bắt buộc giữa thành phần **đã triển khai và kiểm thử**, thiết kế **đã khóa nhưng chưa triển khai**, và hạng mục **còn phụ thuộc**. Công thức CA-VHC mô tả phương pháp đề xuất; chúng không phải bằng chứng rằng PR3 đã tồn tại trong engine hoặc đã tốt hơn baseline.
+> Chương này phân biệt thành phần **đã triển khai và kiểm thử**, PR3 **đang triển khai theo slice**, và hạng mục **còn phụ thuộc**. E1 DEV không phải kết quả Holdout hoặc sign-off PR3; RQ4/RQ5 mới là protocol dự kiến. Xem [Docs 17](17_pr3_implementation_readiness.md) và [Docs 22](22_nckh_extended_scope.md).
 
 ## 3.1. Thiết kế nghiên cứu và kiến trúc tổng thể
 
@@ -51,10 +51,12 @@ Sinh hình học glyph và các biến thể theo ngữ cảnh
 Trellis DAG ở cấp từ + Viterbi DP
         │
         ▼
-Ghép dấu và các nét phụ
+Proposed PR3: state gồm glyph và ứng viên dấu;
+B3: dấu vẫn được ghép hậu DAG
         │
         ▼
-Bio-variation có seed + bố trí dòng/trang
+Biến thiên style tất định trong phạm vi hình học đã kiểm chứng
+và bố trí dòng/trang
         │
         ▼
 SVG smoothing, bounds và metric
@@ -72,18 +74,18 @@ Gateway kiểm tra kiểu đầu vào, style, font, `letter_type`, seed và kh�
 | Font Pack, Render Profile, Unicode NFD, `GlyphVariant` và Trellis hiện hành | `IMPLEMENTED_AND_TESTED` | `backend/handwriting/engine.py`, `backend/handwriting/font_packs/` |
 | Structured render trace, metric evaluator, runner và CSV schema | `IMPLEMENTED_AND_TESTED` | PR1, commit `daca566`; các test PR1 hiện hành |
 | Snapshot ASCII 48 cấu hình, seed determinism và DEV-only guard | `IMPLEMENTED_AND_TESTED` | [`09_pr3_acceptance_criteria.md`](09_pr3_acceptance_criteria.md) |
-| `DiacriticCandidate`, `CompositionState` và hàm mục tiêu hai cấp | `DESIGN_LOCKED` | Bước B đã được TV2 cross-review và PASS |
+| `DiacriticCandidate`, `CompositionState` và hàm mục tiêu hai cấp | `IMPLEMENTED_IN_PR3_SLICES; EXIT_PENDING` | Xem code và bằng chứng theo commit tại [Docs 17](17_pr3_implementation_readiness.md); không suy ra production sign-off |
 | Baseline adapters B1/B2/B3 | `IMPLEMENTED_AND_TESTED` | TV2 hoàn tất Entry Gate E3; adapter và runner method tags có test bảo vệ |
 | Interface chuyển tiếp dùng chung | `IMPLEMENTED_AND_LOCKED` | Hợp đồng E4 đã được TV2 và TV4 ký duyệt chính thức theo [`18_pr3_e4_shared_transition_contract_draft.md`](18_pr3_e4_shared_transition_contract_draft.md) |
-| Diacritic-Aware Trellis production | `PENDING_PR3` | Chưa có trong engine hiện hành |
+| Diacritic-Aware Trellis production | `PR3_IN_PROGRESS` | DEV E1 đã chạy; còn cần TV2 recheck, exit sign-off và PR5 formal |
 | Delayed-stroke scheduler | `PENDING_PR4` | Chỉ có thiết kế phân tầng WHERE/WHEN |
 | Benchmark Corpus v1.0 (freeze đối chứng) | `FROZEN_AND_VERIFIED` | [`08_handwriting_dataset_spec.md`](08_handwriting_dataset_spec.md), `tests/test_benchmark_corpus_coverage.py` |
 | Bộ phiếu thu thập P01–P04 & Báo cáo độ phủ | `DESIGNED_AND_AUDITED` | `docs/collection_sheets/P01..P04/`, [`20_p01_p04_coverage_analysis_report.md`](20_p01_p04_coverage_analysis_report.md) |
 | Giao thức thu thập, chính sách No-PII & Kiểm soát lỗi 5 bước | `POLICY_LOCKED` | [`21_handwriting_collection_protocol_and_error_handling.md`](21_handwriting_collection_protocol_and_error_handling.md) |
 | Pipeline kiểm chuẩn quang học 600 DPI (Scan-Validation) | `IMPLEMENTED_AND_TESTED` | `backend/scan_validator/`, `tests/test_scan_validation_pipeline.py` |
-| Schema & Bộ trích xuất Hồ sơ Người viết (Writer Profile P2) | `IMPLEMENTED_AND_TESTED` | `backend/writer_profile/`, `tests/test_writer_profile_extractor.py` |
+| Schema, extractor và generator Hồ sơ Người viết (Writer Profile P2) | `IMPLEMENTED_AND_TESTED_ON_SYNTHETIC_FIXTURES` | `backend/writer_profile/`, `tests/test_writer_profile_extractor.py`, `tests/test_writer_profile_generator.py`; chưa có dữ liệu người viết thật |
 | Thu thập Pilot (3–5 người viết) và Quét máy thật 600 DPI | `BLOCKED_BY_HARDWARE` | Chờ trang bị máy in độ nét cao và máy quét phẳng 600 DPI chuyên dụng |
-| Formal benchmark và ablation | `PENDING_PR5` | Chờ PR2–PR4 và corpus freeze |
+| Formal benchmark và ablation | `PENDING_PR5` | Corpus đã frozen; còn chờ PR3 exit, PR4 và protocol formal |
 | Clearance và thời gian vẽ trên máy thật | `PENDING_TV3_CALIBRATION` | Chưa có số đo vật lý |
 
 ### 3.1.4. Quy trình thu thập dữ liệu, kiểm chuẩn quang học 600 DPI và trích xuất hồ sơ phong cách (Phân hệ TV1)
@@ -340,7 +342,7 @@ Hạ tầng PR1 hiện tính được:
 | `pen_lift_count` | Số lần chuyển giữa các nét liên tục | Chờ baseline comparability |
 | `collision_count` | Số cặp bridge–diacritic giao nhau | Metric validation; chờ PR3 |
 | `minimum_diacritic_clearance_mm` | Khoảng hở nhỏ nhất giữa bridge và dấu | Chờ PR3 và calibration cho claim vật lý |
-| `curvature_cost` | Chi phí thay đổi hướng tại bridge | Diagnostic; shared cost contract E4 còn chờ ký duyệt |
+| `curvature_cost` | Chi phí thay đổi hướng tại bridge | Diagnostic; shared cost contract E4 đã PASS trên `4677aad`; formal effect còn chờ PR5 |
 | `acute_turn_count_120deg` | Số góc lệch tiếp tuyến bridge vượt $120^\circ$; diagnostic bắt buộc cho H3.2 | **Chưa triển khai/đo**; TV2 định nghĩa và kiểm thử trong evaluator trước benchmark PR5 |
 | `optimize_time_ms` | Thời gian tối ưu nội bộ | Diagnostic; chưa phải benchmark |
 
@@ -386,11 +388,19 @@ Phương pháp có các giới hạn sau:
 6. Hiện chưa có bằng chứng để tuyên bố real-time, liên tục $C^1$ toàn cục hoặc an toàn vật lý.
 7. Hai Font Pack và corpus dự kiến giới hạn khả năng khái quát hóa; mọi kết luận sau này phải gắn với đúng phạm vi đánh giá.
 
-## 3.9. Kết luận chương
+## 3.9. Phương pháp dự kiến cho RQ4 và RQ5
+
+**RQ4 — Thói quen viết cá nhân.** TV1 thu mẫu P01–P04 theo consent, QC và mã ẩn danh; schema, extractor và generator ảnh crop → profile đã được kiểm thử trên dữ liệu giả lập, chưa được chứng thực trên chữ viết thật. Protocol tiếp theo chia tập theo người viết và văn bản, xây baseline font mặc định và ánh xạ rule-based, rồi mới thử một mô hình cá nhân hóa gọn. TV4 chỉ tích hợp mapping khi contract TV1 được duyệt. So sánh trên văn bản chưa thấy bằng sai khác đặc trưng, lỗi dấu/va chạm, độ đọc và đánh giá mù về phong cách nếu có đủ mẫu. Không suy tốc độ/áp lực bút từ ảnh quét tĩnh; chưa có kết quả trên người viết thật. Xem [Docs 23](23_rq4_writer_habit_study_protocol.md).
+
+**RQ5 — Font thiết kế có vấn đề chữ Việt.** Ghi phiên bản/giấy phép và lỗi của từng font trước pilot; giữ tập font được chọn cố định. Pipeline thử nghiệm gồm kiểm tra glyph/metrics, chuyển hoặc biên tập outline thành centerline khi khả thi, tạo anchor/dấu, kiểm tra tổ hợp Unicode và hình học, rồi xuất SVG. Đối chứng là font gốc và gắn dấu quy tắc cơ bản. Đo độ phủ tổ hợp tiếng Việt, lỗi hình học, độ đọc, mức giữ phong cách và lượng chỉnh sửa thủ công. Mọi claim máy thật cần calibration TV3. Không giả định có thể chuyển đổi mọi font tự động. Xem [Docs 24](24_rq5_vietnamese_design_font_pilot.md).
+
+RQ4/RQ5 dùng tập dữ liệu, baseline, metric và gate riêng theo [Docs 22](22_nckh_extended_scope.md); không trộn vào 20 DEV/20 Holdout CA-VHC đã frozen. Phần này là thiết kế nghiên cứu chờ review, không phải kết quả hay tính năng đã tích hợp.
+
+## 3.10. Kết luận chương
 
 Chương này mô tả CA-VHC như một mở rộng có kiểm soát của Trellis hiện hành. Thay đổi trung tâm là chuyển node từ `GlyphVariant` sang `CompositionState`, nhờ đó biến thể thân chữ và cấu hình dấu có thể được đánh giá trong cùng một chuỗi Viterbi. Hàm mục tiêu tách chi phí nội tại khỏi chi phí chuyển tiếp, hard pruning loại state không khả thi và structured trace cung cấp dữ liệu cho metric.
 
-Tại thời điểm cập nhật, hạ tầng metric, runner, seed, regression guard và baseline adapters B1/B2/B3 đã tồn tại; `CompositionState` và delayed-stroke scheduler vẫn chưa tồn tại trong production. Chương 4 chỉ được điền kết quả sau PR3–PR5 cùng các gate dữ liệu/phần cứng liên quan.
+Tại thời điểm cập nhật, hạ tầng metric, runner, seed, regression guard và baseline adapters B1/B2/B3 đã tồn tại; `CompositionState` đang được tích hợp trong PR3 theo slice, còn delayed-stroke scheduler PR4 chưa hoàn tất. E1 chỉ có dữ liệu DEV phần mềm; Chương 4 chỉ được điền kết quả chính thức sau các gate PR3–PR5 và kiểm chứng vật lý tương ứng. RQ4/RQ5 phải được báo cáo theo tiến độ và bằng chứng riêng.
 
 ## Tài liệu tham khảo
 
