@@ -809,6 +809,45 @@ def can_ligature(prev_char, curr_char):
     return ex != 'none' and en in ('mid', 'baseline')
 
 
+def _order_pr3_secondary_strokes(base_strokes, secondary_strokes, secondary_meta):
+    """Shorten pen-up travel after the base, preserving stroke order within each glyph."""
+    if not base_strokes or len(secondary_strokes) < 2:
+        return secondary_strokes, secondary_meta
+
+    groups = []
+    for stroke, meta in zip(secondary_strokes, secondary_meta):
+        char_idx = meta["meta"]["char_idx"]
+        if not groups or groups[-1][0] != char_idx:
+            groups.append((char_idx, []))
+        groups[-1][1].append((stroke, meta))
+
+    remaining = list(groups)
+    ordered = []
+    cursor = base_strokes[-1][-1]
+    while remaining:
+        def distance_to_group(i):
+            first_stroke = remaining[i][1][0][0]
+            return float(np.linalg.norm(first_stroke[0] - cursor)), i
+
+        index = min(range(len(remaining)), key=distance_to_group)
+        _, group = remaining.pop(index)
+        ordered.extend(group)
+        cursor = group[-1][0][-1]
+
+    def travel(items):
+        distance = 0.0
+        previous = base_strokes[-1][-1]
+        for stroke, _ in items:
+            distance += float(np.linalg.norm(stroke[0] - previous))
+            previous = stroke[-1]
+        return distance
+
+    original = list(zip(secondary_strokes, secondary_meta))
+    if travel(ordered) >= travel(original):
+        return secondary_strokes, secondary_meta
+    return [stroke for stroke, _ in ordered], [meta for _, meta in ordered]
+
+
 # ----------------------------- Cấu Hình Phong Cách & Font -----------------------------
 
 STYLE_CONFIGS = {
@@ -1568,6 +1607,10 @@ def _text_to_strokes_impl(
                                 "char_idx": char_idx,
                             },
                         })
+
+            if algorithm_mode == "pr3_composition":
+                word_secondary_strokes, word_secondary_meta = _order_pr3_secondary_strokes(
+                    word_base_strokes, word_secondary_strokes, word_secondary_meta)
 
             curr_x = tmp_x
 

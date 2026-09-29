@@ -269,3 +269,17 @@ E1 trong bảng lịch sử của Docs 09 ghi `PASS_CURRENT` vì runner và base
 **Gate còn mở:** (1) TV2 ký human sign-off R01–R03 và recheck ca biên hình học mới; (2) xử lý E1 như trên; (3) chốt biến thiên style của PR3 mà vẫn bảo đảm geometry được chấm khớp geometry render. Physical calibration và formal benchmark vẫn là downstream gates độc lập.
 
 **TV2 recheck tại `73bc9e2` (2026-09-29):** AI recheck ghi R01–R03 `VERIFIED_CLOSED`, còn `TV2_HUMAN_SIGN_OFF: PENDING`. TV2 phát hiện thêm ca biên `np.allclose` dùng relative tolerance mặc định tại tọa độ lớn. TV4 đã đổi so khớp cổng sang `rtol=0` và thêm test tự động cho off-port touch, overlap tại exit và near-port overlap; nhóm PR3 liên quan đạt 30/30, toàn bộ test được Git theo dõi đạt **233 passed**. Cần TV2 recheck commit sửa ca biên trước khi coi phần hình học chuyển tiếp đã ký xong.
+
+## 12. E1 DEV dry-run sau tối ưu thứ tự nét phụ (2026-09-29)
+
+TV2 đã ký riêng shared transition tại `0cf3de1` trên PR #35 cho mã TV4 `1aa6ce2`. PR3 exit sign-off vẫn mở. TV4 tiếp tục E1 bằng cách xếp lại các **nhóm nét phụ/dấu sau thân chữ** theo khoảng cách từ vị trí bút hiện tại, giữ nguyên thứ tự nét trong từng ký tự và chỉ nhận thứ tự mới nếu quãng đường trong từ giảm. Hình học từng nét, state/transition E4, B1/B2/B3 và hardware không đổi. Renderer và trace cùng dùng thứ tự mới.
+
+Đo bằng `build_benchmark_rows` trên **20 từ DEV đóng băng**, hai font `oly`/`omni_casual`, bốn seed chuẩn `42, 100, 2026, 999999`, cùng style mặc định `hand_hocsinh` cho cả ba method. Mỗi ô là tổng `pen_lift_distance_mm` của 80 ca theo font (đơn vị mm):
+
+| Font | B1 Static | B2 Greedy | Proposed PR3 |
+| :--- | ---: | ---: | ---: |
+| `oly` | 2167.473 | 2127.310 | **1941.020** |
+| `omni_casual` | 2606.385 | 2578.424 | **2396.828** |
+| **Tổng 160 ca/method** | **4773.858** | **4705.734** | **4337.848** |
+
+Proposed giảm **9.133% so B1** và **7.818% so B2** trên ma trận DEV này; E1 đạt tiêu chí so sánh phần mềm. Regression test `test_pr3_e1_dev_acceptance_penup_beats_b1_and_b2` khóa thêm mẫu DEV acceptance 10 từ, font `cursive`, seed 42 và collision count bằng 0; test thứ tự nhóm và trace bảo vệ hình học. Toàn bộ test được Git theo dõi cùng `backend/test_handwriting_validation.py`: **236 passed, 1 warning**. Đây là technical DEV dry-run, chưa dùng HOLDOUT và chưa phải benchmark chính thức; quyết định biến thiên style và PR3 exit sign-off vẫn cần hoàn tất.
