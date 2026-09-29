@@ -264,19 +264,38 @@ def record_profile_crop_provenance(
 
     Returns:
         Đường dẫn tệp ledger vừa được ghi/cập nhật.
+
+    Raises:
+        ValueError: Nếu ô cắt thiếu scan_id hoặc cell_id/sample_id hợp lệ (fail-closed).
     """
     ledger_p = Path(ledger_path)
     ledger_p.parent.mkdir(parents=True, exist_ok=True)
 
     records: List[Dict[str, Any]] = []
     for item in used_crops_metadata:
-        c_scan_id = item.get("scan_id") or scan_id or "UNKNOWN_SCAN"
-        c_cell_id = item.get("cell_id") or item.get("sample_id") or "UNKNOWN_CELL"
+        # Lọc nghiêm ngặt: chỉ ghi nhận ô thực sự hợp lệ cho dataset và không bị từ chối/rỗng
+        if not item.get("is_valid_for_dataset", item.get("is_valid", True)):
+            continue
+        if item.get("qc_status") in ("QC_REJECTED", "QC_EMPTY"):
+            continue
+
+        c_scan_id = item.get("scan_id") or scan_id
+        c_cell_id = item.get("cell_id") or item.get("sample_id")
+
+        if not c_scan_id or not str(c_scan_id).strip():
+            raise ValueError(
+                f"Từ chối ghi nhận provenance cho profile '{profile_id}': crop thiếu 'scan_id' hợp lệ: {item}"
+            )
+        if not c_cell_id or not str(c_cell_id).strip():
+            raise ValueError(
+                f"Từ chối ghi nhận provenance cho profile '{profile_id}': crop thiếu 'cell_id' (hoặc 'sample_id') hợp lệ: {item}"
+            )
+
         record = {
             "profile_id": profile_id,
             "writer_id": writer_id,
-            "scan_id": c_scan_id,
-            "cell_id": c_cell_id,
+            "scan_id": str(c_scan_id).strip(),
+            "cell_id": str(c_cell_id).strip(),
             "sample_id": item.get("sample_id"),
             "crop_file": item.get("crop_file"),
             "qc_status": item.get("qc_status", "QC_AUTO_PASS"),
@@ -284,8 +303,36 @@ def record_profile_crop_provenance(
         }
         records.append(record)
 
-    with open(ledger_p, "a", encoding="utf-8") as f:
-        for r in records:
+    # Đọc ledger hiện tại để xử lý chạy lại một cách xác định (idempotent / deduplication)
+    existing_records: List[Dict[str, Any]] = []
+    if ledger_p.exists():
+        with open(ledger_p, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    row = json.loads(line)
+                    # Giữ lại các bản ghi của các profile_id khác, ghi đè/thay thế bản ghi của profile_id này
+                    if row.get("profile_id") != profile_id:
+                        existing_records.append(row)
+                except json.JSONDecodeError:
+                    pass
+
+    # Gộp danh sách bản ghi mới
+    all_records = existing_records + records
+
+    # Sắp xếp xác định (deterministic ordering) theo (profile_id, scan_id, cell_id)
+    all_records.sort(
+        key=lambda r: (
+            str(r.get("profile_id", "")),
+            str(r.get("scan_id", "")),
+            str(r.get("cell_id", "")),
+        )
+    )
+
+    with open(ledger_p, "w", encoding="utf-8") as f:
+        for r in all_records:
             f.write(json.dumps(r, ensure_ascii=False) + "\n")
 
     return ledger_p
@@ -297,6 +344,7 @@ def generate_writer_profile_from_report(
     crops_base_dir: Optional[Union[str, Path]] = None,
     dpi: int = 600,
     provenance_ledger_path: Optional[Union[str, Path]] = None,
+    require_provenance: bool = False,
 ) -> WriterProfile:
     """
     Sinh hồ sơ WriterProfile từ báo cáo quét ScanValidationReport (hoặc dict).
@@ -306,8 +354,17 @@ def generate_writer_profile_from_report(
         writer_id: Mã định danh người viết.
         crops_base_dir: Thư mục cơ sở chứa file ảnh crop.
         dpi: Độ phân giải quang học quét.
-        provenance_ledger_path: (Tùy chọn) Đường dẫn ghi nhật ký xuất xứ ô crop độc lập.
+        provenance_ledger_path: Đường dẫn ghi nhật ký xuất xứ ô crop độc lập.
+        require_provenance: Bắt buộc chỉ định provenance_ledger_path (mặc định False cho unit test cũ, True trong pilot).
     """
+    # Trong đường chạy pilot hoặc khi bật cờ require_provenance, bắt buộc phải có ledger_path
+    is_pilot = require_provenance or report_dict.get("is_pilot", False) or report_dict.get("pilot_run", False)
+    if is_pilot and not provenance_ledger_path:
+        raise ValueError(
+            f"Trong đường chạy pilot RQ4 cho {writer_id}, bắt buộc phải chỉ định provenance_ledger_path "
+            "để lưu vết xuất xứ ô cắt, không được để trống."
+        )
+
     crops_meta = report_dict.get("crops_metadata", [])
     crops_data: List[Dict[str, Any]] = []
     used_crops_meta: List[Dict[str, Any]] = []
@@ -317,6 +374,10 @@ def generate_writer_profile_from_report(
     for m in crops_meta:
         # Bỏ qua các ô bị từ chối hoặc ô trống
         if m.get("qc_status") in ("QC_REJECTED", "QC_EMPTY"):
+            continue
+
+        # Bỏ qua các ô không hợp lệ cho dataset
+        if not m.get("is_valid_for_dataset", True):
             continue
 
         crop_file_rel = m.get("crop_file")
@@ -334,7 +395,7 @@ def generate_writer_profile_from_report(
         crops_data.append({
             "crop_image": img,
             "context_tag": m.get("context_tag", "isolated"),
-            "is_valid": m.get("is_valid_for_dataset", True),
+            "is_valid": True,
         })
         used_crops_meta.append(m)
 
@@ -438,7 +499,7 @@ def main():
     parser.add_argument("--crops-dir", "-c", default=None, help="Base dir containing crop image files")
     parser.add_argument("--output-dir", "-o", default="dataset/processed/writer_profiles/profiles", help="Output directory for profile JSON")
     parser.add_argument("--summary", "-s", default="dataset/processed/writer_profiles/features/writer_features_summary.jsonl", help="Path to features summary JSONL")
-    parser.add_argument("--provenance-ledger", "-l", default=None, help="Optional path to crop provenance ledger JSONL")
+    parser.add_argument("--provenance-ledger", "-l", required=True, help="Đường dẫn file JSONL nhật ký xuất xứ ô cắt (Bắt buộc trong pilot RQ4 để không mất provenance)")
     parser.add_argument("--dpi", type=int, default=600, help="Scan DPI")
     args = parser.parse_args()
 
@@ -459,6 +520,7 @@ def main():
         crops_base_dir=crops_dir,
         dpi=args.dpi,
         provenance_ledger_path=args.provenance_ledger,
+        require_provenance=True,
     )
 
     out_file = save_writer_profile(

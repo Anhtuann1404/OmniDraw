@@ -335,3 +335,168 @@ def test_synthetic_features_fixture_integrity():
         assert "mean_slant_deg" in r
         assert "aspect_ratio_mean" in r
         assert "baseline_jitter_std" in r
+
+
+def test_provenance_ledger_excludes_invalid_dataset_crops(tmp_path):
+    """Kiểm thử bẫy lỗi 1: Các crop có is_valid_for_dataset=False tuyệt đối không được ghi vào ledger."""
+    dpi = 600
+    crops_dir = tmp_path / "crops"
+    crops_dir.mkdir(parents=True)
+
+    img = create_synthetic_char_crop(slant_deg=0.0)
+    valid_crop_file = "SMP_W003_001_valid.png"
+    invalid_crop_file = "SMP_W003_002_invalid.png"
+    cv2.imwrite(str(crops_dir / valid_crop_file), img)
+    cv2.imwrite(str(crops_dir / invalid_crop_file), img)
+
+    mock_report = {
+        "is_success": True,
+        "scan_id": "W003_S01_P01",
+        "form_type": "P01",
+        "input_file": "W003_S01_P01.png",
+        "target_dpi": dpi,
+        "overall_status": "SHEET_PASS",
+        "crops_metadata": [
+            {
+                "cell_id": "P01_C01",
+                "sample_id": "SMP_W003_001",
+                "context_tag": "isolated",
+                "crop_file": f"crops/{valid_crop_file}",
+                "qc_status": "QC_AUTO_PASS",
+                "is_valid_for_dataset": True,
+            },
+            {
+                "cell_id": "P01_C02",
+                "sample_id": "SMP_W003_002",
+                "context_tag": "isolated",
+                "crop_file": f"crops/{invalid_crop_file}",
+                "qc_status": "QC_AUTO_PASS",  # Dù QC_AUTO_PASS nhưng is_valid_for_dataset=False (bị loại)
+                "is_valid_for_dataset": False,
+            }
+        ]
+    }
+
+    ledger_file = tmp_path / "provenance" / "crop_provenance_ledger.jsonl"
+
+    profile = generate_writer_profile_from_report(
+        report_dict=mock_report,
+        writer_id="W003",
+        crops_base_dir=tmp_path,
+        dpi=dpi,
+        provenance_ledger_path=ledger_file,
+    )
+
+    assert profile.num_samples_analyzed == 1
+    assert ledger_file.exists()
+    with open(ledger_file, "r", encoding="utf-8") as f:
+        lines = [json.loads(line.strip()) for line in f if line.strip()]
+
+    # Chỉ ghi nhận đúng 1 ô hợp lệ thực sự tham gia tính toán
+    assert len(lines) == 1
+    assert lines[0]["cell_id"] == "P01_C01"
+    assert lines[0]["sample_id"] == "SMP_W003_001"
+
+
+def test_provenance_ledger_rejects_missing_traceability_ids(tmp_path):
+    """Kiểm thử bẫy lỗi 2: Từ chối fail-closed khi thiếu scan_id hoặc cell_id, không ghi UNKNOWN_*."""
+    ledger_file = tmp_path / "crop_provenance_ledger.jsonl"
+
+    # Ca A: Thiếu scan_id
+    crop_missing_scan = [{
+        "cell_id": "P01_C01",
+        "sample_id": "SMP_001",
+        "crop_file": "crops/c1.png",
+        "is_valid": True,
+    }]
+    with pytest.raises(ValueError, match="scan_id"):
+        record_profile_crop_provenance(
+            profile_id="profile_W001_v1",
+            writer_id="W001",
+            used_crops_metadata=crop_missing_scan,
+            ledger_path=ledger_file,
+            scan_id=None,
+        )
+
+    # Ca B: Thiếu cả cell_id và sample_id
+    crop_missing_cell = [{
+        "scan_id": "W001_S01_P01",
+        "crop_file": "crops/c1.png",
+        "is_valid": True,
+    }]
+    with pytest.raises(ValueError, match="cell_id"):
+        record_profile_crop_provenance(
+            profile_id="profile_W001_v1",
+            writer_id="W001",
+            used_crops_metadata=crop_missing_cell,
+            ledger_path=ledger_file,
+            scan_id="W001_S01_P01",
+        )
+
+    # Bảo đảm không tạo file hoặc không ghi rác UNKNOWN_*
+    if ledger_file.exists():
+        with open(ledger_file, "r", encoding="utf-8") as f:
+            content = f.read()
+        assert "UNKNOWN_SCAN" not in content
+        assert "UNKNOWN_CELL" not in content
+
+
+def test_provenance_ledger_deterministic_rerun_no_duplicates(tmp_path):
+    """Kiểm thử bẫy lỗi 3: Chạy lại cùng một profile xử lý một cách xác định (idempotent, không tạo dòng trùng)."""
+    ledger_file = tmp_path / "crop_provenance_ledger.jsonl"
+
+    crops_w1 = [
+        {"cell_id": "P01_C01", "sample_id": "SMP_W001_001", "scan_id": "W001_S01_P01"},
+        {"cell_id": "P01_C02", "sample_id": "SMP_W001_002", "scan_id": "W001_S01_P01"},
+    ]
+
+    # Lần chạy 1 cho W001
+    record_profile_crop_provenance("profile_W001_v1", "W001", crops_w1, ledger_file)
+    with open(ledger_file, "r", encoding="utf-8") as f:
+        lines_run1 = [line.strip() for line in f if line.strip()]
+    assert len(lines_run1) == 2
+
+    # Lần chạy 2 (chạy lại W001): Số dòng phải giữ nguyên là 2 (không bị nhân đôi lên 4)
+    record_profile_crop_provenance("profile_W001_v1", "W001", crops_w1, ledger_file)
+    with open(ledger_file, "r", encoding="utf-8") as f:
+        lines_run2 = [line.strip() for line in f if line.strip()]
+    assert len(lines_run2) == 2
+    assert lines_run2 == lines_run1
+
+    # Thêm W002
+    crops_w2 = [
+        {"cell_id": "P01_C01", "sample_id": "SMP_W002_001", "scan_id": "W002_S01_P01"},
+    ]
+    record_profile_crop_provenance("profile_W002_v1", "W002", crops_w2, ledger_file)
+    with open(ledger_file, "r", encoding="utf-8") as f:
+        lines_run3 = [json.loads(line.strip()) for line in f if line.strip()]
+    assert len(lines_run3) == 3
+    profiles_recorded = [r["profile_id"] for r in lines_run3]
+    assert profiles_recorded == ["profile_W001_v1", "profile_W001_v1", "profile_W002_v1"]
+
+
+def test_pilot_mode_requires_provenance_ledger(tmp_path):
+    """Kiểm thử yêu cầu pilot: Bắt buộc chỉ định provenance ledger, không âm thầm bỏ qua."""
+    mock_report = {
+        "is_success": True,
+        "is_pilot": True,
+        "scan_id": "W001_S01_P01",
+        "form_type": "P01",
+        "crops_metadata": []
+    }
+
+    # Bị từ chối vì is_pilot=True nhưng không truyền provenance_ledger_path
+    with pytest.raises(ValueError, match="chỉ định provenance_ledger_path"):
+        generate_writer_profile_from_report(
+            report_dict=mock_report,
+            writer_id="W001",
+            provenance_ledger_path=None,
+        )
+
+    # Khi require_provenance=True cũng phải từ chối
+    with pytest.raises(ValueError, match="chỉ định provenance_ledger_path"):
+        generate_writer_profile_from_report(
+            report_dict={"is_success": True, "crops_metadata": []},
+            writer_id="W001",
+            provenance_ledger_path=None,
+            require_provenance=True,
+        )

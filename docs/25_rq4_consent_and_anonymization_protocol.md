@@ -163,9 +163,14 @@ Mọi ô viết tay hoặc mẫu bóc tách trải qua 5 trạng thái kiểm đ
 1. **Hồ sơ `WriterProfile` KHÔNG chứa trường `provenance_manifest` bên trong JSON profile:**
    - Mọi metadata xuất xứ được tách rời hoàn toàn khỏi đối tượng profile để bảo vệ tính bất biến của JSON Schema.
 2. **Cơ chế Truy vết Xuất xứ Cấp độ Ô Cắt (Crop-level Provenance Ledger) cho Pilot:**
-   - Để bảo toàn xuất xứ dữ liệu mà không làm biến dạng schema JSON của `WriterProfile`, TV1 đã thiết lập cơ chế ghi nhật ký độc lập thông qua hàm `record_profile_crop_provenance()` trong `backend/writer_profile/profile_generator.py` (tham số `--provenance-ledger`).
-   - Tệp nhật ký lưu tại `dataset/processed/writer_profiles/provenance/crop_provenance_ledger.jsonl`, ghi nhận bộ ba định danh (`profile_id`, `scan_id`, `cell_id`/`sample_id`) kèm trạng thái QC của từng ô cắt thực tế được nạp vào tính toán profile trong đợt pilot P01–P04.
-   - Cơ chế này hoàn toàn tách biệt khỏi cấu trúc 9 trường dữ liệu của `writer_profile.schema.json`, bảo đảm truy vết 100% từ hồ sơ phong cách ngược về đúng tọa độ ô quét ban đầu.
+   - Để bảo toàn xuất xứ dữ liệu mà không làm biến dạng schema JSON của `WriterProfile`, TV1 đã thiết lập cơ chế ghi nhật ký độc lập thông qua hàm `record_profile_crop_provenance()` trong `backend/writer_profile/profile_generator.py` (tham số `--provenance-ledger` bắt buộc trong đường chạy pilot).
+   - Tệp nhật ký lưu tại `dataset/processed/writer_profiles/provenance/crop_provenance_ledger.jsonl`, ghi nhận bộ ba định danh (`profile_id`, `scan_id`, `cell_id`/`sample_id`) kèm trạng thái QC của các ô cắt thực tế được nạp vào tính toán profile trong đợt pilot P01–P04.
+   - **Quy tắc Kiểm định Chặt chẽ (Fail-Closed & Idempotency):**
+     - *Lọc nghiêm ngặt:* Chỉ ghi nhận các crop thực sự tham gia tính toán profile (`is_valid_for_dataset=True`, không bị từ chối QC hoặc rỗng).
+     - *Từ chối bản ghi thiếu mã:* Nếu ô cắt thiếu `scan_id` hoặc `cell_id`/`sample_id`, hệ thống lập tức ném ngoại lệ `ValueError` thay vì ghi các nhãn giữ chỗ không xác định (`UNKNOWN_*`).
+     - *Xác định khi chạy lại (Idempotent):* Khi chạy lại cùng một `profile_id`, hệ thống ghi đè/thay thế bản ghi cũ của profile đó và sắp xếp có trật tự, tuyệt đối không tạo dòng trùng lặp.
+     - *Bắt buộc trong Pilot:* Đường chạy pilot yêu cầu bắt buộc chỉ định tệp ledger (`require_provenance=True` hoặc CLI `--provenance-ledger`), không cho phép để trống rồi âm thầm bỏ qua.
+   - Cơ chế này hoàn toàn tách biệt khỏi cấu trúc 9 trường dữ liệu của `writer_profile.schema.json`, từng bước thiết lập và kiểm chuẩn liên kết truy vết thực nghiệm từ hồ sơ phong cách ngược về tọa độ ô quét ban đầu.
 3. **Chính sách Loại trừ Git & Phạm vi Chia sẻ Dữ liệu (Git Exclusion & Release Policy):**
    - Mặc định loại trừ khỏi Git (`.gitignore`):
      - `dataset/raw/manifests/`: Chứa toàn bộ metadata quét chi tiết và nhật ký dị thường.
