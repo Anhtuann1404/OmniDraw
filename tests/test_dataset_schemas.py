@@ -366,6 +366,10 @@ def test_validate_manifest_record_fail_closed_iso8601():
         "2026-99-99T99:99:99Z",
         "2026-02-30T10:00:00Z",  # Ngày 30 tháng 2 không tồn tại
         "2026-13-01T10:00:00Z",  # Tháng 13 không tồn tại
+        "2026-09-25T10:00:00",  # Thiếu timezone (offset hoặc Z) - vi phạm format: date-time
+        "2026-09-25 10:00:00",  # Thiếu timezone
+        "2026-09-25T10:00:00.123456",  # Thiếu timezone
+        "2026-09-25T10:00:00+25:00",  # Múi giờ vượt quá giới hạn hợp lệ
         123456789,
         None,
         "",
@@ -376,6 +380,19 @@ def test_validate_manifest_record_fail_closed_iso8601():
         is_valid, errors = validate_manifest_record(rec)
         assert is_valid is False
         assert any("scan_timestamp" in err for err in errors)
+
+    # Các chuỗi date-time có múi giờ hợp lệ phải PASS
+    for valid_ts in [
+        "2026-09-25T10:00:00Z",
+        "2026-09-25T10:00:00z",
+        "2026-09-25T10:00:00+07:00",
+        "2026-09-25T10:00:00-05:00",
+        "2026-09-25T10:00:00.123Z",
+    ]:
+        rec = dict(base_record)
+        rec["scan_timestamp"] = valid_ts
+        is_valid, errors = validate_manifest_record(rec)
+        assert is_valid is True, f"Timestamp hợp lệ bị từ chối: {valid_ts}, lỗi: {errors}"
 
 
 def test_validate_manifest_record_fail_closed_numbers_bool_nan_inf():
@@ -399,8 +416,8 @@ def test_validate_manifest_record_fail_closed_numbers_bool_nan_inf():
         "qc_operator": "TV1",
     }
 
-    # 1. optical_dpi không nhận bool (True), float, NaN, Inf
-    for bad_dpi in [True, False, float("nan"), float("inf"), -float("inf"), "600", 149]:
+    # 1. optical_dpi không nhận bool (True), float, NaN, Inf, và số nguyên cực lớn (Overflow)
+    for bad_dpi in [True, False, float("nan"), float("inf"), -float("inf"), "600", 149, 10**1000]:
         rec = dict(base_record)
         rec["optical_dpi"] = bad_dpi
         is_valid, errors = validate_manifest_record(rec)
@@ -415,9 +432,9 @@ def test_validate_manifest_record_fail_closed_numbers_bool_nan_inf():
         assert is_valid is False
         assert any("is_spare" in err for err in errors)
 
-    # 3. calibration_metrics chứa bool, NaN, Inf
+    # 3. calibration_metrics chứa bool, NaN, Inf, OverflowError (10**1000)
     for field_name in ["ruler_length_mm", "ruler_error_mm", "square_aspect_ratio", "deskew_angle_deg"]:
-        for bad_val in [True, False, float("nan"), float("inf"), -float("inf"), "0.0"]:
+        for bad_val in [True, False, float("nan"), float("inf"), -float("inf"), "0.0", 10**1000, -10**1000]:
             rec = dict(base_record)
             rec["calibration_metrics"] = dict(base_record["calibration_metrics"])
             rec["calibration_metrics"][field_name] = bad_val
@@ -518,8 +535,8 @@ def test_validate_ca_vhc_annotation_fail_closed_comprehensive():
         },
     }
 
-    # 2. timestamp ISO 8601 không hợp lệ
-    for bad_ts in ["not_iso", "2026-02-30T10:00:00Z", 12345]:
+    # 2. timestamp ISO 8601 không hợp lệ (kể cả thiếu múi giờ theo format: date-time)
+    for bad_ts in ["not_iso", "2026-02-30T10:00:00Z", "2026-09-25T10:00:00", 12345]:
         ann = dict(base_annotation)
         ann["timestamp"] = bad_ts
         is_valid, errors = validate_ca_vhc_annotation(ann)
@@ -533,8 +550,8 @@ def test_validate_ca_vhc_annotation_fail_closed_comprehensive():
     assert is_valid is False
     assert any("diacritics[0].type" in err for err in errors)
 
-    # 4. diacritics[0].bounding_box chứa bool, NaN, Inf
-    for bad_coord in [True, float("nan"), float("inf")]:
+    # 4. diacritics[0].bounding_box chứa bool, NaN, Inf, OverflowError (10**1000)
+    for bad_coord in [True, float("nan"), float("inf"), 10**1000]:
         ann = dict(base_annotation)
         ann["diacritics"] = [
             {
@@ -547,8 +564,8 @@ def test_validate_ca_vhc_annotation_fail_closed_comprehensive():
         assert is_valid is False
         assert any("bounding_box" in err for err in errors)
 
-    # 5. geometry bounding_box chứa bool, NaN, Inf
-    for bad_coord in [True, float("nan"), float("inf")]:
+    # 5. geometry bounding_box chứa bool, NaN, Inf, OverflowError (10**1000)
+    for bad_coord in [True, float("nan"), float("inf"), 10**1000]:
         ann = dict(base_annotation)
         ann["geometry"] = dict(base_annotation["geometry"])
         ann["geometry"]["bounding_box"] = [100.0, 20.0, bad_coord, 150.0]
@@ -556,14 +573,18 @@ def test_validate_ca_vhc_annotation_fail_closed_comprehensive():
         assert is_valid is False
         assert any("bounding_box" in err for err in errors)
 
-    # 6. geometry baseline_y, base_anchor, diacritic_offset chứa NaN/Inf/bool
+    # 6. geometry baseline_y, base_anchor, diacritic_offset chứa NaN/Inf/bool/Overflow
     for f_name, bad_val in [
         ("baseline_y", True),
         ("baseline_y", float("nan")),
+        ("baseline_y", 10**1000),
         ("base_anchor", [True, 50.0]),
         ("base_anchor", [140.0, float("inf")]),
+        ("base_anchor", [10**1000, 50.0]),
         ("diacritic_offset", [float("nan"), 0.0]),
+        ("diacritic_offset", [10**1000, -0.20]),
         ("clearance_box", [95.0, 15.0, True, 155.0]),
+        ("clearance_box", [95.0, 15.0, 10**1000, 155.0]),
     ]:
         ann = dict(base_annotation)
         ann["geometry"] = dict(base_annotation["geometry"])
@@ -572,8 +593,8 @@ def test_validate_ca_vhc_annotation_fail_closed_comprehensive():
         assert is_valid is False
         assert any(f_name in err for err in errors)
 
-    # 7. quality_flags legibility_score là bool (True), NaN, float
-    for bad_score in [True, False, float("nan"), 3.5, 0, 6]:
+    # 7. quality_flags legibility_score là bool (True), NaN, float, Overflow (10**1000)
+    for bad_score in [True, False, float("nan"), 3.5, 0, 6, 10**1000]:
         ann = dict(base_annotation)
         ann["quality_flags"] = dict(base_annotation["quality_flags"])
         ann["quality_flags"]["legibility_score"] = bad_score
@@ -590,3 +611,78 @@ def test_validate_ca_vhc_annotation_fail_closed_comprehensive():
             is_valid, errors = validate_ca_vhc_annotation(ann)
             assert is_valid is False
             assert any(flag_name in err for err in errors)
+
+
+def test_schema_validator_overflow_and_rfc3339_regression():
+    """
+    Regression test chuyên sâu theo review TV4:
+    1. _is_valid_float(10**1000) và _is_valid_int(10**1000) trả về False thay vì ném OverflowError.
+    2. _is_valid_iso8601() bắt buộc có múi giờ (Z hoặc offset +/-HH:MM), từ chối chuỗi thiếu múi giờ.
+    3. Toàn bộ trường số của manifest và annotation trả về validation error thay vì crash validator.
+    """
+    from backend.scan_validator.schema_validator import (
+        _is_valid_float,
+        _is_valid_int,
+        _is_valid_iso8601,
+    )
+
+    # 1. Trực tiếp kiểm thử các helper functions
+    assert _is_valid_float(10**1000) is False
+    assert _is_valid_float(-10**1000) is False
+    assert _is_valid_int(10**1000) is False
+    assert _is_valid_int(-10**1000) is False
+
+    assert _is_valid_iso8601("2026-09-25T10:00:00") is False  # Thiếu timezone
+    assert _is_valid_iso8601("2026-09-25 10:00:00") is False  # Thiếu timezone
+    assert _is_valid_iso8601("2026-09-25T10:00:00Z") is True
+    assert _is_valid_iso8601("2026-09-25T10:00:00+07:00") is True
+    assert _is_valid_iso8601("2026-09-25T10:00:00-05:00") is True
+
+    # 2. Manifest record với ruler_length_mm = 10**1000 không crash mà trả lỗi hợp lệ
+    manifest_rec = {
+        "scan_id": "W001_S01_P01",
+        "writer_id": "W001",
+        "session_id": "S01",
+        "page_id": "P01",
+        "is_spare": False,
+        "scan_timestamp": "2026-09-25T10:00:00Z",
+        "scanner_model": "Epson Perfection V39 II",
+        "optical_dpi": 600,
+        "calibration_metrics": {
+            "ruler_length_mm": 10**1000,
+            "ruler_error_mm": 0.0,
+            "square_aspect_ratio": 1.0,
+            "deskew_angle_deg": 0.0,
+        },
+        "qc_status": "QC_AUTO_PASS",
+        "qc_operator": "TV1",
+    }
+    is_valid, errors = validate_manifest_record(manifest_rec)
+    assert is_valid is False
+    assert any("ruler_length_mm" in err for err in errors)
+
+    # 3. Annotation với baseline_y = 10**1000 không crash mà trả lỗi hợp lệ
+    annotation_rec = {
+        "sample_id": "SMP_W001_00421",
+        "writer_id": "W001",
+        "source_image_id": "W001_S01_P01.png",
+        "char_raw": "ế",
+        "unicode_nfd": "e\u0302\u0301",
+        "base_char": "e",
+        "diacritics": [],
+        "context_info": {"position": "isolated"},
+        "geometry": {
+            "bounding_box": [100.0, 20.0, 180.0, 150.0],
+            "baseline_y": 10**1000,
+            "base_anchor": [140.0, 50.0],
+            "diacritic_offset": [0.0, 0.0],
+        },
+        "quality_flags": {
+            "legibility_score": 5,
+            "is_degenerate": False,
+            "is_ambiguous": False,
+        },
+    }
+    is_valid, errors = validate_ca_vhc_annotation(annotation_rec)
+    assert is_valid is False
+    assert any("baseline_y" in err for err in errors)
