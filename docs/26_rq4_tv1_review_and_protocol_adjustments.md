@@ -47,62 +47,65 @@ TV1 đã thiết lập bộ kiểm thử thực nghiệm chuyên sâu tại [`te
 - **Hệ quả sai số:**
   - Không thể trích xuất được khoảng cách giữa các ký tự trong từ (`char_spacing`). Hàm buộc phải rơi về giá trị fallback mặc định ($0.25$).
 
-### 2.3. Sự Kiên Cố Hình Học của Trang P01 (Isolated Character Cells)
-- **Thực nghiệm xác nhận:** Do cấu trúc trang P01 quy định mỗi ô viết chỉ chứa duy nhất 1 ký tự (ground truth đã biết trước), toàn bộ nét trong ô được gom trọn vẹn thành 1 tổ hợp ký tự (`char_stroke_groups`).
-- **Kết quả:**
-  - Tỷ lệ khung chữ của tổ hợp `ế` đạt chuẩn xác $0.78$ (nằm hoàn hảo trong ngưỡng học sinh $0.4..1.2$).
-  - Điểm đáy chân dòng lấy $\max(y)$ của toàn bộ nét $\rightarrow$ tự động bắt đúng đáy thân chữ 'e', loại bỏ hoàn toàn nhiễu dấu phía trên, giữ `baseline_jitter_std` đúng bằng $0.0\,\text{mm}$.
+### 2.3. Khảo sát Hình học của Trang P01 (Isolated Character Cells) trên Ảnh Giả lập
+- **Thực nghiệm xác nhận:** Trang P01 gồm **24 ô định chuẩn** (lưới 4 × 6 theo Docs 20 Section 3.1). Vì mỗi ô viết chỉ chứa duy nhất 1 ký tự đích đã biết trước (known isolated character ground truth), toàn bộ nét trong ô được gom thành 1 tổ hợp ký tự (`char_stroke_groups`).
+- **Kết quả trên test giả lập:**
+  - Tỷ lệ khung chữ của tổ hợp `ế` đo được xấp xỉ $0.78$ (nằm trong khoảng hình học học sinh $0.4..1.2$).
+  - Điểm đáy chân dòng lấy $\max(y)$ của toàn bộ nét $\rightarrow$ tự động bắt đúng đáy thân chữ 'e', tránh được việc dấu tách rời phía trên làm méo chân dòng, giữ `baseline_jitter_std` đúng bằng $0.0\,\text{mm}$ trong ca thử nghiệm này.
+- **Giới hạn cần lưu ý:** Kết quả này phản ánh điều kiện lý tưởng của ảnh nhân tạo. Trên ảnh quét chữ viết thật, nếu người viết viết tràn qua biên ô, đè lên đường kẻ quang học xám hoặc mực bị đứt gãy, việc phân đoạn ô vẫn có thể gặp sai số và bắt buộc phải qua bước rà soát QC bằng mắt (manual verification).
 
 ---
 
-## 3. Bốn Kiến nghị Hiệu chỉnh Protocol RQ4 Gửi TV4
+## 3. Bốn Đề xuất Kỹ thuật Sơ bộ (Preliminary Proposals) từ TV1 Gửi TV4 Thảo luận
 
-Để bảo đảm tính khoa học, độ tin cậy của dữ liệu và tránh tạo ra các bug tiềm ẩn khi TV4 tích hợp Writer Profile vào Trellis DAG engine, TV1 kiến nghị 4 điểm điều chỉnh kỹ thuật sau:
+Để đóng góp cho việc hoàn thiện protocol RQ4 và chuẩn bị dữ liệu cho TV4, TV1 nêu 4 đề xuất kỹ thuật sơ bộ dưới đây để nhóm cùng thảo luận (các bộ lọc và ngưỡng tham số **chưa khóa cứng**, sẽ được thử nghiệm và tinh chỉnh khi có dữ liệu pilot thực tế):
 
-### Kiến nghị 1: Áp dụng Chính sách Trích xuất Đặc trưng Phân tầng (2-Stage Profile Extraction)
-Không dùng chung một thuật toán phân đoạn ảnh cho tất cả các loại mẫu. Thay vào đó, phân tách rõ ràng nguồn trích xuất cho từng nhóm đặc trưng:
-- **Tầng 1 — Trích xuất Đặc trưng Cấu trúc Ký tự (Độc quyền từ P01):**
-  - Các chỉ số: `mean_slant_deg` (độ nghiêng), `aspect_ratio_mean` (tỷ lệ khung), `stroke_width_mean_mm` (bề rộng nét), và `diacritic_tendencies` (độ lệch mỏ neo dấu) **chỉ được trích xuất từ 72 ô ký tự rời của trang P01**.
-  - *Lý do:* P01 đã có ground truth cấp ô, miễn nhiễm 100% với lỗi tách dấu và dính chữ.
-- **Tầng 2 — Trích xuất Đặc trưng Dòng chảy & Khoảng cách (Từ P02, P03, P04):**
-  - Các chỉ số: `word_spacing_mean_ratio` (khoảng cách từ), `line_spacing_mean_ratio` (khoảng cách dòng), và `baseline_jitter_std` (dao động chân dòng) được trích xuất từ P03 (câu) và P04 (đoạn văn).
-  - Sử dụng **phép chiếu ngang (horizontal projection profile)** và hồi quy tuyến tính dòng kẻ để tìm trục baseline thực tế, thay vì lấy tọa độ đáy của từng connected component đơn lẻ.
+### Đề xuất 1: Thử nghiệm Chính sách Trích xuất Đặc trưng Phân tầng (2-Stage Profile Extraction Proposal)
+Đề xuất phân tách nguồn trích xuất cho từng nhóm đặc trưng theo tính chất hình học của mẫu:
+- **Tầng 1 — Đặc trưng Cấu trúc Ký tự (Từ 24 ô định chuẩn P01):**
+  - Các chỉ số: `mean_slant_deg` (độ nghiêng), `aspect_ratio_mean` (tỷ lệ khung), `stroke_width_mean_mm` (bề rộng nét), và `diacritic_tendencies` (độ lệch mỏ neo dấu) trích xuất từ 24 ô ký tự rời P01.
+  - *Lý do đề xuất:* P01 có nhãn ký tự đích đã biết trước theo từng ô, giảm thiểu tối đa hiện tượng tách dấu thành ký tự độc lập so với việc bóc tách tự do trên dòng chữ.
+- **Tầng 2 — Đặc trưng Dòng chảy & Khoảng cách (Từ P02, P03, P04):**
+  - Các chỉ số: `word_spacing_mean_ratio` (khoảng cách từ), `line_spacing_mean_ratio` (khoảng cách dòng), và `baseline_jitter_std` (dao động chân dòng) được khảo sát từ P03 (câu) và P04 (đoạn văn).
+  - Khuyến nghị nghiên cứu bổ sung **phép chiếu ngang (horizontal projection profile)** và hồi quy tuyến tính dòng kẻ để tìm trục baseline thực tế, thay vì phụ thuộc hoàn toàn vào tọa độ đáy của từng connected component đơn lẻ.
 
-### Kiến nghị 2: Bổ sung Bộ Lọc Thành Phần Dấu khi Ước lượng Baseline
+### Đề xuất 2: Nghiên cứu Bộ Lọc Dấu khi Ước lượng Baseline trên Dòng Chữ
 Trong module `profile_generator.py`, khi xử lý ảnh từ hoặc dòng chữ có chứa nhiều connected components:
-- Bổ sung ngưỡng lọc tọa độ Y: Chỉ những component có tọa độ tâm nằm ở nửa dưới của dòng chữ ($y_{\text{center}} > y_{\text{line\_median}}$) mới được tham gia vào tập điểm tính chân dòng (`baseline_points`).
-- Toàn bộ các component nhỏ nằm ở nửa trên (dấu mũ, dấu sắc, dấu hỏi, dấu ngã, dấu chấm 'i') bị loại khỏi tập điểm chân dòng để tránh làm vọt sai số `baseline_jitter_std`.
+- Đề xuất thử nghiệm ngưỡng lọc tọa độ Y: Chỉ những component có tọa độ tâm nằm ở nửa dưới của dòng chữ ($y_{\text{center}} > y_{\text{line\_median}}$) mới được xem xét làm ứng viên điểm chân dòng (`baseline_points`).
+- Cần kiểm chứng giải pháp này trên mẫu thật có gán nhãn trước khi chốt thành quy tắc chính thức, nhằm tránh lọc nhầm các chữ có đuôi descender (như 'g', 'y', 'p').
 
-### Kiến nghị 3: Khóa Hợp đồng Giao diện Tham số Giữa Profile và Engine (Contract Boundary)
-TV4 cần xác định danh mục tham số engine mà `WriterProfile` được phép can thiệp khi render văn bản mới:
-1. `global_style.mean_slant_deg` $\rightarrow$ Áp dụng vào góc xoay ma trận ngòi bút (kẹp trong biên an toàn $[-20^\circ, +20^\circ]$).
-2. `global_style.aspect_ratio_mean` $\rightarrow$ Scale hệ số co giãn ngang $s_x$ của glyph (kẹp trong $[0.85, 1.15]$).
+### Đề xuất 3: Khung Gợi ý Tham số Giữa Profile và Engine (Contract Discussion)
+TV1 đề xuất TV4 cân nhắc danh mục tham số engine mà `WriterProfile` có thể tác động khi render văn bản mới:
+1. `global_style.mean_slant_deg` $\rightarrow$ Áp dụng vào góc xoay ma trận ngòi bút (ví dụ kẹp trong biên an toàn $[-20^\circ, +20^\circ]$).
+2. `global_style.aspect_ratio_mean` $\rightarrow$ Scale hệ số co giãn ngang $s_x$ của glyph (ví dụ kẹp trong $[0.85, 1.15]$).
 3. `spacing.char_spacing_mean_ratio` $\rightarrow$ Điều chỉnh bước dịch ngòi bút $dx_{\text{advance}}$ giữa các ký tự.
 4. `spacing.word_spacing_mean_ratio` $\rightarrow$ Điều chỉnh khoảng cách phím cách (space width).
-5. `diacritic_tendencies.diacritic_offset_bias` $\rightarrow$ Bổ sung bias $[\Delta x, \Delta y]$ vào mỏ neo dấu gốc, **nhưng bắt buộc phải qua bộ kiểm tra va chạm clearance $\ge 0.20\,\text{mm}$ của TV4**; nếu vi phạm va chạm thì hủy bỏ bias cá nhân hóa để ưu tiên tính đúng đắn của chữ Việt.
+5. `diacritic_tendencies.diacritic_offset_bias` $\rightarrow$ Bổ sung bias $[\Delta x, \Delta y]$ vào mỏ neo dấu gốc, **nhưng bắt buộc phải tuân thủ bộ kiểm tra va chạm clearance $\ge 0.20\,\text{mm}$ của TV4**; nếu vi phạm va chạm thì hủy bỏ bias cá nhân hóa để ưu tiên tính đúng đắn của chữ Việt.
+*(Các ngưỡng trên là gợi ý biên kỹ thuật từ phía dữ liệu, TV4 toàn quyền quyết định contract tích hợp vào engine).*
 
-### Kiến nghị 4: Giữ Vững Tuyên bố Khoa học Trung thực (Faithful Claims)
+### Đề xuất 4: Nhất quán Tuyên bố Khoa học Trung thực (Faithful Claims)
 - Nhất quán với khuyến cáo của TV4: Toàn bộ kết quả kiểm thử trên dữ liệu giả lập (13 tests hiện có + 4 tests edge cases mới) **chỉ có giá trị kiểm chứng kỹ thuật phần mềm (software verification)**, tuyệt đối không được dùng để khẳng định "AI đã cá nhân hóa thành công phong cách người viết".
-- Kết luận khoa học về RQ4 chỉ được đưa ra sau khi hoàn tất đợt Pilot 3–5 người viết thật với bản in/quét 600 DPI, đánh giá mù hoán vị B0/B1/P và kiểm định độ đồng thuận giữa những người chấm theo đúng rubric của Doc 23.
+- Đợt Pilot 3–5 người viết **chỉ nhằm kiểm tra tính khả thi kỹ thuật (feasibility check)** của quy trình in, viết, quét 600 DPI, và pipeline bóc tách, tuyệt đối **không dùng để kết luận về năng lực tổng quát hóa hay hiệu quả của việc học phong cách cá nhân hóa**.
+- Kết luận khoa học về RQ4 chỉ được đưa ra sau khi hoàn tất nghiên cứu quy mô đủ lớn với bản in/quét 600 DPI, đánh giá mù hoán vị B0/B1/P và kiểm định độ đồng thuận giữa những người chấm theo đúng rubric của Doc 23.
 
 ---
 
-## 4. Kế hoạch Hành động Triển khai Pilot P01–P04 (3–5 Người viết)
+## 4. Kế hoạch Hành động Triển khai Pilot Khả thi P01–P04 (3–5 Người viết)
 
-Để sẵn sàng dữ liệu ngay khi thiết bị máy in và máy quét 600 DPI có mặt tại lab, TV1 đã chuẩn bị hoàn tất:
+Để sẵn sàng dữ liệu ngay khi thiết bị máy in và máy quét 600 DPI có mặt tại lab, TV1 chuẩn bị kế hoạch kiểm tra khả thi:
 
 | Bước | Nội dung công việc | Đầu ra kỹ thuật | Trách nhiệm |
 | :--- | :--- | :--- | :--- |
 | **B1** | Chuẩn bị bản in tiêu chuẩn P01–P04 (giấy A4 $80\,\text{g/m}^2$, mực xám $10\%$, 4 góc fiducial) | 5 bộ phiếu in định chuẩn P01–P04 | TV1 |
-| **B2** | Tuyển chọn 3–5 tình nguyện viên, giải thích mục đích và ký Cam kết Đồng thuận (Doc 25) | 5 bản giấy Consent có chữ ký (lưu offline) | TV1 |
+| **B2** | Trình duyệt mẫu Consent (Doc 25) với TV4 và Đơn vị phụ trách trước khi tuyển tình nguyện viên | Mẫu Consent đã được phê duyệt | TV1 + TV4 |
 | **B3** | Hướng dẫn viết mẫu bằng bút gel $0.5\,\text{mm}$ chuẩn, không dùng bút xóa, giữ nhịp tự nhiên | 5 bộ phiếu đã hoàn thành nét viết | TV1 + Tình nguyện viên |
 | **B4** | Quét phẳng quang học 600 DPI (True Color RGB, lossless PNG, không auto-filter) | 20 tệp ảnh quét gốc `W001_S01_P01.png`... | TV1 |
 | **B5** | Chạy Scan-Validation Pipeline (affine deskew, kiểm định thước, bóc tách ô mẫu, lập manifest) | `collection_manifest.jsonl` hợp lệ schema | TV1 |
-| **B6** | Chạy `profile_generator.py` theo chính sách 2 tầng, lưu `profile_W00x_v1.json` và bảng summary | 5 hồ sơ cá nhân hóa đạt chuẩn JSON Schema | TV1 |
+| **B6** | Chạy `profile_generator.py` thử nghiệm, ghi nhận nhật ký lỗi tách dấu/dính nét thực tế | Báo cáo feasibility & các ca thất bại | TV1 |
 
 ---
 
 ## 5. Kết luận & Đề xuất Bước tiếp theo
 
-1. TV1 đã hoàn thành việc đồng bộ toàn bộ tài liệu từ `f5445ef`, khóa an toàn `.gitignore` chống rò rỉ dữ liệu thật, ban hành quy chuẩn Consent & Ẩn danh hóa ([`docs/25`](25_rq4_consent_and_anonymization_protocol.md)), và lập trình bộ kiểm thử thực nghiệm bẫy lỗi tách dấu/dính chữ ([`tests/test_profile_generator_edge_cases.py`](../tests/test_profile_generator_edge_cases.py)).
-2. Kính chuyển bản báo cáo này đến **TV4** để thống nhất các điểm hiệu chỉnh kỹ thuật trên trước khi bắt đầu tích hợp Writer Profile vào engine.
+1. TV1 đã đồng bộ toàn bộ tài liệu từ `f5445ef`, khóa an toàn `.gitignore` chống rò rỉ dữ liệu thật, soạn thảo quy chuẩn Consent & Mã hóa định danh ([`docs/25`](25_rq4_consent_and_anonymization_protocol.md) ở trạng thái chờ duyệt), và lập trình bộ kiểm thử thực nghiệm bẫy lỗi tách dấu/dính chữ ([`tests/test_profile_generator_edge_cases.py`](../tests/test_profile_generator_edge_cases.py)).
+2. Kính chuyển bản báo cáo này đến **TV4** để cùng thảo luận và thống nhất các đề xuất kỹ thuật trước khi bắt đầu tích hợp Writer Profile vào engine. Chờ phê duyệt biểu mẫu Consent trước khi tiến hành Pilot.

@@ -186,12 +186,13 @@ def test_touching_cursive_ligature_anomaly():
 
 def test_isolated_p01_grouping_resilience():
     """
-    Thực nghiệm 3: Chứng minh tính chuẩn xác và kiên cố của trang P01 (Isolated Character Cells).
-    Vì mỗi ô P01 đã biết trước là 1 ký tự đơn lẻ (ground truth context='isolated'):
-    1. Toàn bộ nét của ô (kể cả dấu tách rời) được gom chung thành 1 ký tự duy nhất.
-    2. Điểm đáy baseline chỉ lấy giá trị y lớn nhất (đáy thân chữ), hoàn toàn miễn nhiễm
-       với việc dấu tách rời phía trên.
-    3. Tỷ lệ khung chữ và góc nghiêng nét được tính toán chính xác 100%.
+    Thực nghiệm 3: Khảo sát hành vi của trang P01 (Isolated Character Cells) trên ảnh nhân tạo.
+    Trong phạm vi test giả lập, vì mỗi ô P01 đã biết trước là 1 ký tự đơn lẻ (context='isolated'):
+    1. Toàn bộ nét của ô (kể cả dấu tách rời) được gom chung thành 1 cụm ký tự duy nhất.
+    2. Điểm đáy baseline lấy giá trị y lớn nhất (đáy thân chữ), tránh được hiện tượng dấu
+       tách rời phía trên làm méo chân dòng trong ca thử nghiệm này.
+    3. Tỷ lệ khung chữ và góc nghiêng nét được ước lượng hợp thức theo schema.
+    (Lưu ý: Đây là kiểm chứng logic trên dữ liệu nhân tạo; trên ảnh quét thật cần QC kiểm tra).
     """
     dpi = 600
     img_e = create_synthetic_accented_letter_image(dpi=dpi)
