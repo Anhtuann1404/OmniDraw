@@ -84,12 +84,10 @@ def _safe_repr(val: Any, max_len: int = 60) -> str:
 
 
 def _is_valid_int(val: Any, min_val: Optional[int] = None, max_val: Optional[int] = None) -> bool:
-    """Kiểm tra số nguyên hợp lệ, loại trừ bool, NaN, Inf hoặc kiểu không phải int."""
+    """Kiểm tra số nguyên hợp lệ, loại trừ bool, NaN, Inf hoặc kiểu không phải int (tuân thủ 100% JSON Schema)."""
     if type(val) is bool or not isinstance(val, int):
         return False
     try:
-        if val.bit_length() > 64:
-            return False
         if min_val is not None and val < min_val:
             return False
         if max_val is not None and val > max_val:

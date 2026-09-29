@@ -416,13 +416,20 @@ def test_validate_manifest_record_fail_closed_numbers_bool_nan_inf():
         "qc_operator": "TV1",
     }
 
-    # 1. optical_dpi không nhận bool (True), float, NaN, Inf, và số nguyên cực lớn (Overflow)
-    for bad_dpi in [True, False, float("nan"), float("inf"), -float("inf"), "600", 149, 10**1000]:
+    # 1. optical_dpi không nhận bool (True/False), float, NaN, Inf, string, và số nguyên < 150
+    for bad_dpi in [True, False, float("nan"), float("inf"), -float("inf"), "600", 149]:
         rec = dict(base_record)
         rec["optical_dpi"] = bad_dpi
         is_valid, errors = validate_manifest_record(rec)
         assert is_valid is False
         assert any("optical_dpi" in err for err in errors)
+
+    # optical_dpi chấp nhận số nguyên >= 150 hợp lệ (kể cả số nguyên lớn như 2**64, 10**100 do JSON Schema không quy định maximum)
+    for valid_dpi in [150, 300, 600, 1200, 2**64, 10**100]:
+        rec = dict(base_record)
+        rec["optical_dpi"] = valid_dpi
+        is_valid, errors = validate_manifest_record(rec)
+        assert is_valid is True, f"optical_dpi = {valid_dpi} phải hợp lệ nhưng trả về lỗi: {errors}"
 
     # 2. is_spare không nhận int (1/0) hay string
     for bad_spare in [1, 0, "true", None]:
@@ -616,9 +623,10 @@ def test_validate_ca_vhc_annotation_fail_closed_comprehensive():
 def test_schema_validator_overflow_and_rfc3339_regression():
     """
     Regression test chuyên sâu theo review TV4:
-    1. _is_valid_float(10**1000) và _is_valid_int(10**1000) trả về False thay vì ném OverflowError.
-    2. _is_valid_iso8601() bắt buộc có múi giờ (Z hoặc offset +/-HH:MM), từ chối chuỗi thiếu múi giờ.
-    3. Toàn bộ trường số của manifest và annotation trả về validation error thay vì crash validator.
+    1. _is_valid_float(10**1000) trả về False thay vì ném OverflowError (fail-closed cho trường float).
+    2. _is_valid_int() không gò ép giới hạn 64-bit tùy tiện nếu schema không yêu cầu; tuân thủ đúng min/max bounds.
+    3. _is_valid_iso8601() bắt buộc có múi giờ (Z hoặc offset +/-HH:MM), từ chối chuỗi thiếu múi giờ.
+    4. Toàn bộ trường số của manifest và annotation trả về validation error thay vì crash validator.
     """
     from backend.scan_validator.schema_validator import (
         _is_valid_float,
@@ -627,10 +635,22 @@ def test_schema_validator_overflow_and_rfc3339_regression():
     )
 
     # 1. Trực tiếp kiểm thử các helper functions
+    # Float fields: 10**1000 gây OverflowError khi float() -> fail-closed an toàn
     assert _is_valid_float(10**1000) is False
     assert _is_valid_float(-10**1000) is False
-    assert _is_valid_int(10**1000) is False
-    assert _is_valid_int(-10**1000) is False
+
+    # Int fields: số nguyên lớn (arbitrary precision) hợp lệ khi không có max_val,
+    # nhưng bị chặn đúng theo min_val / max_val
+    assert _is_valid_int(2**64) is True
+    assert _is_valid_int(10**100) is True
+    assert _is_valid_int(150, min_val=150) is True
+    assert _is_valid_int(2**64, min_val=150) is True
+    assert _is_valid_int(149, min_val=150) is False
+    assert _is_valid_int(10**1000, max_val=5) is False
+    assert _is_valid_int(6, min_val=1, max_val=5) is False
+    assert _is_valid_int(True) is False
+    assert _is_valid_int(False) is False
+    assert _is_valid_int(1.0) is False
 
     assert _is_valid_iso8601("2026-09-25T10:00:00") is False  # Thiếu timezone
     assert _is_valid_iso8601("2026-09-25 10:00:00") is False  # Thiếu timezone
