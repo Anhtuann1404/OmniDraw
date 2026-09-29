@@ -13,7 +13,7 @@ Trước khi gửi bất kỳ lệnh vẽ nào xuống máy vẽ vật lý, TV3 
 
 | STT | Hạng mục kiểm tra | Tiêu chuẩn đạt | Trạng thái |
 | :---: | :--- | :--- | :---: |
-| 1 | **Nguồn cấp điện (Power Supply)** | Adapter 9V–12V / 1.5A–2.1A cấp nguồn ổn định cho mạch EBB, đèn LED xanh sáng liên tục. | ⬜ Chưa kiểm tra |
+| 1 | **Nguồn cấp điện (Power Supply)** | Kiểm tra đúng nhãn nguồn (power adapter label) đi kèm phiên bản thiết bị được bàn giao trước khi cắm (chuẩn bo mạch EBB hỗ trợ 9V–12V DC, dòng tối thiểu 1.5A–2.1A, chân cắm barrel jack dương trong / center-positive; phổ biến là 9V/2.1A cho V3 chuẩn hoặc 12V/2A cho V3/A3/SE). Cấp nguồn ổn định cho bo mạch EBB, đèn LED xanh sáng liên tục. | ⬜ Chưa kiểm tra |
 | 2 | **Cáp kết nối USB/Serial** | Dây cáp cắm chắc chắn từ PC vào cổng USB của EBB, máy tính nhận diện thiết bị CDC COM port (trên Windows: Device Manager hiển thị cổng COM, trên Linux: `/dev/ttyACM0`). | ⬜ Chưa kiểm tra |
 | 3 | **Cơ cấu dây đai & Ổ bi (Belts & Pulleys)** | Dây đai GT2 hai trục X và Y có độ căng vừa phải (không chùng gây rơ bước, không quá căng làm quá tải động cơ bước). | ⬜ Chưa kiểm tra |
 | 4 | **Bút vẽ & Cơ cấu kẹp bút** | Bút được kẹp vuông góc $90^\circ$ so với mặt giấy, ngòi bút không bị lỏng khi di chuyển nhanh. | ⬜ Chưa kiểm tra |
@@ -179,3 +179,16 @@ python backend/hardware_adapter.py --benchmark-rq3 --mode fake
 python backend/hardware_adapter.py --benchmark-rq3 --mode physical
 ```
 
+### C. Thi công Tiêu bản Đầy đủ Khối A & B (Clearance Ladder & Acute Turns):
+```powershell
+# Chạy tiêu bản đầy đủ trên Simulator
+python backend/hardware_adapter.py --smoke-test --mode simulator --svg tests/fixtures/rq3_clearance_calibration_specimen.svg
+
+# Chạy tiêu bản đầy đủ trên Fake Driver
+python backend/hardware_adapter.py --smoke-test --mode fake --svg tests/fixtures/rq3_clearance_calibration_specimen.svg
+
+# Chạy tiêu bản đầy đủ trên Máy vẽ thật (BẮT BUỘC trước khi đo khoảng hở & đóng gate PASS_TV3_CALIBRATION)
+python backend/hardware_adapter.py --smoke-test --mode physical --svg tests/fixtures/rq3_clearance_calibration_specimen.svg
+```
+
+> **Lưu ý đóng gate:** Ba job Khối C (`--benchmark-rq3`) chỉ kiểm chuẩn động học trục Z và dải tốc độ. Bắt buộc phải thi công tiêu bản đầy đủ Khối A và B trên máy thật để đo đạc bề rộng nét mực, khoảng hở diacritic ($0.10 \to 0.70\,\text{mm}$) và độ nảy góc cua ($60^\circ \to 150^\circ$) mới đủ điều kiện nghiệm thu `PASS_TV3_CALIBRATION`.

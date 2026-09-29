@@ -83,11 +83,14 @@ Tiêu bản kiểm chuẩn được thiết kế trên khổ A4 ngang ($297 \tim
 [BƯỚC 2: Cố định giấy & Cài đặt lực ngòi]
       │
       ▼
-[BƯỚC 3: Chạy CLI Benchmark tự động (--benchmark-rq3)]
-  ├── Trích xuất 3 dải vận tốc độc lập (Khối C)
-  ├── Thiết lập adapter.set_speed() chuẩn % driver [8, 16, 24]%
-  ├── Giám sát bằng Dynamic Deadline + Chủ động Cancel nếu timeout
-  └── Ghi nhận 3 rows telemetry vào logs/hardware_metrics.csv
+[BƯỚC 3: Thi công Tiêu bản Kiểm chuẩn RQ3 trên Máy thật]
+  ├── [3.1] Thi công Tiêu bản Đầy đủ Khối A & B (--smoke-test --svg rq3_specimen.svg)
+  │     └── In trọn vẹn Clearance Ladder (0.10–0.70mm) & Acute Turns (60°–150°)
+  └── [3.2] Chạy Benchmark Động học 3 Dải Vận tốc Khối C (--benchmark-rq3)
+        ├── Trích xuất 3 dải vận tốc độc lập (20, 40, 60 mm/s)
+        ├── Thiết lập adapter.set_speed() chuẩn % driver [8, 16, 24]%
+        ├── Giám sát bằng Dynamic Deadline + Chủ động Cancel nếu timeout
+        └── Ghi nhận 3 rows telemetry vào logs/hardware_metrics.csv
       │
       ▼
 [BƯỚC 4: Để khô mực 15 phút & Quét phẳng 600 DPI]
@@ -102,15 +105,30 @@ Tiêu bản kiểm chuẩn được thiết kế trên khổ A4 ngang ($297 \tim
 ### Bước 1: Chuẩn bị máy & Cân bằng bàn vẽ
 1. Đặt máy vẽ trên mặt bàn đá hoặc gỗ phẳng vững chắc, không rung động.
 2. Dùng thước nivô (thủy bình) kiểm tra độ phẳng mặt bàn vẽ theo 2 trục X và Y.
-3. Cắm nguồn $12\text{V}/2\text{A}$ và cáp USB vào máy tính điều khiển.
+3. Kiểm tra nhãn nguồn (power adapter label) đi kèm phiên bản máy vẽ được bàn giao (mạch EBB hỗ trợ dải $9\text{V} - 12\text{V}\,\text{DC} / 1.5\text{A} - 2.1\text{A}$, đầu cắm barrel jack dương trong / center-positive; phổ biến là $9\text{V}/2.1\text{A}$ cho AxiDraw V3 tiêu chuẩn hoặc $12\text{V}/2\text{A}$ cho bản V3/A3/SE). Cắm đúng nguồn định mức và cắm cáp USB vào máy tính điều khiển.
 
 ### Bước 2: Cố định giấy & Cài đặt lực ngòi
 1. Dán phẳng 4 góc tờ giấy Double A A4 vào mặt bàn vẽ bằng băng dính giấy (washi tape), không làm căng phồng giấy.
 2. Gá bút Pentel EnerGel $0.5\,\text{mm}$ vào ngàm kẹp, điều chỉnh lò xo/đối trọng đạt lực tì $60 \pm 10\,\text{gf}$.
 3. Cho máy về gốc tọa độ máy (Home: $X=0, Y=0$) và kiểm tra hành trình nâng hạ bút tự do.
 
-### Bước 3: Chạy CLI Benchmark tự động
-1. Thực hiện lệnh benchmark tự động:
+### Bước 3: Thi công Tiêu bản Kiểm chuẩn RQ3 trên Máy thật
+
+> **RÀNG BUỘC ĐÓNG GATE (`PASS_TV3_CALIBRATION`):** Lệnh benchmark `--benchmark-rq3` chỉ thi công Khối C (3 dải vận tốc Z). **Tuyệt đối không coi 3 job Khối C là đủ để đóng gate.** Bắt buộc phải thực hiện cả Bước 3.1 (in toàn bộ Khối A và Khối B) và Bước 3.2 (đo đạc 3 dải vận tốc Khối C) trên máy thật trước khi chuyển sang đo đạc quang học và đóng gate nghiệm thu.
+
+#### Bước 3.1: Thi công Tiêu bản Đầy đủ Khối A & B (Thang khoảng hở & Góc cua)
+1. Chạy lệnh vẽ toàn bộ tiêu bản trên máy thật:
+   ```bash
+   python backend/hardware_adapter.py --smoke-test --mode physical --svg tests/fixtures/rq3_clearance_calibration_specimen.svg
+   ```
+2. Lệnh này vẽ trọn vẹn:
+   - **Khối A:** Thang kiểm tra khoảng hở diacritic 7 bậc ($0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70\,\text{mm}$).
+   - **Khối B:** Các góc cua bẻ hướng tiếp tuyến ($60^\circ, 90^\circ, 120^\circ, 150^\circ$).
+   - **Khối D:** Thước chuẩn quang học $50.00\,\text{mm}$ và ô vuông $20.00 \times 20.00\,\text{mm}$.
+3. Xác nhận trên bản vẽ giấy: Đầy đủ các đường nét của Khối A và B, không đứt nét, không va chạm kẹt cơ khí.
+
+#### Bước 3.2: Chạy Benchmark Tự động 3 Dải Vận tốc Khối C
+1. Chạy lệnh benchmark tự động:
    ```bash
    python backend/hardware_adapter.py --benchmark-rq3 --mode physical
    ```

@@ -114,7 +114,7 @@ Mỗi lượt chạy theo quy trình:
 | 1 | smoke_test_specimen.svg | simulator | PASS (CLI `--mode simulator`) | Đã hoàn thành qua CLI smoke-test |
 | 2 | bezier_length_test.svg | simulator | PASS (Pytest Suite) | Đã hoàn thành qua Pytest |
 | 3 | smoke_test_specimen.svg | fake | PASS (CLI `--mode fake`) | Đã hoàn thành (kiểm chứng ngắt/pause an toàn) |
-| 4 | output_tv2_art_mode_smoke.svg | simulator & fake | PASS (CLI `--smoke-test`) | Đã nghiệm thu TV2 bàn giao (Art Mode, 16 nét, 25 trường CSV, `actual_hardware_measured=False`) |
+| 4 | output_tv2_art_mode_smoke.svg | simulator & fake | PASS (CLI `--smoke-test --svg tests/fixtures/output_tv2_art_mode_smoke.svg`) | Đã chạy và kiểm chứng qua lệnh: `python backend/hardware_adapter.py --smoke-test --mode simulator/fake --svg tests/fixtures/output_tv2_art_mode_smoke.svg` (Art Mode, 16 nét, 25 trường CSV, `actual_hardware_measured=False`) |
 | 5 | smoke_test_specimen.svg | axidraw_real | **BLOCKED BY HARDWARE** | Chờ máy vẽ & cáp vật lý sẵn sàng |
 
 ---
@@ -226,9 +226,11 @@ Trong đó:
 - [ ] Kết nối cáp USB AxiDraw → PC, xác nhận COM port trong Device Manager.
 - [ ] Cập nhật `config/calibration_profile.yaml`: đặt `device.port` đúng COM port.
 - [ ] Chạy `python -m pytest tests/test_hardware_adapter.py -v` → tất cả PASS.
-- [ ] Gọi `adapter = AxiDrawAdapter(); adapter.connect()` → xác nhận `is_connected=True`.
-- [ ] Chạy smoke test vật lý: `python backend/hardware_adapter.py` (cần thêm __main__ block).
-- [ ] Lưu log vào `logs/smoke_test_YYYYMMDD.csv`.
+- [ ] Chạy kiểm tra kết nối từ gốc repo: `python -c "from backend.hardware_adapter import AxiDrawAdapter; ad = AxiDrawAdapter(); print('Connected:', ad.connect())"` → xác nhận `is_connected=True`.
+- [ ] Chạy smoke test vật lý: `python backend/hardware_adapter.py --smoke-test --mode physical`.
+- [ ] Chạy tiêu bản đầy đủ Khối A & B: `python backend/hardware_adapter.py --smoke-test --mode physical --svg tests/fixtures/rq3_clearance_calibration_specimen.svg`.
+- [ ] Chạy benchmark 3 dải vận tốc Khối C: `python backend/hardware_adapter.py --benchmark-rq3 --mode physical`.
+- [ ] Lưu log vào `logs/hardware_metrics.csv` và `logs/smoke_test_YYYYMMDD.csv`.
 - [ ] Chụp ảnh kết quả, đo sai số tọa độ, ghi vào `logs/coord_error_log.csv`.
 - [ ] Cập nhật `calibration_profile.yaml`: `verified_on_hardware: true`.
 - [ ] Cập nhật `docs/04_progress-log.md` với kết quả smoke test.
