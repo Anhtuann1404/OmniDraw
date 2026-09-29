@@ -73,23 +73,23 @@ logs/*.txt
 frontend/.vite/
 
 # =============================================================================
-# OmniDraw - Dữ liệu chữ viết thật, Manifest thô & Hồ sơ người viết (No-PII)
-# Mặc định chặn dữ liệu cá nhân/thô; chỉ bản tổng hợp được duyệt mới được chia sẻ.
+# OmniDraw - Dữ liệu chữ viết thật, Manifest thô, Hồ sơ người viết & Provenance (No-PII)
+# Mặc định chặn toàn bộ dữ liệu cá nhân, ảnh thô, manifest quét, hồ sơ phong cách và vector đặc trưng.
+# Lưu ý: Mọi bản xuất dữ liệu phục vụ chia sẻ kết quả phải là bản xuất riêng
+# được thẩm định và phê duyệt chính thức bởi TV4 / đơn vị phụ trách (không commit trực tiếp).
 # =============================================================================
 dataset/raw/images/
 dataset/raw/consent/
 dataset/raw/manifests/
 dataset/processed/ca_vhc/crops/
 dataset/processed/writer_profiles/profiles/
+dataset/processed/writer_profiles/features/
+dataset/processed/writer_profiles/provenance/
 dataset/processed/writer_profiles/profile_*.json
 *_pii.*
 *registry*.json
 *.tif
 *.tiff
-
-# Cho phép chia sẻ bản tổng hợp vector đặc trưng ẩn danh đã qua phê duyệt
-!dataset/processed/writer_profiles/features/
-!dataset/processed/writer_profiles/features/**
 
 # =========================
 # Node / Frontend Build

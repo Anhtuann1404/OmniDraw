@@ -241,17 +241,76 @@ def generate_writer_profile_from_crops(
     return profile
 
 
+def record_profile_crop_provenance(
+    profile_id: str,
+    writer_id: str,
+    used_crops_metadata: List[Dict[str, Any]],
+    ledger_path: Union[str, Path],
+    scan_id: Optional[str] = None,
+) -> Path:
+    """
+    Ghi nhật ký liên kết xuất xứ cấp ô cắt (crop-level provenance ledger) cho đợt pilot RQ4.
+
+    Lưu trữ độc lập dạng JSON Lines (không làm biến dạng cấu trúc JSON của WriterProfile),
+    ghi nhận bộ ba (profile_id, scan_id, cell_id/sample_id) của các ô cắt thực tế được
+    sử dụng để tổng hợp đặc trưng phong cách, bảo toàn tính truy vết cho nghiên cứu.
+
+    Args:
+        profile_id: Mã định danh hồ sơ phong cách (ví dụ: 'profile_W001_v1').
+        writer_id: Mã định danh người viết (ví dụ: 'W001').
+        used_crops_metadata: Danh sách metadata của các ô cắt đã được nạp và phân tích.
+        ledger_path: Đường dẫn tệp JSONL nhật ký xuất xứ.
+        scan_id: Mã định danh phiên quét/trang nếu metadata ô chưa có.
+
+    Returns:
+        Đường dẫn tệp ledger vừa được ghi/cập nhật.
+    """
+    ledger_p = Path(ledger_path)
+    ledger_p.parent.mkdir(parents=True, exist_ok=True)
+
+    records: List[Dict[str, Any]] = []
+    for item in used_crops_metadata:
+        c_scan_id = item.get("scan_id") or scan_id or "UNKNOWN_SCAN"
+        c_cell_id = item.get("cell_id") or item.get("sample_id") or "UNKNOWN_CELL"
+        record = {
+            "profile_id": profile_id,
+            "writer_id": writer_id,
+            "scan_id": c_scan_id,
+            "cell_id": c_cell_id,
+            "sample_id": item.get("sample_id"),
+            "crop_file": item.get("crop_file"),
+            "qc_status": item.get("qc_status", "QC_AUTO_PASS"),
+            "context_tag": item.get("context_tag", "isolated"),
+        }
+        records.append(record)
+
+    with open(ledger_p, "a", encoding="utf-8") as f:
+        for r in records:
+            f.write(json.dumps(r, ensure_ascii=False) + "\n")
+
+    return ledger_p
+
+
 def generate_writer_profile_from_report(
     report_dict: Dict[str, Any],
     writer_id: str,
     crops_base_dir: Optional[Union[str, Path]] = None,
     dpi: int = 600,
+    provenance_ledger_path: Optional[Union[str, Path]] = None,
 ) -> WriterProfile:
     """
     Sinh hồ sơ WriterProfile từ báo cáo quét ScanValidationReport (hoặc dict).
+
+    Args:
+        report_dict: Báo cáo quét hoặc từ điển kết quả scan validation.
+        writer_id: Mã định danh người viết.
+        crops_base_dir: Thư mục cơ sở chứa file ảnh crop.
+        dpi: Độ phân giải quang học quét.
+        provenance_ledger_path: (Tùy chọn) Đường dẫn ghi nhật ký xuất xứ ô crop độc lập.
     """
     crops_meta = report_dict.get("crops_metadata", [])
     crops_data: List[Dict[str, Any]] = []
+    used_crops_meta: List[Dict[str, Any]] = []
 
     base_p = Path(crops_base_dir) if crops_base_dir else None
 
@@ -277,12 +336,25 @@ def generate_writer_profile_from_report(
             "context_tag": m.get("context_tag", "isolated"),
             "is_valid": m.get("is_valid_for_dataset", True),
         })
+        used_crops_meta.append(m)
 
-    return generate_writer_profile_from_crops(
+    profile = generate_writer_profile_from_crops(
         writer_id=writer_id,
         crops_data=crops_data,
         dpi=dpi,
     )
+
+    if provenance_ledger_path is not None and used_crops_meta:
+        scan_id = report_dict.get("scan_id") or report_dict.get("input_file")
+        record_profile_crop_provenance(
+            profile_id=profile.profile_id,
+            writer_id=writer_id,
+            used_crops_metadata=used_crops_meta,
+            ledger_path=provenance_ledger_path,
+            scan_id=scan_id,
+        )
+
+    return profile
 
 
 def save_writer_profile(
@@ -366,6 +438,7 @@ def main():
     parser.add_argument("--crops-dir", "-c", default=None, help="Base dir containing crop image files")
     parser.add_argument("--output-dir", "-o", default="dataset/processed/writer_profiles/profiles", help="Output directory for profile JSON")
     parser.add_argument("--summary", "-s", default="dataset/processed/writer_profiles/features/writer_features_summary.jsonl", help="Path to features summary JSONL")
+    parser.add_argument("--provenance-ledger", "-l", default=None, help="Optional path to crop provenance ledger JSONL")
     parser.add_argument("--dpi", type=int, default=600, help="Scan DPI")
     args = parser.parse_args()
 
@@ -385,6 +458,7 @@ def main():
         writer_id=args.writer_id,
         crops_base_dir=crops_dir,
         dpi=args.dpi,
+        provenance_ledger_path=args.provenance_ledger,
     )
 
     out_file = save_writer_profile(

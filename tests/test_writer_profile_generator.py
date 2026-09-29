@@ -22,6 +22,7 @@ from backend.writer_profile.profile_generator import (
     extract_char_boxes_from_image,
     generate_writer_profile_from_crops,
     generate_writer_profile_from_report,
+    record_profile_crop_provenance,
     save_writer_profile,
     px_to_mm,
     mm_to_px,
@@ -212,3 +213,125 @@ def test_generate_writer_profile_from_report(tmp_path):
     assert profile.num_samples_analyzed == 1
     is_valid, errors = validate_writer_profile(profile.to_dict())
     assert is_valid, f"Profile từ scan report không hợp lệ: {errors}"
+
+
+def test_record_profile_crop_provenance_ledger(tmp_path):
+    ledger_file = tmp_path / "crop_provenance_ledger.jsonl"
+    used_crops = [
+        {
+            "cell_id": "P01_C01",
+            "sample_id": "SMP_W001_001",
+            "crop_file": "crops/SMP_W001_001_crop.png",
+            "qc_status": "QC_AUTO_PASS",
+            "context_tag": "isolated",
+        },
+        {
+            "cell_id": "P01_C02",
+            "sample_id": "SMP_W001_002",
+            "crop_file": "crops/SMP_W001_002_crop.png",
+            "qc_status": "QC_AUTO_PASS",
+            "context_tag": "isolated",
+        }
+    ]
+
+    out_p = record_profile_crop_provenance(
+        profile_id="profile_W001_v1",
+        writer_id="W001",
+        used_crops_metadata=used_crops,
+        ledger_path=ledger_file,
+        scan_id="W001_S01_P01",
+    )
+
+    assert out_p.exists()
+    with open(out_p, "r", encoding="utf-8") as f:
+        lines = [json.loads(line.strip()) for line in f if line.strip()]
+
+    assert len(lines) == 2
+    assert lines[0]["profile_id"] == "profile_W001_v1"
+    assert lines[0]["writer_id"] == "W001"
+    assert lines[0]["scan_id"] == "W001_S01_P01"
+    assert lines[0]["cell_id"] == "P01_C01"
+    assert lines[0]["qc_status"] == "QC_AUTO_PASS"
+
+    assert lines[1]["cell_id"] == "P01_C02"
+
+
+def test_generate_writer_profile_from_report_with_provenance_ledger(tmp_path):
+    dpi = 600
+    crops_dir = tmp_path / "crops"
+    crops_dir.mkdir(parents=True)
+
+    img = create_synthetic_char_crop(slant_deg=8.0)
+    crop_filename = "SMP_W002_001_crop.png"
+    cv2.imwrite(str(crops_dir / crop_filename), img)
+
+    mock_report = {
+        "is_success": True,
+        "scan_id": "W002_S01_P01",
+        "form_type": "P01",
+        "input_file": "W002_S01_P01.png",
+        "target_dpi": dpi,
+        "overall_status": "SHEET_PASS",
+        "crops_metadata": [
+            {
+                "cell_id": "P01_C01",
+                "sample_id": "SMP_W002_001",
+                "context_tag": "isolated",
+                "crop_file": f"crops/{crop_filename}",
+                "qc_status": "QC_AUTO_PASS",
+                "is_valid_for_dataset": True,
+            },
+            {
+                "cell_id": "P01_C02",
+                "sample_id": "SMP_W002_002",
+                "context_tag": "isolated",
+                "crop_file": "crops/rejected.png",
+                "qc_status": "QC_REJECTED",
+                "is_valid_for_dataset": False,
+            }
+        ]
+    }
+
+    ledger_file = tmp_path / "provenance" / "crop_provenance_ledger.jsonl"
+
+    profile = generate_writer_profile_from_report(
+        report_dict=mock_report,
+        writer_id="W002",
+        crops_base_dir=tmp_path,
+        dpi=dpi,
+        provenance_ledger_path=ledger_file,
+    )
+
+    # 1. Profile hợp lệ 9 trường theo schema
+    assert profile.writer_id == "W002"
+    p_dict = profile.to_dict()
+    is_valid, errors = validate_writer_profile(p_dict)
+    assert is_valid, f"Profile không hợp lệ: {errors}"
+    assert "provenance_manifest" not in p_dict
+
+    # 2. Ledger ghi đúng ô hợp lệ, bỏ qua ô bị từ chối
+    assert ledger_file.exists()
+    with open(ledger_file, "r", encoding="utf-8") as f:
+        ledger_lines = [json.loads(line.strip()) for line in f if line.strip()]
+
+    assert len(ledger_lines) == 1
+    assert ledger_lines[0]["scan_id"] == "W002_S01_P01"
+    assert ledger_lines[0]["cell_id"] == "P01_C01"
+    assert ledger_lines[0]["profile_id"] == profile.profile_id
+
+
+def test_synthetic_features_fixture_integrity():
+    fixture_path = _REPO_ROOT / "tests" / "fixtures" / "synthetic_writer_features_summary.jsonl"
+    assert fixture_path.exists(), f"Không tìm thấy fixture: {fixture_path}"
+
+    with open(fixture_path, "r", encoding="utf-8") as f:
+        rows = [json.loads(line.strip()) for line in f if line.strip()]
+
+    assert len(rows) == 3
+    writer_ids = [r["writer_id"] for r in rows]
+    assert writer_ids == ["W001", "W002", "W003"]
+    for r in rows:
+        assert "profile_id" in r
+        assert "mean_slant_deg" in r
+        assert "aspect_ratio_mean" in r
+        assert "baseline_jitter_std" in r

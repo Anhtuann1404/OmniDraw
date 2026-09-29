@@ -162,12 +162,15 @@ Mọi ô viết tay hoặc mẫu bóc tách trải qua 5 trạng thái kiểm đ
 Để bảo đảm tính tương thích với schema, nguyên tắc phân tách trách nhiệm và an toàn dữ liệu:
 1. **Hồ sơ `WriterProfile` KHÔNG chứa trường `provenance_manifest` bên trong JSON profile:**
    - Mọi metadata xuất xứ được tách rời hoàn toàn khỏi đối tượng profile để bảo vệ tính bất biến của JSON Schema.
-2. **Phạm vi truy vết hiện tại & Khẳng định kỹ thuật minh bạch:**
-   - Ở giai đoạn tiền pilot (pre-pilot), liên kết xuất xứ hoạt động ở cấp độ phiên quét (`scan_id` $\leftrightarrow$ `writer_id` qua `collection_manifest.jsonl`) và cấp độ hồ sơ đặc trưng (`writer_id` $\leftrightarrow$ `profile_id` qua `writer_features_summary.jsonl`).
-   - **Khả năng truy vết chi tiết ở cấp độ ô cắt (crop-level provenance: liên kết danh sách cụ thể các cặp `scan_id`/`cell_id` thực sự được sử dụng để tính toán từng `profile_id`) hiện CHƯA ĐƯỢC TRIỂN KHAI trong mã nguồn tiền pilot.**
-   - *Lộ trình kỹ thuật:* Bảng liên kết xuất xứ chi tiết (dự kiến `dataset/processed/writer_profiles/provenance/profile_crops_provenance.jsonl`) sẽ được thiết kế và bổ sung cùng test truy vết tương ứng khi hoàn thiện pipeline nạp ảnh quét thật sau đợt pilot P01–P04.
-3. **Chính sách Loại trừ Git & Phạm vi Chia sẻ Dữ liệu (Git Exclusion Policy):**
+2. **Cơ chế Truy vết Xuất xứ Cấp độ Ô Cắt (Crop-level Provenance Ledger) cho Pilot:**
+   - Để bảo toàn xuất xứ dữ liệu mà không làm biến dạng schema JSON của `WriterProfile`, TV1 đã thiết lập cơ chế ghi nhật ký độc lập thông qua hàm `record_profile_crop_provenance()` trong `backend/writer_profile/profile_generator.py` (tham số `--provenance-ledger`).
+   - Tệp nhật ký lưu tại `dataset/processed/writer_profiles/provenance/crop_provenance_ledger.jsonl`, ghi nhận bộ ba định danh (`profile_id`, `scan_id`, `cell_id`/`sample_id`) kèm trạng thái QC của từng ô cắt thực tế được nạp vào tính toán profile trong đợt pilot P01–P04.
+   - Cơ chế này hoàn toàn tách biệt khỏi cấu trúc 9 trường dữ liệu của `writer_profile.schema.json`, bảo đảm truy vết 100% từ hồ sơ phong cách ngược về đúng tọa độ ô quét ban đầu.
+3. **Chính sách Loại trừ Git & Phạm vi Chia sẻ Dữ liệu (Git Exclusion & Release Policy):**
    - Mặc định loại trừ khỏi Git (`.gitignore`):
      - `dataset/raw/manifests/`: Chứa toàn bộ metadata quét chi tiết và nhật ký dị thường.
      - `dataset/processed/writer_profiles/profiles/`: Chứa file JSON hồ sơ phong cách chi tiết của từng người viết.
-   - **Chỉ bản tổng hợp vector đặc trưng đã qua phê duyệt (`dataset/processed/writer_profiles/features/writer_features_summary.jsonl`)** mới được phép chia sẻ và lưu vết trong kho mã nguồn Git phục vụ thẩm định khoa học. Mọi dữ liệu chi tiết khác đều được cách ly bảo mật theo đúng quy chuẩn đạo đức nghiên cứu.
+     - `dataset/processed/writer_profiles/features/`: Do mỗi dòng mang `writer_id` và vector đặc trưng của từng cá nhân riêng lẻ, thư mục này được mặc định loại trừ khỏi Git ở vị trí dữ liệu thật để bảo vệ quyền riêng tư.
+     - `dataset/processed/writer_profiles/provenance/`: Nhật ký xuất xứ ô quét chi tiết.
+   - **Test Fixture Giả lập:** Dữ liệu mẫu dùng trong unit tests được lưu độc lập tại [`tests/fixtures/synthetic_writer_features_summary.jsonl`](../tests/fixtures/synthetic_writer_features_summary.jsonl) và được ghi chú rõ ràng là dữ liệu giả lập.
+   - **Quy tắc Xuất bản & Chia sẻ Kết quả:** Nếu sau này cần chia sẻ kết quả nghiên cứu, nhóm nghiên cứu sẽ lập **bản xuất riêng đã được thẩm định và phê duyệt chính thức bởi TV4 và đơn vị phụ trách**; tuyệt đối không commit trực tiếp dữ liệu thô, manifest quét hay vector đặc trưng người viết cá nhân lên Git.

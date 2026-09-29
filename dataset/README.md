@@ -35,8 +35,10 @@ dataset/
 │       │   ├── profile_W001_v1.json
 │       │   ├── profile_W002_v1.json
 │       │   └── ...
-│       └── features/                   # [CHIA SẺ ĐÃ PHÊ DUYỆT] Bảng tổng hợp vector đặc trưng
-│           └── writer_features_summary.jsonl
+│       ├── features/                   # [GITIGNORED] Vector đặc trưng trung gian theo từng người viết
+│       │   └── writer_features_summary.jsonl
+│       └── provenance/                 # [GITIGNORED] Nhật ký liên kết xuất xứ cấp ô cắt
+│           └── crop_provenance_ledger.jsonl
 └── schemas/                            # JSON Schema kiểm thực tính toàn vẹn cấu trúc (Tracked)
     ├── writer_profile.schema.json      # Schema hồ sơ người viết P2
     ├── ca_vhc_annotation.schema.json   # Schema gán nhãn mỏ neo CA-VHC (Proposed)
@@ -68,9 +70,11 @@ Theo quy định tại [`docs/21_handwriting_collection_protocol_and_error_handl
   2. Bảng kê khai phiên thu thập thô chứa metadata chi tiết: `dataset/raw/manifests/`.
   3. Toàn bộ ảnh crop bóc tách: `dataset/processed/ca_vhc/crops/`.
   4. Toàn bộ hồ sơ phong cách chi tiết theo từng cá nhân: `dataset/processed/writer_profiles/profiles/` (và các file `profile_*.json`).
-- **Phạm vi dữ liệu được phép chia sẻ và commit:**
-  - **Chỉ duy nhất bản tổng hợp vector đặc trưng đã qua phê duyệt (`dataset/processed/writer_profiles/features/writer_features_summary.jsonl`)** mới được phép chia sẻ và lưu vết trong Git nhằm phục vụ đối sánh khoa học và tái lập nghiên cứu.
-  - Tuyệt đối không tự ý chia sẻ dữ liệu chi tiết của từng cá nhân khi chưa có sự phê duyệt bằng văn bản của TV4 và đơn vị phụ trách.
+  5. Toàn bộ vector đặc trưng trung gian và nhật ký xuất xứ ô cắt: `dataset/processed/writer_profiles/features/`, `dataset/processed/writer_profiles/provenance/`.
+- **Quy định Chia sẻ Kết quả & Test Fixtures:**
+  - Vì mỗi dòng trong `writer_features_summary.jsonl` chứa `writer_id` và vector đặc trưng riêng lẻ của từng người viết, tệp này được **loại trừ khỏi Git** ở vị trí dữ liệu thật để bảo vệ quyền riêng tư.
+  - Dữ liệu phục vụ kiểm thử đơn vị được lưu độc lập tại [`tests/fixtures/synthetic_writer_features_summary.jsonl`](../tests/fixtures/synthetic_writer_features_summary.jsonl) và được gắn nhãn rõ là **dữ liệu giả lập (synthetic test fixture)**.
+  - **Nếu sau này cần chia sẻ kết quả nghiên cứu:** Nhóm nghiên cứu sẽ tạo **bản xuất riêng đã được thẩm định và phê duyệt chính thức bởi TV4 và đơn vị phụ trách**; tuyệt đối không commit trực tiếp dữ liệu thô hoặc dữ liệu người viết cá nhân lên Git.
 
 ## 4. Công cụ Xử lý Dữ liệu Đi kèm
 
