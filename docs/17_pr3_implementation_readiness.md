@@ -254,6 +254,8 @@ Suite tại mốc slice 6: **199 passed** (bao gồm `backend/test_handwriting_v
 
 ## 11. TV4 exit-gate evidence sau `d4ed1a4` (2026-09-29)
 
+**Lưu ý lịch sử:** Bảng dưới là snapshot trước tối ưu E1 ở `adb0417`; kết luận `NOT_PASSED` của E1 và danh sách gate mở tại thời điểm này đã được thay thế bởi §12–13. Không dùng bảng này làm verdict hiện hành.
+
 Đây là kiểm tra phần mềm trên nhánh `codex/tv4-pr3-slices`, sau khi TV4 sửa ba finding `TV2-PR3-R01–R03` tại `d4ed1a4` và mở rộng test Proposed D1 lên 5 lượt. TV2 chưa recheck hoặc ký sign-off implementation. Lệnh `git ls-files -z 'tests/test*.py' | xargs -0 backend/venv/bin/python -m pytest -q backend/test_handwriting_validation.py` đạt **231 passed, 1 warning**. Các file hardware/CAD chưa commit trong checkout không nằm trong thay đổi TV4 này.
 
 | Exit criterion Docs 09 | Bằng chứng hiện có | Trạng thái TV4 |
@@ -283,3 +285,25 @@ TV2 đã ký riêng shared transition tại `0cf3de1` trên PR #35 cho mã TV4 `
 | **Tổng 160 ca/method** | **4773.858** | **4705.734** | **4337.848** |
 
 Proposed giảm **9.133% so B1** và **7.818% so B2** trên ma trận DEV này; E1 đạt tiêu chí so sánh phần mềm. Regression test `test_pr3_e1_dev_acceptance_penup_beats_b1_and_b2` khóa thêm mẫu DEV acceptance 10 từ, font `cursive`, seed 42 và collision count bằng 0; test thứ tự nhóm và trace bảo vệ hình học. Toàn bộ test được Git theo dõi cùng `backend/test_handwriting_validation.py`: **236 passed, 1 warning**. Đây là technical DEV dry-run, chưa dùng HOLDOUT và chưa phải benchmark chính thức; quyết định biến thiên style và PR3 exit sign-off vẫn cần hoàn tất.
+
+**TV2 sign-off cho đúng mốc `adb0417`:** [Phiếu E1 của TV2](https://github.com/Anhtuann1404/OmniDraw/blob/codex/tv2-motion-handoff/docs/tv2_pr3_e1_review.md) tại `f1b309c` ghi `PASS_SOFTWARE_DEV` và `TV2_HUMAN_SIGN_OFF: APPROVED` riêng cho E1; `PR3_EXIT_SIGN_OFF: PENDING`. TV2 tái lập đủ 160 ca/method và kiểm tra độ nhạy khi tắt biến thiên style của B1/B2. Phạm vi ký này không tự chuyển sang mã style mới ở §13.
+
+## 13. Bằng chứng E1 có thể tái lập và phạm vi style PR3 sau `072029b` (2026-09-29)
+
+### 13.1. Phạm vi style đã chốt để TV2 recheck
+
+PR3 opt-in hỗ trợ bốn preset `hand_hocsinh`, `hand_nguoilon`, `hand_thuphap`, `hand_chukinhanh` với **giãn chữ, độ nghiêng affine và độ lượn dòng xác định**. Engine áp dụng biến đổi hình học trước bước prune, đánh giá state/transition và hard collision; renderer dùng đúng `GlyphWorldGeometry` đã chọn. Nét gạch ngang `đ` được biến đổi cùng hệ tọa độ. `jitter_amp` ngẫu nhiên của pipeline B1/B2/B3 **không áp dụng trong PR3** vì sẽ làm nét vẽ sau DAG lệch khỏi geometry đã kiểm tra va chạm. Đây là phạm vi style PR3 được công bố, không phải xác nhận nó tương đương mọi hiệu ứng style của B3.
+
+Test nghiệm thu DEV trên 10 từ × 4 preset, font `cursive`, seed 42: NFD/mark, layer ≤ 9, collision = 0, clearance ≥ 0.20 mm đều PASS; D1 lặp 5 lần cho từng preset PASS. Test renderer xác nhận bốn fingerprint style khác nhau và từng nét dấu được render trùng byte với geometry đã đưa vào DAG. Dry-run bổ sung 10 từ × 2 font benchmark × 4 preset, seed 42: **80/80 ca chạy xong, tổng collision = 0**. Toàn bộ suite được Git theo dõi cùng `backend/test_handwriting_validation.py`: **270 passed, 1 warning**.
+
+### 13.2. E1 sau thay đổi style
+
+Script [`generate_pr3_e1_dev_evidence.py`](../scripts/generate_pr3_e1_dev_evidence.py) tạo [`pr3_e1_dev_rows.csv`](evidence/pr3_e1_dev_rows.csv) gồm **480 dòng** (160 ca/method) và [`pr3_e1_dev_metadata.json`](evidence/pr3_e1_dev_metadata.json) chứa commit mã `072029b`, corpus/hash, font, seed, style, phiên bản Python/NumPy, lệnh chạy và hash CSV. Chỉ đọc `BENCHMARK_DEV_CORPUS_20`; không mở HOLDOUT. Chạy lại từ gốc repo bằng `backend/venv/bin/python3 scripts/generate_pr3_e1_dev_evidence.py`.
+
+| Method | `oly` (mm) | `omni_casual` (mm) | Tổng (mm) |
+| :--- | ---: | ---: | ---: |
+| B1 Static | 2167.473 | 2606.385 | 4773.858 |
+| B2 Greedy | 2127.310 | 2578.424 | 4705.734 |
+| Proposed PR3 | 1941.020 | 2402.340 | **4343.360** |
+
+Proposed giảm **9.018% so B1** và **7.701% so B2** trên ma trận DEV hiện hành. Sự khác biệt 5.512 mm so với §12 đến từ việc `omni_casual` giờ áp dụng slant/drift trước DAG; số §12 là bằng chứng lịch sử tại `adb0417`. E1 vẫn đạt ở mức TV4 software DEV; **TV2 cần recheck phiên bản style mới** trước khi coi sign-off E1 bao phủ commit hiện tại. H1.1/PR5, quyết định chấp nhận giới hạn jitter của style và PR3 exit sign-off vẫn mở; physical calibration cũng là gate riêng.
