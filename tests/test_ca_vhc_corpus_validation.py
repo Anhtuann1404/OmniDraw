@@ -145,18 +145,24 @@ def test_unicode_normalization_integrity():
 # ==============================================================================
 
 def test_tone_distribution_coverage():
-    """Kiểm tra độ phủ đầy đủ 6 thanh điệu tiếng Việt theo Doc 19 Mục 3.1."""
+    """
+    Kiểm tra độ phủ thanh điệu và phân vai chủ đích theo Doc 19 Mục 3.1:
+    - Tập DEV (20 từ): Stressed Diacritic Subset, tập trung 5 thanh mang dấu phụ (0 thanh ngang).
+    - Tập HOLDOUT (20 từ): Full-Spectrum Generalization Set, bao phủ đủ 6/6 thanh điệu (kể cả thanh ngang).
+    - Tập hợp toàn thể (DEV ∪ HOLDOUT): Phủ trọn vẹn 100% cả 6 thanh tiếng Việt.
+    """
     data = load_frozen_corpus_metadata()
 
-    # Tập DEV: 5 sắc, 3 huyền, 3 hỏi, 3 ngã, 5 nặng (tổng 20) + nhánh (sắc) -> 6 sắc
+    # Tập DEV (20 từ): 6 sắc, 3 huyền, 3 hỏi, 3 ngã, 5 nặng (chủ ý không có thanh ngang)
     dev_tones = [item["tone"] for item in data["dev_corpus_20"]]
     assert dev_tones.count("acute") == 6
     assert dev_tones.count("grave") == 3
     assert dev_tones.count("hook_above") == 3
     assert dev_tones.count("tilde") == 3
     assert dev_tones.count("dot_below") == 5
+    assert dev_tones.count("level") == 0, "DEV chủ ý không chứa thanh ngang để tối đa hóa dung lượng kiểm thử dấu"
 
-    # Tập HOLDOUT: 2 ngang (level), 3 sắc, 5 huyền, 2 hỏi, 2 ngã, 6 nặng (tổng 20)
+    # Tập HOLDOUT (20 từ): đầy đủ 6 thanh gồm 2 ngang (level), 3 sắc, 5 huyền, 2 hỏi, 2 ngã, 6 nặng
     holdout_tones = [item["tone"] for item in data["holdout_corpus_20"]]
     assert holdout_tones.count("level") == 2
     assert holdout_tones.count("acute") == 3
@@ -165,9 +171,10 @@ def test_tone_distribution_coverage():
     assert holdout_tones.count("tilde") == 2
     assert holdout_tones.count("dot_below") == 6
 
-    # Cả hai tập đều có độ phủ thanh điệu phong phú
+    # Xác thực tập hợp thanh điệu
     assert set(dev_tones) == {"acute", "grave", "hook_above", "tilde", "dot_below"}
     assert set(holdout_tones) == {"level", "acute", "grave", "hook_above", "tilde", "dot_below"}
+    assert set(dev_tones) | set(holdout_tones) == {"level", "acute", "grave", "hook_above", "tilde", "dot_below"}
 
 
 def test_diacritics_and_stacking_coverage():
