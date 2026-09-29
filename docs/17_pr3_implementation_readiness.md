@@ -266,4 +266,6 @@ Suite tại mốc slice 6: **199 passed** (bao gồm `backend/test_handwriting_v
 
 E1 trong bảng lịch sử của Docs 09 ghi `PASS_CURRENT` vì runner và baseline adapters đã có. Trạng thái đó chỉ xác nhận **hạ tầng đo**, chưa xác nhận tiêu chí giảm quãng đường pen-up của Proposed. Số trên là chẩn đoán DEV một font/seed, không phải benchmark PR5 hoặc kết luận H1.1. Trước khi ký PR3 exit, TV4/TV2 cần thống nhất cách xử lý E1 theo contract và chạy ma trận DEV được khóa; không điều chỉnh thuật toán bằng HOLDOUT.
 
-**Gate còn mở:** (1) TV2 recheck `d4ed1a4` và ký verdict riêng R01–R03; (2) xử lý E1 như trên; (3) chốt biến thiên style của PR3 mà vẫn bảo đảm geometry được chấm khớp geometry render. Physical calibration và formal benchmark vẫn là downstream gates độc lập.
+**Gate còn mở:** (1) TV2 ký human sign-off R01–R03 và recheck ca biên hình học mới; (2) xử lý E1 như trên; (3) chốt biến thiên style của PR3 mà vẫn bảo đảm geometry được chấm khớp geometry render. Physical calibration và formal benchmark vẫn là downstream gates độc lập.
+
+**TV2 recheck tại `73bc9e2` (2026-09-29):** AI recheck ghi R01–R03 `VERIFIED_CLOSED`, còn `TV2_HUMAN_SIGN_OFF: PENDING`. TV2 phát hiện thêm ca biên `np.allclose` dùng relative tolerance mặc định tại tọa độ lớn. TV4 đã đổi so khớp cổng sang `rtol=0` và thêm test tự động cho off-port touch, overlap tại exit và near-port overlap; nhóm PR3 liên quan đạt 30/30, toàn bộ test được Git theo dõi đạt **233 passed**. Cần TV2 recheck commit sửa ca biên trước khi coi phần hình học chuyển tiếp đã ký xong.

@@ -443,16 +443,16 @@ def _bridge_touches_strokes(bridge, strokes, anchor_role=None):
                 anchor = bridge[0] if anchor_role == "exit" else bridge[-1]
                 is_join_segment = (
                     anchor_role == "exit" and stroke_index == len(strokes) - 1 and
-                    segment_index == len(stroke) - 2 and np.allclose(d, anchor, atol=1e-6)
+                    segment_index == len(stroke) - 2 and np.allclose(d, anchor, atol=1e-6, rtol=0)
                 ) or (
                     anchor_role == "entry" and stroke_index == 0 and segment_index == 0 and
-                    np.allclose(c, anchor, atol=1e-6)
+                    np.allclose(c, anchor, atol=1e-6, rtol=0)
                 )
                 if is_join_segment and (
-                    (np.allclose(a, anchor, atol=1e-6) or
-                     np.allclose(b, anchor, atol=1e-6))
+                    (np.allclose(a, anchor, atol=1e-6, rtol=0) or
+                     np.allclose(b, anchor, atol=1e-6, rtol=0))
                 ):
-                    bridge_other = b if np.allclose(a, anchor, atol=1e-6) else a
+                    bridge_other = b if np.allclose(a, anchor, atol=1e-6, rtol=0) else a
                     glyph_other = c if anchor_role == "exit" else d
                     u, v = bridge_other - anchor, glyph_other - anchor
                     # Collinear rays in the same direction overlap beyond the anchor.

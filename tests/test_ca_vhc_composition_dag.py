@@ -30,9 +30,9 @@ def _with_stroke(world, stroke, *, mark=False, prepend=False):
     )
 
 
-def _transition(prev_world, curr_world, *, clearance=0.2):
-    prev, _ = _state(0.)
-    curr, _ = _state(3.)
+def _transition(prev_world, curr_world, *, clearance=0.2, prev_x=0., curr_x=3.):
+    prev, _ = _state(prev_x)
+    curr, _ = _state(curr_x)
     return evaluate_composition_transition(
         prev, curr, prev_world, curr_world,
         TransitionWeights(w_penup=0., w_lift=100., w_curvature=0., w_bridge_collision=0.),
@@ -56,6 +56,28 @@ def test_bridge_anchor_exemption_belongs_to_correct_glyph_only():
     wrong_entry = np.array([[3., 0.], [3., 1.]])
     assert _transition(prev, _with_stroke(curr, wrong_exit)).decision == "LIFT"
     assert _transition(_with_stroke(prev, wrong_entry, prepend=True), curr).decision == "LIFT"
+
+
+def test_bridge_off_port_touch_and_exit_overlap_are_not_exempt():
+    _, prev = _state(0.)
+    _, curr = _state(3.)
+    off_port_touch = np.array([[2., 0.], [2., 1.]])
+    assert _transition(prev, _with_stroke(curr, off_port_touch)).decision == "LIFT"
+    overlap_at_exit = GlyphWorldGeometry(
+        (np.array([[1.5, 0.], [1., 0.]]),), prev.diacritic_strokes,
+        prev.entry_pt, prev.exit_pt, prev.v_entry, prev.v_exit, prev.diacritic_bbox,
+    )
+    assert _transition(overlap_at_exit, curr).decision == "LIFT"
+
+
+def test_near_port_overlap_at_large_coordinates_is_not_exempt():
+    _, prev = _state(99.)
+    _, curr = _state(102.)
+    shifted_exit = GlyphWorldGeometry(
+        (np.array([[99., 0.], [100.0005, 0.]]),), prev.diacritic_strokes,
+        prev.entry_pt, prev.exit_pt, prev.v_entry, prev.v_exit, prev.diacritic_bbox,
+    )
+    assert _transition(shifted_exit, curr, prev_x=99., curr_x=102.).decision == "LIFT"
 
 
 @pytest.mark.parametrize("mark", [
