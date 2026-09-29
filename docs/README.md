@@ -2,6 +2,8 @@
 
 File này là điểm vào chính của toàn bộ tài liệu OmniDraw. Chọn nhóm theo mục đích thay vì tìm theo số thứ tự file.
 
+**Đề tài làm việc (29/09/2026):** *OmniDraw: Nghiên cứu tái tạo chữ Việt có dấu theo phong cách cá nhân và font thiết kế trên máy vẽ*. [Phạm vi RQ1–RQ5 và mức bằng chứng](22_nckh_extended_scope.md) phân biệt CA-VHC lõi với hai hướng mở rộng chưa được chứng minh.
+
 ## Bắt đầu nhanh
 
 | Khi cần biết | Mở tài liệu |
@@ -11,6 +13,7 @@ File này là điểm vào chính của toàn bộ tài liệu OmniDraw. Chọn 
 | Kiến trúc phần mềm hiện tại | [`01_tech-stack.md`](01_tech-stack.md) |
 | API và data contract | [`OmniDraw_API_Spec-4.md`](OmniDraw_API_Spec-4.md) |
 | Câu hỏi nghiên cứu và kế hoạch thực nghiệm | [`10_nckh_research_plan.md`](10_nckh_research_plan.md) |
+| Phạm vi mới: học thói quen viết và font thiết kế | [`22_nckh_extended_scope.md`](22_nckh_extended_scope.md) |
 | Cross-review Chương 1–3 | [`reviews/README.md`](reviews/README.md) |
 | Thiết kế phần cứng | [`hardware/00_hardware_index.md`](hardware/00_hardware_index.md) |
 
@@ -33,7 +36,10 @@ File này là điểm vào chính của toàn bộ tài liệu OmniDraw. Chọn 
 - [`09_pr3_acceptance_criteria.md`](09_pr3_acceptance_criteria.md): Entry/Exit Gate PR3.
 - [`16_rq_code_metric_test_traceability.md`](16_rq_code_metric_test_traceability.md): truy vết RQ–code–metric–test và evidence ledger.
 - [`17_pr3_implementation_readiness.md`](17_pr3_implementation_readiness.md): dependency PR2, bản đồ symbol, các lát cắt triển khai, test map và Definition of Ready cho PR3.
-- [`18_pr3_e4_shared_transition_contract_draft.md`](18_pr3_e4_shared_transition_contract_draft.md): dự thảo giao diện chuyển tiếp TV2–TV4 để đóng Entry Gate E4; chưa được ký duyệt.
+- [`18_pr3_e4_shared_transition_contract_draft.md`](18_pr3_e4_shared_transition_contract_draft.md): giao diện chuyển tiếp TV2–TV4 đã PASS E4 theo contract `4677aad`.
+- [`22_nckh_extended_scope.md`](22_nckh_extended_scope.md): RQ4/RQ5, phương pháp dự kiến, gate và ranh giới bằng chứng.
+- [`23_rq4_writer_habit_study_protocol.md`](23_rq4_writer_habit_study_protocol.md): protocol dữ liệu, baseline và đánh giá thói quen viết theo người.
+- [`24_rq5_vietnamese_design_font_pilot.md`](24_rq5_vietnamese_design_font_pilot.md): protocol chọn font thiết kế, dựng chữ Việt có dấu và pilot đánh giá.
 
 ## Dữ liệu chữ viết tay
 

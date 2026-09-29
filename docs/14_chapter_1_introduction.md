@@ -2,8 +2,8 @@
 
 **Bản thảo:** 0.1  
 **Trạng thái:** `DRAFT — TEAM REVIEW PENDING`  
-**Phạm vi:** Handwriting Mode / CA-VHC; chưa trình bày kết quả thực nghiệm OmniDraw  
-**Tên đề tài làm việc:** *OmniDraw — Tối ưu hợp thành chữ viết tay tiếng Việt theo ngữ cảnh cho máy vẽ nét đơn*
+**Phạm vi:** Handwriting Mode / CA-VHC P0 và hai hướng mở rộng RQ4–RQ5; chưa trình bày kết quả thực nghiệm chính thức
+**Tên đề tài làm việc:** *OmniDraw: Nghiên cứu tái tạo chữ Việt có dấu theo phong cách cá nhân và font thiết kế trên máy vẽ*
 
 > [!IMPORTANT]
 > Chương này mô tả vấn đề nghiên cứu, mục tiêu, câu hỏi, phạm vi và đóng góp **dự kiến**. OmniDraw chưa có kết quả thực nghiệm chính thức cho RQ1–RQ3; vì vậy, mọi phát biểu về hiệu quả của CA-VHC đều là giả thuyết cần kiểm chứng, không phải kết luận.
@@ -16,7 +16,7 @@ Chữ viết tay số có thể được biểu diễn như một chuỗi tọa 
 
 Nghiên cứu về chữ viết tay trực tuyến tiếng Việt ghi nhận vai trò đáng kể của delayed strokes, tức các nét như dấu có thể được viết sau thân chữ hoặc sau một số ký tự kế tiếp [3]. Vì vậy, trong một hệ thống viết bằng máy, vị trí dấu, thứ tự vẽ dấu, lựa chọn biến thể thân chữ và quyết định nối hay nhấc bút cần được xem là các quyết định có quan hệ với nhau. Nếu từng quyết định được thực hiện riêng lẻ, một lựa chọn tốt ở bước trước có thể tạo ra va chạm hoặc quãng di chuyển không cần thiết ở bước sau.
 
-Từ bối cảnh đó, OmniDraw được phát triển như một engine tạo quỹ đạo vector nét đơn từ văn bản, hướng đến đầu ra có thể kiểm tra bằng hình học và có thể chuyển giao cho máy vẽ. Trọng tâm nghiên cứu P0 không phải là tạo chữ viết tay bằng mô hình sinh học sâu, mà là xây dựng một phương pháp hợp thành chữ viết tay tiếng Việt theo ngữ cảnh, có trạng thái hữu hạn, hàm chi phí minh bạch và protocol đánh giá tái lập được.
+Từ bối cảnh đó, OmniDraw được phát triển với hai luồng tạo quỹ đạo cho máy vẽ: **Art Mode** chuyển ảnh/tranh thành nét vẽ có thứ tự, và **Handwriting Mode** chuyển văn bản thành chữ Việt có dấu. Trọng tâm nghiên cứu P0 của chương là phương pháp hợp thành chữ Việt theo ngữ cảnh, có trạng thái hữu hạn, hàm chi phí minh bạch và protocol đánh giá tái lập được. Art Mode vẫn là một phần của hệ thống và có bộ đối sánh tối ưu đường vẽ độc lập; kết quả của nó không thay thế bằng chứng cho các câu hỏi CA-VHC.
 
 ## 1.2. Vấn đề nghiên cứu
 
@@ -42,6 +42,8 @@ Vấn đề nghiên cứu của đề tài được phát biểu như sau:
 ### 1.3.1. Mục tiêu tổng quát
 
 Đề xuất và đánh giá phương pháp **Context-Aware Vietnamese Handwriting Composition (CA-VHC)** cho OmniDraw, trong đó biến thể thân chữ và ứng viên dấu được biểu diễn trong một trạng thái hợp thành chung, sau đó lựa chọn bằng quy hoạch động Viterbi theo các tiêu chí về hình học, chuyển động và khả năng thi công.
+
+Ở phạm vi toàn đề tài, CA-VHC là lõi cho hai hướng mở rộng có điều kiện: học các đặc trưng thói quen viết từ mẫu của từng người và thử dựng lại chữ Việt có dấu cho một số font thiết kế gặp lỗi hỗ trợ tiếng Việt. Hai hướng này có câu hỏi, baseline và phép đánh giá riêng tại [Docs 22](22_nckh_extended_scope.md); hiện chưa có bằng chứng hiệu quả.
 
 ### 1.3.2. Mục tiêu cụ thể
 
@@ -78,6 +80,14 @@ Giả thuyết của RQ3 là số trạng thái sau pruning đủ nhỏ để re
 | RQ2 | Collision count và minimum clearance | B3 | PR3 và calibration ngưỡng vật lý |
 | RQ3 | Số trạng thái, thời gian giải, bounds và thi công | Giới hạn thiết kế + hardware validation | PR3, PR5 và TV3 calibration |
 
+### 1.4.4. RQ4 và RQ5 — Hướng mở rộng có điều kiện
+
+**RQ4:** Từ một số mẫu chữ viết tay được phép sử dụng, mô hình hóa thói quen của từng người có tạo được văn bản mới gần phong cách mẫu hơn baseline mặc định/rule-based mà vẫn giữ độ đúng và độ đọc của chữ Việt không? Đánh giá phải tách người viết và văn bản, không dùng mẫu kiểm tra để học profile.
+
+**RQ5:** Trên một số font thiết kế được chọn có lỗi hoặc thiếu dấu tiếng Việt, quy trình dựng centerline kết hợp anchor và kiểm tra hình học có cải thiện độ phủ và độ đọc, đồng thời giữ được phong cách, so với font gốc và phương án gắn dấu cơ bản không? Kết luận chỉ áp dụng cho tập font được thử.
+
+Các giả thuyết định lượng/ngưỡng cho RQ4–RQ5 sẽ được chốt trước pilot, không dùng ngưỡng của RQ1–RQ3; xem [Docs 22](22_nckh_extended_scope.md).
+
 ## 1.5. Đối tượng và phạm vi nghiên cứu
 
 ### 1.5.1. Đối tượng nghiên cứu
@@ -95,11 +105,12 @@ Giả thuyết của RQ3 là số trạng thái sau pruning đủ nhỏ để re
 - So sánh B1/B2/B3/Proposed trên corpus, seed và số lần lặp được kiểm soát.
 - Kiểm chứng phần mềm trước; kiểm chứng máy vẽ thật chỉ sau khi hoàn tất hiệu chuẩn phần cứng.
 
-### 1.5.3. Ngoài phạm vi câu hỏi nghiên cứu hiện hành
+### 1.5.3. Phạm vi mở rộng và giới hạn
 
-- Writer Profile, few-shot personalization và mô phỏng thói quen người viết thuộc P2.
-- Chuyển đổi TTF/OTF sang centerline, mở rộng hàng loạt Font Pack và mô hình sinh chữ viết tay sâu thuộc P3.
-- Art Mode như sketch, hatching hoặc stipple không được dùng làm bằng chứng cho CA-VHC Handwriting Mode.
+- RQ4/P2: dùng mẫu có đồng ý để suy ra đặc trưng thói quen viết và thử tạo văn bản chưa thấy; split theo người viết/văn bản, so với baseline mặc định và rule-based. Schema/extractor hiện có chưa phải mô hình cá nhân hóa hoàn chỉnh.
+- RQ5/P3 pilot: chọn một số font thiết kế thiếu/lỗi chữ Việt, thử dựng nét centerline và bố trí dấu theo anchor/hình học; so độ phủ, độ đọc và mức giữ phong cách. Không hứa chuyển đổi mọi TTF/OTF hay sửa mọi lỗi font.
+- Deep generative handwriting và mở rộng font hàng loạt nằm ngoài các thử nghiệm ban đầu.
+- Art Mode như sketch, hatching hoặc stipple là nhánh ứng dụng và đánh giá hệ thống riêng, với đối sánh Naive/Greedy/OmniDraw theo [roadmap](02_roadmap.md). Không dùng kết quả Art Mode làm bằng chứng cho CA-VHC Handwriting Mode hoặc RQ4/RQ5.
 - Hệ thống chưa tuyên bố hoạt động real-time, trơn $C^1$ toàn cục hoặc an toàn vật lý.
 - Nhận dạng chữ viết tay không phải mục tiêu của RQ1–RQ3; corpus Writer Profile không thay thế corpus đánh giá CA-VHC.
 
@@ -136,7 +147,7 @@ Về thực tiễn, đầu ra nét đơn có thể giảm phần xử lý trung 
 
 ## 1.9. Giới hạn và ranh giới tuyên bố
 
-Tại thời điểm cập nhật, PR1 về metric và experiment infrastructure cùng PR2 baseline adapters đã hoàn thành; E4 shared transition interface còn chờ TV2+TV4 ký duyệt, PR3 về Diacritic-Aware Trellis chưa bắt đầu; corpus formal và hardware calibration chưa được khóa. Vì vậy:
+Tại ngày 29/09/2026, PR1 và PR2 đã hoàn thành; E4 đã PASS trên contract `4677aad`; PR3 đang triển khai theo slice và mới có bằng chứng E1 DEV phần mềm ở [Docs 17](17_pr3_implementation_readiness.md). Corpus CA-VHC v1.0 đã frozen; PR3 exit, PR5 Holdout, đánh giá RQ4/RQ5 và hardware calibration vẫn chưa hoàn tất. Vì vậy:
 
 - chưa có số liệu chính thức để chấp nhận hoặc bác bỏ RQ1–RQ3;
 - chưa được gọi CA-VHC là real-time hoặc tốt hơn baseline;
@@ -154,7 +165,7 @@ Phần còn lại của báo cáo được tổ chức như sau:
 - **Chương 2 — Tổng quan và cơ sở lý thuyết:** tổng hợp nghiên cứu về chữ viết tay trực tuyến, dấu tiếng Việt, Unicode/OpenType, Viterbi và robot vẽ; xác lập khoảng trống nghiên cứu provisional.
 - **Chương 3 — Phương pháp nghiên cứu:** mô tả `CompositionState`, hàm mục tiêu, pruning, recurrence, baseline, corpus, protocol thực nghiệm và kiểm chứng phần cứng.
 - **Chương 4 — Kết quả và thảo luận:** trình bày kết quả định lượng, ablation, phân tích lỗi và threats to validity sau khi toàn bộ gate hoàn tất.
-- **Chương 5 — Kết luận và hướng phát triển:** trả lời RQ theo bằng chứng thu được, nêu giới hạn và định hướng Writer Profile, Font Pack hoặc triển khai nâng cao.
+- **Chương 5 — Kết luận và hướng phát triển:** trả lời riêng RQ1–RQ3, RQ4 và RQ5 theo mức bằng chứng thực có; nêu phần chưa thử và giới hạn khái quát hóa.
 
 ## Tài liệu tham khảo
 

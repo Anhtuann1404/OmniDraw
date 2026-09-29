@@ -1,6 +1,8 @@
 # OmniDraw — Đặc Tả Nghiên Cứu & Thiết Kế Kỹ Thuật Lõi CA-VHC
 *(Phiên bản Đồng bộ Toàn diện Tài liệu Dự án & TV2 Cross-Review)*
 
+> **Phạm vi tài liệu:** Đây là đặc tả/ngưỡng cho **RQ1–RQ3 P0**; các dòng trạng thái bên dưới phản ánh checkpoint lịch sử Step B. Trạng thái PR3 ngày 29/09/2026 ở [Docs 17](17_pr3_implementation_readiness.md), RQ4 học thói quen viết và RQ5 pilot font thiết kế ở [Docs 22](22_nckh_extended_scope.md). Việc mở rộng đề tài không sửa ngưỡng đã khóa ở đây.
+
 **Tài liệu:** Khung thuật toán Context-Aware Vietnamese Handwriting Composition (CA-VHC)
 **Tác giả / Lead phần chuyển động:** Thành viên 2 — Stroke Optimization & Path Planning Lead; owner phần motion/DP của CA-VHC
 **Chủ trì đề tài & Handwriting:** Thành viên 4 — Project Lead & Handwriting / CA-VHC Composition Lead

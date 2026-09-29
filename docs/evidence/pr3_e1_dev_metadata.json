@@ -1,0 +1,29 @@
+{
+  "source_commit": "072029bd1e703021c4ad643d53692e81e0a022a4",
+  "corpus_version": "CA-VHC-CORPUS-v1.0-FROZEN",
+  "corpus_sha256": "37ba0f765646c96ce230a2abdb175d7bfa5e002e87f3b83d924f80921c039868",
+  "corpus_split": "dev",
+  "word_count": 20,
+  "fonts": [
+    "oly",
+    "omni_casual"
+  ],
+  "seeds": [
+    42,
+    100,
+    2026,
+    999999
+  ],
+  "style": "hand_hocsinh",
+  "methods": [
+    "b1_static",
+    "b2_greedy",
+    "pr3_composition"
+  ],
+  "rows_per_method": 160,
+  "total_rows": 480,
+  "python_version": "3.14.6",
+  "numpy_version": "2.5.2",
+  "csv_sha256": "f8b6d13bf432c5aba0be8b36b8003ac73922f4ed36561c9d684d622f2981de40",
+  "command": "backend/venv/bin/python3 scripts/generate_pr3_e1_dev_evidence.py"
+}

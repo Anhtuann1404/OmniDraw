@@ -1,5 +1,7 @@
 # OmniDraw — Ma trận Truy vết RQ–Code–Metric–Test
 
+> **Cập nhật trạng thái 29/09/2026:** ma trận chi tiết phía dưới được lập ở snapshot `cda92eb` ngày 22/09 và một số ô là bằng chứng lịch sử. Đọc trạng thái hiện tại tại [Docs 17](17_pr3_implementation_readiness.md) và bảng cập nhật cuối tài liệu này: PR2/E3 và E4 PASS, corpus v1.0 frozen, PR3 đang triển khai/E1 DEV đã có, PR3 exit và PR5 formal vẫn PENDING. RQ4/RQ5 là hướng mở rộng ở [Docs 22](22_nckh_extended_scope.md).
+
 ## Material Passport
 
 | Trường | Giá trị |
@@ -93,10 +95,10 @@ Không được đổi một hàng thành `VERIFIED_INFRASTRUCTURE` chỉ vì t�
 | Gate | Điều kiện đóng gate | Bằng chứng bắt buộc | Hiện trạng | Chặn |
 | :--- | :--- | :--- | :--- | :--- |
 | **G0 — Research cross-review** | TV1–TV3 có human verdict; TV4 disposition mọi finding | Ba phiếu review + `review_disposition.md` | `IN_PROGRESS` | `RQ FREEZE: APPROVED` |
-| **G1 — PR2 baseline parity / E4 interface** | B1/B2/B3 chạy độc lập qua cùng interface và schema; TV2+TV4 thống nhất interface transition cho Proposed | PR #32 (`bcc1a7a`), adapter tests PASS; hợp đồng E4 và hai owner sign-off còn thiếu | `E3_PASS_E4_PENDING` | E4 chặn PR3 implementation; formal H1/H3 còn cần PR3–PR5 |
-| **G2 — PR3 software exit** | `CompositionState` production; 10/10 DEV specimens; 0 crash/NaN; bounds/regression đạt | PR3 unit/integration/acceptance suite | `PENDING_PR3` | H2; Proposed rows; PR4 |
+| **G1 — PR2 baseline parity / E4 interface** | B1/B2/B3 chạy độc lập qua cùng interface và schema; TV2+TV4 thống nhất interface transition cho Proposed | PR #32 (`bcc1a7a`), adapter tests PASS; E4 hai owner ký trên `4677aad` | `E3_PASS_E4_PASS` | Đã mở PR3; formal H1/H3 còn cần PR3–PR5 |
+| **G2 — PR3 software exit** | `CompositionState` production; 10/10 DEV specimens; 0 crash/NaN; bounds/regression đạt | PR3 unit/integration/acceptance suite; E1 DEV tại [Docs 17](17_pr3_implementation_readiness.md) | `IMPLEMENTATION_IN_PROGRESS; EXIT_PENDING` | H2 formal; PR4; TV2 final recheck |
 | **G3 — PR4 delayed-stroke P0** | Deterministic delayed-stroke scheduling và tie-break | Unit/regression tests; stroke-order trace | `PENDING_PR4` | H1 về pen-lift đầy đủ; PR5 |
-| **G4 — Formal corpus freeze** | TV1 duyệt coverage/version và khóa DEV/Holdout | Corpus manifest/version; leakage check | `PENDING_TV1_FREEZE` | Formal PR5 / mở Holdout |
+| **G4 — Formal corpus freeze** | TV1 duyệt coverage/version và khóa DEV/Holdout | [Corpus v1.0 frozen](19_benchmark_corpus_freeze_report.md), 20 DEV/20 Holdout disjoint | `PASS` | Holdout vẫn chỉ mở theo protocol PR5 |
 | **G5 — Formal PR5** | B1/B2/B3/Proposed × corpus × font × seed × repetitions; reporting tự động | Immutable raw CSV, environment manifest, aggregation report | `PENDING_PR5` | PASS/FAIL/INCONCLUSIVE cho H1–H3 |
 | **G6 — Physical validation** | Calibration và smoke test trên máy thật | Hardware log có provenance; actual timing; error measurements | `BLOCKED_EXTERNAL` | Physical feasibility claim |
 
@@ -166,7 +168,7 @@ Mỗi PR liên quan phải cập nhật tài liệu này theo quy tắc sau:
 - [ ] Không đổi hypothesis verdict trước khi G5 hoàn tất.
 - [ ] Mọi physical claim phải chờ G6.
 
-## 8. Công việc TV4 có thể chuẩn bị khi chờ PR2 và cross-review
+## 8. Kế hoạch lịch sử trước PR2 và cross-review (snapshot 22/09)
 
 1. Giữ Chương 1–3 bất biến trong vòng review hiện tại.
 2. Chuẩn bị test skeleton và interface checklist cho `CompositionState` ở mức thiết kế; chưa merge production PR3 trước G1.
@@ -175,3 +177,13 @@ Mỗi PR liên quan phải cập nhật tài liệu này theo quy tắc sau:
 5. Khi nhận finding từ TV1–TV3, cập nhật disposition trước khi sửa bản thảo.
 
 Tài liệu này được cập nhật theo evidence mới; không dùng nó như giấy chứng nhận rằng thuật toán đã hoàn thiện hoặc đề tài đã đạt kết quả nghiên cứu.
+
+## 9. Bổ sung truy vết hiện hành (29/09/2026)
+
+| RQ/gate | Bằng chứng hiện có | Còn thiếu để kết luận |
+| :--- | :--- | :--- |
+| RQ1–RQ3 / PR3 | [Docs 17 §12–13](17_pr3_implementation_readiness.md): E1 DEV 160 ca/method, 2 font × 4 seed × 20 DEV; bản style `072029b` Proposed 4.343,360 mm, giảm 9,018% vs B1 và 7,701% vs B2. TV2 ký E1 cho bản trước `adb0417` | Recheck đúng bản cuối; PR3 exit; PR4 và PR5 Holdout. H1.1 chưa đạt ngưỡng PASS trên DEV, không suy ra verdict formal |
+| RQ2 / PR3 exit | `CompositionState` và kiểm tra hình học đang tích hợp theo slice | Acceptance đầy đủ, trace/render parity, TV2/TV4 sign-off |
+| RQ3 / physical | Simulator/fake và preflight phần mềm TV3 | AxiDraw/cáp, calibration và `actual_draw_time_sec` máy thật |
+| RQ4 / P2 | Schema, extractor và generator ảnh crop → Writer Profile do TV1 chuẩn bị; 13/13 test extractor/generator PASS trên synthetic fixture | Consent, dữ liệu QC, split writer/text, baseline, tích hợp và đánh giá độc lập; [protocol](23_rq4_writer_habit_study_protocol.md) |
+| RQ5 / P3 pilot | Hướng thiết kế, chưa có importer/font study | Tập font và giấy phép, pipeline centerline/anchor, đối chứng, rubric độ đọc/phong cách; [protocol](24_rq5_vietnamese_design_font_pilot.md) |

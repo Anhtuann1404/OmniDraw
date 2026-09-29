@@ -1,8 +1,12 @@
 # OmniDraw — Roadmap
 
-**Cập nhật lần cuối:** 21/09/2026
+**Cập nhật lần cuối:** 29/09/2026 (định hướng nghiên cứu và trạng thái hiện hành)
 **Chu kỳ làm việc:** Sprint 2 tuần
 **Deadline cuối cùng (nộp/bảo vệ):** *(điền ngày khi có lịch chính thức của đơn vị)*
+
+**Tên đề tài làm việc:** *OmniDraw: Nghiên cứu tái tạo chữ Việt có dấu theo phong cách cá nhân và font thiết kế trên máy vẽ*. CA-VHC RQ1–RQ3 vẫn là đường găng P0; RQ4 học thói quen viết (P2) và RQ5 dựng lại chữ Việt cho **font thiết kế được chọn** (P3 pilot) là hai nhánh nghiên cứu có gate riêng, theo [Docs 22](22_nckh_extended_scope.md). Lộ trình bên dưới có cả các quyết định lịch sử; [Docs 03](03_current-task.md) là ảnh chụp trạng thái hiện tại.
+
+**Art Mode vẫn thuộc phạm vi OmniDraw:** pipeline ảnh/tranh → nét vẽ và bộ đối sánh Naive/Greedy/OmniDraw là nhánh sản phẩm và đánh giá tối ưu đường vẽ riêng do TV2 lead. Benchmark Art Mode trong mục 4/Giai đoạn 4 còn mở; số liệu của nhánh này không dùng để kết luận RQ1–RQ5 về chữ Việt. Tên đề tài làm việc nhấn vào trọng tâm nghiên cứu, không giới hạn tính năng của toàn hệ thống.
 
 > Đánh dấu trạng thái mỗi mục nhỏ: `⬜ Chưa bắt đầu` / `🟡 Đang làm` / `✅ Xong`
 > Mỗi giai đoạn lớn chỉ được coi là xong khi TẤT CẢ mục nhỏ bên trong đã ✅.
@@ -119,7 +123,9 @@ Một nhiệm vụ hoặc tính năng chỉ được đánh dấu hoàn thành (
 - Telemetry phản hồi trạng thái vẽ từ phần cứng theo thời gian thực [P2 — sau Gate 2].
 - Đồng bộ hiệu ứng preview trên canvas theo tiến trình nét vẽ máy thật [P2 — sau Gate 2].
 
-### P3 — Backlog nghiên cứu xa (Post-Defense Backlog)
+### P3 — Pilot font thiết kế và backlog dài hạn
+
+- **RQ5 pilot:** lựa chọn một số font thiết kế có lỗi/thiếu chữ Việt, thử dựng centerline và bố trí dấu, đối chiếu độ phủ, độ đọc, mức giữ phong cách và công chỉnh tay. Chỉ mở sau khi P0 ổn định và đã chốt tập font, giấy phép, baseline, rubric; xem [Docs 22](22_nckh_extended_scope.md). Không cam kết sửa được mọi font trong kỳ bảo vệ.
 *Tuyệt đối không thực hiện trước khi đóng băng tính năng (Feature Freeze).*
 - Bộ chuyển đổi font viền đôi TTF/OTF sang centerline nét đơn.
 - Bổ sung ồ ạt các font pack mới chưa qua kiểm thử hình học.
@@ -289,9 +295,9 @@ Nghiên cứu               Song song                 & Đánh giá             
 - [x] Xử lý chuẩn hóa Unicode NFD, tự động ghép dấu thanh và dấu phụ theo mỏ neo (anchors) và offset (TV4)
 - [x] **BƯỚC A — Architecture Audit Trellis DAG / CA-VHC hiện tại (COMPLETE):** Audit toàn diện mã nguồn, bóc tách hạn chế ghép dấu post-DAG, phân rã NFD và rủi ro va chạm cầu nối runtime (`06_audit_trellis_dag_report.md`) [P0] (TV4)
 - [x] **BƯỚC B — Diacritic-Aware State Architecture Design (APPROVED AND CLOSED):** Khóa thiết kế kiến trúc trạng thái lai `CompositionState = GlyphVariant × DiacriticCandidate` (`07_diacritic_aware_state_design.md`), phân tách $C_{\text{state}}$ và $J_{\text{transition}}$, loại bỏ double-count, Single Source of Truth `DiacriticConfig`, khống chế $K_{\text{raw}} \le 9$, 12 unit test strategies; trạng thái: Architecture draft: DONE / Internal technical cleanup: DONE / TV2 cross-review: COMPLETED / PASS [P0] (TV4 chủ trì phối hợp TV2)
-- [ ] **BƯỚC C — Production Implementation (AUTHORIZED / NOT YET IMPLEMENTED — READY FOR STEP C: YES):** Software implementation authorized by TV4 after TV2 technical cross-review; chưa có CompositionState production implementation, chưa có diacritic-aware DAG production, chưa có delayed-stroke P0, chưa hoàn thành benchmark chính thức (không được hiểu AUTHORIZED là COMPLETED) [P0] (TV4 & TV2)
-  - **Nhiệm vụ ưu tiên cao nhất của TV4:** `PR1 — Hoàn thiện CA-VHC Metrics & Experiment Infrastructure`: tích hợp internal evaluator vào experiment pipeline, mở rộng CSV cho các metric CA-VHC đã thực sự tồn tại, xây dựng automated experiment runner, giữ backward compatibility; chưa bắt đầu PR3 `CompositionState` trước khi PR1 có test và metric baseline ổn định.
-  - **Mốc TV2 đã hoàn tất:** `PR2 — Chuẩn hóa ba baseline adapters B1/B2/B3` độc lập (PR #32, Entry Gate E3 PASS). **Việc tiếp theo của TV2+TV4:** ký duyệt hợp đồng transition-cost E4 trước khi mở PR3; xem [`18_pr3_e4_shared_transition_contract_draft.md`](18_pr3_e4_shared_transition_contract_draft.md).
+- [ ] **BƯỚC C — PR3 đang triển khai theo slice; exit PENDING:** `CompositionState` và diacritic-aware DAG đã có phần triển khai/DEV evidence; chưa có sign-off PR3 exit, delayed-stroke PR4 hoặc benchmark PR5 chính thức [P0] (TV4 lead, TV2 recheck transition).
+  - **PR1 và PR2:** hạ tầng metric/runner và ba baseline B1/B2/B3 đã hoàn tất; E3 PASS.
+  - **E4:** TV2+TV4 đã ký contract `4677aad` và PASS; bằng chứng E1 DEV và việc còn lại ở [`17_pr3_implementation_readiness.md`](17_pr3_implementation_readiness.md). Không dùng E1 DEV thay cho kết luận H1.1/PR3 exit.
 - [ ] Nghiên cứu tối ưu hóa thứ tự nét trễ (`delayed-stroke ordering`): quyết định viết dấu ngay sau nguyên âm, sau khi viết xong thân từ, hay theo nhóm nét trễ để cân bằng giữa quãng đường di chuyển quay lại, số lần nhấc bút và độ dễ đọc [P0] (TV4 & TV2)
 - [ ] Xử lý an toàn tổ hợp nhiều dấu tiếng Việt chồng tầng (dấu mũ + thanh, dấu móc + thanh) [P0] (TV4)
 
@@ -329,18 +335,18 @@ Nghiên cứu               Song song                 & Đánh giá             
 - [ ] Mở rộng kiểm thử hình học và QA trực quan cho toàn bộ bảng chữ cái, chữ hoa và tổ hợp dấu tiếng Việt phức tạp [P1] (TV4)
 
 #### 2.5 Phần cứng — Firmware & Điều khiển chuyển động (Đường chạy TV3)
-**Trạng thái:** ⬜ Chưa bắt đầu | **Phụ trách:** TV3 | **Mức ưu tiên:** P0
-- [ ] Chuẩn hóa interface chung giữa hardware simulator và máy vẽ thật [P0]
-- [ ] Điều khiển máy vẽ AxiDraw qua `pyaxidraw` thực thi đúng file SVG chuẩn [P0]
-- [ ] Xử lý an toàn các lệnh tạm dừng (`pause`), tiếp tục (`resume`), hủy vẽ (`cancel`) [P1]
-- [ ] Xây dựng quy trình và checklist hiệu chuẩn tọa độ, vận tốc, gia tốc và độ nảy ngòi bút [P0]
+**Trạng thái:** 🟢 Hoàn thành nền tảng phần mềm | **Phụ trách:** TV3 | **Mức ưu tiên:** P0
+- [x] Chuẩn hóa interface chung giữa hardware simulator và máy vẽ thật (`HardwareAdapterInterface`, `MockSimulatorAdapter`, `AxiDrawAdapter`) [P0]
+- [x] Điều khiển máy vẽ AxiDraw qua `pyaxidraw` thực thi đúng file SVG chuẩn (tích hợp chuẩn bị origin offset 5mm, xử lý tỷ lệ viewBox) [P0]
+- [x] Xử lý an toàn các lệnh tạm dừng (`pause`), tiếp tục (`resume`), hủy vẽ (`cancel`) với kiểm tra capability `pause_supported` và khóa trạng thái luồng [P1]
+- [x] Xây dựng quy trình và checklist hiệu chuẩn tọa độ, vận tốc, gia tốc và độ nảy ngòi bút (`07_physical_calibration_protocol.md`, `measurement-protocol.md`) [P0]
 
 #### 2.6 Phần cứng — Đo đạc thực tế & Trạng thái (Đường chạy TV3)
-**Trạng thái:** ⬜ Chưa bắt đầu | **Phụ trách:** TV3 | **Mức ưu tiên:** P0 / P2
-- [ ] Thu thập số đo thời gian vẽ thực tế `actual_draw_time_sec` trên máy vẽ vật lý [P0]
-- [ ] Báo cáo đo lường sai số quỹ đạo vật lý so với tọa độ SVG thiết kế [P0]
-- [ ] Gửi trạng thái/tiến độ thi công về đúng chuẩn JSON ở mục 5 trong API Spec [P1]
-- [ ] Phát hiện lỗi cơ bản (kẹt giấy, hết mực) và trả đúng mã lỗi chuẩn [P1]
+**Trạng thái:** 🟡 Hoàn tất hợp đồng & pipeline / Chờ thiết bị vật lý | **Phụ trách:** TV3 | **Mức ưu tiên:** P0 / P2
+- [ ] Thu thập số đo thời gian vẽ thực tế `actual_draw_time_sec` trên máy vẽ vật lý [P0] *(Blocked by hardware: chờ máy AxiDraw và cáp USB)*
+- [ ] Báo cáo đo lường sai số quỹ đạo vật lý so với tọa độ SVG thiết kế [P0] *(Blocked by hardware: chờ máy thật và camera)*
+- [x] Gửi trạng thái/tiến độ thi công về đúng chuẩn JSON ở mục 5 trong API Spec (bao gồm `pause_supported`, `progress_is_estimated`, các cờ mô hình động học) [P1]
+- [x] Phát hiện lỗi cơ bản (mất kết nối, ngoại lệ driver, lỗi ghi log) và trả đúng mã lỗi chuẩn (`HARDWARE_NOT_CONNECTED`, `HARDWARE_ERROR`, `HARDWARE_PAUSE_UNSUPPORTED`, `LOG_WRITE_ERROR`) [P1]
 - [ ] Telemetry phản hồi trạng thái đầu bút theo thời gian thực (hướng mở rộng) [P2]
 
 #### 2.7 Giao diện, Strict Validation & Tích hợp (Đường chạy TV4)
