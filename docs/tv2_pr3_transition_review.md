@@ -4,8 +4,8 @@
 - `REVIEWED_COMMIT: 983ebe7d4271d4b3bf48c75d51eb35a04c1e20e8`
 - `SLICE_3_ORIGIN: 2556672ca943786a74f67c01618da1930e7c9a40`
 - `CONTRACT: E4 e4-v1, ký tại 4677aad và ee7c214`
-- `AI_DRAFT_STATUS: CHANGES_REQUESTED`
-- `TV2_HUMAN_SIGN_OFF: PENDING`
+- `AI_DRAFT_STATUS: CHANGES_REQUESTED` tại review gốc `983ebe7`; verdict recheck cuối ở mục `1aa6ce2` bên dưới.
+- `TV2_HUMAN_SIGN_OFF: APPROVED` — TV2 xác nhận trong hội thoại ngày 2026-09-29, chỉ cho review shared-transition PR3 tại `1aa6ce2`; không phải PR3 exit sign-off.
 
 Phạm vi: chỉ đọc `backend/handwriting/composition.py::evaluate_composition_transition()`, `engine.py::bridge_collision_cost()` được gọi từ đó, `tests/test_ca_vhc_composition_dag.py`, và E4. Không sửa code TV4, B3/default hay hardware. Đây là review implementation, không mở lại E4 và không đóng gate thực nghiệm.
 
@@ -32,7 +32,7 @@ Phạm vi: chỉ đọc `backend/handwriting/composition.py::evaluate_compositio
 - `RECHECK_COMMIT: d4ed1a4653de16711a2a9f6308c51fe5d8f9cc0a`
 - `RECHECK_BRANCH: origin/codex/tv4-pr3-slices`; tại lúc fetch, đầu nhánh là `c6de3e72663abb6aebdee2e562b4311c60f9feaa`. Diff từ `d4ed1a4` đến đầu nhánh không đổi hai file code/test được recheck.
 - `AI_RECHECK_STATUS: R01–R03 VERIFIED_CLOSED; follow-up geometry tolerance cần TV4 triage`
-- `TV2_HUMAN_SIGN_OFF: PENDING` — bảng dưới là kết luận kỹ thuật do AI soạn, chưa thay cho xác nhận của TV2.
+- `TV2_HUMAN_SIGN_OFF: PENDING` tại mốc recheck `d4ed1a4`; xác nhận cuối được ghi riêng tại mốc `1aa6ce2` bên dưới.
 
 Đối chiếu E4 e4-v1 đã ký: $J_{lift}=w_1D_{penup}+w_2$, $J_{conn}=w_3C_{curvature}+w_4C_{bridge}$; $C_{state}$ chỉ cộng một lần ở mỗi state; giao cắt hình học hard-invalid không phụ thuộc trọng số hay ngưỡng clearance mềm. `eval_transition()`/B3 vẫn nằm ngoài đường gọi riêng của PR3.
 
@@ -45,3 +45,13 @@ Phạm vi: chỉ đọc `backend/handwriting/composition.py::evaluate_compositio
 Test độc lập trên checkout tách tại đúng `d4ed1a4`: `tests/test_ca_vhc_composition_dag.py` **13 passed**; `test_pr3_vietnamese_acceptance.py`, `test_pr3_renderer_integration.py`, `test_pr3_acceptance_baseline.py` **21 passed**. Tổng 34 test liên quan PASS; chưa chạy lại toàn bộ 231 test mà TV4 báo cáo. `tests/test_ca_vhc_composition_dag.py:99–115` đã kiểm tra trọng số không mặc định cho `CONNECT`/`LIFT` và tổng DP chỉ cộng legibility của mỗi state một lần. Các test nghiệm thu còn kiểm tra đường renderer; không suy ra từ đó rằng gate thực nghiệm đã đóng.
 
 **Follow-up mới, chưa thuộc R01–R03:** `_bridge_touches_strokes()` dùng `np.allclose(..., atol=1e-6)` nhưng giữ `rtol` mặc định (`composition.py:446–455`). Với geometry đầu vào không nhất quán, ví dụ exit công bố ở `(100, 0)` mm nhưng endpoint của nét base ở `(100.0005, 0)` mm, bridge bắt đầu tại `(100, 0)` và cùng hướng với nét base, đoạn overlap 0.0005 mm có thể được miễn như tiếp xúc cổng hợp lệ; thử trực tiếp cho `CONNECT` khi `LIFT` đắt. Đây là ca biên của dữ liệu geometry lệch cổng, chưa thấy bằng chứng xuất hiện ở glyph tạo bằng pipeline hiện hành. TV4 nên xét `rtol=0`, kiểm tra tính nhất quán giữa port và stroke endpoint, và thêm regression test cho near-port overlap; đồng thời đưa hai ca thủ công off-port touch/collinear overlap vào test tự động. Không tự sửa code TV4 hoặc đổi trạng thái E4/PR3/gate thực nghiệm tại đây.
+
+## Recheck ca biên và TV2 sign-off tại `1aa6ce2`
+
+- `FINAL_RECHECK_COMMIT: 1aa6ce24561b067346007cf30d6cf3b390bdf9dd`
+- `TV2_HUMAN_SIGN_OFF: APPROVED` — chính TV2 xác nhận trong hội thoại ngày 2026-09-29 sau khi nhận báo cáo recheck mã; không điền tên cá nhân chưa được cung cấp.
+- `SIGN_OFF_SCOPE: shared-transition geometry và TV2-PR3-R01–R03 theo E4 e4-v1`; E1 pen-up distance, biến thiên style và PR3 exit sign-off vẫn mở.
+
+Diff `d4ed1a4..1aa6ce2` không thay đổi công thức transition, state cost, B3/default hay hardware. Tại `backend/handwriting/composition.py:446–455`, toàn bộ phép `np.allclose` dùng để miễn tiếp xúc cổng đã đặt `rtol=0`, giữ `atol=1e-6` mm; tọa độ lớn không còn làm dung sai phình theo giá trị tọa độ. `tests/test_ca_vhc_composition_dag.py:61–83` thêm ca off-port touch, collinear overlap tại exit, và near-port overlap ở tọa độ khoảng 100 mm (endpoint lệch 0.0005 mm) đều phải cho `LIFT`. Vì vậy follow-up về relative tolerance được xác minh đã sửa ở mức code/test; R01–R03 vẫn `VERIFIED_CLOSED`.
+
+Lượt recheck này xác minh diff và assertion test, nhưng **không chạy lại test độc lập**: sandbox không đọc được bộ phụ thuộc Python tạm trước đó và chặn tải lại NumPy/pytest. Con số **233 passed** là kết quả TV4 báo cáo, không phải kết quả TV2/AI tự chạy ở `1aa6ce2`. Lượt trước đã chạy độc lập 34 test liên quan trên `d4ed1a4` và PASS. Phạm vi ký ở trên là review transition; không đóng E1, quyết định style, physical calibration hay formal benchmark.
