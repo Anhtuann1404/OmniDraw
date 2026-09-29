@@ -72,6 +72,8 @@ Tiêu bản kiểm chuẩn được thiết kế trên khổ A4 ngang ($297 \tim
 - **Cấu trúc:** Thước kiểm chuẩn dài chính xác $50.00\,\text{mm}$ theo trục X và Y, kèm ô vuông $20.00 \times 20.00\,\text{mm}$.
 - **Mục tiêu:** Hiệu chỉnh tỷ lệ co giãn quang học khi scan trước khi đo đạc độ rộng nét.
 
+> **Lưu ý về phạm vi bóc tách hình học:** Mô hình động học và parser trích xuất công cụ thi công (`calculate_svg_draw_breakdown()`) chỉ tính toán trên các đối tượng đường nét hình học (`<path>`). Các nhãn văn bản (`<text>`) trên tiêu bản là chú thích hiển thị (annotations), không được đưa vào phép tính động học bóc tách và không thuộc đối tượng thi công của đầu vẽ vector.
+
 ---
 
 ## 4. Quy trình Thực hiện Thực nghiệm từng bước
@@ -105,7 +107,7 @@ Tiêu bản kiểm chuẩn được thiết kế trên khổ A4 ngang ($297 \tim
 ### Bước 1: Chuẩn bị máy & Cân bằng bàn vẽ
 1. Đặt máy vẽ trên mặt bàn đá hoặc gỗ phẳng vững chắc, không rung động.
 2. Dùng thước nivô (thủy bình) kiểm tra độ phẳng mặt bàn vẽ theo 2 trục X và Y.
-3. Kiểm tra nhãn nguồn (power adapter label) đi kèm phiên bản máy vẽ được bàn giao (mạch EBB hỗ trợ dải $9\text{V} - 12\text{V}\,\text{DC} / 1.5\text{A} - 2.1\text{A}$, đầu cắm barrel jack dương trong / center-positive; phổ biến là $9\text{V}/2.1\text{A}$ cho AxiDraw V3 tiêu chuẩn hoặc $12\text{V}/2\text{A}$ cho bản V3/A3/SE). Cắm đúng nguồn định mức và cắm cáp USB vào máy tính điều khiển.
+3. Kiểm tra nguồn cấp điện: Theo công bố kỹ thuật của nhà sản xuất, nguồn OEM tiêu chuẩn của AxiDraw là $9\text{V}\,\text{DC}, 1.5\text{A}$ (đầu cắm barrel jack $2.1\text{mm} \times 5.5\text{mm}$, cực dương ở giữa / center-positive; bo mạch EBB hỗ trợ dải $9\text{V} - 12\text{V}\,\text{DC}$, nhưng tuyệt đối không tự ý dùng nguồn $12\text{V}$ khi chưa có xác nhận kỹ thuật). Người vận hành bắt buộc phải đối chiếu trực tiếp thông số trên nhãn của adapter đi kèm và nhãn dán trên chính thiết bị được bàn giao trước khi cắm điện. Cắm cáp USB vào máy tính điều khiển.
 
 ### Bước 2: Cố định giấy & Cài đặt lực ngòi
 1. Dán phẳng 4 góc tờ giấy Double A A4 vào mặt bàn vẽ bằng băng dính giấy (washi tape), không làm căng phồng giấy.

@@ -13,7 +13,7 @@ Trước khi gửi bất kỳ lệnh vẽ nào xuống máy vẽ vật lý, TV3 
 
 | STT | Hạng mục kiểm tra | Tiêu chuẩn đạt | Trạng thái |
 | :---: | :--- | :--- | :---: |
-| 1 | **Nguồn cấp điện (Power Supply)** | Kiểm tra đúng nhãn nguồn (power adapter label) đi kèm phiên bản thiết bị được bàn giao trước khi cắm (chuẩn bo mạch EBB hỗ trợ 9V–12V DC, dòng tối thiểu 1.5A–2.1A, chân cắm barrel jack dương trong / center-positive; phổ biến là 9V/2.1A cho V3 chuẩn hoặc 12V/2A cho V3/A3/SE). Cấp nguồn ổn định cho bo mạch EBB, đèn LED xanh sáng liên tục. | ⬜ Chưa kiểm tra |
+| 1 | **Nguồn cấp điện (Power Supply)** | Nguồn OEM AxiDraw theo công bố nhà sản xuất là 9V DC, 1.5A (giắc cắm barrel 2.1mm x 5.5mm, dương trong / center-positive). Mạch EBB hỗ trợ dải 9V–12V DC, nhưng tuyệt đối không khuyến nghị hay tự ý dùng nguồn 12V khi chưa có xác nhận từ nhà sản xuất. Hướng dẫn bắt buộc: Người vận hành phải đối chiếu trực tiếp thông số trên nhãn của adapter đi kèm và nhãn dán trên chính thiết bị được bàn giao trước khi cắm điện. Đèn LED xanh trên bo mạch EBB sáng ổn định liên tục. | ⬜ Chưa kiểm tra |
 | 2 | **Cáp kết nối USB/Serial** | Dây cáp cắm chắc chắn từ PC vào cổng USB của EBB, máy tính nhận diện thiết bị CDC COM port (trên Windows: Device Manager hiển thị cổng COM, trên Linux: `/dev/ttyACM0`). | ⬜ Chưa kiểm tra |
 | 3 | **Cơ cấu dây đai & Ổ bi (Belts & Pulleys)** | Dây đai GT2 hai trục X và Y có độ căng vừa phải (không chùng gây rơ bước, không quá căng làm quá tải động cơ bước). | ⬜ Chưa kiểm tra |
 | 4 | **Bút vẽ & Cơ cấu kẹp bút** | Bút được kẹp vuông góc $90^\circ$ so với mặt giấy, ngòi bút không bị lỏng khi di chuyển nhanh. | ⬜ Chưa kiểm tra |
@@ -58,6 +58,7 @@ Trước khi gửi bất kỳ lệnh vẽ nào xuống máy vẽ vật lý, TV3 
 
 1. **`estimated_draw_time_sec` (Thời gian Ước lượng / Mô phỏng):**
    - Được tính bằng công thức: $T_{\text{est}} = \frac{\sum L_{\text{path}}}{V_{\text{pen}}} + N_{\text{lifts}} \times \Delta t_{\text{servo}}$.
+   - **Phạm vi bóc tách:** Parser động học chỉ tính toán trên các thẻ `<path>`. Các thẻ `<text>` là nhãn chú thích trực quan, không tham gia vào bóc tách động học hoặc hành trình thi công ngòi bút.
    - Áp dụng trong toàn bộ quá trình chờ đợi và hiển thị % trên giao diện Web UI.
    - Khi chạy ở chế độ `MockSimulatorAdapter`, trường này phản ánh thời gian chạy ảo.
 2. **`actual_draw_time_sec` (Thời gian Thi công Vật lý Thực tế):**

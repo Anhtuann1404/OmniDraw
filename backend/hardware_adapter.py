@@ -972,6 +972,9 @@ def calculate_svg_draw_breakdown(
       hay suy giảm vận tốc góc cua (corner slowdown).
     - Cờ mô hình bắt buộc: accel_model_applied=False, corner_model_applied=False.
     - Gia tốc driver (accel_pct) là thông số cấu hình firmware, không tương đương gia tốc mm/s^2.
+    - Phạm vi bóc tách: Parser trích xuất và tính toán động học dựa trên các thẻ <path>
+      (bao gồm các đoạn M/L/H/V, Bézier C/S/Q/T, cung tròn A/a, phân cấp nhóm lồng <g>).
+      Các thẻ chú thích văn bản <text> không được đưa vào phép tính động học của đường vẽ bút.
     """
     default_breakdown = {
         "total_time_sec": 15,
@@ -2373,8 +2376,13 @@ def reset_hardware_adapter() -> None:
 # CLI Entry Point: Smoke Test cho TV3
 # ---------------------------------------------------------------------------
 
-async def _run_smoke_test(mode: str = "simulator", fixture_path: Optional[str] = None,
-                          profile_path: Optional[str] = None) -> int:
+async def _run_smoke_test(
+    mode: str = "simulator",
+    fixture_path: Optional[str] = None,
+    profile_path: Optional[str] = None,
+    adapter: Optional[HardwareAdapterInterface] = None,
+    timeout_sec: Optional[float] = None,
+) -> int:
     print("=" * 70)
     print(f"OmniDraw TV3 Hardware Smoke Test Runner — Mode: {mode.upper()}")
     print("=" * 70)
@@ -2390,13 +2398,13 @@ async def _run_smoke_test(mode: str = "simulator", fixture_path: Optional[str] =
     print(f"1. Nạp fixture: {fixture_path}")
     print(f"2. Nạp calibration profile từ: {profile_path or 'config/calibration_profile.yaml'}")
 
-    adapter: HardwareAdapterInterface
-    if mode == "physical":
-        adapter = AxiDrawAdapter(profile_path=profile_path, use_fake_driver=False)
-    elif mode == "fake":
-        adapter = AxiDrawAdapter(profile_path=profile_path, use_fake_driver=True)
-    else:
-        adapter = MockSimulatorAdapter(connected=True, speed_factor=15.0, profile_path=profile_path)
+    if adapter is None:
+        if mode == "physical":
+            adapter = AxiDrawAdapter(profile_path=profile_path, use_fake_driver=False)
+        elif mode == "fake":
+            adapter = AxiDrawAdapter(profile_path=profile_path, use_fake_driver=True)
+        else:
+            adapter = MockSimulatorAdapter(connected=True, speed_factor=15.0, profile_path=profile_path)
 
     print(f"3. Thử kết nối adapter ({adapter.__class__.__name__})...")
     conn = adapter.connect()
@@ -2404,8 +2412,11 @@ async def _run_smoke_test(mode: str = "simulator", fixture_path: Optional[str] =
     if not conn and mode == "physical":
         print("[INFO] Không tìm thấy pyaxidraw hoặc thiết bị vật lý AxiDraw. Máy chưa sẵn sàng.")
         return 2
+    if not conn:
+        print("[FAIL] Kết nối adapter thất bại.")
+        return 1
 
-    req_id = f"smoke-{int(time.time())}"
+    req_id = f"smoke-{int(time.time() * 1000)}"
     print(f"4. Bắt đầu tác vụ in với request_id='{req_id}'...")
     res = await adapter.start_job(req_id, fixture_path)
     if "error" in res:
@@ -2425,8 +2436,24 @@ async def _run_smoke_test(mode: str = "simulator", fixture_path: Optional[str] =
     else:
         print("5-6. Tạm dừng (pause) chưa được hỗ trợ trên phần cứng thật (pause_supported=False). Bỏ qua.")
 
-    print("7. Đợi tác vụ hoàn tất (polling status)...")
-    for _ in range(100):
+    # Tính toán deadline timeout động phù hợp với độ dài tiêu bản
+    init_st = adapter.get_status(req_id)
+    est_total_sec = float(init_st.get("total_draw_time_sec") or 15.0)
+
+    if timeout_sec is not None:
+        effective_timeout = float(timeout_sec)
+    elif isinstance(adapter, MockSimulatorAdapter):
+        speed_factor = getattr(adapter, "speed_factor", 15.0) or 15.0
+        expected_wall_sec = est_total_sec / speed_factor
+        effective_timeout = max(25.0, expected_wall_sec * 2.5 + 5.0)
+    elif getattr(adapter, "use_fake_driver", False):
+        effective_timeout = max(15.0, est_total_sec * 0.5 + 5.0)
+    else:
+        effective_timeout = max(30.0, est_total_sec * 2.0 + 15.0)
+
+    print(f"7. Đợi tác vụ hoàn tất (polling status, dynamic timeout={effective_timeout:.1f}s)...")
+    deadline = time.monotonic() + effective_timeout
+    while time.monotonic() < deadline:
         await asyncio.sleep(0.1)
         st = adapter.get_status(req_id)
         if st["status"] == "done":
@@ -2440,7 +2467,29 @@ async def _run_smoke_test(mode: str = "simulator", fixture_path: Optional[str] =
             print(f"[FAIL] Tác vụ gặp lỗi: {st.get('error')}")
             return 1
 
-    print("[TIMEOUT] Quá thời gian chờ hoàn thành smoke test.")
+    # Khi timeout xảy ra, bắt buộc phải chủ động hủy job an toàn để tránh motor chạy ngầm
+    print(f"[TIMEOUT] Quá thời gian chờ hoàn thành smoke test (deadline {effective_timeout:.1f}s). Đang kích hoạt hủy job an toàn...")
+    cancel_res: Dict[str, Any] = {}
+    cancel_err: Optional[str] = None
+    try:
+        cancel_res = await adapter.cancel_job(req_id)
+    except Exception as c_exc:
+        cancel_err = str(c_exc)
+
+    driver_stopped = bool(
+        (cancel_res.get("driver_stopped") is True or cancel_res.get("driver_stop_confirmed") is True)
+        and not cancel_err
+        and not cancel_res.get("error")
+        and cancel_res.get("status") == "cancelled"
+    )
+
+    if driver_stopped:
+        print(f"[CANCELLED] Đã hủy job '{req_id}' an toàn và xác nhận driver đã dừng.")
+    else:
+        err_msg = cancel_err or cancel_res.get("error") or "Không xác nhận được trạng thái dừng driver"
+        if isinstance(err_msg, dict):
+            err_msg = err_msg.get("message", str(err_msg))
+        print(f"[EMERGENCY] Hủy job '{req_id}' thất bại hoặc chưa xác nhận driver dừng: {err_msg}. VUI LÒNG NHẤN NÚT DỪNG VẬT LÝ!")
     return 1
 
 
@@ -2760,10 +2809,16 @@ if __name__ == "__main__":
                         help="Chế độ chạy adapter: simulator, fake, hoặc physical")
     parser.add_argument("--svg", type=str, default=None, help="Đường dẫn file SVG mẫu")
     parser.add_argument("--profile", type=str, default=None, help="Đường dẫn calibration_profile.yaml")
+    parser.add_argument("--timeout", type=float, default=None, help="Thời gian chờ tối đa (giây) cho smoke test")
     args = parser.parse_args()
 
     if args.smoke_test:
-        code = asyncio.run(_run_smoke_test(mode=args.mode, fixture_path=args.svg, profile_path=args.profile))
+        code = asyncio.run(_run_smoke_test(
+            mode=args.mode,
+            fixture_path=args.svg,
+            profile_path=args.profile,
+            timeout_sec=args.timeout,
+        ))
         sys.exit(code)
     elif args.benchmark_rq3:
         print("=" * 70)

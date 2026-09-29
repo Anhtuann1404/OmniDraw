@@ -73,6 +73,7 @@ from hardware_adapter import (
     VALID_HARDWARE_ERRORS,
     mm_s_to_axidraw_speed_pct,
     AXIDRAW_DEFAULT_MAX_SPEED_MM_S,
+    _run_smoke_test,
 )
 
 _module_temp_csv = None
@@ -2220,6 +2221,84 @@ class TestTV4IntegrationContracts(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(fake_rows[-1]["is_simulated"], "True")
         self.assertEqual(fake_rows[-1]["actual_hardware_measured"], "False")
         self.assertEqual(fake_rows[-1]["source_tag"], "axidraw_fake_driver")
+
+    def test_smoke_test_runner_with_long_rq3_specimen_on_simulator(self):
+        """
+        TV4 Review: Smoke test runner với tiêu bản dài (rq3_clearance_calibration_specimen.svg)
+        phải tính dynamic deadline phù hợp (không bị giới hạn 10s cố định) và trả về code 0.
+        """
+        long_fixture = os.path.join(_repo_root, "tests", "fixtures", "rq3_clearance_calibration_specimen.svg")
+        self.assertTrue(os.path.isfile(long_fixture))
+        adapter = MockSimulatorAdapter(connected=True, speed_factor=100.0, metrics_csv_path=self.csv_path)
+
+        code = asyncio.run(_run_smoke_test(
+            mode="simulator",
+            fixture_path=long_fixture,
+            adapter=adapter,
+        ))
+        self.assertEqual(code, 0, f"Smoke test with long specimen must complete successfully (code 0), got {code}")
+
+    def test_smoke_test_runner_with_long_rq3_specimen_on_fake_driver(self):
+        """
+        TV4 Review: Smoke test runner với tiêu bản dài trên Fake Driver phải hoàn tất thành công (code 0).
+        """
+        long_fixture = os.path.join(_repo_root, "tests", "fixtures", "rq3_clearance_calibration_specimen.svg")
+        self.assertTrue(os.path.isfile(long_fixture))
+        adapter = AxiDrawAdapter(use_fake_driver=True, metrics_csv_path=self.csv_path)
+        adapter.connect()
+        adapter._ad.total_plot_time = 0.05
+
+        code = asyncio.run(_run_smoke_test(
+            mode="fake",
+            fixture_path=long_fixture,
+            adapter=adapter,
+        ))
+        self.assertEqual(code, 0, f"Smoke test with long specimen on fake driver must return 0, got {code}")
+
+    def test_smoke_test_runner_timeout_safely_cancels_job(self):
+        """
+        TV4 Review: Khi smoke test timeout, runner không được bỏ mặc job đang in
+        mà bắt buộc phải chủ động cancel_job() an toàn và trả về code 1.
+        """
+        long_fixture = os.path.join(_repo_root, "tests", "fixtures", "rq3_clearance_calibration_specimen.svg")
+        adapter = MockSimulatorAdapter(connected=True, speed_factor=1.0, metrics_csv_path=self.csv_path)
+
+        code = asyncio.run(_run_smoke_test(
+            mode="simulator",
+            fixture_path=long_fixture,
+            adapter=adapter,
+            timeout_sec=0.05,
+        ))
+        self.assertEqual(code, 1, "Timed out smoke test must return exit code 1")
+
+        # Xác nhận job đã bị hủy trên adapter
+        self.assertTrue(len(adapter.jobs) > 0)
+        last_job = list(adapter.jobs.values())[-1]
+        self.assertEqual(last_job["status"], "cancelled", "Job must be cancelled on adapter when timeout occurs")
+
+    def test_smoke_test_runner_timeout_when_cancellation_unconfirmed_handles_emergency(self):
+        """
+        TV4 Review: Khi smoke test timeout và lệnh hủy driver thất bại / không xác nhận được,
+        runner phải cảnh báo khẩn và trả về code 1 mà không nuốt lỗi.
+        """
+        class FailingCancelAdapter(MockSimulatorAdapter):
+            async def cancel_job(self, request_id: str):
+                res = await super().cancel_job(request_id)
+                res["driver_stopped"] = False
+                res["driver_stop_confirmed"] = False
+                res["error"] = {"code": "DRIVER_STOP_FAILED", "message": "Driver stop command failed"}
+                return res
+
+        long_fixture = os.path.join(_repo_root, "tests", "fixtures", "rq3_clearance_calibration_specimen.svg")
+        adapter = FailingCancelAdapter(connected=True, speed_factor=1.0, metrics_csv_path=self.csv_path)
+
+        code = asyncio.run(_run_smoke_test(
+            mode="simulator",
+            fixture_path=long_fixture,
+            adapter=adapter,
+            timeout_sec=0.05,
+        ))
+        self.assertEqual(code, 1, "Failed cancellation on timeout must return exit code 1")
 
 
 if __name__ == "__main__":
