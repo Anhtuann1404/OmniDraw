@@ -27,6 +27,7 @@ From phase Q3 onward, all hardware modifications, additions, and architectural d
 | [05_electronics_spec.md](05_electronics_spec.md) | **Electronics Specification** | SYSTEM CONCEPT / TBD | Controller candidate, stepper drivers, power regulation, wiring |
 | [06_validation_plan.md](06_validation_plan.md) | **Hardware Validation Plan** | PROPOSED VALIDATION PLAN / TBD | Experimental test procedures, validation matrices, target criteria |
 | [07_physical_calibration_protocol.md](07_physical_calibration_protocol.md) | **Physical Calibration Protocol** | ACTIVE BASELINE PROTOCOL | RQ3 physical calibration, ink bleed, clearance ladder, telemetry |
+| [08_rq3_preflight_report.md](08_rq3_preflight_report.md) | **RQ3 Preflight Report** | VERIFIED BASELINE | Preflight checks on simulator/fake driver, CLI commands, execution readiness |
 | [hardware_decision_log.md](hardware_decision_log.md) | **Hardware Decision Log** | ACTIVE | Architectural decisions, interface freeze history, change rationale |
 
 ---

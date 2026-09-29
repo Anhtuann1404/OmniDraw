@@ -114,7 +114,7 @@ Mỗi lượt chạy theo quy trình:
 | 1 | smoke_test_specimen.svg | simulator | PASS (CLI `--mode simulator`) | Đã hoàn thành qua CLI smoke-test |
 | 2 | bezier_length_test.svg | simulator | PASS (Pytest Suite) | Đã hoàn thành qua Pytest |
 | 3 | smoke_test_specimen.svg | fake | PASS (CLI `--mode fake`) | Đã hoàn thành (kiểm chứng ngắt/pause an toàn) |
-| 4 | (art mode output từ TV2) | simulator | Chờ TV2 cung cấp SVG | Sẵn sàng chạy khi TV2 chuyển giao SVG |
+| 4 | output_tv2_art_mode_smoke.svg | simulator & fake | PASS (CLI `--smoke-test`) | Đã nghiệm thu TV2 bàn giao (Art Mode, 16 nét, 25 trường CSV, `actual_hardware_measured=False`) |
 | 5 | smoke_test_specimen.svg | axidraw_real | **BLOCKED BY HARDWARE** | Chờ máy vẽ & cáp vật lý sẵn sàng |
 
 ---

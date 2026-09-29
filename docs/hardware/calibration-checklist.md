@@ -13,7 +13,7 @@ Trước khi gửi bất kỳ lệnh vẽ nào xuống máy vẽ vật lý, TV3 
 
 | STT | Hạng mục kiểm tra | Tiêu chuẩn đạt | Trạng thái |
 | :---: | :--- | :--- | :---: |
-| 1 | **Nguồn cấp điện (Power Supply)** | Adapter 9V/1.5A–2.1A cấp nguồn ổn định cho mạch EBB, đèn LED xanh sáng liên tục. | ⬜ Chưa kiểm tra |
+| 1 | **Nguồn cấp điện (Power Supply)** | Adapter 9V–12V / 1.5A–2.1A cấp nguồn ổn định cho mạch EBB, đèn LED xanh sáng liên tục. | ⬜ Chưa kiểm tra |
 | 2 | **Cáp kết nối USB/Serial** | Dây cáp cắm chắc chắn từ PC vào cổng USB của EBB, máy tính nhận diện thiết bị CDC COM port (trên Windows: Device Manager hiển thị cổng COM, trên Linux: `/dev/ttyACM0`). | ⬜ Chưa kiểm tra |
 | 3 | **Cơ cấu dây đai & Ổ bi (Belts & Pulleys)** | Dây đai GT2 hai trục X và Y có độ căng vừa phải (không chùng gây rơ bước, không quá căng làm quá tải động cơ bước). | ⬜ Chưa kiểm tra |
 | 4 | **Bút vẽ & Cơ cấu kẹp bút** | Bút được kẹp vuông góc $90^\circ$ so với mặt giấy, ngòi bút không bị lỏng khi di chuyển nhanh. | ⬜ Chưa kiểm tra |
@@ -151,10 +151,11 @@ python backend/camera_inspector.py --capture --output logs/camera_test.jpg
 
 ---
 
-## 10. CLI Smoke Test Tự động của TV3
+## 10. CLI Smoke Test & Benchmark Tự động của TV3
 
-TV3 cung cấp script CLI tích hợp sẵn để kiểm tra vòng đời phần cứng và adapter mà không phụ thuộc backend:
+TV3 cung cấp script CLI tích hợp sẵn để kiểm tra vòng đời phần cứng, adapter và benchmark RQ3 mà không phụ thuộc backend:
 
+### A. Smoke Test Vòng đời (start → pause → resume → done):
 ```powershell
 # Chạy mô phỏng Simulator
 python backend/hardware_adapter.py --smoke-test --mode simulator
@@ -164,5 +165,17 @@ python backend/hardware_adapter.py --smoke-test --mode fake
 
 # Chạy với Máy vẽ AxiDraw thật (khi có thiết bị cắm vào cổng USB)
 python backend/hardware_adapter.py --smoke-test --mode physical
+```
+
+### B. Benchmark Tự động Tiêu bản RQ3 (Khối C 3 dải vận tốc 20/40/60 mm/s):
+```powershell
+# Chạy benchmark RQ3 trên Simulator
+python backend/hardware_adapter.py --benchmark-rq3 --mode simulator
+
+# Chạy benchmark RQ3 trên Fake Driver (kiểm chứng timeout động & 3 jobs)
+python backend/hardware_adapter.py --benchmark-rq3 --mode fake
+
+# Chạy benchmark RQ3 trên Máy vẽ thật (khi có thiết bị cắm vào cổng USB)
+python backend/hardware_adapter.py --benchmark-rq3 --mode physical
 ```
 
