@@ -72,16 +72,24 @@ logs/*.txt
 !logs/.gitkeep
 frontend/.vite/
 
-# =========================
-# OmniDraw - Dữ liệu chữ viết thật & PII (Tuyệt đối không push lên Git)
-# =========================
+# =============================================================================
+# OmniDraw - Dữ liệu chữ viết thật, Manifest thô & Hồ sơ người viết (No-PII)
+# Mặc định chặn dữ liệu cá nhân/thô; chỉ bản tổng hợp được duyệt mới được chia sẻ.
+# =============================================================================
 dataset/raw/images/
 dataset/raw/consent/
+dataset/raw/manifests/
 dataset/processed/ca_vhc/crops/
+dataset/processed/writer_profiles/profiles/
+dataset/processed/writer_profiles/profile_*.json
 *_pii.*
 *registry*.json
 *.tif
 *.tiff
+
+# Cho phép chia sẻ bản tổng hợp vector đặc trưng ẩn danh đã qua phê duyệt
+!dataset/processed/writer_profiles/features/
+!dataset/processed/writer_profiles/features/**
 
 # =========================
 # Node / Frontend Build

@@ -156,12 +156,18 @@ Mọi ô viết tay hoặc mẫu bóc tách trải qua 5 trạng thái kiểm đ
 4. `QC_VERIFIED_PASS`: Đã qua thẩm định thủ công bằng mắt của điều phối viên TV1, xác nhận nét chữ hợp lệ, không dùng bút xóa, đủ độ tương phản.
 5. `QC_REJECTED`: Ô bị loại bỏ khỏi tập huấn luyện do gạch xóa, viết sai ô, hoặc rách giấy (vẫn lưu vết trong manifest để bảo đảm tính toàn vẹn mẫu số nghiên cứu).
 
-### 4.3. Quản lý Xuất xứ Dữ liệu (Data Provenance Architecture)
+### 4.3. Quản lý Xuất xứ Dữ liệu & Ranh giới Chia sẻ (Data Provenance & Release Boundary)
 Đối tượng `WriterProfile` được sinh bởi `profile_generator.py` tuân thủ nghiêm ngặt 100% định nghĩa cấu trúc của [`dataset/schemas/writer_profile.schema.json`](../dataset/schemas/writer_profile.schema.json), bao gồm 9 trường dữ liệu chuẩn (`profile_id`, `writer_id`, `version`, `created_at`, `num_samples_analyzed`, `global_style`, `spacing`, `diacritic_tendencies`, `allograph_tendencies`).
 
-Để bảo đảm tính tương thích với schema và nguyên tắc phân tách trách nhiệm:
-- **Hồ sơ `WriterProfile` KHÔNG chứa trường `provenance_manifest` bên trong JSON profile.**
-- Thông tin xuất xứ và liên kết chi tiết (provenance linkage) được **lưu trữ riêng biệt** qua 2 tệp phụ trợ:
-  1. `dataset/raw/manifests/collection_manifest.jsonl`: Lưu vết toàn bộ phiên quét `scan_id`, thiết bị scanner, DPI, các chỉ số căn chỉnh hình học và nhật ký dị thường cấp ô (`cell_anomalies`).
-  2. `dataset/processed/writer_profiles/features/writer_features_summary.jsonl`: Lưu vết dòng trích xuất đặc trưng gắn liền với từng `profile_id`, số lượng mẫu phân tích hợp lệ và thời điểm sinh.
-- Mọi dữ liệu liên kết đều truy xuất được ngược về nguồn gốc ban đầu mà không làm biến dạng schema JSON đã đóng băng.
+Để bảo đảm tính tương thích với schema, nguyên tắc phân tách trách nhiệm và an toàn dữ liệu:
+1. **Hồ sơ `WriterProfile` KHÔNG chứa trường `provenance_manifest` bên trong JSON profile:**
+   - Mọi metadata xuất xứ được tách rời hoàn toàn khỏi đối tượng profile để bảo vệ tính bất biến của JSON Schema.
+2. **Phạm vi truy vết hiện tại & Khẳng định kỹ thuật minh bạch:**
+   - Ở giai đoạn tiền pilot (pre-pilot), liên kết xuất xứ hoạt động ở cấp độ phiên quét (`scan_id` $\leftrightarrow$ `writer_id` qua `collection_manifest.jsonl`) và cấp độ hồ sơ đặc trưng (`writer_id` $\leftrightarrow$ `profile_id` qua `writer_features_summary.jsonl`).
+   - **Khả năng truy vết chi tiết ở cấp độ ô cắt (crop-level provenance: liên kết danh sách cụ thể các cặp `scan_id`/`cell_id` thực sự được sử dụng để tính toán từng `profile_id`) hiện CHƯA ĐƯỢC TRIỂN KHAI trong mã nguồn tiền pilot.**
+   - *Lộ trình kỹ thuật:* Bảng liên kết xuất xứ chi tiết (dự kiến `dataset/processed/writer_profiles/provenance/profile_crops_provenance.jsonl`) sẽ được thiết kế và bổ sung cùng test truy vết tương ứng khi hoàn thiện pipeline nạp ảnh quét thật sau đợt pilot P01–P04.
+3. **Chính sách Loại trừ Git & Phạm vi Chia sẻ Dữ liệu (Git Exclusion Policy):**
+   - Mặc định loại trừ khỏi Git (`.gitignore`):
+     - `dataset/raw/manifests/`: Chứa toàn bộ metadata quét chi tiết và nhật ký dị thường.
+     - `dataset/processed/writer_profiles/profiles/`: Chứa file JSON hồ sơ phong cách chi tiết của từng người viết.
+   - **Chỉ bản tổng hợp vector đặc trưng đã qua phê duyệt (`dataset/processed/writer_profiles/features/writer_features_summary.jsonl`)** mới được phép chia sẻ và lưu vết trong kho mã nguồn Git phục vụ thẩm định khoa học. Mọi dữ liệu chi tiết khác đều được cách ly bảo mật theo đúng quy chuẩn đạo đức nghiên cứu.

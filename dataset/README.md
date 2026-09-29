@@ -13,10 +13,11 @@ Tuân thủ nghiêm ngặt theo đặc tả chuẩn: [`docs/08_handwriting_datas
 ```text
 dataset/
 ├── README.md                           # Tài liệu hướng dẫn quản trị dữ liệu (tệp này)
-├── raw/                                # Kho lưu trữ dữ liệu thô (READ-ONLY / BẤT BIẾN)
-│   ├── images/                         # Ảnh quét phẳng PNG 600 DPI không nén suy hao
+├── raw/                                # Kho lưu trữ dữ liệu thô (READ-ONLY / BẤT BIẾN / GITIGNORED)
+│   ├── images/                         # [GITIGNORED] Ảnh quét phẳng PNG 600 DPI không nén suy hao
 │   │   └── W{xxx}_S{yy}_P{zz}.png      # Đặt tên danh định: writer_id, session_id, page_no
-│   └── manifests/                      # Bảng kê khai phiên thu thập và metadata bảo mật
+│   ├── consent/                        # [GITIGNORED] Bản quét phiếu đồng thuận có chữ ký
+│   └── manifests/                      # [GITIGNORED] Bảng kê khai phiên thu thập và metadata chi tiết
 │       └── collection_manifest.jsonl
 ├── processed/                          # Kho dữ liệu sau tiền xử lý và kiểm chuẩn quang học
 │   ├── ca_vhc/                         # Phân nhánh CA-VHC (Offline calibration)
@@ -24,20 +25,19 @@ dataset/
 │   │   │   ├── ca_vhc_train.jsonl
 │   │   │   ├── ca_vhc_val.jsonl
 │   │   │   └── ca_vhc_test.jsonl
-│   │   ├── crops/                      # Ảnh trích xuất từng ký tự / âm tiết chuẩn hóa
+│   │   ├── crops/                      # [GITIGNORED] Ảnh trích xuất từng ký tự / âm tiết chuẩn hóa
 │   │   │   ├── glyphs/
 │   │   │   └── diacritics/
 │   │   └── splits/                     # Danh sách phân chia Writer-Disjoint cố định
 │   │       └── split_metadata_v1.json
 │   └── writer_profiles/                # Phân nhánh Hồ sơ Người viết (Writer Profile P2)
-│       ├── profiles/                   # File JSON hồ sơ người viết hoàn chỉnh
+│       ├── profiles/                   # [GITIGNORED] File JSON hồ sơ cá nhân theo từng người viết
 │       │   ├── profile_W001_v1.json
 │       │   ├── profile_W002_v1.json
-│       │   ├── profile_W003_v1.json
 │       │   └── ...
-│       └── features/                   # Bảng tổng hợp vector đặc trưng trung gian
+│       └── features/                   # [CHIA SẺ ĐÃ PHÊ DUYỆT] Bảng tổng hợp vector đặc trưng
 │           └── writer_features_summary.jsonl
-└── schemas/                            # JSON Schema kiểm thực tính toàn vẹn cấu trúc
+└── schemas/                            # JSON Schema kiểm thực tính toàn vẹn cấu trúc (Tracked)
     ├── writer_profile.schema.json      # Schema hồ sơ người viết P2
     ├── ca_vhc_annotation.schema.json   # Schema gán nhãn mỏ neo CA-VHC (Proposed)
     └── collection_manifest.schema.json # Schema phiên thu thập
@@ -54,14 +54,23 @@ dataset/
 
 ---
 
-## 3. Chính sách Bảo mật & Đạo đức Nghiên cứu (No-PII Policy)
+## 3. Chính sách Bảo mật, Đạo đức & Kiểm soát Phiên bản Git
 
-Theo quy định tại [`docs/21_handwriting_collection_protocol_and_error_handling.md`](../docs/21_handwriting_collection_protocol_and_error_handling.md):
-- **Ẩn danh hóa 100%:** Tuyệt đối không lưu trữ thông tin định danh cá nhân (PII: Họ tên, email, số điện thoại, CCCD) trong kho dữ liệu `dataset/`.
+### 3.1. Mã hóa Định danh & Bảo vệ Quyền riêng tư (Pseudonymization)
+Theo quy định tại [`docs/21_handwriting_collection_protocol_and_error_handling.md`](../docs/21_handwriting_collection_protocol_and_error_handling.md) và [`docs/25_rq4_consent_and_anonymization_protocol.md`](../docs/25_rq4_consent_and_anonymization_protocol.md):
+- **Tuyệt đối không lưu PII:** Không lưu trữ thông tin định danh cá nhân (PII: Họ tên, email, số điện thoại, CCCD) trong kho dữ liệu `dataset/`.
 - **Mã hóa người viết:** Mỗi người viết được định danh bằng mã duy nhất dạng `W{xxx}` (ví dụ: `W001`, `W002`).
 - Bảng ánh xạ danh tính người tham gia được lưu trữ ngoại tuyến tại kho lưu trữ độc lập cách ly mạng (air-gapped registry) do điều phối viên bảo mật phụ trách.
 
----
+### 3.2. Chính sách Loại trừ Git & Phạm vi Chia sẻ Dữ liệu (Git Exclusion & Release Boundary)
+- **Mặc định chặn khỏi Git (`.gitignore`):**
+  1. Toàn bộ ảnh quét và tài liệu pháp lý thô: `dataset/raw/images/`, `dataset/raw/consent/`.
+  2. Bảng kê khai phiên thu thập thô chứa metadata chi tiết: `dataset/raw/manifests/`.
+  3. Toàn bộ ảnh crop bóc tách: `dataset/processed/ca_vhc/crops/`.
+  4. Toàn bộ hồ sơ phong cách chi tiết theo từng cá nhân: `dataset/processed/writer_profiles/profiles/` (và các file `profile_*.json`).
+- **Phạm vi dữ liệu được phép chia sẻ và commit:**
+  - **Chỉ duy nhất bản tổng hợp vector đặc trưng đã qua phê duyệt (`dataset/processed/writer_profiles/features/writer_features_summary.jsonl`)** mới được phép chia sẻ và lưu vết trong Git nhằm phục vụ đối sánh khoa học và tái lập nghiên cứu.
+  - Tuyệt đối không tự ý chia sẻ dữ liệu chi tiết của từng cá nhân khi chưa có sự phê duyệt bằng văn bản của TV4 và đơn vị phụ trách.
 
 ## 4. Công cụ Xử lý Dữ liệu Đi kèm
 
