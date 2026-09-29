@@ -291,3 +291,302 @@ def test_validate_ca_vhc_annotation_invalid_enums():
     assert any("bounding_box" in err for err in errors)
     assert any("legibility_score" in err for err in errors)
     assert any("is_degenerate" in err for err in errors)
+
+
+# =============================================================================
+# 4. Kiểm thử Cơ chế Fail-Closed Chặt chẽ (Input Sai Kiểu, ISO 8601, NaN/Inf, Bool)
+# =============================================================================
+
+def test_validate_manifest_record_fail_closed_non_dict_and_unhashable_types():
+    """Kiểm tra fail-closed khi input không phải dict hoặc chứa kiểu unhashable (list/dict) tại page_id/qc_status."""
+    # 1. Non-dict input
+    for bad_input in [None, "string", [1, 2, 3], 12345]:
+        is_valid, errors = validate_manifest_record(bad_input)
+        assert is_valid is False
+        assert any("dictionary" in err for err in errors)
+
+    # 2. page_id là list, dict, int (không được ném TypeError do kiểm tra set)
+    base_record = {
+        "scan_id": "W001_S01_P01",
+        "writer_id": "W001",
+        "session_id": "S01",
+        "is_spare": False,
+        "scan_timestamp": "2026-09-25T10:00:00Z",
+        "scanner_model": "Epson Perfection V39 II",
+        "optical_dpi": 600,
+        "calibration_metrics": {
+            "ruler_length_mm": 50.04,
+            "ruler_error_mm": 0.04,
+            "square_aspect_ratio": 1.001,
+            "deskew_angle_deg": -0.15,
+        },
+        "qc_status": "QC_VERIFIED_PASS",
+        "qc_operator": "TV1",
+    }
+
+    for bad_page_id in [["P01"], {"page": "P01"}, 101, None]:
+        rec = dict(base_record)
+        rec["page_id"] = bad_page_id
+        is_valid, errors = validate_manifest_record(rec)
+        assert is_valid is False
+        assert any("page_id" in err for err in errors)
+
+    # 3. qc_status là list, dict
+    for bad_qc in [["QC_AUTO_PASS"], {"qc": "QC_RAW"}, 999]:
+        rec = dict(base_record)
+        rec["page_id"] = "P01"
+        rec["qc_status"] = bad_qc
+        is_valid, errors = validate_manifest_record(rec)
+        assert is_valid is False
+        assert any("qc_status" in err for err in errors)
+
+
+def test_validate_manifest_record_fail_closed_iso8601():
+    """Kiểm tra fail-closed cho ngày giờ ISO 8601 không hợp lệ hoặc sai định dạng."""
+    base_record = {
+        "scan_id": "W001_S01_P01",
+        "writer_id": "W001",
+        "session_id": "S01",
+        "page_id": "P01",
+        "is_spare": False,
+        "scanner_model": "Epson Perfection V39 II",
+        "optical_dpi": 600,
+        "calibration_metrics": {
+            "ruler_length_mm": 50.0,
+            "ruler_error_mm": 0.0,
+            "square_aspect_ratio": 1.0,
+            "deskew_angle_deg": 0.0,
+        },
+        "qc_status": "QC_AUTO_PASS",
+        "qc_operator": "TV1",
+    }
+
+    invalid_timestamps = [
+        "not-a-timestamp",
+        "2026-99-99T99:99:99Z",
+        "2026-02-30T10:00:00Z",  # Ngày 30 tháng 2 không tồn tại
+        "2026-13-01T10:00:00Z",  # Tháng 13 không tồn tại
+        123456789,
+        None,
+        "",
+    ]
+    for bad_ts in invalid_timestamps:
+        rec = dict(base_record)
+        rec["scan_timestamp"] = bad_ts
+        is_valid, errors = validate_manifest_record(rec)
+        assert is_valid is False
+        assert any("scan_timestamp" in err for err in errors)
+
+
+def test_validate_manifest_record_fail_closed_numbers_bool_nan_inf():
+    """Kiểm tra loại trừ boolean, NaN, Inf tại các trường số của manifest."""
+    base_record = {
+        "scan_id": "W001_S01_P01",
+        "writer_id": "W001",
+        "session_id": "S01",
+        "page_id": "P01",
+        "is_spare": False,
+        "scan_timestamp": "2026-09-25T10:00:00Z",
+        "scanner_model": "Epson Perfection V39 II",
+        "optical_dpi": 600,
+        "calibration_metrics": {
+            "ruler_length_mm": 50.0,
+            "ruler_error_mm": 0.0,
+            "square_aspect_ratio": 1.0,
+            "deskew_angle_deg": 0.0,
+        },
+        "qc_status": "QC_AUTO_PASS",
+        "qc_operator": "TV1",
+    }
+
+    # 1. optical_dpi không nhận bool (True), float, NaN, Inf
+    for bad_dpi in [True, False, float("nan"), float("inf"), -float("inf"), "600", 149]:
+        rec = dict(base_record)
+        rec["optical_dpi"] = bad_dpi
+        is_valid, errors = validate_manifest_record(rec)
+        assert is_valid is False
+        assert any("optical_dpi" in err for err in errors)
+
+    # 2. is_spare không nhận int (1/0) hay string
+    for bad_spare in [1, 0, "true", None]:
+        rec = dict(base_record)
+        rec["is_spare"] = bad_spare
+        is_valid, errors = validate_manifest_record(rec)
+        assert is_valid is False
+        assert any("is_spare" in err for err in errors)
+
+    # 3. calibration_metrics chứa bool, NaN, Inf
+    for field_name in ["ruler_length_mm", "ruler_error_mm", "square_aspect_ratio", "deskew_angle_deg"]:
+        for bad_val in [True, False, float("nan"), float("inf"), -float("inf"), "0.0"]:
+            rec = dict(base_record)
+            rec["calibration_metrics"] = dict(base_record["calibration_metrics"])
+            rec["calibration_metrics"][field_name] = bad_val
+            is_valid, errors = validate_manifest_record(rec)
+            assert is_valid is False
+            assert any(field_name in err for err in errors)
+
+    # 4. calibration_metrics không phải dict
+    for bad_calib in [None, [50.0, 0.0, 1.0, 0.0], "calibration_data"]:
+        rec = dict(base_record)
+        rec["calibration_metrics"] = bad_calib
+        is_valid, errors = validate_manifest_record(rec)
+        assert is_valid is False
+        assert any("calibration_metrics" in err for err in errors)
+
+
+def test_validate_manifest_record_cell_anomalies_fail_closed():
+    """Kiểm tra fail-closed cho cell_anomalies với kiểu sai và unhashable status."""
+    base_record = {
+        "scan_id": "W001_S01_P01",
+        "writer_id": "W001",
+        "session_id": "S01",
+        "page_id": "P01",
+        "is_spare": False,
+        "scan_timestamp": "2026-09-25T10:00:00Z",
+        "scanner_model": "Epson Perfection V39 II",
+        "optical_dpi": 600,
+        "calibration_metrics": {
+            "ruler_length_mm": 50.0,
+            "ruler_error_mm": 0.0,
+            "square_aspect_ratio": 1.0,
+            "deskew_angle_deg": 0.0,
+        },
+        "qc_status": "QC_AUTO_PASS",
+        "qc_operator": "TV1",
+    }
+
+    # 1. cell_anomalies không phải list
+    rec = dict(base_record)
+    rec["cell_anomalies"] = "not_a_list"
+    is_valid, errors = validate_manifest_record(rec)
+    assert is_valid is False
+    assert any("cell_anomalies" in err for err in errors)
+
+    # 2. item không phải dict
+    rec = dict(base_record)
+    rec["cell_anomalies"] = [123, "not_dict"]
+    is_valid, errors = validate_manifest_record(rec)
+    assert is_valid is False
+    assert any("cell_anomalies[0]" in err for err in errors)
+
+    # 3. status là list (unhashable)
+    rec = dict(base_record)
+    rec["cell_anomalies"] = [{"cell_id": "TONE_01", "status": ["USER_MISWRITTEN"]}]
+    is_valid, errors = validate_manifest_record(rec)
+    assert is_valid is False
+    assert any("cell_anomalies[0].status" in err for err in errors)
+
+
+def test_validate_ca_vhc_annotation_fail_closed_comprehensive():
+    """Kiểm tra fail-closed toàn diện cho CA-VHC annotation: non-dict, ISO 8601, NaN/Inf, boolean."""
+    # 1. Non-dict input
+    for bad_input in [None, "string", [1, 2, 3], 42]:
+        is_valid, errors = validate_ca_vhc_annotation(bad_input)
+        assert is_valid is False
+        assert any("dictionary" in err for err in errors)
+
+    base_annotation = {
+        "sample_id": "SMP_W001_00421",
+        "writer_id": "W001",
+        "source_image_id": "W001_S01_P01.png",
+        "char_raw": "ế",
+        "unicode_nfd": "e\u0302\u0301",
+        "base_char": "e",
+        "diacritics": [
+            {
+                "type": "circumflex",
+                "unicode_codepoint": "U+0302",
+                "bounding_box": [120.0, 45.0, 160.0, 75.0],
+            }
+        ],
+        "tone_mark": "acute",
+        "context_info": {
+            "position": "word_medial",
+        },
+        "geometry": {
+            "bounding_box": [100.0, 20.0, 180.0, 150.0],
+            "baseline_y": 140.0,
+            "base_anchor": [140.0, 50.0],
+            "diacritic_anchor": [145.0, 35.0],
+            "diacritic_offset": [0.35, -0.20],
+            "clearance_box": [95.0, 15.0, 185.0, 155.0],
+        },
+        "quality_flags": {
+            "legibility_score": 5,
+            "is_degenerate": False,
+            "is_ambiguous": False,
+        },
+    }
+
+    # 2. timestamp ISO 8601 không hợp lệ
+    for bad_ts in ["not_iso", "2026-02-30T10:00:00Z", 12345]:
+        ann = dict(base_annotation)
+        ann["timestamp"] = bad_ts
+        is_valid, errors = validate_ca_vhc_annotation(ann)
+        assert is_valid is False
+        assert any("timestamp" in err for err in errors)
+
+    # 3. diacritics[0].type là list (unhashable)
+    ann = dict(base_annotation)
+    ann["diacritics"] = [{"type": ["circumflex"], "unicode_codepoint": "U+0302"}]
+    is_valid, errors = validate_ca_vhc_annotation(ann)
+    assert is_valid is False
+    assert any("diacritics[0].type" in err for err in errors)
+
+    # 4. diacritics[0].bounding_box chứa bool, NaN, Inf
+    for bad_coord in [True, float("nan"), float("inf")]:
+        ann = dict(base_annotation)
+        ann["diacritics"] = [
+            {
+                "type": "circumflex",
+                "unicode_codepoint": "U+0302",
+                "bounding_box": [120.0, bad_coord, 160.0, 75.0],
+            }
+        ]
+        is_valid, errors = validate_ca_vhc_annotation(ann)
+        assert is_valid is False
+        assert any("bounding_box" in err for err in errors)
+
+    # 5. geometry bounding_box chứa bool, NaN, Inf
+    for bad_coord in [True, float("nan"), float("inf")]:
+        ann = dict(base_annotation)
+        ann["geometry"] = dict(base_annotation["geometry"])
+        ann["geometry"]["bounding_box"] = [100.0, 20.0, bad_coord, 150.0]
+        is_valid, errors = validate_ca_vhc_annotation(ann)
+        assert is_valid is False
+        assert any("bounding_box" in err for err in errors)
+
+    # 6. geometry baseline_y, base_anchor, diacritic_offset chứa NaN/Inf/bool
+    for f_name, bad_val in [
+        ("baseline_y", True),
+        ("baseline_y", float("nan")),
+        ("base_anchor", [True, 50.0]),
+        ("base_anchor", [140.0, float("inf")]),
+        ("diacritic_offset", [float("nan"), 0.0]),
+        ("clearance_box", [95.0, 15.0, True, 155.0]),
+    ]:
+        ann = dict(base_annotation)
+        ann["geometry"] = dict(base_annotation["geometry"])
+        ann["geometry"][f_name] = bad_val
+        is_valid, errors = validate_ca_vhc_annotation(ann)
+        assert is_valid is False
+        assert any(f_name in err for err in errors)
+
+    # 7. quality_flags legibility_score là bool (True), NaN, float
+    for bad_score in [True, False, float("nan"), 3.5, 0, 6]:
+        ann = dict(base_annotation)
+        ann["quality_flags"] = dict(base_annotation["quality_flags"])
+        ann["quality_flags"]["legibility_score"] = bad_score
+        is_valid, errors = validate_ca_vhc_annotation(ann)
+        assert is_valid is False
+        assert any("legibility_score" in err for err in errors)
+
+    # 8. quality_flags is_degenerate / is_ambiguous là int (1/0), str
+    for flag_name in ["is_degenerate", "is_ambiguous"]:
+        for bad_bool in [1, 0, "True", None]:
+            ann = dict(base_annotation)
+            ann["quality_flags"] = dict(base_annotation["quality_flags"])
+            ann["quality_flags"][flag_name] = bad_bool
+            is_valid, errors = validate_ca_vhc_annotation(ann)
+            assert is_valid is False
+            assert any(flag_name in err for err in errors)

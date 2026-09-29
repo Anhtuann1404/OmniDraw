@@ -95,14 +95,30 @@ Bao gồm 20 từ độc lập tuyệt đối, được khóa bảo mật chốn
 
 ## 3. Phân tích Độ phủ Ngôn ngữ học & Hình học (Coverage Analysis)
 
-### 3.1. Độ phủ Thanh điệu (Tones)
-Cả hai tập DEV và HOLDOUT đều bảo đảm độ phủ toàn diện 100% hệ thống 6 thanh tiếng Việt (ngang, huyền, sắc, hỏi, ngã, nặng):
-- **Thanh Ngang (Không dấu):** DEV bao gồm trong các âm tiết nền tảng; HOLDOUT có `nghiêng`, `xoay`.
-- **Thanh Sắc:** DEV (5 từ: `tiếng`, `nước`, `khuấy`, `hướng`, `bước`, `nhánh`); HOLDOUT (3 từ: `khoác`, `thoáng`, `quét`).
-- **Thanh Huyền:** DEV (3 từ: `đường`, `trường`, `kiều`); HOLDOUT (5 từ: `truyền`, `hoàng`, `quỳnh`, `giường`, `nguồn`).
-- **Thanh Hỏi:** DEV (3 từ: `thuở`, `nghỉ`, `chuẩn`); HOLDOUT (2 từ: `khoảnh`, `sưởi`).
-- **Thanh Ngã:** DEV (3 từ: `nguyễn`, `nghĩ`, `vẫy`); HOLDOUT (2 từ: `bỗng`, `khẽ`).
-- **Thanh Nặng:** DEV (5 từ: `việt`, `hoặc`, `quyện`, `phượng`, `mượt`); HOLDOUT (6 từ: `nguyệt`, `nhuộm`, `duyệt`, `chuyện`, `nhặt`, `vẹn`).
+### 3.1. Độ phủ Thanh điệu (Tones) và Phân định Vai trò Giữa DEV và HOLDOUT
+
+Tập hợp toàn thể của bộ ngữ liệu đối chuẩn ($\mathcal{C} = DEV \cup HOLDOUT$, gồm 40 từ) bảo đảm **độ phủ 100% hệ thống 6 thanh tiếng Việt** (ngang, huyền, sắc, hỏi, ngã, nặng). Giữa hai tập có sự phân vai chủ đích về độ phủ thanh điệu nhằm phục vụ mục tiêu nghiên cứu cụ thể:
+
+1. **Tập DEV (20 từ — Tập trung tối đa 5 thanh có dấu phụ / Stressed Diacritic Subset):**
+   - **Mục tiêu thiết kế:** Dành trọn vẹn 100% dung lượng (20/20 từ) cho **5 thanh có dấu thanh điệu hiển thị** (sắc, huyền, hỏi, ngã, nặng), nhằm tối đa hóa mật độ va chạm dấu (bridge–diacritic collisions) và tạo áp lực kiểm thử lớn nhất cho giải thuật Viterbi DP trong pha phát triển thuật toán.
+   - **Chủ ý không chứa thanh ngang:** Tập DEV chủ ý không chứa từ thanh ngang thuần túy (không dấu) để không lãng phí dung lượng mẫu cho các trường hợp không có dấu thanh (vốn đã được kiểm chứng hồi quy độc lập qua 48 trường hợp ASCII baseline).
+   - **Phân bố 20 từ DEV (5/6 thanh):**
+     - *Thanh Sắc:* 6 từ (`tiếng`, `nước`, `khuấy`, `hướng`, `bước`, `nhánh`).
+     - *Thanh Nặng:* 5 từ (`việt`, `hoặc`, `quyện`, `phượng`, `mượt`).
+     - *Thanh Huyền:* 3 từ (`đường`, `trường`, `kiều`).
+     - *Thanh Hỏi:* 3 từ (`thuở`, `nghỉ`, `chuẩn`).
+     - *Thanh Ngã:* 3 từ (`nguyễn`, `nghĩ`, `vẫy`).
+     - *(Thanh Ngang: 0 từ — chủ ý chuyển giao sang tập HOLDOUT).*
+
+2. **Tập HOLDOUT (20 từ — Bao phủ toàn diện 6/6 thanh / Full-Spectrum Generalization Set):**
+   - **Mục tiêu thiết kế:** Kiểm chứng năng lực tổng quát hóa của thuật toán trên toàn bộ không gian thanh điệu tiếng Việt, bao gồm cả các từ không mang dấu thanh nhằm xác nhận thuật toán không suy thoái khi xử lý âm tiết thanh ngang.
+   - **Phân bố 20 từ HOLDOUT (đầy đủ 6/6 thanh):**
+     - *Thanh Ngang (Không dấu):* 2 từ (`nghiêng`, `xoay`).
+     - *Thanh Sắc:* 3 từ (`khoác`, `thoáng`, `quét`).
+     - *Thanh Huyền:* 5 từ (`truyền`, `hoàng`, `quỳnh`, `giường`, `nguồn`).
+     - *Thanh Hỏi:* 2 từ (`khoảnh`, `sưởi`).
+     - *Thanh Ngã:* 2 từ (`bỗng`, `khẽ`).
+     - *Thanh Nặng:* 6 từ (`nguyệt`, `nhuộm`, `duyệt`, `chuyện`, `nhặt`, `vẹn`).
 
 ### 3.2. Độ phủ Dấu Phụ / Ký tự Biến âm (Diacritics & Combining Marks)
 - **Dấu Mũ (`^`):** Xuất hiện trên cả `â`, `ê`, `ô` (`khuấy`, `chuẩn`, `vẫy`, `tiếng`, `việt`, `nguyễn`, `quyện`, `kiều`, `bỗng`, `nhuộm`, `nguồn`).

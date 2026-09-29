@@ -5,16 +5,21 @@ Triển khai các bộ thẩm định quy tắc (rule-based validators) thuần 
 1. dataset/schemas/collection_manifest.schema.json (Doc 21 Section 6.2)
 2. dataset/schemas/ca_vhc_annotation.schema.json (Doc 08 Section 7.2)
 
-Tuân thủ nghiêm ngặt nguyên tắc Ponytail:
+Tuân thủ nghiêm ngặt nguyên tắc Ponytail & Kỷ luật Fail-Closed:
 - Hoàn toàn độc lập, không thêm phụ thuộc ngoài (không cần jsonschema library).
-- Validate chi tiết các trường bắt buộc, kiểu dữ liệu, miền giá trị và enum.
+- Kiểm tra chặt chẽ kiểu dữ liệu, chặn triệt để TypeError khi input sai kiểu (ví dụ page_id là list).
+- Kiểm tra tính hợp lệ của date-time ISO 8601 bằng cả regex và parser datetime.
+- Chặn boolean ở các trường số (Python coi bool là subclass của int).
+- Chặn số thực không hợp lệ (NaN, +Inf, -Inf).
 - Báo cáo lỗi tường minh, phục vụ trực tiếp cho Scan Validation Pipeline và Data Governance.
 """
 
 from __future__ import annotations
 
 import json
+import math
 import re
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, List, Tuple, Optional
 
@@ -66,16 +71,58 @@ def load_schema(schema_filename: str) -> Dict[str, Any]:
         return json.load(f)
 
 
+def _is_valid_int(val: Any, min_val: Optional[int] = None, max_val: Optional[int] = None) -> bool:
+    """Kiểm tra số nguyên hợp lệ, loại trừ bool, NaN, Inf hoặc kiểu không phải int."""
+    if type(val) is bool or not isinstance(val, int):
+        return False
+    if min_val is not None and val < min_val:
+        return False
+    if max_val is not None and val > max_val:
+        return False
+    return True
+
+
+def _is_valid_float(val: Any, min_val: Optional[float] = None, max_val: Optional[float] = None) -> bool:
+    """Kiểm tra số thực/nguyên hợp lệ, loại trừ bool, NaN, Inf."""
+    if type(val) is bool or not isinstance(val, (int, float)):
+        return False
+    if math.isnan(val) or math.isinf(val):
+        return False
+    if min_val is not None and val < min_val:
+        return False
+    if max_val is not None and val > max_val:
+        return False
+    return True
+
+
+def _is_valid_iso8601(val: Any) -> bool:
+    """Kiểm tra chuỗi ISO 8601 hợp lệ bằng cả regex và datetime.fromisoformat."""
+    if not isinstance(val, str) or not val.strip():
+        return False
+    if not _ISO8601_REGEX.match(val):
+        return False
+    try:
+        clean_ts = val.replace("Z", "+00:00") if val.endswith("Z") else val
+        datetime.fromisoformat(clean_ts)
+        return True
+    except (ValueError, TypeError):
+        return False
+
+
 # =============================================================================
 # 1. Thẩm định Bản ghi Collection Manifest (Doc 21 Section 6.2)
 # =============================================================================
 
-def validate_manifest_record(record: Dict[str, Any]) -> Tuple[bool, List[str]]:
+def validate_manifest_record(record: Any) -> Tuple[bool, List[str]]:
     """
     Thẩm định tính hợp lệ của một bản ghi nhật ký thu thập (collection manifest record).
     Khớp 100% với dataset/schemas/collection_manifest.schema.json.
+    Trả về (False, errors) khi input sai kiểu, không bao giờ ném TypeError.
     """
     errors: List[str] = []
+
+    if not isinstance(record, dict):
+        return False, [f"Bản ghi manifest phải là dictionary (object), nhận: {type(record).__name__}"]
 
     required_fields = [
         "scan_id",
@@ -98,34 +145,31 @@ def validate_manifest_record(record: Dict[str, Any]) -> Tuple[bool, List[str]]:
         return False, errors
 
     # 1. Định danh & thông số cơ bản
-    if not isinstance(record["scan_id"], str) or not record["scan_id"].strip():
-        errors.append("Trường 'scan_id' phải là chuỗi không rỗng")
+    for str_f in ["scan_id", "writer_id", "session_id", "scanner_model", "qc_operator"]:
+        val = record.get(str_f)
+        if not isinstance(val, str) or not val.strip():
+            errors.append(f"Trường '{str_f}' phải là chuỗi không rỗng")
 
-    if not isinstance(record["writer_id"], str) or not record["writer_id"].strip():
-        errors.append("Trường 'writer_id' phải là chuỗi không rỗng")
+    page_id = record.get("page_id")
+    if not isinstance(page_id, str) or page_id not in VALID_PAGE_IDS:
+        errors.append(f"Trường 'page_id' phải là chuỗi thuộc {sorted(VALID_PAGE_IDS)}, nhận: {page_id}")
 
-    if not isinstance(record["session_id"], str) or not record["session_id"].strip():
-        errors.append("Trường 'session_id' phải là chuỗi không rỗng")
+    is_spare = record.get("is_spare")
+    if type(is_spare) is not bool:
+        errors.append(f"Trường 'is_spare' phải là boolean (True/False), nhận: {type(is_spare).__name__}")
 
-    if record["page_id"] not in VALID_PAGE_IDS:
-        errors.append(f"Trường 'page_id' phải thuộc {sorted(VALID_PAGE_IDS)}, nhận: {record['page_id']}")
+    scan_ts = record.get("scan_timestamp")
+    if not _is_valid_iso8601(scan_ts):
+        errors.append(f"Trường 'scan_timestamp' phải là định dạng date-time ISO 8601 hợp lệ, nhận: {scan_ts}")
 
-    if not isinstance(record["is_spare"], bool):
-        errors.append("Trường 'is_spare' phải là boolean (True/False)")
-
-    if not isinstance(record["scan_timestamp"], str) or not _ISO8601_REGEX.match(record["scan_timestamp"]):
-        errors.append(f"Trường 'scan_timestamp' phải là định dạng date-time ISO 8601, nhận: {record.get('scan_timestamp')}")
-
-    if not isinstance(record["scanner_model"], str) or not record["scanner_model"].strip():
-        errors.append("Trường 'scanner_model' phải là chuỗi không rỗng")
-
-    if not isinstance(record["optical_dpi"], int) or record["optical_dpi"] < 150:
-        errors.append(f"Trường 'optical_dpi' phải là số nguyên >= 150, nhận: {record['optical_dpi']}")
+    dpi = record.get("optical_dpi")
+    if not _is_valid_int(dpi, min_val=150):
+        errors.append(f"Trường 'optical_dpi' phải là số nguyên >= 150 (không nhận boolean/NaN/Inf), nhận: {dpi}")
 
     # 2. Calibration metrics
     calib = record.get("calibration_metrics")
     if not isinstance(calib, dict):
-        errors.append("Trường 'calibration_metrics' phải là một object")
+        errors.append(f"Trường 'calibration_metrics' phải là một object (dict), nhận: {type(calib).__name__}")
     else:
         calib_req = ["ruler_length_mm", "ruler_error_mm", "square_aspect_ratio", "deskew_angle_deg"]
         for cf in calib_req:
@@ -134,43 +178,47 @@ def validate_manifest_record(record: Dict[str, Any]) -> Tuple[bool, List[str]]:
 
         if "ruler_length_mm" in calib:
             val = calib["ruler_length_mm"]
-            if not isinstance(val, (int, float)) or val < 0.0:
-                errors.append(f"'calibration_metrics.ruler_length_mm' phải là số >= 0.0, nhận: {val}")
+            if not _is_valid_float(val, min_val=0.0):
+                errors.append(f"'calibration_metrics.ruler_length_mm' phải là số thực hữu hạn >= 0.0, nhận: {val}")
 
         if "ruler_error_mm" in calib:
-            if not isinstance(calib["ruler_error_mm"], (int, float)):
-                errors.append(f"'calibration_metrics.ruler_error_mm' phải là số, nhận: {calib['ruler_error_mm']}")
+            val = calib["ruler_error_mm"]
+            if not _is_valid_float(val):
+                errors.append(f"'calibration_metrics.ruler_error_mm' phải là số thực hữu hạn, nhận: {val}")
 
         if "square_aspect_ratio" in calib:
             val = calib["square_aspect_ratio"]
-            if not isinstance(val, (int, float)) or not (0.5 <= val <= 1.5):
-                errors.append(f"'calibration_metrics.square_aspect_ratio' phải thuộc [0.5, 1.5], nhận: {val}")
+            if not _is_valid_float(val, min_val=0.5, max_val=1.5):
+                errors.append(f"'calibration_metrics.square_aspect_ratio' phải là số thực hữu hạn thuộc [0.5, 1.5], nhận: {val}")
 
         if "deskew_angle_deg" in calib:
-            if not isinstance(calib["deskew_angle_deg"], (int, float)):
-                errors.append(f"'calibration_metrics.deskew_angle_deg' phải là số, nhận: {calib['deskew_angle_deg']}")
+            val = calib["deskew_angle_deg"]
+            if not _is_valid_float(val):
+                errors.append(f"'calibration_metrics.deskew_angle_deg' phải là số thực hữu hạn, nhận: {val}")
 
     # 3. QC status & operator
-    if record["qc_status"] not in VALID_QC_STATUSES:
-        errors.append(f"Trường 'qc_status' phải thuộc {sorted(VALID_QC_STATUSES)}, nhận: {record['qc_status']}")
-
-    if not isinstance(record["qc_operator"], str) or not record["qc_operator"].strip():
-        errors.append("Trường 'qc_operator' phải là chuỗi không rỗng")
+    qc_status = record.get("qc_status")
+    if not isinstance(qc_status, str) or qc_status not in VALID_QC_STATUSES:
+        errors.append(f"Trường 'qc_status' phải là chuỗi thuộc {sorted(VALID_QC_STATUSES)}, nhận: {qc_status}")
 
     # 4. Cell anomalies (tùy chọn)
     if "cell_anomalies" in record:
         anomalies = record["cell_anomalies"]
         if not isinstance(anomalies, list):
-            errors.append("Trường 'cell_anomalies' phải là mảng danh sách")
+            errors.append(f"Trường 'cell_anomalies' phải là mảng danh sách (list), nhận: {type(anomalies).__name__}")
         else:
             for i, a in enumerate(anomalies):
                 if not isinstance(a, dict):
-                    errors.append(f"'cell_anomalies[{i}]' phải là object")
+                    errors.append(f"'cell_anomalies[{i}]' phải là object (dict), nhận: {type(a).__name__}")
                     continue
-                if "cell_id" not in a or not isinstance(a["cell_id"], str) or not a["cell_id"].strip():
+                cell_id = a.get("cell_id")
+                if not isinstance(cell_id, str) or not cell_id.strip():
                     errors.append(f"'cell_anomalies[{i}].cell_id' phải là chuỗi không rỗng")
-                if "status" not in a or a["status"] not in VALID_ANOMALY_STATUSES:
-                    errors.append(f"'cell_anomalies[{i}].status' phải thuộc {sorted(VALID_ANOMALY_STATUSES)}, nhận: {a.get('status')}")
+                st = a.get("status")
+                if not isinstance(st, str) or st not in VALID_ANOMALY_STATUSES:
+                    errors.append(f"'cell_anomalies[{i}].status' phải là chuỗi thuộc {sorted(VALID_ANOMALY_STATUSES)}, nhận: {st}")
+                if "note" in a and not isinstance(a["note"], str):
+                    errors.append(f"'cell_anomalies[{i}].note' phải là chuỗi nếu có")
 
     return len(errors) == 0, errors
 
@@ -179,12 +227,16 @@ def validate_manifest_record(record: Dict[str, Any]) -> Tuple[bool, List[str]]:
 # 2. Thẩm định Bản ghi CA-VHC Annotation (Doc 08 Section 7.2)
 # =============================================================================
 
-def validate_ca_vhc_annotation(annotation: Dict[str, Any]) -> Tuple[bool, List[str]]:
+def validate_ca_vhc_annotation(annotation: Any) -> Tuple[bool, List[str]]:
     """
     Thẩm định tính hợp lệ của bản ghi gán nhãn ký tự và mỏ neo dấu CA-VHC.
     Khớp 100% với dataset/schemas/ca_vhc_annotation.schema.json.
+    Trả về (False, errors) khi input sai kiểu, không bao giờ ném TypeError.
     """
     errors: List[str] = []
+
+    if not isinstance(annotation, dict):
+        return False, [f"Bản ghi annotation phải là dictionary (object), nhận: {type(annotation).__name__}"]
 
     required_fields = [
         "sample_id",
@@ -207,47 +259,62 @@ def validate_ca_vhc_annotation(annotation: Dict[str, Any]) -> Tuple[bool, List[s
 
     # 1. Định danh & thông tin văn bản
     for str_f in ["sample_id", "writer_id", "source_image_id", "char_raw", "unicode_nfd", "base_char"]:
-        if not isinstance(annotation[str_f], str) or not annotation[str_f].strip():
+        val = annotation.get(str_f)
+        if not isinstance(val, str) or not val.strip():
             errors.append(f"Trường '{str_f}' phải là chuỗi không rỗng")
 
     if "timestamp" in annotation:
         ts = annotation["timestamp"]
-        if not isinstance(ts, str) or not _ISO8601_REGEX.match(ts):
-            errors.append(f"Trường 'timestamp' phải là định dạng date-time ISO 8601, nhận: {ts}")
+        if not _is_valid_iso8601(ts):
+            errors.append(f"Trường 'timestamp' phải là định dạng date-time ISO 8601 hợp lệ, nhận: {ts}")
 
     # 2. Diacritics array
-    if not isinstance(annotation["diacritics"], list):
-        errors.append("Trường 'diacritics' phải là danh sách mảng")
+    diacs = annotation.get("diacritics")
+    if not isinstance(diacs, list):
+        errors.append(f"Trường 'diacritics' phải là danh sách mảng (list), nhận: {type(diacs).__name__}")
     else:
-        for i, d in enumerate(annotation["diacritics"]):
+        for i, d in enumerate(diacs):
             if not isinstance(d, dict):
-                errors.append(f"'diacritics[{i}]' phải là object")
+                errors.append(f"'diacritics[{i}]' phải là object (dict), nhận: {type(d).__name__}")
                 continue
-            if "type" not in d or d["type"] not in VALID_DIACRITIC_TYPES:
-                errors.append(f"'diacritics[{i}].type' phải thuộc {sorted(VALID_DIACRITIC_TYPES)}, nhận: {d.get('type')}")
-            if "unicode_codepoint" not in d or not isinstance(d["unicode_codepoint"], str):
-                errors.append(f"'diacritics[{i}].unicode_codepoint' phải là chuỗi mã code")
+            dtype = d.get("type")
+            if not isinstance(dtype, str) or dtype not in VALID_DIACRITIC_TYPES:
+                errors.append(f"'diacritics[{i}].type' phải là chuỗi thuộc {sorted(VALID_DIACRITIC_TYPES)}, nhận: {dtype}")
+            cp = d.get("unicode_codepoint")
+            if not isinstance(cp, str) or not cp.strip():
+                errors.append(f"'diacritics[{i}].unicode_codepoint' phải là chuỗi mã code không rỗng")
             if "bounding_box" in d:
                 bbox = d["bounding_box"]
-                if not isinstance(bbox, (list, tuple)) or len(bbox) != 4 or not all(isinstance(x, (int, float)) for x in bbox):
-                    errors.append(f"'diacritics[{i}].bounding_box' phải là mảng 4 số [xmin, ymin, xmax, ymax]")
+                if not isinstance(bbox, (list, tuple)) or len(bbox) != 4 or not all(_is_valid_float(x) for x in bbox):
+                    errors.append(f"'diacritics[{i}].bounding_box' phải là mảng 4 số thực hữu hạn [xmin, ymin, xmax, ymax]")
 
     # 3. Tone mark
-    if "tone_mark" in annotation and annotation["tone_mark"] not in VALID_TONE_MARKS:
-        errors.append(f"Trường 'tone_mark' phải thuộc {sorted(VALID_TONE_MARKS)}, nhận: {annotation['tone_mark']}")
+    if "tone_mark" in annotation:
+        tm = annotation["tone_mark"]
+        if not isinstance(tm, str) or tm not in VALID_TONE_MARKS:
+            errors.append(f"Trường 'tone_mark' phải là chuỗi thuộc {sorted(VALID_TONE_MARKS)}, nhận: {tm}")
 
     # 4. Context info
     ctx = annotation.get("context_info")
     if not isinstance(ctx, dict):
-        errors.append("Trường 'context_info' phải là object")
+        errors.append(f"Trường 'context_info' phải là object (dict), nhận: {type(ctx).__name__}")
     else:
-        if "position" not in ctx or ctx["position"] not in VALID_POSITIONS:
-            errors.append(f"'context_info.position' phải thuộc {sorted(VALID_POSITIONS)}, nhận: {ctx.get('position')}")
+        pos = ctx.get("position")
+        if not isinstance(pos, str) or pos not in VALID_POSITIONS:
+            errors.append(f"'context_info.position' phải là chuỗi thuộc {sorted(VALID_POSITIONS)}, nhận: {pos}")
+        if "prev_char" in ctx and ctx["prev_char"] is not None and not isinstance(ctx["prev_char"], str):
+            errors.append("'context_info.prev_char' phải là chuỗi hoặc null")
+        if "next_char" in ctx and ctx["next_char"] is not None and not isinstance(ctx["next_char"], str):
+            errors.append("'context_info.next_char' phải là chuỗi hoặc null")
+        if "syllable_text" in ctx and ctx["syllable_text"] is not None and not isinstance(ctx["syllable_text"], str):
+            errors.append("'context_info.syllable_text' phải là chuỗi hoặc null")
+        if "letter_type" in ctx and not isinstance(ctx["letter_type"], str):
+            errors.append("'context_info.letter_type' phải là chuỗi")
 
     # 5. Geometry
     geom = annotation.get("geometry")
     if not isinstance(geom, dict):
-        errors.append("Trường 'geometry' phải là object")
+        errors.append(f"Trường 'geometry' phải là object (dict), nhận: {type(geom).__name__}")
     else:
         geom_req = ["bounding_box", "baseline_y", "base_anchor", "diacritic_offset"]
         for gf in geom_req:
@@ -256,36 +323,36 @@ def validate_ca_vhc_annotation(annotation: Dict[str, Any]) -> Tuple[bool, List[s
 
         if "bounding_box" in geom:
             bbox = geom["bounding_box"]
-            if not isinstance(bbox, (list, tuple)) or len(bbox) != 4 or not all(isinstance(x, (int, float)) for x in bbox):
-                errors.append("'geometry.bounding_box' phải là mảng 4 số [xmin, ymin, xmax, ymax]")
+            if not isinstance(bbox, (list, tuple)) or len(bbox) != 4 or not all(_is_valid_float(x) for x in bbox):
+                errors.append("'geometry.bounding_box' phải là mảng 4 số thực hữu hạn [xmin, ymin, xmax, ymax]")
 
-        if "baseline_y" in geom and not isinstance(geom["baseline_y"], (int, float)):
-            errors.append("'geometry.baseline_y' phải là số (pixel)")
+        if "baseline_y" in geom and not _is_valid_float(geom["baseline_y"]):
+            errors.append("'geometry.baseline_y' phải là số thực hữu hạn (pixel)")
 
         if "base_anchor" in geom:
             ba = geom["base_anchor"]
-            if not isinstance(ba, (list, tuple)) or len(ba) != 2 or not all(isinstance(x, (int, float)) for x in ba):
-                errors.append("'geometry.base_anchor' phải là mảng 2 số [x, y] (mm)")
-
-        if "diacritic_offset" in geom:
-            do = geom["diacritic_offset"]
-            if not isinstance(do, (list, tuple)) or len(do) != 2 or not all(isinstance(x, (int, float)) for x in do):
-                errors.append("'geometry.diacritic_offset' phải là mảng 2 số [dx, dy] (mm)")
+            if not isinstance(ba, (list, tuple)) or len(ba) != 2 or not all(_is_valid_float(x) for x in ba):
+                errors.append("'geometry.base_anchor' phải là mảng 2 số thực hữu hạn [x, y] (mm)")
 
         if "diacritic_anchor" in geom:
             da = geom["diacritic_anchor"]
-            if not isinstance(da, (list, tuple)) or len(da) != 2 or not all(isinstance(x, (int, float)) for x in da):
-                errors.append("'geometry.diacritic_anchor' phải là mảng 2 số [x, y] (mm)")
+            if not isinstance(da, (list, tuple)) or len(da) != 2 or not all(_is_valid_float(x) for x in da):
+                errors.append("'geometry.diacritic_anchor' phải là mảng 2 số thực hữu hạn [x, y] (mm)")
+
+        if "diacritic_offset" in geom:
+            do = geom["diacritic_offset"]
+            if not isinstance(do, (list, tuple)) or len(do) != 2 or not all(_is_valid_float(x) for x in do):
+                errors.append("'geometry.diacritic_offset' phải là mảng 2 số thực hữu hạn [dx, dy] (mm)")
 
         if "clearance_box" in geom:
             cb = geom["clearance_box"]
-            if not isinstance(cb, (list, tuple)) or len(cb) != 4 or not all(isinstance(x, (int, float)) for x in cb):
-                errors.append("'geometry.clearance_box' phải là mảng 4 số [xmin, ymin, xmax, ymax]")
+            if not isinstance(cb, (list, tuple)) or len(cb) != 4 or not all(_is_valid_float(x) for x in cb):
+                errors.append("'geometry.clearance_box' phải là mảng 4 số thực hữu hạn [xmin, ymin, xmax, ymax]")
 
     # 6. Quality flags
     qf = annotation.get("quality_flags")
     if not isinstance(qf, dict):
-        errors.append("Trường 'quality_flags' phải là object")
+        errors.append(f"Trường 'quality_flags' phải là object (dict), nhận: {type(qf).__name__}")
     else:
         for qff in ["legibility_score", "is_degenerate", "is_ambiguous"]:
             if qff not in qf:
@@ -293,13 +360,16 @@ def validate_ca_vhc_annotation(annotation: Dict[str, Any]) -> Tuple[bool, List[s
 
         if "legibility_score" in qf:
             ls = qf["legibility_score"]
-            if not isinstance(ls, int) or not (1 <= ls <= 5):
-                errors.append(f"'quality_flags.legibility_score' phải là số nguyên thuộc [1, 5], nhận: {ls}")
+            if not _is_valid_int(ls, min_val=1, max_val=5):
+                errors.append(f"'quality_flags.legibility_score' phải là số nguyên thuộc [1, 5] (không nhận boolean/NaN/Inf), nhận: {ls}")
 
-        if "is_degenerate" in qf and not isinstance(qf["is_degenerate"], bool):
-            errors.append("'quality_flags.is_degenerate' phải là boolean")
+        if "is_degenerate" in qf and type(qf["is_degenerate"]) is not bool:
+            errors.append(f"'quality_flags.is_degenerate' phải là boolean (True/False), nhận: {type(qf['is_degenerate']).__name__}")
 
-        if "is_ambiguous" in qf and not isinstance(qf["is_ambiguous"], bool):
-            errors.append("'quality_flags.is_ambiguous' phải là boolean")
+        if "is_ambiguous" in qf and type(qf["is_ambiguous"]) is not bool:
+            errors.append(f"'quality_flags.is_ambiguous' phải là boolean (True/False), nhận: {type(qf['is_ambiguous']).__name__}")
+
+        if "annotator_id" in qf and (not isinstance(qf["annotator_id"], str) or not qf["annotator_id"].strip()):
+            errors.append("'quality_flags.annotator_id' phải là chuỗi không rỗng nếu có")
 
     return len(errors) == 0, errors

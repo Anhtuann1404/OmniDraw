@@ -79,4 +79,3 @@ __all__ = [
     "VALID_QC_STATUSES",
     "VALID_ANOMALY_STATUSES",
 ]
-
