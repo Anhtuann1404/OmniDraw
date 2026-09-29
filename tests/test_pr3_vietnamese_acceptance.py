@@ -8,7 +8,7 @@ from backend.handwriting.benchmark_fixtures import (
     BENCHMARK_DEV_CORPUS_20, PR3_VIETNAMESE_ACCEPTANCE_SPECIMENS,
 )
 from backend.handwriting.engine import (
-    generate_accents, group_nfd_graphemes, text_to_strokes_structured,
+    STYLE_CONFIGS, generate_accents, group_nfd_graphemes, text_to_strokes_structured,
 )
 from backend.handwriting.metrics_evaluator import evaluate_ca_vhc_metrics
 from backend.handwriting.metrics_evaluator import compute_stroke_fingerprint
@@ -20,7 +20,8 @@ def test_pr3_acceptance_specimens_are_dev_only():
 
 
 @pytest.mark.parametrize("word", PR3_VIETNAMESE_ACCEPTANCE_SPECIMENS)
-def test_pr3_dev_specimen_nfd_geometry_and_clearance(word, monkeypatch):
+@pytest.mark.parametrize("style", STYLE_CONFIGS)
+def test_pr3_dev_specimen_nfd_geometry_and_clearance(word, style, monkeypatch):
     from backend.handwriting import composition
 
     original_solve = composition.optimize_composition_dag
@@ -32,7 +33,8 @@ def test_pr3_dev_specimen_nfd_geometry_and_clearance(word, monkeypatch):
 
     monkeypatch.setattr(composition, "optimize_composition_dag", checked_solve)
     result = text_to_strokes_structured(
-        word, font="cursive", seed=42, _algorithm_mode="pr3_composition")
+        word, font="cursive", style=style, seed=42,
+        _algorithm_mode="pr3_composition")
     metrics = evaluate_ca_vhc_metrics(result)
     assert layer_sizes and max(layer_sizes) <= 9
     assert all(1 <= size <= 9 for size in layer_sizes)
@@ -56,8 +58,9 @@ def test_pr3_dev_specimen_nfd_geometry_and_clearance(word, monkeypatch):
         assert all(tuple(item.meta["accents"]) == marks for item in actual)
 
 
-def test_pr3_same_seed_is_deterministic():
+@pytest.mark.parametrize("style", STYLE_CONFIGS)
+def test_pr3_same_seed_is_deterministic(style):
     fingerprints = [compute_stroke_fingerprint(text_to_strokes_structured(
-        "tiếng", font="cursive", seed=42,
+        "tiếng", font="cursive", style=style, seed=42,
         _algorithm_mode="pr3_composition").strokes) for _ in range(5)]
     assert len(set(fingerprints)) == 1

@@ -4,6 +4,7 @@ from collections import Counter
 import numpy as np
 
 from backend.handwriting import engine
+from backend.handwriting import composition
 from backend.handwriting.metrics_evaluator import compute_stroke_fingerprint
 from backend.handwriting.metrics_evaluator import total_travel_distance
 from backend.handwriting.benchmark_fixtures import PR3_VIETNAMESE_ACCEPTANCE_SPECIMENS
@@ -78,3 +79,30 @@ def test_pr3_reordered_secondary_trace_matches_rendered_strokes():
     for item in secondary:
         stroke_index = item.meta["continuous_stroke_id"]
         np.testing.assert_array_equal(item.points, result.strokes[stroke_index])
+
+
+def test_pr3_supported_styles_evaluate_the_exact_rendered_marks(monkeypatch):
+    original_solve = composition.optimize_composition_dag
+    fingerprints = set()
+    for style in engine.STYLE_CONFIGS:
+        captured = {"marks": []}
+
+        def capture(layers, *args, **kwargs):
+            solution = original_solve(layers, *args, **kwargs)
+            captured["marks"].extend(
+                stroke for layer, chosen in zip(layers, solution["states"])
+                for state, world in layer if state is chosen
+                for stroke in world.diacritic_strokes)
+            return solution
+
+        monkeypatch.setattr(composition, "optimize_composition_dag", capture)
+        result = engine.text_to_strokes_structured(
+            "tiếng nước", font="cursive", style=style, seed=42,
+            _algorithm_mode="pr3_composition")
+        rendered_marks = [item.points for item in result.trace
+                          if item.stroke_type == "diacritic_stroke"]
+        assert Counter(stroke.tobytes() for stroke in captured["marks"]) == Counter(
+            stroke.tobytes() for stroke in rendered_marks)
+        assert all(np.isfinite(stroke).all() for stroke in result.strokes)
+        fingerprints.add(compute_stroke_fingerprint(result.strokes))
+    assert len(fingerprints) == len(engine.STYLE_CONFIGS)

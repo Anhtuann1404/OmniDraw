@@ -848,6 +848,40 @@ def _order_pr3_secondary_strokes(base_strokes, secondary_strokes, secondary_meta
     return [stroke for stroke, _ in ordered], [meta for _, meta in ordered]
 
 
+def _style_pr3_world(world, slant, drift_y, baseline_y):
+    """Apply deterministic style geometry before PR3 collision and transition checks."""
+    from .composition import GlyphWorldGeometry
+
+    if slant == 0.0 and drift_y == 0.0:
+        return world
+
+    def points(stroke):
+        styled = np.array(stroke, dtype=float, copy=True)
+        styled[:, 0] += (baseline_y - styled[:, 1]) * slant
+        styled[:, 1] += drift_y
+        return styled
+
+    def point(value):
+        styled = np.array(value, dtype=float, copy=True)
+        styled[0] += (baseline_y - styled[1]) * slant
+        styled[1] += drift_y
+        return styled
+
+    def tangent(value):
+        styled = np.array([value[0] - slant * value[1], value[1]], dtype=float)
+        return styled / np.linalg.norm(styled)
+
+    base = tuple(points(stroke) for stroke in world.base_strokes)
+    marks = tuple(points(stroke) for stroke in world.diacritic_strokes)
+    bbox = None
+    if marks:
+        all_marks = np.vstack(marks)
+        bbox = (float(all_marks[:, 0].min()), float(all_marks[:, 1].min()),
+                float(all_marks[:, 0].max()), float(all_marks[:, 1].max()))
+    return GlyphWorldGeometry(base, marks, point(world.entry_pt), point(world.exit_pt),
+                              tangent(world.v_entry), tangent(world.v_exit), bbox)
+
+
 # ----------------------------- Cấu Hình Phong Cách & Font -----------------------------
 
 STYLE_CONFIGS = {
@@ -1398,6 +1432,11 @@ def _text_to_strokes_impl(
                 pr3_config = DiacriticConfig()
                 layers = []
                 for info in char_info_list:
+                    baseline_y = info["offset"][1] + 14.0 * info["scale_vec"][1]
+
+                    def style_world(world, baseline_y=baseline_y):
+                        return _style_pr3_world(world, slant, drift_y, baseline_y)
+
                     variants = get_glyph_variants(info["char"], info["raw_s"])
                     states = build_composition_states(
                         info["char"], info["accents"], variants, info["cx"],
@@ -1407,10 +1446,11 @@ def _text_to_strokes_impl(
                     states = prune_composition_states(
                         states, info["scale_vec"], info["offset"], pr3_config,
                         page_bounds_mm=(0., 0., paper_w, paper_h),
+                        world_transform=style_world,
                     )
                     layers.append(tuple(
-                        (state, transform_state_to_world(
-                            state, info["scale_vec"], info["offset"]))
+                        (state, style_world(transform_state_to_world(
+                            state, info["scale_vec"], info["offset"])))
                         for state in states
                     ))
                 pr3_weights = (TransitionWeights() if enable_lig else
@@ -1421,10 +1461,8 @@ def _text_to_strokes_impl(
                     "variants": [state.base_variant for state in pr3_solution["states"]],
                     "conns": [item.decision == "CONNECT" for item in pr3_solution["transitions"]],
                 }
-                pr3_world = [
-                    transform_state_to_world(state, info["scale_vec"], info["offset"])
-                    for state, info in zip(pr3_solution["states"], char_info_list)
-                ]
+                pr3_world = [next(world for state, world in layer if state is chosen)
+                             for layer, chosen in zip(layers, pr3_solution["states"])]
             elif algorithm_mode == "b3_current_trellis":
                 dp_sol = optimize_word_dag(
                     char_info_list, weights=weights, force_lift=(not enable_lig)
@@ -1449,7 +1487,9 @@ def _text_to_strokes_impl(
 
             for char_idx, info in enumerate(char_info_list):
                 var = dp_sol["variants"][char_idx]
-                scaled_s = [s.astype(float) * info["scale_vec"] + info["offset"] for s in var.strokes]
+                scaled_s = (list(pr3_world[char_idx].base_strokes)
+                            if algorithm_mode == "pr3_composition" else
+                            [s.astype(float) * info["scale_vec"] + info["offset"] for s in var.strokes])
                 b_char = info["char"]
 
                 # Tách nét chính và nét phụ dùng helper split_glyph_strokes
@@ -1574,7 +1614,13 @@ def _text_to_strokes_impl(
                 if info["is_d_stroke"]:
                     d_bar = STROKE_D_BAR if b_char == 'd' else STROKE_CAP_D_BAR
                     bar_scaled = d_bar.astype(float) * info["scale_vec"]
-                    word_secondary_strokes.append(bar_scaled + info["offset"])
+                    bar_world = bar_scaled + info["offset"]
+                    if algorithm_mode == "pr3_composition":
+                        baseline_y = info["offset"][1] + 14.0 * info["scale_vec"][1]
+                        bar_world = bar_world.copy()
+                        bar_world[:, 0] += (baseline_y - bar_world[:, 1]) * slant
+                        bar_world[:, 1] += drift_y
+                    word_secondary_strokes.append(bar_world)
                     word_secondary_meta.append({
                         "stroke_type": "secondary_stroke",
                         "char": b_char,

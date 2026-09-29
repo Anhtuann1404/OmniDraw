@@ -335,7 +335,8 @@ def evaluate_composition_state(state, world, config=None, w_legibility=1.0):
     return StateCostBreakdown(clearance, collision_cost, legibility, placement, total)
 
 
-def prune_composition_states(states, scale_vec, offset, config=None, page_bounds_mm=None):
+def prune_composition_states(states, scale_vec, offset, config=None, page_bounds_mm=None,
+                             world_transform=None):
     """Remove hard-invalid states; never restore a pruned canonical candidate."""
     config = config or DiacriticConfig()
     _frame(scale_vec, offset)
@@ -347,6 +348,8 @@ def prune_composition_states(states, scale_vec, offset, config=None, page_bounds
     for state in states:
         try:
             world = transform_state_to_world(state, scale_vec, offset)
+            if world_transform is not None:
+                world = world_transform(world)
             cost = evaluate_composition_state(state, world, config)
         except (CompositionGeometryError, ValueError):
             continue
