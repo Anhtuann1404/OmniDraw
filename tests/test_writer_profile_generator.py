@@ -663,3 +663,119 @@ def test_provenance_ledger_preserves_corrupted_file_on_error(tmp_path):
     # Kiểm tra chứng minh không mất dữ liệu: Nội dung tệp cũ phải giữ nguyên 100% từng byte
     assert ledger_file.exists()
     assert ledger_file.read_bytes() == initial_bytes
+
+
+def test_profile_generation_fails_closed_when_all_crops_blank_fresh_run(tmp_path):
+    """Kiểm thử fail-closed lần chạy mới: Khi tất cả crop đều trắng, báo lỗi, không tạo profile và không ghi ledger."""
+    dpi = 600
+    crops_dir = tmp_path / "crops"
+    crops_dir.mkdir(parents=True)
+
+    # Cả 2 crop đều là ảnh trắng hoàn toàn (không có nét bút)
+    img_blank = np.full((120, 120), 255, dtype=np.uint8)
+    cv2.imwrite(str(crops_dir / "blank1.png"), img_blank)
+    cv2.imwrite(str(crops_dir / "blank2.png"), img_blank)
+
+    mock_report = {
+        "is_success": True,
+        "scan_id": "W005_S01_P01",
+        "form_type": "P01",
+        "input_file": "W005_S01_P01.png",
+        "target_dpi": dpi,
+        "overall_status": "SHEET_PASS",
+        "crops_metadata": [
+            {
+                "cell_id": "P01_C01",
+                "sample_id": "SMP_W005_001",
+                "context_tag": "isolated",
+                "crop_file": "crops/blank1.png",
+                "qc_status": "QC_AUTO_PASS",
+                "is_valid_for_dataset": True,
+            },
+            {
+                "cell_id": "P01_C02",
+                "sample_id": "SMP_W005_002",
+                "context_tag": "isolated",
+                "crop_file": "crops/blank2.png",
+                "qc_status": "QC_AUTO_PASS",
+                "is_valid_for_dataset": True,
+            },
+        ],
+    }
+
+    ledger_file = tmp_path / "provenance" / "crop_provenance_ledger.jsonl"
+
+    # Đường chạy phải fail-closed với lỗi rõ ràng về số mẫu thực tế bằng 0
+    with pytest.raises(ValueError, match="Số mẫu thực tế bằng 0|Không trích xuất được bất kỳ nét chữ hợp lệ nào"):
+        generate_writer_profile_from_report(
+            report_dict=mock_report,
+            writer_id="W005",
+            crops_base_dir=tmp_path,
+            dpi=dpi,
+            provenance_ledger_path=ledger_file,
+        )
+
+    # Khẳng định: Không tạo hồ sơ giả và không tạo ledger rỗng/0 dòng
+    assert not ledger_file.exists()
+
+
+def test_profile_generation_fails_closed_rerun_preserves_existing_ledger(tmp_path):
+    """Kiểm thử fail-closed lần chạy lại: Khi chạy lại với crop toàn ảnh trắng, không ghi đè làm mất ledger cũ."""
+    dpi = 600
+    crops_dir = tmp_path / "crops"
+    crops_dir.mkdir(parents=True)
+
+    img_blank = np.full((120, 120), 255, dtype=np.uint8)
+    cv2.imwrite(str(crops_dir / "blank_rerun.png"), img_blank)
+
+    ledger_file = tmp_path / "provenance" / "crop_provenance_ledger.jsonl"
+    ledger_file.parent.mkdir(parents=True, exist_ok=True)
+
+    # Thiết lập ledger cũ đã có dữ liệu từ trước của W001 và W002
+    initial_rows = [
+        {"profile_id": "profile_W001_v1", "writer_id": "W001", "scan_id": "W001_S01_P01", "cell_id": "P01_C01"},
+        {"profile_id": "profile_W001_v1", "writer_id": "W001", "scan_id": "W001_S01_P01", "cell_id": "P01_C02"},
+        {"profile_id": "profile_W002_v1", "writer_id": "W002", "scan_id": "W002_S01_P01", "cell_id": "P01_C01"},
+    ]
+    with open(ledger_file, "w", encoding="utf-8") as f:
+        for r in initial_rows:
+            f.write(json.dumps(r, ensure_ascii=False) + "\n")
+
+    initial_bytes = ledger_file.read_bytes()
+
+    # Báo cáo chạy lại cho W001 nhưng chỉ toàn crop ảnh trắng không có nét
+    mock_rerun_report = {
+        "is_success": True,
+        "scan_id": "W001_S01_P01",
+        "form_type": "P01",
+        "input_file": "W001_S01_P01.png",
+        "target_dpi": dpi,
+        "overall_status": "SHEET_PASS",
+        "crops_metadata": [
+            {
+                "cell_id": "P01_C01",
+                "sample_id": "SMP_W001_001",
+                "context_tag": "isolated",
+                "crop_file": "crops/blank_rerun.png",
+                "qc_status": "QC_AUTO_PASS",
+                "is_valid_for_dataset": True,
+            }
+        ],
+    }
+
+    # Chạy lại phải fail-closed với thông báo lỗi rõ ràng
+    with pytest.raises(ValueError, match="Số mẫu thực tế bằng 0|Không trích xuất được bất kỳ nét chữ hợp lệ nào"):
+        generate_writer_profile_from_report(
+            report_dict=mock_rerun_report,
+            writer_id="W001",
+            crops_base_dir=tmp_path,
+            dpi=dpi,
+            provenance_ledger_path=ledger_file,
+        )
+
+    # Khẳng định quan trọng: Tệp ledger cũ giữ nguyên 100% từng byte, không bị ghi đè hay xóa mất bản ghi cũ của W001
+    assert ledger_file.read_bytes() == initial_bytes
+    with open(ledger_file, "r", encoding="utf-8") as f:
+        surviving_rows = [json.loads(line.strip()) for line in f if line.strip()]
+    assert len(surviving_rows) == 3
+    assert [r["profile_id"] for r in surviving_rows] == ["profile_W001_v1", "profile_W001_v1", "profile_W002_v1"]

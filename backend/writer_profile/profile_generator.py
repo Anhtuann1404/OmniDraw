@@ -221,6 +221,12 @@ def generate_writer_profile_from_crops(
                 for b in boxes:
                     baseline_points.append(((b[0] + b[2]) / 2.0, b[3]))
 
+    if valid_samples_count == 0:
+        raise ValueError(
+            f"Không trích xuất được bất kỳ nét chữ hợp lệ nào từ các ô cắt của người viết '{writer_id}'. "
+            "Số mẫu thực tế bằng 0, hủy bỏ việc sinh WriterProfile để tránh tạo hồ sơ mang số mẫu giả (fail-closed)."
+        )
+
     # Sử dụng WriterProfileExtractor để tính toán các đặc trưng thống kê
     extractor = WriterProfileExtractor(
         version=version, default_stroke_width_mm=default_stroke_width_mm
@@ -232,7 +238,7 @@ def generate_writer_profile_from_crops(
         character_stroke_groups=char_stroke_groups if char_stroke_groups else None,
         words_data=words_data if words_data else None,
         baseline_points=baseline_points if baseline_points else None,
-        num_samples_analyzed=max(1, valid_samples_count),
+        num_samples_analyzed=valid_samples_count,
     )
 
     # Kiểm định tính hợp thức của profile theo schema
@@ -317,6 +323,12 @@ def record_profile_crop_provenance(
             "context_tag": item.get("context_tag", "isolated"),
         }
         records.append(record)
+
+    if not records:
+        raise ValueError(
+            f"Không có ô cắt hợp lệ nào để ghi nhận provenance cho profile '{profile_id}' (writer_id='{writer_id}'). "
+            "Từ chối ghi nhận và bảo toàn tệp ledger cũ (fail-closed)."
+        )
 
     # Đọc ledger hiện tại để xử lý chạy lại một cách xác định (idempotent / deduplication)
     # Fail-closed: Nếu ledger cũ có dòng JSON hỏng, lập tức báo lỗi và giữ nguyên tệp cũ, không mất dữ liệu.
