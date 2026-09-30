@@ -61,12 +61,14 @@ TV1 đã thiết lập bộ kiểm thử thực nghiệm chuyên sâu tại [`te
 - **Dữ liệu thực nghiệm (Thực nghiệm 5):** Thử nghiệm trên từ `tê` giả lập với baseline chuẩn phẳng tại $y = 11.0\,\text{mm}$:
   - Đáy của dấu mũ nằm tại $y = 6.5\,\text{mm}$.
   - Nếu thuật toán lấy đáy của toàn bộ các bounding boxes làm điểm chân dòng, `baseline_jitter_std` bị thổi phồng nhân tạo lên **$> 1.5\,\text{mm}$** dù chữ viết của người viết hoàn toàn phẳng.
-  - **Kiểm chứng giải pháp:** Khi áp dụng bộ lọc loại bỏ các thành phần nằm ở nửa trên dòng ($y_{\text{bottom}} < 8.0\,\text{mm}$), chỉ còn 2 hộp thân chữ 't' và 'e' tham gia tính toán, đưa `baseline_jitter_std` trở về mức phẳng chuẩn **$< 0.1\,\text{mm}$**.
+  - **Phép thử kiểm chứng trong test:** Khi thử nghiệm bộ lọc loại bỏ các thành phần nằm ở nửa trên dòng ($y_{\text{bottom}} < 8.0\,\text{mm}$), chỉ còn 2 hộp thân chữ 't' và 'e' tham gia tính toán, đưa `baseline_jitter_std` trở về mức phẳng chuẩn **$< 0.1\,\text{mm}$**.
+  - **Lưu ý ranh giới kỹ thuật & Khẳng định phạm vi:** Ngưỡng $8.0\,\text{mm}$ chỉ là một phép thử khái niệm (proof of concept) trong bài test trên một ảnh giả lập đơn lẻ; **ngưỡng này chưa được áp dụng vào pipeline chính thức (`profile_generator.py`) và chưa được xác nhận trên mẫu chữ viết thật**. TV1 xác định **chưa cần triển khai bộ lọc này vào code production** khi chưa có dữ liệu gán nhãn thực tế từ đợt pilot.
 
-### 2.5. Năng lực Chống Nhiễu Quang học & Đứt Nét (Optical Noise & Stroke Resilience)
-- **Thực nghiệm 6:** Kiểm chứng khả năng lọc nhiễu của `profile_generator.py` đối với các chấm bụi quang học hoặc xơ giấy quét nhỏ ($1\text{--}2\,\text{px}$):
-  - Phép biến đổi hình thái học `cv2.morphologyEx(..., cv2.MORPH_OPEN)` kết hợp ngưỡng chu vi tối thiểu `min_perimeter_px=10.0` đã loại bỏ hoàn toàn các chấm nhiễu đơn lẻ, bảo toàn chính xác nét chữ hợp lệ.
-  - Khẳng định: Việc quét ở độ phân giải cao $600\,\text{DPI}$ với độ tương phản tốt là điều kiện tiên quyết để tránh đứt gãy nét thành các mảnh vụn nhỏ bị bộ lọc ngộ nhận là nhiễu.
+### 2.5. Năng lực Kháng Nhiễu Quang học Cô Lập trong Điều Kiện Test Giả Lập (Isolated Optical Noise Resilience)
+- **Thực nghiệm 6 đối chiếu ảnh sạch vs. ảnh có nhiễu:** Kiểm chứng bằng bài test so sánh trực tiếp giữa ảnh nét sạch gốc (`img_clean`) và ảnh có thêm các hạt nhiễu nhỏ $1\text{--}2\,\text{px}$ rải rác ngoài biên (`img_noisy`):
+  - *Kiểm tra thành phần nhiễu bị loại:* Cả hai ảnh đều trích xuất đúng 1 contour duy nhất (`len(strokes_clean) == len(strokes_noisy) == 1`). Ba chấm nhiễu cô lập ngoài biên không sinh contour nét thừa do bị loại bỏ bởi ngưỡng `min_perimeter_px=10.0` và phép mở hình thái học `cv2.morphologyEx`.
+  - *Định lượng mức thay đổi hình học nét chính:* Độ lệch biên bounding box của nét chính giữa hai ảnh được kiểm soát ở mức rất nhỏ ($< 0.05\,\text{mm}$), các vector đặc trưng profile trích xuất giữa hai ảnh lệch không đáng kể ($\Delta_{\text{aspect}} < 0.02$, $\Delta_{\text{slant}} < 0.2^\circ$, $\Delta_{\text{jitter}} < 0.02\,\text{mm}$).
+- **Giới hạn bằng chứng thực nghiệm:** Kết quả trên chỉ chứng minh được khả năng kháng nhiễu đối với các chấm nhiễu nhỏ nằm **cô lập tách rời ngoài nét chữ** trên ảnh nhân tạo. Bài test chưa bao quát các trường hợp nhiễu dính liền vào nét chữ (gây biến dạng contour) hoặc nhiễu nền phức tạp trên giấy quét thật. Do đó, TV1 không đưa ra kết luận "loại bỏ hoàn toàn mọi loại nhiễu trên ảnh thật"; quy chuẩn quét quang học phẳng $600\,\text{DPI}$ với độ tương phản cao và vệ sinh kính quét vẫn là yêu cầu bắt buộc của quy trình.
 
 ---
 

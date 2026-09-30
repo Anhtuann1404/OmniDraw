@@ -8,6 +8,7 @@ Phục vụ: Đánh giá thực nghiệm RQ4, kiểm soát rủi ro phân đoạ
 """
 
 import math
+from typing import Tuple, List, Optional
 from pathlib import Path
 import cv2
 import numpy as np
@@ -149,31 +150,44 @@ def create_synthetic_word_with_diacritic_image(
     return img
 
 
-def create_synthetic_noisy_crop_image(
+def create_synthetic_clean_and_noisy_crop_pair(
     dpi: int = 600,
     width_mm: float = 14.0,
     height_mm: float = 14.0,
-) -> np.ndarray:
+) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Tạo ảnh crop giả lập có 1 nét chữ hợp lệ và các chấm nhiễu quang học nhỏ (bụi kính quét / xơ giấy).
+    Tạo cặp ảnh crop đối chứng:
+    1. img_clean: Chỉ chứa 1 nét chữ hợp lệ duy nhất (vòng tròn nét đơn).
+    2. img_noisy: Bản sao của img_clean có thêm 3 chấm nhiễu nhỏ 1-2px rải rác ngoài biên.
     """
     w_px = mm_to_px(width_mm, dpi)
     h_px = mm_to_px(height_mm, dpi)
-    img = np.full((h_px, w_px, 3), 255, dtype=np.uint8)
+    img_clean = np.full((h_px, w_px, 3), 255, dtype=np.uint8)
 
     cx = w_px // 2
     cy = h_px // 2
     stroke_thickness = max(2, mm_to_px(0.5, dpi))
 
-    # Nét vẽ chuẩn: một hình elip/chữ cái hợp lệ
-    cv2.circle(img, (cx, cy), mm_to_px(3.0, dpi), (0, 0, 0), stroke_thickness)
+    # Nét vẽ chuẩn: một hình tròn đặc (đúng 1 contour biên ngoài, không có lỗ rỗng bên trong)
+    cv2.circle(img_clean, (cx, cy), mm_to_px(2.5, dpi), (0, 0, 0), -1)
 
-    # Các đốm nhiễu nhỏ đơn lẻ (1-2 px)
-    img[mm_to_px(2.0, dpi), mm_to_px(2.0, dpi)] = [0, 0, 0]
-    img[mm_to_px(3.0, dpi), mm_to_px(12.0, dpi)] = [0, 0, 0]
-    img[mm_to_px(12.0, dpi), mm_to_px(3.0, dpi)] = [0, 0, 0]
+    img_noisy = img_clean.copy()
+    # Các đốm nhiễu nhỏ đơn lẻ (1-2 px) nằm độc lập ngoài nét chính
+    img_noisy[mm_to_px(2.0, dpi), mm_to_px(2.0, dpi)] = [0, 0, 0]
+    img_noisy[mm_to_px(3.0, dpi), mm_to_px(12.0, dpi)] = [0, 0, 0]
+    img_noisy[mm_to_px(12.0, dpi), mm_to_px(3.0, dpi)] = [0, 0, 0]
 
-    return img
+    return img_clean, img_noisy
+
+
+def create_synthetic_noisy_crop_image(
+    dpi: int = 600,
+    width_mm: float = 14.0,
+    height_mm: float = 14.0,
+) -> np.ndarray:
+    """Tạo ảnh crop giả lập có nhiễu (tái sử dụng create_synthetic_clean_and_noisy_crop_pair)."""
+    _, img_noisy = create_synthetic_clean_and_noisy_crop_pair(dpi=dpi, width_mm=width_mm, height_mm=height_mm)
+    return img_noisy
 
 
 def test_detached_diacritic_segmentation_anomaly():
@@ -373,25 +387,56 @@ def test_contextual_word_diacritic_baseline_distortion():
 
 def test_noisy_crop_filtering_resilience():
     """
-    Thực nghiệm 6: Kiểm chứng năng lực chống nhiễu quang học nhỏ (bụi kính, xơ giấy).
-    Các hạt nhiễu nhỏ (1-2 px) bị loại bỏ bởi min_perimeter_px và morphologyEx,
-    chỉ nét chữ hợp lệ được đưa vào profile_generator.
+    Thực nghiệm 6: Kiểm chứng đối chiếu ảnh sạch (clean) và ảnh có nhiễu cô lập (noisy).
+    1. Kiểm tra thành phần nhiễu bị loại: Cả 2 ảnh đều trích xuất đúng 1 contour duy nhất
+       (3 chấm nhiễu nhỏ 1-2px bị loại bỏ bởi min_perimeter_px=10.0 và morphologyEx).
+    2. Kiểm tra mức thay đổi hình học nét chính: Độ lệch bounding box giữa nét sạch và
+       nét trong ảnh nhiễu phải rất nhỏ (< 0.05mm).
+    3. Kiểm tra tính ổn định của WriterProfile: Các đặc trưng trích xuất giữa 2 ảnh lệch không đáng kể.
     """
     dpi = 600
-    img_noisy = create_synthetic_noisy_crop_image(dpi=dpi)
+    img_clean, img_noisy = create_synthetic_clean_and_noisy_crop_pair(dpi=dpi)
 
-    strokes = extract_strokes_from_image(img_noisy, dpi=dpi, min_perimeter_px=10.0)
-    # Khẳng định: Các hạt bụi 1-2px bị loại, chỉ còn lại nét vẽ vòng tròn chính
-    assert len(strokes) >= 1
+    strokes_clean = extract_strokes_from_image(img_clean, dpi=dpi, min_perimeter_px=10.0)
+    strokes_noisy = extract_strokes_from_image(img_noisy, dpi=dpi, min_perimeter_px=10.0)
 
-    crops_data = [
-        {"crop_image": img_noisy, "context_tag": "isolated", "is_valid": True}
-    ]
-    profile = generate_writer_profile_from_crops(
-        writer_id="W004",
-        crops_data=crops_data,
+    # 1. Xác nhận thành phần nhiễu cô lập bị loại bỏ: Số contour của 2 ảnh là như nhau (= 1)
+    assert len(strokes_clean) == 1, f"Ảnh sạch phải có đúng 1 stroke, nhận: {len(strokes_clean)}"
+    assert len(strokes_noisy) == 1, f"Ảnh nhiễu không sinh contour thừa, nhận: {len(strokes_noisy)}"
+
+    pts_clean = strokes_clean[0]
+    pts_noisy = strokes_noisy[0]
+
+    # 2. Định lượng mức thay đổi hình học của nét chính giữa 2 ảnh:
+    min_clean, max_clean = np.min(pts_clean, axis=0), np.max(pts_clean, axis=0)
+    min_noisy, max_noisy = np.min(pts_noisy, axis=0), np.max(pts_noisy, axis=0)
+
+    diff_min = float(np.max(np.abs(min_clean - min_noisy)))
+    diff_max = float(np.max(np.abs(max_clean - max_noisy)))
+
+    assert diff_min < 0.05, f"Độ lệch min coord của nét chính giữa ảnh sạch và nhiễu < 0.05mm, nhận: {diff_min}"
+    assert diff_max < 0.05, f"Độ lệch max coord của nét chính giữa ảnh sạch và nhiễu < 0.05mm, nhận: {diff_max}"
+
+    # 3. Đối chiếu hồ sơ WriterProfile sinh ra từ 2 ảnh:
+    prof_clean = generate_writer_profile_from_crops(
+        writer_id="W004_clean",
+        crops_data=[{"crop_image": img_clean, "context_tag": "isolated", "is_valid": True}],
         dpi=dpi,
     )
-    assert profile.num_samples_analyzed == 1
-    is_valid, _ = validate_writer_profile(profile.to_dict())
-    assert is_valid is True
+    prof_noisy = generate_writer_profile_from_crops(
+        writer_id="W004_noisy",
+        crops_data=[{"crop_image": img_noisy, "context_tag": "isolated", "is_valid": True}],
+        dpi=dpi,
+    )
+
+    assert prof_clean.num_samples_analyzed == 1
+    assert prof_noisy.num_samples_analyzed == 1
+
+    # Các chỉ số hình học lệch không đáng kể
+    delta_aspect = abs(prof_clean.global_style.aspect_ratio_mean - prof_noisy.global_style.aspect_ratio_mean)
+    delta_slant = abs(prof_clean.global_style.mean_slant_deg - prof_noisy.global_style.mean_slant_deg)
+    delta_jitter = abs(prof_clean.global_style.baseline_jitter_std - prof_noisy.global_style.baseline_jitter_std)
+
+    assert delta_aspect < 0.02, f"Độ lệch aspect_ratio giữa sạch và nhiễu phải < 0.02, nhận: {delta_aspect}"
+    assert delta_slant < 0.2, f"Độ lệch mean_slant giữa sạch và nhiễu phải < 0.2 độ, nhận: {delta_slant}"
+    assert delta_jitter < 0.02, f"Độ lệch baseline_jitter giữa sạch và nhiễu phải < 0.02mm, nhận: {delta_jitter}"
