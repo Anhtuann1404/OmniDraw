@@ -152,6 +152,7 @@ def generate_writer_profile_from_crops(
     dpi: int = 600,
     version: str = "1.0.0",
     default_stroke_width_mm: float = 0.5,
+    used_indices: Optional[List[int]] = None,
 ) -> WriterProfile:
     """
     Tự động sinh hồ sơ phong cách WriterProfile từ danh sách dữ liệu ảnh crop.
@@ -165,6 +166,7 @@ def generate_writer_profile_from_crops(
         dpi: Độ phân giải ảnh crop (mặc định 600 DPI).
         version: Phiên bản thuật toán trích xuất (mặc định "1.0.0").
         default_stroke_width_mm: Bề rộng nét ngòi bút giả định (mm).
+        used_indices: (Tùy chọn) Danh sách lưu chỉ mục các ô crop thực tế được trích xuất thành công.
 
     Returns:
         Đối tượng WriterProfile hợp lệ theo JSON Schema.
@@ -176,7 +178,7 @@ def generate_writer_profile_from_crops(
 
     valid_samples_count = 0
 
-    for item in crops_data:
+    for idx, item in enumerate(crops_data):
         if not item.get("is_valid", True):
             continue
 
@@ -189,6 +191,8 @@ def generate_writer_profile_from_crops(
             continue
 
         valid_samples_count += 1
+        if used_indices is not None:
+            used_indices.append(idx)
         all_strokes.extend(strokes)
 
         context = item.get("context_tag", "isolated")
@@ -266,7 +270,7 @@ def record_profile_crop_provenance(
         Đường dẫn tệp ledger vừa được ghi/cập nhật.
 
     Raises:
-        ValueError: Nếu ô cắt thiếu scan_id hoặc cell_id/sample_id hợp lệ (fail-closed).
+        ValueError: Nếu ô cắt thiếu scan_id hoặc cell_id/sample_id hợp lệ, hoặc tệp cũ bị lỗi JSON (fail-closed).
     """
     ledger_p = Path(ledger_path)
     ledger_p.parent.mkdir(parents=True, exist_ok=True)
@@ -280,12 +284,23 @@ def record_profile_crop_provenance(
             continue
 
         c_scan_id = item.get("scan_id") or scan_id
-        c_cell_id = item.get("cell_id") or item.get("sample_id")
 
         if not c_scan_id or not str(c_scan_id).strip():
             raise ValueError(
                 f"Từ chối ghi nhận provenance cho profile '{profile_id}': crop thiếu 'scan_id' hợp lệ: {item}"
             )
+        c_scan_id_str = str(c_scan_id).strip()
+        # Fail-closed: scan_id phải là mã định danh chuẩn, không được chứa đường dẫn tệp hay đuôi file
+        if any(sep in c_scan_id_str for sep in ("/", "\\")) or any(
+            c_scan_id_str.lower().endswith(ext)
+            for ext in (".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp", ".json")
+        ):
+            raise ValueError(
+                f"Từ chối ghi nhận provenance cho profile '{profile_id}': 'scan_id' mang định dạng đường dẫn tệp không hợp lệ: {c_scan_id_str!r}. "
+                "Yêu cầu mã định danh chuẩn (ví dụ 'W001_S01_P01'), tuyệt đối không dùng đường dẫn tệp thay thế."
+            )
+
+        c_cell_id = item.get("cell_id") or item.get("sample_id")
         if not c_cell_id or not str(c_cell_id).strip():
             raise ValueError(
                 f"Từ chối ghi nhận provenance cho profile '{profile_id}': crop thiếu 'cell_id' (hoặc 'sample_id') hợp lệ: {item}"
@@ -294,7 +309,7 @@ def record_profile_crop_provenance(
         record = {
             "profile_id": profile_id,
             "writer_id": writer_id,
-            "scan_id": str(c_scan_id).strip(),
+            "scan_id": c_scan_id_str,
             "cell_id": str(c_cell_id).strip(),
             "sample_id": item.get("sample_id"),
             "crop_file": item.get("crop_file"),
@@ -304,20 +319,31 @@ def record_profile_crop_provenance(
         records.append(record)
 
     # Đọc ledger hiện tại để xử lý chạy lại một cách xác định (idempotent / deduplication)
+    # Fail-closed: Nếu ledger cũ có dòng JSON hỏng, lập tức báo lỗi và giữ nguyên tệp cũ, không mất dữ liệu.
     existing_records: List[Dict[str, Any]] = []
     if ledger_p.exists():
         with open(ledger_p, "r", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if not line:
+            for line_no, line in enumerate(f, 1):
+                line_str = line.strip()
+                if not line_str:
                     continue
                 try:
-                    row = json.loads(line)
-                    # Giữ lại các bản ghi của các profile_id khác, ghi đè/thay thế bản ghi của profile_id này
-                    if row.get("profile_id") != profile_id:
-                        existing_records.append(row)
-                except json.JSONDecodeError:
-                    pass
+                    row = json.loads(line_str)
+                except json.JSONDecodeError as err:
+                    raise ValueError(
+                        f"Phát hiện dòng JSON bị lỗi cấu trúc tại dòng {line_no} trong tệp ledger '{ledger_p}': {line_str}. "
+                        "Hủy bỏ thao tác ghi để bảo vệ toàn vẹn dữ liệu và giữ nguyên tệp cũ."
+                    ) from err
+
+                if not isinstance(row, dict):
+                    raise ValueError(
+                        f"Phát hiện dòng không phải JSON object tại dòng {line_no} trong tệp ledger '{ledger_p}': {line_str}. "
+                        "Hủy bỏ thao tác ghi để bảo vệ toàn vẹn dữ liệu và giữ nguyên tệp cũ."
+                    )
+
+                # Giữ lại các bản ghi của các profile_id khác, ghi đè/thay thế bản ghi của profile_id này
+                if row.get("profile_id") != profile_id:
+                    existing_records.append(row)
 
     # Gộp danh sách bản ghi mới
     all_records = existing_records + records
@@ -365,9 +391,34 @@ def generate_writer_profile_from_report(
             "để lưu vết xuất xứ ô cắt, không được để trống."
         )
 
+    # Kiểm tra mã scan_id: Yêu cầu định danh chuẩn, không dùng đường dẫn input_file thay thế
+    scan_id = report_dict.get("scan_id")
+    if provenance_ledger_path is not None:
+        if not scan_id:
+            candidate_scan_ids = {str(m.get("scan_id")).strip() for m in report_dict.get("crops_metadata", []) if m.get("scan_id")}
+            if len(candidate_scan_ids) == 1:
+                scan_id = candidate_scan_ids.pop()
+
+        if not scan_id or not str(scan_id).strip():
+            raise ValueError(
+                f"Thiếu mã 'scan_id' hợp lệ trong báo cáo quét để ghi nhận provenance cho người viết {writer_id}. "
+                "Yêu cầu mã định danh chuẩn (ví dụ 'W001_S01_P01'), tuyệt đối không dùng đường dẫn tệp thay thế."
+            )
+        scan_id_str = str(scan_id).strip()
+        if any(sep in scan_id_str for sep in ("/", "\\")) or any(
+            scan_id_str.lower().endswith(ext)
+            for ext in (".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp", ".json")
+        ):
+            raise ValueError(
+                f"Mã 'scan_id' trong báo cáo quét mang định dạng đường dẫn tệp không hợp lệ: {scan_id_str!r}. "
+                "Yêu cầu mã định danh chuẩn (ví dụ 'W001_S01_P01'), không được dùng đường dẫn thay thế."
+            )
+    else:
+        scan_id_str = str(scan_id).strip() if scan_id else None
+
     crops_meta = report_dict.get("crops_metadata", [])
     crops_data: List[Dict[str, Any]] = []
-    used_crops_meta: List[Dict[str, Any]] = []
+    candidate_crops_meta: List[Dict[str, Any]] = []
 
     base_p = Path(crops_base_dir) if crops_base_dir else None
 
@@ -397,22 +448,26 @@ def generate_writer_profile_from_report(
             "context_tag": m.get("context_tag", "isolated"),
             "is_valid": True,
         })
-        used_crops_meta.append(m)
+        candidate_crops_meta.append(m)
 
+    # Trích xuất profile và lấy chính xác danh sách chỉ mục các ô thực sự được extractor sử dụng
+    used_crops_indices: List[int] = []
     profile = generate_writer_profile_from_crops(
         writer_id=writer_id,
         crops_data=crops_data,
         dpi=dpi,
+        used_indices=used_crops_indices,
     )
 
-    if provenance_ledger_path is not None and used_crops_meta:
-        scan_id = report_dict.get("scan_id") or report_dict.get("input_file")
+    actual_used_crops_meta = [candidate_crops_meta[i] for i in used_crops_indices]
+
+    if provenance_ledger_path is not None:
         record_profile_crop_provenance(
             profile_id=profile.profile_id,
             writer_id=writer_id,
-            used_crops_metadata=used_crops_meta,
+            used_crops_metadata=actual_used_crops_meta,
             ledger_path=provenance_ledger_path,
-            scan_id=scan_id,
+            scan_id=scan_id_str,
         )
 
     return profile
@@ -468,18 +523,22 @@ def save_writer_profile(
         }
 
         # Nếu file đã tồn tại, đọc các dòng cũ để tránh trùng lặp writer_id
+        # Fail-closed: Báo lỗi nếu phát hiện dòng JSON bị hỏng, giữ nguyên file cũ
         existing_rows: List[Dict[str, Any]] = []
         if sum_p.exists():
             with open(sum_p, "r", encoding="utf-8") as f:
-                for line in f:
-                    line = line.strip()
-                    if line:
+                for line_no, line in enumerate(f, 1):
+                    line_str = line.strip()
+                    if line_str:
                         try:
-                            row = json.loads(line)
+                            row = json.loads(line_str)
                             if row.get("writer_id") != profile.writer_id:
                                 existing_rows.append(row)
-                        except json.JSONDecodeError:
-                            pass
+                        except json.JSONDecodeError as err:
+                            raise ValueError(
+                                f"Phát hiện dòng JSON bị lỗi cấu trúc tại dòng {line_no} trong tệp summary '{sum_p}': {line_str}. "
+                                "Hủy bỏ thao tác ghi để bảo vệ toàn vẹn dữ liệu."
+                            ) from err
 
         existing_rows.append(summary_row)
         # Sắp xếp theo writer_id

@@ -500,3 +500,166 @@ def test_pilot_mode_requires_provenance_ledger(tmp_path):
             provenance_ledger_path=None,
             require_provenance=True,
         )
+
+
+def test_provenance_ledger_excludes_blank_or_no_stroke_crops(tmp_path):
+    """Kiểm thử đối chiếu: Crop ảnh trắng/không trích xuất được nét bị loại khỏi ledger, khớp num_samples_analyzed."""
+    dpi = 600
+    crops_dir = tmp_path / "crops"
+    crops_dir.mkdir(parents=True)
+
+    # Crop 1: Có nét chữ hợp lệ
+    img_valid = create_synthetic_char_crop(slant_deg=0.0)
+    valid_crop_file = "SMP_W004_001_valid.png"
+    cv2.imwrite(str(crops_dir / valid_crop_file), img_valid)
+
+    # Crop 2: Ảnh trắng tinh (255) không có nét, dù metadata đánh dấu hợp lệ
+    img_blank = np.full((120, 120), 255, dtype=np.uint8)
+    blank_crop_file = "SMP_W004_002_blank.png"
+    cv2.imwrite(str(crops_dir / blank_crop_file), img_blank)
+
+    mock_report = {
+        "is_success": True,
+        "scan_id": "W004_S01_P01",
+        "form_type": "P01",
+        "input_file": "W004_S01_P01.png",
+        "target_dpi": dpi,
+        "overall_status": "SHEET_PASS",
+        "crops_metadata": [
+            {
+                "cell_id": "P01_C01",
+                "sample_id": "SMP_W004_001",
+                "context_tag": "isolated",
+                "crop_file": f"crops/{valid_crop_file}",
+                "qc_status": "QC_AUTO_PASS",
+                "is_valid_for_dataset": True,
+            },
+            {
+                "cell_id": "P01_C02",
+                "sample_id": "SMP_W004_002",
+                "context_tag": "isolated",
+                "crop_file": f"crops/{blank_crop_file}",
+                "qc_status": "QC_AUTO_PASS",  # Đánh dấu PASS nhưng ảnh trắng không có nét
+                "is_valid_for_dataset": True,
+            }
+        ]
+    }
+
+    ledger_file = tmp_path / "provenance" / "crop_provenance_ledger.jsonl"
+
+    profile = generate_writer_profile_from_report(
+        report_dict=mock_report,
+        writer_id="W004",
+        crops_base_dir=tmp_path,
+        dpi=dpi,
+        provenance_ledger_path=ledger_file,
+    )
+
+    # 1. Extractor chỉ tính ô có nét thực tế
+    assert profile.num_samples_analyzed == 1
+
+    # 2. Đọc ledger và đối chiếu hai bên
+    assert ledger_file.exists()
+    with open(ledger_file, "r", encoding="utf-8") as f:
+        ledger_records = [json.loads(line.strip()) for line in f if line.strip()]
+
+    # Số bản ghi trong ledger phải KHỚP TUYỆT ĐỐI với số mẫu extractor phân tích
+    assert len(ledger_records) == profile.num_samples_analyzed == 1
+    assert ledger_records[0]["cell_id"] == "P01_C01"
+    assert ledger_records[0]["sample_id"] == "SMP_W004_001"
+    # Ô ảnh trắng P01_C02 tuyệt đối không được xuất hiện
+    assert all(r["cell_id"] != "P01_C02" for r in ledger_records)
+
+
+def test_provenance_ledger_rejects_missing_or_path_scan_id(tmp_path):
+    """Kiểm thử fail-closed: Từ chối thiếu scan_id hoặc dùng đường dẫn tệp/đuôi file thay thế."""
+    dpi = 600
+    crops_dir = tmp_path / "crops"
+    crops_dir.mkdir(parents=True)
+    img = create_synthetic_char_crop()
+    cv2.imwrite(str(crops_dir / "crop1.png"), img)
+    ledger_file = tmp_path / "ledger.jsonl"
+
+    # Ca 1: Thiếu scan_id trong report, có input_file -> Cấm lấy input_file thay thế, phải raise ValueError
+    report_missing_scan_id = {
+        "is_success": True,
+        "input_file": "scans/raw_page_01.png",
+        "crops_metadata": [{
+            "cell_id": "P01_C01",
+            "sample_id": "SMP_001",
+            "crop_file": "crops/crop1.png",
+            "is_valid_for_dataset": True,
+        }]
+    }
+    with pytest.raises(ValueError, match="scan_id"):
+        generate_writer_profile_from_report(
+            report_dict=report_missing_scan_id,
+            writer_id="W001",
+            crops_base_dir=tmp_path,
+            dpi=dpi,
+            provenance_ledger_path=ledger_file,
+        )
+
+    # Ca 2: scan_id mang đuôi file ảnh (.png) trong report -> Bị từ chối
+    report_ext_scan_id = {
+        "is_success": True,
+        "scan_id": "W001_S01_P01.png",
+        "crops_metadata": [{
+            "cell_id": "P01_C01",
+            "sample_id": "SMP_001",
+            "crop_file": "crops/crop1.png",
+            "is_valid_for_dataset": True,
+        }]
+    }
+    with pytest.raises(ValueError, match="đường dẫn tệp không hợp lệ"):
+        generate_writer_profile_from_report(
+            report_dict=report_ext_scan_id,
+            writer_id="W001",
+            crops_base_dir=tmp_path,
+            dpi=dpi,
+            provenance_ledger_path=ledger_file,
+        )
+
+    # Ca 3: record_profile_crop_provenance trực tiếp với scan_id chứa đường dẫn thư mục
+    with pytest.raises(ValueError, match="đường dẫn tệp không hợp lệ"):
+        record_profile_crop_provenance(
+            profile_id="profile_W001_v1",
+            writer_id="W001",
+            used_crops_metadata=[{
+                "cell_id": "P01_C01",
+                "sample_id": "SMP_001",
+                "scan_id": "scans/W001_S01_P01",
+                "is_valid_for_dataset": True,
+            }],
+            ledger_path=ledger_file,
+        )
+
+
+def test_provenance_ledger_preserves_corrupted_file_on_error(tmp_path):
+    """Kiểm thử fail-closed & toàn vẹn dữ liệu: Khi ledger cũ có dòng JSON hỏng, báo lỗi và giữ nguyên 100% tệp cũ."""
+    ledger_file = tmp_path / "corrupted_ledger.jsonl"
+
+    # Tạo tệp ledger cũ chứa 1 dòng hợp lệ và 1 dòng JSON bị hỏng
+    initial_content = (
+        '{"profile_id": "profile_W001_v1", "writer_id": "W001", "scan_id": "W001_S01_P01", "cell_id": "P01_C01"}\n'
+        '{"corrupted_json_line: INVALID_SYNTAX\n'
+    )
+    ledger_file.write_text(initial_content, encoding="utf-8")
+    initial_bytes = ledger_file.read_bytes()
+
+    crops_new = [
+        {"cell_id": "P01_C02", "sample_id": "SMP_W002_002", "scan_id": "W002_S01_P01"},
+    ]
+
+    # Cố gắng ghi bản ghi mới vào ledger hỏng -> Phải lập tức ném ValueError
+    with pytest.raises(ValueError, match="Phát hiện dòng JSON bị lỗi cấu trúc"):
+        record_profile_crop_provenance(
+            profile_id="profile_W002_v1",
+            writer_id="W002",
+            used_crops_metadata=crops_new,
+            ledger_path=ledger_file,
+        )
+
+    # Kiểm tra chứng minh không mất dữ liệu: Nội dung tệp cũ phải giữ nguyên 100% từng byte
+    assert ledger_file.exists()
+    assert ledger_file.read_bytes() == initial_bytes
