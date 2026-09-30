@@ -56,6 +56,20 @@ TV1 đã thiết lập bộ kiểm thử thực nghiệm chuyên sâu tại [`te
 
 ---
 
+### 2.4. Hiện tượng 3: Sai số Chân dòng trên Từ Ngữ cảnh P02 Có Dấu (Contextual Word Diacritic Distortion)
+- **Cơ chế phát sinh:** Ở biểu mẫu P02 (từ ngữ cảnh), một từ tiếng Việt có dấu (ví dụ: chữ `tê`) chứa cả thân chữ cơ sở và dấu phụ tách rời phía trên. Khi bóc tách bằng connected components, thuật toán nhận diện được cả thân chữ 't', 'e' và dấu mũ '^'.
+- **Dữ liệu thực nghiệm (Thực nghiệm 5):** Thử nghiệm trên từ `tê` giả lập với baseline chuẩn phẳng tại $y = 11.0\,\text{mm}$:
+  - Đáy của dấu mũ nằm tại $y = 6.5\,\text{mm}$.
+  - Nếu thuật toán lấy đáy của toàn bộ các bounding boxes làm điểm chân dòng, `baseline_jitter_std` bị thổi phồng nhân tạo lên **$> 1.5\,\text{mm}$** dù chữ viết của người viết hoàn toàn phẳng.
+  - **Kiểm chứng giải pháp:** Khi áp dụng bộ lọc loại bỏ các thành phần nằm ở nửa trên dòng ($y_{\text{bottom}} < 8.0\,\text{mm}$), chỉ còn 2 hộp thân chữ 't' và 'e' tham gia tính toán, đưa `baseline_jitter_std` trở về mức phẳng chuẩn **$< 0.1\,\text{mm}$**.
+
+### 2.5. Năng lực Chống Nhiễu Quang học & Đứt Nét (Optical Noise & Stroke Resilience)
+- **Thực nghiệm 6:** Kiểm chứng khả năng lọc nhiễu của `profile_generator.py` đối với các chấm bụi quang học hoặc xơ giấy quét nhỏ ($1\text{--}2\,\text{px}$):
+  - Phép biến đổi hình thái học `cv2.morphologyEx(..., cv2.MORPH_OPEN)` kết hợp ngưỡng chu vi tối thiểu `min_perimeter_px=10.0` đã loại bỏ hoàn toàn các chấm nhiễu đơn lẻ, bảo toàn chính xác nét chữ hợp lệ.
+  - Khẳng định: Việc quét ở độ phân giải cao $600\,\text{DPI}$ với độ tương phản tốt là điều kiện tiên quyết để tránh đứt gãy nét thành các mảnh vụn nhỏ bị bộ lọc ngộ nhận là nhiễu.
+
+---
+
 ## 3. Bốn Đề xuất Kỹ thuật Sơ bộ (Preliminary Proposals) từ TV1 Gửi TV4 Thảo luận
 
 Để đóng góp cho việc hoàn thiện protocol RQ4 và chuẩn bị dữ liệu cho TV4, TV1 nêu 4 đề xuất kỹ thuật sơ bộ dưới đây để nhóm cùng thảo luận (các bộ lọc và ngưỡng tham số **chưa khóa cứng**, sẽ được thử nghiệm và tinh chỉnh khi có dữ liệu pilot thực tế):

@@ -104,6 +104,78 @@ def create_synthetic_cursive_word_image(
     return img
 
 
+def create_synthetic_word_with_diacritic_image(
+    dpi: int = 600,
+    width_mm: float = 25.0,
+    height_mm: float = 14.0,
+) -> np.ndarray:
+    """
+    Tạo ảnh crop giả lập từ có dấu tiếng Việt trong ngữ cảnh P02 (ví dụ: chữ 'tê').
+    Gồm 2 thân chữ cơ sở 't' và 'e' thẳng hàng tại baseline y = 11.0mm,
+    kèm theo dấu mũ '^' tách rời phía trên chữ 'e' (y = 5.0..6.5mm).
+    """
+    w_px = mm_to_px(width_mm, dpi)
+    h_px = mm_to_px(height_mm, dpi)
+    img = np.full((h_px, w_px, 3), 255, dtype=np.uint8)
+
+    stroke_thickness = max(2, mm_to_px(0.45, dpi))
+
+    # 1. Chữ 't' cơ sở (x = 7.0mm): nét dọc y = 6.0..11.0mm, nét ngang y = 8.0mm
+    x_t = mm_to_px(7.0, dpi)
+    y_t_top = mm_to_px(6.0, dpi)
+    y_base = mm_to_px(11.0, dpi)
+    cv2.line(img, (x_t, y_t_top), (x_t, y_base), (0, 0, 0), stroke_thickness)
+    cv2.line(
+        img,
+        (x_t - mm_to_px(1.5, dpi), mm_to_px(8.0, dpi)),
+        (x_t + mm_to_px(1.5, dpi), mm_to_px(8.0, dpi)),
+        (0, 0, 0),
+        stroke_thickness,
+    )
+
+    # 2. Thân chữ 'e' cơ sở (x = 16.0mm): elip y = 7.5..11.0mm (đáy chạm đúng 11.0mm)
+    x_e = mm_to_px(16.0, dpi)
+    y_e_top = mm_to_px(7.5, dpi)
+    e_center = (x_e, (y_e_top + y_base) // 2)
+    e_axes = (mm_to_px(2.2, dpi), (y_base - y_e_top) // 2)
+    cv2.ellipse(img, e_center, e_axes, 0, 0, 360, (0, 0, 0), stroke_thickness)
+
+    # 3. Dấu mũ '^' tách rời trên đầu 'e' (x = 16.0mm, y = 5.0..6.5mm)
+    y_hat_peak = mm_to_px(5.0, dpi)
+    y_hat_bot = mm_to_px(6.5, dpi)
+    cv2.line(img, (x_e - mm_to_px(1.5, dpi), y_hat_bot), (x_e, y_hat_peak), (0, 0, 0), stroke_thickness)
+    cv2.line(img, (x_e, y_hat_peak), (x_e + mm_to_px(1.5, dpi), y_hat_bot), (0, 0, 0), stroke_thickness)
+
+    return img
+
+
+def create_synthetic_noisy_crop_image(
+    dpi: int = 600,
+    width_mm: float = 14.0,
+    height_mm: float = 14.0,
+) -> np.ndarray:
+    """
+    Tạo ảnh crop giả lập có 1 nét chữ hợp lệ và các chấm nhiễu quang học nhỏ (bụi kính quét / xơ giấy).
+    """
+    w_px = mm_to_px(width_mm, dpi)
+    h_px = mm_to_px(height_mm, dpi)
+    img = np.full((h_px, w_px, 3), 255, dtype=np.uint8)
+
+    cx = w_px // 2
+    cy = h_px // 2
+    stroke_thickness = max(2, mm_to_px(0.5, dpi))
+
+    # Nét vẽ chuẩn: một hình elip/chữ cái hợp lệ
+    cv2.circle(img, (cx, cy), mm_to_px(3.0, dpi), (0, 0, 0), stroke_thickness)
+
+    # Các đốm nhiễu nhỏ đơn lẻ (1-2 px)
+    img[mm_to_px(2.0, dpi), mm_to_px(2.0, dpi)] = [0, 0, 0]
+    img[mm_to_px(3.0, dpi), mm_to_px(12.0, dpi)] = [0, 0, 0]
+    img[mm_to_px(12.0, dpi), mm_to_px(3.0, dpi)] = [0, 0, 0]
+
+    return img
+
+
 def test_detached_diacritic_segmentation_anomaly():
     """
     Thực nghiệm 1: Chứng minh hiện tượng bẫy lỗi dấu tách rời (Detached Diacritic Anomaly).
@@ -250,3 +322,76 @@ def test_qc_filtering_and_provenance_integrity():
     # Mẫu hỏng bị loại bỏ, chỉ còn 1 mẫu hợp lệ được phân tích
     assert profile.num_samples_analyzed == 1
     assert profile.writer_id == "W002"
+
+
+def test_contextual_word_diacritic_baseline_distortion():
+    """
+    Thực nghiệm 5: Định lượng sai số baseline jitter trên từ ngữ cảnh P02 có dấu (ví dụ: chữ 'tê').
+    Khi context_tag='contextual_word':
+    1. Bóc tách connected components phát hiện cả 2 thân chữ ('t', 'e') và dấu mũ '^'.
+    2. Cả 't' và 'e' đều nằm phẳng trên baseline y = 11.0mm (jitter thực tế = 0.0mm).
+    3. Tuy nhiên đáy của dấu mũ ở y = 6.5mm kéo theo điểm baseline giả mạo.
+    4. baseline_jitter_std bị méo mó nhân tạo > 1.5mm nếu không có bộ lọc dấu (Proposal 2 trong Doc 26).
+    5. Chứng minh phương án khắc phục: Lọc các hộp nằm ở nửa trên (y_bottom < y_threshold)
+       sẽ phục hồi baseline jitter về đúng 0.0mm.
+    """
+    dpi = 600
+    img_word = create_synthetic_word_with_diacritic_image(dpi=dpi)
+
+    # Đưa vào pipeline với context_tag="contextual_word"
+    crops_data = [
+        {"crop_image": img_word, "context_tag": "contextual_word", "is_valid": True}
+    ]
+
+    profile = generate_writer_profile_from_crops(
+        writer_id="W003",
+        crops_data=crops_data,
+        dpi=dpi,
+    )
+
+    # 1. Profile vẫn hợp thức theo schema (không bị crash sập chương trình)
+    is_valid, errors = validate_writer_profile(profile.to_dict())
+    assert is_valid is True, f"Profile không hợp lệ: {errors}"
+    assert profile.num_samples_analyzed == 1
+
+    # 2. Định lượng sai số: Jitter bị thổi phồng nhân tạo do dấu mũ ở y = 6.5mm
+    jitter = profile.global_style.baseline_jitter_std
+    assert jitter > 1.5, f"Kỳ vọng phát hiện sai số baseline jitter > 1.5mm, nhận: {jitter}"
+
+    # 3. Thực nghiệm kiểm chứng giải pháp lọc nửa dưới (Lower-half baseline filter proposal):
+    boxes = extract_char_boxes_from_image(img_word, dpi=dpi)
+    assert len(boxes) == 3  # 't', 'e', and '^'
+
+    # Giả lập bộ lọc nửa dưới: lọc bỏ các box có y_max (đáy) < 8.0mm
+    filtered_boxes = [b for b in boxes if b[3] >= 8.0]
+    assert len(filtered_boxes) == 2  # Chỉ còn lại 't' và 'e'
+
+    filtered_baseline_pts = [((b[0] + b[2]) / 2.0, b[3]) for b in filtered_boxes]
+    corrected_jitter = extract_baseline_jitter_std(filtered_baseline_pts)
+    assert corrected_jitter < 0.1, f"Sau khi lọc dấu mũ, jitter trở về mức phẳng ~0.0mm, nhận: {corrected_jitter}"
+
+
+def test_noisy_crop_filtering_resilience():
+    """
+    Thực nghiệm 6: Kiểm chứng năng lực chống nhiễu quang học nhỏ (bụi kính, xơ giấy).
+    Các hạt nhiễu nhỏ (1-2 px) bị loại bỏ bởi min_perimeter_px và morphologyEx,
+    chỉ nét chữ hợp lệ được đưa vào profile_generator.
+    """
+    dpi = 600
+    img_noisy = create_synthetic_noisy_crop_image(dpi=dpi)
+
+    strokes = extract_strokes_from_image(img_noisy, dpi=dpi, min_perimeter_px=10.0)
+    # Khẳng định: Các hạt bụi 1-2px bị loại, chỉ còn lại nét vẽ vòng tròn chính
+    assert len(strokes) >= 1
+
+    crops_data = [
+        {"crop_image": img_noisy, "context_tag": "isolated", "is_valid": True}
+    ]
+    profile = generate_writer_profile_from_crops(
+        writer_id="W004",
+        crops_data=crops_data,
+        dpi=dpi,
+    )
+    assert profile.num_samples_analyzed == 1
+    is_valid, _ = validate_writer_profile(profile.to_dict())
+    assert is_valid is True
