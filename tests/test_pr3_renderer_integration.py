@@ -2,6 +2,7 @@
 
 from collections import Counter
 import numpy as np
+import pytest
 
 from backend.handwriting import engine
 from backend.handwriting import composition
@@ -106,3 +107,44 @@ def test_pr3_supported_styles_evaluate_the_exact_rendered_marks(monkeypatch):
         assert all(np.isfinite(stroke).all() for stroke in result.strokes)
         fingerprints.add(compute_stroke_fingerprint(result.strokes))
     assert len(fingerprints) == len(engine.STYLE_CONFIGS)
+
+
+@pytest.mark.parametrize("style", tuple(engine.STYLE_CONFIGS))
+def test_pr3_bridge_trace_tangents_match_selected_styled_geometry(monkeypatch, style):
+    original_solve = composition.optimize_composition_dag
+    expected = []
+
+    def capture(layers, *args, **kwargs):
+        solution = original_solve(layers, *args, **kwargs)
+        worlds = [next(world for state, world in layer if state is chosen)
+                  for layer, chosen in zip(layers, solution["states"])]
+        for i, transition in enumerate(solution["transitions"]):
+            if transition.decision == "CONNECT":
+                expected.append((worlds[i], worlds[i + 1], transition))
+        return solution
+
+    monkeypatch.setattr(composition, "optimize_composition_dag", capture)
+    result = engine.text_to_strokes_structured(
+        "tiếng nguyễn", font="cursive", style=style, seed=42,
+        _algorithm_mode="pr3_composition")
+    bridges = [item for item in result.trace if item.stroke_type == "bridge_stroke"]
+    assert bridges and len(bridges) == len(expected)
+    for bridge, (left, right, transition) in zip(bridges, expected):
+        np.testing.assert_array_equal(bridge.meta["v_exit"], left.v_exit)
+        np.testing.assert_array_equal(bridge.meta["v_entry"], right.v_entry)
+        np.testing.assert_array_equal(bridge.meta["p_exit"], left.exit_pt)
+        np.testing.assert_array_equal(bridge.meta["p_entry"], right.entry_pt)
+        assert bridge.meta["curvature_cost"] == transition.breakdown.c_curvature
+
+
+@pytest.mark.parametrize("style", tuple(engine.STYLE_CONFIGS))
+def test_pr3_d_bars_render_and_trace_consistently_without_post_dag_jitter(style):
+    result = engine.text_to_strokes_structured(
+        "đường Đường", font="cursive", style=style, seed=42,
+        _algorithm_mode="pr3_composition")
+    bars = [item for item in result.trace if item.meta.get("part") == "d_bar"]
+    assert len(bars) == 2
+    for bar in bars:
+        assert np.isfinite(bar.points).all()
+        np.testing.assert_array_equal(
+            bar.points, result.strokes[bar.meta["continuous_stroke_id"]])

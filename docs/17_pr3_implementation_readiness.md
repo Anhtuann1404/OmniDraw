@@ -306,4 +306,14 @@ Script [`generate_pr3_e1_dev_evidence.py`](../scripts/generate_pr3_e1_dev_eviden
 | B2 Greedy | 2127.310 | 2578.424 | 4705.734 |
 | Proposed PR3 | 1941.020 | 2402.340 | **4343.360** |
 
-Proposed giảm **9.018% so B1** và **7.701% so B2** trên ma trận DEV hiện hành. Sự khác biệt 5.512 mm so với §12 đến từ việc `omni_casual` giờ áp dụng slant/drift trước DAG; số §12 là bằng chứng lịch sử tại `adb0417`. E1 vẫn đạt ở mức TV4 software DEV; **TV2 cần recheck phiên bản style mới** trước khi coi sign-off E1 bao phủ commit hiện tại. H1.1/PR5, quyết định chấp nhận giới hạn jitter của style và PR3 exit sign-off vẫn mở; physical calibration cũng là gate riêng.
+Proposed giảm **9.018% so B1** và **7.701% so B2** trên ma trận DEV hiện hành. Sự khác biệt 5.512 mm so với §12 đến từ việc `omni_casual` giờ áp dụng slant/drift trước DAG; số §12 là bằng chứng lịch sử tại `adb0417`. Phiếu TV2 tại `0b21232` xác nhận `PASS_SOFTWARE_DEV` cho E1 tại `18b1962`, tái sinh CSV trùng byte; `TV2_HUMAN_SIGN_OFF` và `PR3_EXIT_SIGN_OFF` trong phiếu này vẫn `PENDING`. H1.1/PR5 và physical calibration là các gate riêng.
+
+### 13.3. TV4 xử lý TV2-PR3-R04 và giới hạn hard collision (30/09/2026)
+
+Bridge trace của PR3 nay lấy `v_exit`/`v_entry` trực tiếp từ `GlyphWorldGeometry` đã được chọn sau style, cùng nguồn geometry mà transition chấm. Regression test đối chiếu vector, port và curvature cost trên cả bốn preset; đường B3/default giữ cách tính tiếp tuyến hiện hành. Đây là sửa metadata; tọa độ nét render và evidence E1 không thay đổi.
+
+**Phạm vi hard collision PR3 hiện hành:** bộ đánh giá transition kiểm tra bridge với base strokes và diacritic strokes của hai state kề nhau, với ngoại lệ tiếp xúc tại đúng port theo E4. Không tuyên bố bảo đảm không va chạm cho mọi cặp nét trong toàn văn bản. `collision_count` trong evidence E1 chỉ đếm bridge–diacritic theo metric hiện hành.
+
+**Nét gạch `đ/Đ`:** vẫn được thêm sau DAG và biến đổi slant/drift trong cùng hệ tọa độ, nhưng chưa nằm trong tập vật cản của transition. Vì vậy PR3 exit được đề nghị với giới hạn này; không dùng collision count bằng 0 để khẳng định bridge không chạm nét gạch trên mọi đầu vào. Test bốn preset với `đường Đường` bảo vệ việc render đủ hai nét gạch, điểm hữu hạn và trace khớp nét render; không phải chứng minh hard collision cho mọi nét gạch. Nếu nghiệm thu yêu cầu mở rộng bảo đảm này, phải bổ sung nét gạch vào geometry trước DAG và đánh giá lại trước khi mở rộng claim.
+
+Kiểm chứng ngày 30/09: renderer integration **15/15 PASS**; toàn bộ test được Git theo dõi cùng `backend/test_handwriting_validation.py` **278 passed, 1 warning** (Starlette deprecation); `git diff --check` sạch. TV2 cần recheck sửa R04 và chấp nhận phạm vi trên trước khi ký PR3 exit. Consent, dữ liệu người viết thật và hardware calibration không được đóng bởi thay đổi này.

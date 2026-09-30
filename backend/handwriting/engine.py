@@ -1536,6 +1536,8 @@ def _text_to_strokes_impl(
                         bridge_curv_cost = 0.0
 
                     if algorithm_mode == "pr3_composition":
+                        v_ex_world = pr3_world[char_idx - 1].v_exit
+                        v_en_world = pr3_world[char_idx].v_entry
                         transition = pr3_solution["transitions"][char_idx - 1]
                         bridge = transition.bridge_strokes[0]
                         bridge_curv_cost = transition.breakdown.c_curvature
