@@ -1,5 +1,7 @@
 # TV2 — PR3 style, E1 và exit recheck
 
+> Phiếu này là snapshot tại `18b1962`. Xác nhận hiện hành cho bản sửa `c1b4696` và PR3 software exit nằm tại [phiếu TV2 ngày 01/10/2026](tv2_pr3_exit_rq_scope_confirmation.md); các trạng thái `PENDING` bên dưới không phải verdict cho `c1b4696`.
+
 - `REVIEWED_BRANCH: codex/tv4-pr3-slices`
 - `REVIEWED_COMMIT: 18b19623d1089b7ba148ef827593c9337ffa3779`
 - `STYLE_CODE_COMMIT: 072029bd1e703021c4ad643d53692e81e0a022a4`
