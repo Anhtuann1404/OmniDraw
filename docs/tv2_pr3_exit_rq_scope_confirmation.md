@@ -1,11 +1,11 @@
 # TV2 — Xác nhận PR3 software exit và phạm vi RQ chuyển động
 
 - `CONFIRMATION_DATE: 2026-10-01 (Asia/Saigon)`
-- `TV2_HUMAN_CONFIRMATION: APPROVED` — TV2 xác nhận trực tiếp cả hai mục trong hội thoại ngày 01/10/2026; phiếu này ghi lại quyết định đó, không tự nhận chữ ký của thành viên khác.
+- `TV2_HUMAN_SIGN_OFF: APPROVED` — TV2 xác nhận trực tiếp cả hai mục trong hội thoại ngày 01/10/2026; phiếu này ghi lại quyết định đó, không tự nhận chữ ký của thành viên khác.
 - `REVIEWED_TV4_COMMIT: c1b4696bbc426dfe76e0453557575ec03ea5d651`
 - `REVIEWED_TV2_HEAD: 0b21232ae84911713e7040a9643f5ebe4a27ffb9`
 - `RESEARCH_PLAN_SNAPSHOT: docs/10_nckh_research_plan.md` tại `0b21232` (blob `af6fb9e70197a80080ae60f3734b9132d3212cb6`)
-- `PR3_SOFTWARE_EXIT_SIGN_OFF: APPROVED_WITH_DOCUMENTED_SCOPE`
+- `PR3_EXIT_SIGN_OFF: APPROVED` — chỉ cho software exit trong phạm vi giới hạn được công bố tại Docs 17 §13.3.
 - `TV2_RQ_MOTION_SCOPE_VERDICT: PASS`
 - `GLOBAL_RQ_FREEZE: PENDING_TEAM_APPROVAL`
 

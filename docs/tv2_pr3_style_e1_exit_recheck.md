@@ -1,14 +1,24 @@
 # TV2 — PR3 style, E1 và exit recheck
 
-> Phiếu này là snapshot tại `18b1962`. Xác nhận hiện hành cho bản sửa `c1b4696` và PR3 software exit nằm tại [phiếu TV2 ngày 01/10/2026](tv2_pr3_exit_rq_scope_confirmation.md); các trạng thái `PENDING` bên dưới không phải verdict cho `c1b4696`.
+## Verdict hiện hành tại `c1b4696`
+
+- `TV2_HUMAN_SIGN_OFF: APPROVED` — TV2 xác nhận trực tiếp ngày 01/10/2026.
+- `PR3_EXIT_SIGN_OFF: APPROVED` — chỉ cho PR3 software exit trong giới hạn hard collision tại Docs 17 §13.3; không mở rộng sang nét gạch `đ/Đ` thêm sau DAG.
+- `TV2-PR3-R04: VERIFIED_CLOSED` — bridge trace lấy tiếp tuyến từ world geometry đã chọn sau style; regression test bốn preset và bộ test độc lập 278 passed, 1 warning.
+
+Chi tiết version binding, phạm vi RQ và các gate downstream ở [phiếu xác nhận TV2](tv2_pr3_exit_rq_scope_confirmation.md). E1 vẫn `PASS_SOFTWARE_DEV`; HOLDOUT, H1.1/PR5 và calibration vật lý vẫn mở.
+
+## Snapshot lịch sử tại `18b1962`
+
+Các verdict bên dưới ghi lại trạng thái trước khi TV4 sửa R04 tại `c1b4696`, không thay thế verdict hiện hành ở trên.
 
 - `REVIEWED_BRANCH: codex/tv4-pr3-slices`
 - `REVIEWED_COMMIT: 18b19623d1089b7ba148ef827593c9337ffa3779`
 - `STYLE_CODE_COMMIT: 072029bd1e703021c4ad643d53692e81e0a022a4`
 - `STYLE_VERDICT: CHANGES_REQUESTED` — phạm vi bỏ micro-jitter sau DAG là hợp lý và hình học style đã được đánh giá trước khi render, nhưng metadata tiếp tuyến trong bridge trace chưa khớp hình học đã chọn.
 - `E1_VERDICT: PASS_SOFTWARE_DEV` — chỉ cho Docs 09 E1 trên ma trận DEV tại commit được review.
-- `PR3_EXIT_SIGN_OFF: PENDING` — cần đóng finding `TV2-PR3-R04` và recheck trace trước khi TV2 ký exit.
-- `TV2_HUMAN_SIGN_OFF: PENDING` — các verdict kỹ thuật trong phiếu này chưa thay thế xác nhận của TV2.
+- `PR3_EXIT_SIGN_OFF_AT_18B1962: PENDING` — cần đóng finding `TV2-PR3-R04` và recheck trace trước khi TV2 ký exit.
+- `TV2_HUMAN_SIGN_OFF_AT_18B1962: PENDING` — các verdict kỹ thuật tại snapshot này chưa thay thế xác nhận của TV2.
 
 ## Style, dấu, bridge và hard collision
 
@@ -45,8 +55,8 @@ Tọa độ bridge và `p_exit/p_entry` vẫn khớp; `curvature_cost` lấy t�
 
 Proposed giảm **9,018%** so B1 và **7,701%** so B2. Điều này đáp ứng tiêu chí so sánh phần mềm E1 trên DEV tại `18b1962`; phiếu `f1b309c` chỉ áp dụng cho `adb0417`. Metadata ghi `source_commit=072029b` là commit mã đã sinh CSV; Docs 17 §13 được thêm ở `18b1962`. Kết luận H1.1/PR5, thời gian máy thật và hiệu quả trên HOLDOUT vẫn mở.
 
-## PR3 exit
+## PR3 exit tại `18b1962` — lịch sử
 
-**Chưa ký exit.** Gate TV2 còn thiếu là sửa hoặc loại metadata tiếp tuyến bridge không khớp geometry style (`TV2-PR3-R04`) và recheck assertion tương ứng. TV4 cũng nên xác định phạm vi hard collision cho nét gạch `đ` vì nét này được thêm sau DAG và không nằm trong bốn tập base/dấu mà transition kiểm tra; bốn ca DEV đã thử không phát hiện va chạm, nhưng `collision_count=0` trong CSV chỉ đo bridge–diacritic. Việc này cần quyết định phạm vi/test rõ trước khi tuyên bố bảo đảm hard collision cho mọi nét render.
+**Chưa ký exit tại mốc này.** Gate TV2 còn thiếu là sửa hoặc loại metadata tiếp tuyến bridge không khớp geometry style (`TV2-PR3-R04`) và recheck assertion tương ứng. TV4 cũng nên xác định phạm vi hard collision cho nét gạch `đ` vì nét này được thêm sau DAG và không nằm trong bốn tập base/dấu mà transition kiểm tra; bốn ca DEV đã thử không phát hiện va chạm, nhưng `collision_count=0` trong CSV chỉ đo bridge–diacritic. Việc này cần quyết định phạm vi/test rõ trước khi tuyên bố bảo đảm hard collision cho mọi nét render.
 
 TV2 không sửa code TV4 trong lượt review này. E1 DEV không tự đóng H1.1/PR5, và kết quả phần mềm không thay thế calibration vật lý.
