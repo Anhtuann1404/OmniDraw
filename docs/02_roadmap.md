@@ -1,5 +1,7 @@
 # OmniDraw — Roadmap
 
+**Trạng thái hiện hành — 01/10/2026:** PR3 software exit tại `c1b4696` đã được TV2 ký `TV2_HUMAN_SIGN_OFF: APPROVED` và `PR3_EXIT_SIGN_OFF: APPROVED` trong commit `f6470dd`; TV4 xác nhận tích hợp. Bộ test độc lập: 278 passed, 1 warning. E1 chỉ `PASS_SOFTWARE_DEV`. Phạm vi hard collision giới hạn bridge với base/dấu của hai state kề nhau; nét gạch `đ/Đ` thêm sau DAG không thuộc bảo đảm này. HOLDOUT, H1.1/PR5 và calibration vật lý vẫn mở. Hướng nghiên cứu mới đang thảo luận, chưa thay đổi contract/ownership. Xem [phiếu ký TV2](tv2_pr3_exit_rq_scope_confirmation.md) và [Docs 17 §14](17_pr3_implementation_readiness.md).
+
 **Cập nhật lần cuối:** 29/09/2026 (định hướng nghiên cứu và trạng thái hiện hành)
 **Chu kỳ làm việc:** Sprint 2 tuần
 **Deadline cuối cùng (nộp/bảo vệ):** *(điền ngày khi có lịch chính thức của đơn vị)*
@@ -295,7 +297,7 @@ Nghiên cứu               Song song                 & Đánh giá             
 - [x] Xử lý chuẩn hóa Unicode NFD, tự động ghép dấu thanh và dấu phụ theo mỏ neo (anchors) và offset (TV4)
 - [x] **BƯỚC A — Architecture Audit Trellis DAG / CA-VHC hiện tại (COMPLETE):** Audit toàn diện mã nguồn, bóc tách hạn chế ghép dấu post-DAG, phân rã NFD và rủi ro va chạm cầu nối runtime (`06_audit_trellis_dag_report.md`) [P0] (TV4)
 - [x] **BƯỚC B — Diacritic-Aware State Architecture Design (APPROVED AND CLOSED):** Khóa thiết kế kiến trúc trạng thái lai `CompositionState = GlyphVariant × DiacriticCandidate` (`07_diacritic_aware_state_design.md`), phân tách $C_{\text{state}}$ và $J_{\text{transition}}$, loại bỏ double-count, Single Source of Truth `DiacriticConfig`, khống chế $K_{\text{raw}} \le 9$, 12 unit test strategies; trạng thái: Architecture draft: DONE / Internal technical cleanup: DONE / TV2 cross-review: COMPLETED / PASS [P0] (TV4 chủ trì phối hợp TV2)
-- [ ] **BƯỚC C — PR3 đang triển khai theo slice; exit PENDING:** `CompositionState` và diacritic-aware DAG đã có phần triển khai/DEV evidence; chưa có sign-off PR3 exit, delayed-stroke PR4 hoặc benchmark PR5 chính thức [P0] (TV4 lead, TV2 recheck transition).
+- [x] **BƯỚC C — PR3 software exit APPROVED:** `CompositionState` và diacritic-aware DAG đã có phần triển khai/DEV evidence; đã có sign-off PR3 tại `f6470dd` cho mã `c1b4696`; PR4 và benchmark PR5 chính thức vẫn mở [P0] (TV4 lead, TV2 recheck transition).
   - **PR1 và PR2:** hạ tầng metric/runner và ba baseline B1/B2/B3 đã hoàn tất; E3 PASS.
   - **E4:** TV2+TV4 đã ký contract `4677aad` và PASS; bằng chứng E1 DEV và việc còn lại ở [`17_pr3_implementation_readiness.md`](17_pr3_implementation_readiness.md). Không dùng E1 DEV thay cho kết luận H1.1/PR3 exit.
 - [ ] Nghiên cứu tối ưu hóa thứ tự nét trễ (`delayed-stroke ordering`): quyết định viết dấu ngay sau nguyên âm, sau khi viết xong thân từ, hay theo nhóm nét trễ để cân bằng giữa quãng đường di chuyển quay lại, số lần nhấc bút và độ dễ đọc [P0] (TV4 & TV2)

@@ -1,5 +1,7 @@
 # OmniDraw — Research Freeze Pack & Khung Báo cáo NCKH
 
+**Trạng thái hiện hành — 01/10/2026:** PR3 software exit tại `c1b4696` đã được TV2 ký `TV2_HUMAN_SIGN_OFF: APPROVED` và `PR3_EXIT_SIGN_OFF: APPROVED` trong commit `f6470dd`; TV4 xác nhận tích hợp. Bộ test độc lập: 278 passed, 1 warning. E1 chỉ `PASS_SOFTWARE_DEV`. Phạm vi hard collision giới hạn bridge với base/dấu của hai state kề nhau; nét gạch `đ/Đ` thêm sau DAG không thuộc bảo đảm này. HOLDOUT, H1.1/PR5 và calibration vật lý vẫn mở. Hướng nghiên cứu mới đang thảo luận, chưa thay đổi contract/ownership. Xem [phiếu ký TV2](tv2_pr3_exit_rq_scope_confirmation.md) và [Docs 17 §14](17_pr3_implementation_readiness.md).
+
 **Tên đề tài làm việc:** *OmniDraw: Nghiên cứu tái tạo chữ Việt có dấu theo phong cách cá nhân và font thiết kế trên máy vẽ*.
 **Bổ sung phạm vi 29/09/2026:** RQ1–RQ3 là lõi CA-VHC P0 đang review; RQ4 (học thói quen viết, P2) và RQ5 (pilot font thiết kế lỗi tiếng Việt, P3) là hướng mở rộng có protocol/gate riêng tại [Docs 22](22_nckh_extended_scope.md). Nội dung mở rộng chưa được team sign-off và không đổi ngưỡng RQ1–RQ3.
 
@@ -305,7 +307,7 @@ Cross-review được thực hiện theo gói tài liệu Chương 1–3 và Res
 | Reviewer | Phạm vi phải duyệt | Artifact trọng tâm | Trạng thái |
 | :--- | :--- | :--- | :--- |
 | TV1 | Corpus coverage, DEV/Holdout governance, reproducibility và Writer Profile nằm ngoài RQ P0 | Docs 10–12; Chương 1 mục 1.5/1.9; Chương 3 mục 3.1/3.7/3.8 | `CLOSED (PASS)` tại checkpoint; scoped recheck còn chờ |
-| TV2 | RQ1, B1/B2/B3, transition cost, Viterbi, curvature và motion metrics | Chương 1 mục 1.4; Chương 2 mục 2.4–2.6; Chương 3 mục 3.3–3.5/3.8 | `CLOSED (PASS)`; metadata checkpoint còn chờ đồng bộ |
+| TV2 | RQ1, B1/B2/B3, transition cost, Viterbi, curvature và motion metrics | Chương 1 mục 1.4; Chương 2 mục 2.4–2.6; Chương 3 mục 3.3–3.5/3.8 | `CLOSED (PASS)`; version binding được TV2 xác nhận tại `f6470dd` |
 | TV3 | RQ3 physical feasibility, calibration, actual draw time và physical clearance | Chương 1 mục 1.4.3/1.8/1.9; Chương 2 mục 2.5–2.6; Chương 3 mục 3.1/3.7/3.8 | `CLOSED (PASS)` tại checkpoint; scoped recheck còn chờ |
 | TV4 | RQ2, composition geometry, metric/runner integrity, citation boundary và code–docs consistency | Toàn bộ Freeze Pack và Chương 1–3; disposition toàn bộ finding | Đã đối chiếu 11 finding; chờ version binding TV2 và scoped recheck TV1/TV3 |
 
@@ -313,11 +315,11 @@ Verdict hợp lệ gồm `PENDING`, `PASS`, `PASS_WITH_CHANGES` và `BLOCKED`. M
 
 ### 7.1. Điều kiện chuyển sang `RQ FREEZE: APPROVED`
 
-- [x] TV2 đã xác nhận baseline và các giả thuyết chuyển động trên commit recheck `e26af4f`; trường checkpoint trong phiếu còn chờ TV2 đồng bộ.
+- [x] TV2 đã xác nhận baseline và các giả thuyết chuyển động trên commit recheck `e26af4f`; version binding và phạm vi motion được xác nhận tại `f6470dd`.
 - [x] TV1 xác nhận phạm vi corpus và quy tắc leakage (đã freeze tại [`docs/19_benchmark_corpus_freeze_report.md`](19_benchmark_corpus_freeze_report.md) và ký duyệt phiếu TV1).
 - [x] TV3 xác nhận wording cho các tuyên bố vật lý (đã ký duyệt phiếu TV3).
 
-- [ ] `REVIEW_TARGET_COMMIT` phải khớp giữa [`reviews/README.md`](reviews/README.md), ba phiếu reviewer và master disposition; phiếu TV2 hiện còn giữ commit review gốc `5e9c857` ở trường này thay vì checkpoint `7ae43e6`.
+- [ ] Đối chiếu version binding giữa các owner trên bản hợp nhất trước global freeze. Riêng TV2 đã xác nhận checkpoint `7ae43e6`, recheck `e26af4f` và tích hợp `031d198` trong [phiếu hiện hành](tv2_pr3_exit_rq_scope_confirmation.md); thông tin lệch checkpoint TV2 trước đây là lịch sử, không yêu cầu review lại từ đầu.
 - [ ] TV1, TV2 và TV3 nộp verdict có version binding cho đúng phạm vi Chương 1–3.
 - [ ] TV4 xử lý toàn bộ finding tại [`reviews/review_disposition.md`](reviews/review_disposition.md) và kiểm tra chéo Docs 02/03/05/07/08/09/10–15.
 - [ ] Không có metric chưa triển khai nào bị mô tả là measured result.

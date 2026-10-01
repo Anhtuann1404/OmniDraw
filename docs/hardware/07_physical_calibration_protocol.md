@@ -53,7 +53,17 @@ Tiêu bản kiểm chuẩn được thiết kế trên khổ A4 ngang ($297 \tim
   3. Kiểm chứng thực nghiệm cho giả thuyết H3.2 (`acute_turn_count_120deg`).
 
 ### 3.3. Khối C: Tần suất nâng hạ bút trục Z (Rapid Pen-Lift Actuation Test)
-- **Cấu trúc:** Dãy nét đứt tuần hoàn chu kỳ $2\,\text{mm}$ nét vẽ / $2\,\text{mm}$ nhấc bút ở các dải tốc độ $v \in \{20, 40, 60\}\,\text{mm/s}$.
+- **Cấu trúc:** Dãy nét đứt tuần hoàn chu kỳ $2.0\,\text{mm}$ nét vẽ (20 nhịp) / $2.0\,\text{mm}$ nhấc bút (19 nhịp) ở 3 dải tốc độ danh định $v \in \{20.0, 40.0, 60.0\}\,\text{mm/s}$:
+  - `rapid_pen_lift_20mms`: $v = 20\,\text{mm/s}$ (driver speed: $8\%$), tần số danh định $f = 5.0\,\text{Hz}$, tọa độ $Y = 172.0\,\text{mm}$.
+  - `rapid_pen_lift_40mms`: $v = 40\,\text{mm/s}$ (driver speed: $16\%$), tần số danh định $f = 10.0\,\text{Hz}$, tọa độ $Y = 180.0\,\text{mm}$.
+  - `rapid_pen_lift_60mms`: $v = 60\,\text{mm/s}$ (driver speed: $24\%$), tần số danh định $f = 15.0\,\text{Hz}$, tọa độ $Y = 188.0\,\text{mm}$.
+- **Cơ chế thi công & Hợp đồng Đơn vị (TV2-HW-R04 & TV4 Review):**
+  1. *Đúng đơn vị driver:* `pyaxidraw.options.speed_pendown` nhận giá trị phần trăm (1–100%) của tốc độ tối đa ($250\,\text{mm/s}$), KHÔNG nhận trực tiếp mm/s. Các dải $20, 40, 60\,\text{mm/s}$ được quy đổi tương ứng thành $8\%, 16\%, 24\%$.
+  2. *Tách bạch dữ liệu nghiên cứu:* Hệ thống lưu trữ riêng rẽ `requested_speed_mm_s`, `driver_speed_pct`, và `physical_speed_status = "UNVERIFIED"`. Tuyệt đối không ghi nhận tốc độ cơ học đạt đúng $20/40/60\,\text{mm/s}$ vào CSV khi chưa có thiết bị đo độc lập.
+  3. *Timeout động & Xác thực Dừng Cơ học:* Runner tính toán dynamic deadline:
+     $$T_{timeout} = \min(\max(15.0, T_{est} \times 2.5 + 5.0), T_{cap})$$
+     bằng `time.monotonic()`. Nếu quá hạn, runner chủ động gọi `cancel_job()`. Hệ thống bắt buộc xác nhận trạng thái dừng thực tế qua phương thức dừng chuyên dụng `stop()` và kiểm tra `plot_running = False` (`driver_stopped: True`). Do `disconnect()` thuộc Interactive context và không bảo đảm motor dừng trong Plot context (`plot_run()`), nếu driver chỉ có `disconnect()`, thiếu API dừng phần mềm hoặc gặp lỗi, runner trả về `status = "timeout_cancellation_failed"` kèm cảnh báo khẩn yêu cầu người vận hành nhấn nút Dừng/Pause vật lý trên máy vẽ; tuyệt đối không ngụy tạo trạng thái dừng an toàn.
+  4. *Ranh giới giữa Kế hoạch và Thực nghiệm:* Runner benchmark chỉ thi công Khối C (`block_c_rapid_pen_lift_tested: True`). Các thông số của Khối A và Khối B được định danh chính xác là hình học sẵn có trên fixture (`fixture_clearance_ladder_available_mm`, `fixture_acute_turn_angles_available_deg`), với `block_a_clearance_ladder_tested: False`, `block_b_acute_turns_tested: False`.
 - **Mục tiêu:**
   1. Kiểm tra độ trễ thực tế của servo trục Z ($t_{down}, t_{up}$).
   2. Phát hiện hiện tượng vệt đuôi chuột (pen drag) do nhấc bút không kịp hoặc đọng mực do hạ bút chậm.
@@ -74,6 +84,10 @@ Tiêu bản kiểm chuẩn được thiết kế trên khổ A4 ngang ($297 \tim
       │
       ▼
 [BƯỚC 3: Chạy CLI Benchmark tự động (--benchmark-rq3)]
+  ├── Trích xuất 3 dải vận tốc độc lập (Khối C)
+  ├── Thiết lập adapter.set_speed() chuẩn % driver [8, 16, 24]%
+  ├── Giám sát bằng Dynamic Deadline + Chủ động Cancel nếu timeout
+  └── Ghi nhận 3 rows telemetry vào logs/hardware_metrics.csv
       │
       ▼
 [BƯỚC 4: Để khô mực 15 phút & Quét phẳng 600 DPI]
@@ -100,7 +114,9 @@ Tiêu bản kiểm chuẩn được thiết kế trên khổ A4 ngang ($297 \tim
    ```bash
    python backend/hardware_adapter.py --benchmark-rq3 --mode physical
    ```
-2. Hệ thống sẽ tự động gửi tiêu bản `tests/fixtures/rq3_clearance_calibration_specimen.svg` sang driver phần cứng, bấm giờ độ phân giải microsecond, thu thập telemetry và lưu kết quả vào `logs/hardware_metrics.csv`.
+2. Hệ thống sẽ tự động trích xuất 3 dải tiêu bản từ `tests/fixtures/rq3_clearance_calibration_specimen.svg`, áp dụng các giá trị % driver tương ứng (8%, 16%, 24%) vào driver phần cứng AxiDraw qua `adapter.set_speed()`, áp dụng timeout động kèm cơ chế hủy an toàn, thu thập telemetry và lưu 3 dòng kết quả độc lập vào `logs/hardware_metrics.csv` với trạng thái `physical_speed_status = "UNVERIFIED"`.
+3. Nếu thiết bị chưa cắm hoặc thiếu driver, hệ thống sẽ trả về mã an toàn `status: "blocked"` (`BLOCKED_BY_HARDWARE`), tuyệt đối không rơi vào fake driver hay ghi nhận sai lệch `actual_hardware_measured=True`.
+
 
 ### Bước 4: Để khô mực & Quét phẳng
 1. Sau khi máy vẽ hoàn tất, giữ nguyên bản vẽ trên bàn phẳng ít nhất 15 phút ở nhiệt độ phòng ($25^\circ\text{C}$) để mực gel đóng rắn hoàn toàn, tránh lem bẩn khi quét.

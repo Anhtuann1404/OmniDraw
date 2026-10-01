@@ -8,6 +8,7 @@ from typing import Iterable, Sequence
 
 try:
     from backend.handwriting.baselines import BASELINE_METHOD_TAGS, B3_CURRENT_TRELLIS
+    from backend.handwriting.composition import PROPOSED_METHOD_TAG
     from backend.handwriting.benchmark_fixtures import (
         BENCHMARK_DEV_CORPUS_20,
         BENCHMARK_HOLDOUT_CORPUS_20,
@@ -21,6 +22,7 @@ try:
     from backend.logs.csv_logger import log_experiment_csv
 except ImportError:  # Direct execution from backend/.
     from handwriting.baselines import BASELINE_METHOD_TAGS, B3_CURRENT_TRELLIS
+    from handwriting.composition import PROPOSED_METHOD_TAG
     from handwriting.benchmark_fixtures import (
         BENCHMARK_DEV_CORPUS_20,
         BENCHMARK_HOLDOUT_CORPUS_20,
@@ -68,6 +70,8 @@ def build_benchmark_rows(
     method_tag: str = METHOD_TAG,
 ) -> list[dict]:
     """Render a deterministic matrix and return one flat metrics row per case."""
+    if method_tag == PROPOSED_METHOD_TAG and corpus_split != "dev":
+        raise ValueError("PR3 Proposed technical dry-run is DEV-only")
     rows = []
     for item_index, text in enumerate(words, start=1):
         for font in fonts:
@@ -141,7 +145,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--fonts", nargs="+", default=list(DEFAULT_FONTS))
     parser.add_argument("--seeds", nargs="+", type=int, default=list(STANDARD_SEEDS))
     parser.add_argument("--style", default="hand_hocsinh")
-    parser.add_argument("--method", choices=BASELINE_METHOD_TAGS, default=METHOD_TAG)
+    parser.add_argument("--method", choices=BASELINE_METHOD_TAGS + (PROPOSED_METHOD_TAG,),
+                        default=METHOD_TAG)
     parser.add_argument(
         "--allow-holdout",
         action="store_true",
@@ -156,6 +161,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.corpus != "dev" and not args.allow_holdout:
         parser.error("holdout/all requires --allow-holdout to prevent accidental tuning leakage")
+    if args.method == PROPOSED_METHOD_TAG and args.corpus != "dev":
+        parser.error("PR3 Proposed technical dry-run is DEV-only")
 
     rows = []
     for split, words in _selected_corpora(args.corpus):

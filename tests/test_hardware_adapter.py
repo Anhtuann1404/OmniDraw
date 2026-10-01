@@ -52,6 +52,7 @@ from hardware_adapter import (
     _FakeAxiDrawDriver,
     get_hardware_adapter,
     reset_hardware_adapter,
+    calculate_svg_draw_breakdown,
     estimate_svg_draw_time,
     parse_svg_path_length_mm,
     parse_svg_path_geometry,
@@ -64,7 +65,11 @@ from hardware_adapter import (
     migrate_hardware_metrics_csv,
     HARDWARE_METRICS_FIELDNAMES,
     run_rq3_calibration_benchmark,
+    extract_rq3_band_specimen_svg,
+    RQ3_SPEED_BANDS,
     VALID_HARDWARE_ERRORS,
+    mm_s_to_axidraw_speed_pct,
+    AXIDRAW_DEFAULT_MAX_SPEED_MM_S,
 )
 
 _module_temp_csv = None
@@ -308,10 +313,249 @@ class TestAxiDrawAdapterModes(unittest.IsolatedAsyncioTestCase):
 
         c_res = await adapter.cancel_job(req_id)
         self.assertEqual(c_res["status"], "cancelled")
+        self.assertTrue(c_res.get("driver_stopped"))
+        self.assertTrue(c_res.get("driver_stop_confirmed"))
 
         await asyncio.sleep(0.2)
         st = adapter.get_status(req_id)
         self.assertEqual(st["status"], "cancelled")
+
+    async def test_axidraw_cancel_job_stops_via_stop_api(self):
+        """
+        TV4 Requirement - Đường dừng hợp lệ:
+        Driver có phương thức stop(). Gọi cancel_job() kích hoạt stop()
+        và xác nhận driver đã dừng thực sự (plot_running = False),
+        trả về status='cancelled', driver_stopped=True, driver_stop_confirmed=True.
+        """
+        class DriverWithStop:
+            def __init__(self):
+                self.stopped = False
+                self.plot_running = True
+                self.options = type("opts", (), {"speed_pendown": 25})()
+            def stop(self):
+                self.stopped = True
+                self.plot_running = False
+            def is_running(self):
+                return self.plot_running
+            def plot_setup(self, path):
+                pass
+            def plot_run(self):
+                time.sleep(0.5)
+
+        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp_csv:
+            tmp_csv_path = tmp_csv.name
+
+        try:
+            adapter = AxiDrawAdapter(use_fake_driver=False, metrics_csv_path=tmp_csv_path)
+            driver = DriverWithStop()
+            adapter._ad = driver
+            adapter._connected = True
+
+            req_id = "test-stop-api-req"
+            await adapter.start_job(req_id, self.fixture)
+            await asyncio.sleep(0.02)
+
+            res = await adapter.cancel_job(req_id)
+            self.assertEqual(res["status"], "cancelled")
+            self.assertTrue(res["driver_stopped"])
+            self.assertTrue(res["driver_stop_confirmed"])
+            self.assertTrue(driver.stopped, "Driver stop() method MUST be called!")
+            self.assertFalse(driver.plot_running)
+
+            st = adapter.get_status(req_id)
+            self.assertEqual(st["status"], "cancelled")
+        finally:
+            if os.path.exists(tmp_csv_path):
+                os.remove(tmp_csv_path)
+
+    async def test_axidraw_cancel_job_with_disconnect_only_and_plot_running_rejects_confirmation(self):
+        """
+        TV4 Blocker Finding:
+        Theo tài liệu pyaxidraw, disconnect() thuộc Interactive context, trong khi job
+        đang chạy bằng plot_run() ở Plot context.
+        Việc gọi disconnect() thành công trong khi plot vẫn chạy KHÔNG ĐƯỢC COI LÀ DỪNG:
+        - driver_stopped = False
+        - driver_stop_confirmed = False
+        - status = 'error' (TUYỆT ĐỐI không báo 'cancelled' như đã dừng an toàn)
+        - code = 'HARDWARE_CANCEL_UNSUPPORTED'
+        - error message chứa cảnh báo người vận hành nhấn nút dừng/pause vật lý trên máy vẽ.
+        """
+        class DriverWithDisconnectOnlyAndPlotRunning:
+            def __init__(self):
+                self.disconnected = False
+                self.plot_running = True
+                self.options = type("opts", (), {"speed_pendown": 25})()
+            def disconnect(self):
+                self.disconnected = True
+                # disconnect() chỉ thuộc Interactive context, plot_run() vẫn tiếp tục chạy!
+            def plot_setup(self, path):
+                pass
+            def plot_run(self):
+                time.sleep(0.5)
+                self.plot_running = False
+
+        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp_csv:
+            tmp_csv_path = tmp_csv.name
+
+        try:
+            adapter = AxiDrawAdapter(use_fake_driver=False, metrics_csv_path=tmp_csv_path)
+            driver = DriverWithDisconnectOnlyAndPlotRunning()
+            adapter._ad = driver
+            adapter._connected = True
+
+            req_id = "test-disconnect-not-stopped-req"
+            await adapter.start_job(req_id, self.fixture)
+            await asyncio.sleep(0.02)
+
+            res = await adapter.cancel_job(req_id)
+            # Khẳng định: disconnect() thành công KHÔNG chứng minh motor đã dừng
+            self.assertTrue(driver.disconnected, "disconnect() có thể được gọi để giải phóng tài nguyên cổng")
+            self.assertEqual(res["status"], "error", "TUYỆT ĐỐI không báo 'cancelled' khi chưa thể xác nhận dừng an toàn!")
+            self.assertFalse(res["driver_stopped"])
+            self.assertFalse(res["driver_stop_confirmed"])
+            self.assertEqual(res["error"]["code"], "HARDWARE_CANCEL_UNSUPPORTED")
+            self.assertIn("vật lý", res["error"]["message"].lower())
+
+            st = adapter.get_status(req_id)
+            self.assertEqual(st["status"], "error")
+            self.assertFalse(st.get("actual_hardware_measured"))
+        finally:
+            if os.path.exists(tmp_csv_path):
+                os.remove(tmp_csv_path)
+
+    async def test_axidraw_cancel_job_fails_when_stop_called_but_plot_still_running(self):
+        """
+        TV4 Requirement:
+        Driver có stop(), stop() được gọi nhưng plot_run() vẫn đang chạy (không có bằng chứng dừng):
+        - driver_stopped = False
+        - driver_stop_confirmed = False
+        - status = 'error'
+        - code = 'DRIVER_STOP_FAILED'
+        - error message chứa cảnh báo người vận hành nhấn nút dừng vật lý.
+        """
+        class UnresponsivePlotDriver:
+            def __init__(self):
+                self.stopped = False
+                self.plot_running = True
+                self.options = type("opts", (), {"speed_pendown": 25})()
+            def stop(self):
+                self.stopped = True
+                # plot_running vẫn là True!
+            def is_running(self):
+                return self.plot_running
+            def plot_setup(self, path):
+                pass
+            def plot_run(self):
+                time.sleep(0.5)
+
+        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp_csv:
+            tmp_csv_path = tmp_csv.name
+
+        try:
+            adapter = AxiDrawAdapter(use_fake_driver=False, metrics_csv_path=tmp_csv_path)
+            driver = UnresponsivePlotDriver()
+            adapter._ad = driver
+            adapter._connected = True
+
+            req_id = "test-unresponsive-plot-req"
+            await adapter.start_job(req_id, self.fixture)
+            await asyncio.sleep(0.02)
+
+            res = await adapter.cancel_job(req_id)
+            self.assertEqual(res["status"], "error")
+            self.assertFalse(res["driver_stopped"])
+            self.assertFalse(res["driver_stop_confirmed"])
+            self.assertEqual(res["error"]["code"], "DRIVER_STOP_FAILED")
+            self.assertIn("vật lý", res["error"]["message"].lower())
+
+            st = adapter.get_status(req_id)
+            self.assertEqual(st["status"], "error")
+        finally:
+            if os.path.exists(tmp_csv_path):
+                os.remove(tmp_csv_path)
+
+    async def test_axidraw_cancel_job_fails_when_driver_raises_error(self):
+        """
+        AxiDrawAdapter.cancel_job:
+        Driver ném exception trong lúc dừng. Tuyệt đối không nuốt lỗi,
+        phải trả về status='error', code='DRIVER_STOP_FAILED', driver_stopped=False.
+        """
+        class DriverRaisingOnStop:
+            def __init__(self):
+                self.options = type("opts", (), {"speed_pendown": 25})()
+            def stop(self):
+                raise IOError("USB Bus I/O Timeout")
+            def plot_setup(self, path):
+                pass
+            def plot_run(self):
+                time.sleep(0.5)
+
+        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp_csv:
+            tmp_csv_path = tmp_csv.name
+
+        try:
+            adapter = AxiDrawAdapter(use_fake_driver=False, metrics_csv_path=tmp_csv_path)
+            driver = DriverRaisingOnStop()
+            adapter._ad = driver
+            adapter._connected = True
+
+            req_id = "test-driver-err-req"
+            await adapter.start_job(req_id, self.fixture)
+            await asyncio.sleep(0.02)
+
+            res = await adapter.cancel_job(req_id)
+            self.assertEqual(res["status"], "error")
+            self.assertFalse(res["driver_stopped"])
+            self.assertFalse(res["driver_stop_confirmed"])
+            self.assertEqual(res["error"]["code"], "DRIVER_STOP_FAILED")
+            self.assertIn("USB Bus I/O Timeout", res["error"]["message"])
+
+            st = adapter.get_status(req_id)
+            self.assertEqual(st["status"], "error")
+        finally:
+            if os.path.exists(tmp_csv_path):
+                os.remove(tmp_csv_path)
+
+    async def test_axidraw_cancel_job_fails_when_driver_has_no_stop_api(self):
+        """
+        AxiDrawAdapter.cancel_job:
+        Driver không có bất kỳ API dừng nào (không stop, không disconnect).
+        Không được trả về status='cancelled' giả tạo. Phải trả về status='error',
+        code='HARDWARE_CANCEL_UNSUPPORTED', driver_stopped=False.
+        """
+        class DriverWithoutStopApi:
+            def __init__(self):
+                self.options = type("opts", (), {"speed_pendown": 25})()
+            def plot_setup(self, path):
+                pass
+            def plot_run(self):
+                time.sleep(0.5)
+
+        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp_csv:
+            tmp_csv_path = tmp_csv.name
+
+        try:
+            adapter = AxiDrawAdapter(use_fake_driver=False, metrics_csv_path=tmp_csv_path)
+            driver = DriverWithoutStopApi()
+            adapter._ad = driver
+            adapter._connected = True
+
+            req_id = "test-no-stop-api-req"
+            await adapter.start_job(req_id, self.fixture)
+            await asyncio.sleep(0.02)
+
+            res = await adapter.cancel_job(req_id)
+            self.assertEqual(res["status"], "error")
+            self.assertFalse(res["driver_stopped"])
+            self.assertFalse(res["driver_stop_confirmed"])
+            self.assertEqual(res["error"]["code"], "HARDWARE_CANCEL_UNSUPPORTED")
+
+            st = adapter.get_status(req_id)
+            self.assertEqual(st["status"], "error")
+        finally:
+            if os.path.exists(tmp_csv_path):
+                os.remove(tmp_csv_path)
+
 
 
 # ---------------------------------------------------------------------------
@@ -395,9 +639,15 @@ class TestRQ3CalibrationBenchmark(unittest.TestCase):
         self.assertTrue(res.get("is_simulated"))
         self.assertFalse(res.get("actual_hardware_measured"))
         self.assertEqual(res.get("source_tag"), "simulator")
-        self.assertEqual(res.get("clearance_ladder_tested_mm"), [0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70])
-        self.assertEqual(res.get("acute_turn_angles_tested_deg"), [60, 90, 120, 150])
+        self.assertEqual(res.get("fixture_clearance_ladder_available_mm"), [0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70])
+        self.assertEqual(res.get("fixture_acute_turn_angles_available_deg"), [60, 90, 120, 150])
+        self.assertFalse(res.get("block_a_clearance_ladder_tested"))
+        self.assertFalse(res.get("block_b_acute_turns_tested"))
+        self.assertTrue(res.get("block_c_rapid_pen_lift_tested"))
         self.assertTrue(res.get("rapid_pen_lift_actuation_tested"))
+        self.assertEqual(res.get("physical_speed_status"), "UNVERIFIED")
+        self.assertEqual(res.get("bands_tested"), ["rapid_pen_lift_20mms", "rapid_pen_lift_40mms", "rapid_pen_lift_60mms"])
+        self.assertEqual(len(res.get("band_results", {})), 3)
 
     def test_rq3_benchmark_physical_mode_blocked_without_device(self):
         # Khi không có máy vẽ thật kết nối, physical mode bắt buộc trả về status blocked
@@ -410,6 +660,554 @@ class TestRQ3CalibrationBenchmark(unittest.TestCase):
         res = asyncio.run(run_rq3_calibration_benchmark(mode="simulator", fixture_path="non_existent_fixture.svg"))
         self.assertEqual(res.get("status"), "error")
         self.assertIn("Không tìm thấy fixture RQ3", res.get("error", ""))
+
+    def test_extract_rq3_band_specimen_svg(self):
+        """
+        TV2-HW-R04:
+        Kiểm tra hàm trích xuất SVG dải vận tốc độc lập từ tiêu bản RQ3:
+        - Trích xuất thành công 3 dải: rapid_pen_lift_20mms, rapid_pen_lift_40mms, rapid_pen_lift_60mms.
+        - Mỗi dải tạo ra SVG hợp lệ có viewBox 0 0 297 210.
+        - Chỉ chứa đúng 1 path tương ứng với band_id đó.
+        - Giữ nguyên cấu trúc hình học: 20 nhịp vẽ 2.0mm, 19 nhịp nhấc 2.0mm.
+        """
+        fixture_path = os.path.join(_repo_root, "tests", "fixtures", "rq3_clearance_calibration_specimen.svg")
+        bands = ["rapid_pen_lift_20mms", "rapid_pen_lift_40mms", "rapid_pen_lift_60mms"]
+        for band_id in bands:
+            band_svg = extract_rq3_band_specimen_svg(fixture_path, band_id)
+            is_valid, content, err = validate_svg_content_or_path(band_svg)
+            self.assertTrue(is_valid, f"Extracted SVG for {band_id} must be valid XML: {err}")
+            self.assertIn(f'id="{band_id}"', band_svg)
+            for other_band in bands:
+                if other_band != band_id:
+                    self.assertNotIn(f'id="{other_band}"', band_svg)
+
+    def test_axidraw_speed_unit_conversion_contract(self):
+        """
+        TV4 Blocker 1 Contract Test:
+        - pyaxidraw.options.speed_pendown nhận % (1-100), KHÔNG nhận mm/s trực tiếp.
+        - Kiểm tra hàm mm_s_to_axidraw_speed_pct quy đổi chuẩn xác:
+          20 mm/s = 8%, 40 mm/s = 16%, 60 mm/s = 24% trên thang chuẩn 250 mm/s.
+        - Kiểm tra cận biên: clamped trong khoảng [1, 100].
+        """
+        self.assertEqual(mm_s_to_axidraw_speed_pct(20.0, 250.0), 8)
+        self.assertEqual(mm_s_to_axidraw_speed_pct(40.0, 250.0), 16)
+        self.assertEqual(mm_s_to_axidraw_speed_pct(60.0, 250.0), 24)
+        with self.assertRaises(ValueError):
+            mm_s_to_axidraw_speed_pct(0.0, 250.0)
+        with self.assertRaises(ValueError):
+            mm_s_to_axidraw_speed_pct(-10.0, 250.0)
+        self.assertEqual(mm_s_to_axidraw_speed_pct(300.0, 250.0), 100)
+
+        # Kiểm tra qua AxiDrawAdapter.set_speed() nạp trực tiếp vào driver options
+        driver = _FakeAxiDrawDriver()
+        adapter = AxiDrawAdapter(use_fake_driver=True)
+        adapter._ad = driver
+        adapter.set_speed(speed_pendown_mm_s=40.0, driver_speed_pct=16, requested_speed_mm_s=40.0)
+        self.assertEqual(driver.options.speed_pendown, 16)
+
+    def test_rq3_benchmark_dispatches_3_discrete_speed_jobs_with_driver_stub(self):
+        """
+        TV2-HW-R04 & TV4 Unit Contract:
+        Sử dụng driver stub ghi nhận các lệnh được dispatch:
+        - Dispatch chính xác 3 jobs riêng biệt cho 3 dải tốc độ.
+        - Driver nhận đúng % vận tốc [8, 16, 24]%, KHÔNG nhận mm/s [20, 40, 60].
+        - Telemetry và CSV tách bạch requested_speed_mm_s, driver_speed_pct, và physical_speed_status='UNVERIFIED'.
+        - Không ghi nhận speed_pendown_mm_s bừa bãi khi physical job chưa được hiệu chuẩn vật lý.
+        """
+        class RecordingAxiDrawDriverStub:
+            def __init__(self):
+                self.options = type("opts", (), {
+                    "mode": "plot",
+                    "model": 1,
+                    "speed_pendown": 25,
+                    "speed_penup": 75,
+                    "accel": 75,
+                    "pen_pos_up": 60,
+                    "pen_pos_down": 35,
+                    "pen_delay_up": 100,
+                    "pen_delay_down": 120,
+                    "port": None,
+                    "auto_rotate": True,
+                })()
+                self._connected = False
+                self.dispatched_jobs = []
+
+            def interactive(self):
+                pass
+
+            def connect(self) -> bool:
+                self._connected = True
+                return True
+
+            def disconnect(self):
+                self._connected = False
+
+            def plot_setup(self, svg_path: str):
+                with open(svg_path, "r", encoding="utf-8") as f:
+                    content = f.read()
+                self.dispatched_jobs.append({
+                    "speed_pendown": getattr(self.options, "speed_pendown", None),
+                    "speed_penup": getattr(self.options, "speed_penup", None),
+                    "svg_path": svg_path,
+                    "svg_content": content,
+                })
+
+            def plot_run(self):
+                time.sleep(0.01)
+
+        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp_csv:
+            tmp_csv_path = tmp_csv.name
+
+        try:
+            driver_stub = RecordingAxiDrawDriverStub()
+            adapter = AxiDrawAdapter(use_fake_driver=False, metrics_csv_path=tmp_csv_path)
+            adapter._ad = driver_stub
+            adapter._connected = True
+
+            res = asyncio.run(run_rq3_calibration_benchmark(mode="physical", adapter=adapter))
+
+            self.assertEqual(res.get("status"), "done")
+            self.assertFalse(res.get("is_simulated"))
+            self.assertTrue(res.get("actual_hardware_measured"))
+
+            # KIỂM ĐỊNH BẮT BUỘC 1: Dispatch chính xác 3 jobs riêng biệt (FAIL nếu chỉ gửi 1 job chung)
+            self.assertEqual(
+                len(driver_stub.dispatched_jobs),
+                3,
+                f"Runner MUST dispatch exactly 3 discrete jobs for the 3 speed bands! Got {len(driver_stub.dispatched_jobs)}"
+            )
+
+            # KIỂM ĐỊNH BẮT BUỘC 2: Tốc độ áp dụng trên driver đúng theo % tối đa [8, 16, 24]% (TV4 Unit Contract)
+            # options.speed_pendown nhận % (1-100), KHÔNG nhận giá trị mm/s trực tiếp!
+            applied_speeds = [job["speed_pendown"] for job in driver_stub.dispatched_jobs]
+            self.assertEqual(
+                applied_speeds,
+                [8, 16, 24],
+                f"Dispatched driver speeds must be percentage [8, 16, 24]! Got {applied_speeds}"
+            )
+
+            # KIỂM ĐỊNH BẮT BUỘC 3: Mỗi job chỉ gửi tiêu bản dải đó, không gửi toàn bộ SVG specimen
+            expected_bands = ["rapid_pen_lift_20mms", "rapid_pen_lift_40mms", "rapid_pen_lift_60mms"]
+            for idx, expected_band in enumerate(expected_bands):
+                job_svg = driver_stub.dispatched_jobs[idx]["svg_content"]
+                self.assertIn(f'id="{expected_band}"', job_svg)
+                self.assertNotIn("boundary_frame", job_svg, "Isolated band SVG must not include boundary_frame")
+                self.assertNotIn("block_a_clearance_ladder", job_svg, "Isolated band SVG must not include block A")
+
+            # KIỂM ĐỊNH BẮT BUỘC 4: Telemetry trả về ghi nhận đầy đủ 3 dải, tách bạch mm/s và driver %
+            self.assertEqual(res.get("bands_tested"), expected_bands)
+            band_res = res.get("band_results", {})
+            self.assertEqual(len(band_res), 3)
+            for b_id, b_speed, b_pct in zip(expected_bands, [20.0, 40.0, 60.0], [8, 16, 24]):
+                self.assertIn(b_id, band_res)
+                self.assertEqual(band_res[b_id]["requested_speed_mm_s"], b_speed)
+                self.assertEqual(band_res[b_id]["driver_speed_pct"], b_pct)
+                self.assertEqual(band_res[b_id]["physical_speed_status"], "UNVERIFIED")
+                self.assertTrue(band_res[b_id]["actual_hardware_measured"])
+                self.assertFalse(band_res[b_id]["is_simulated"])
+                self.assertEqual(band_res[b_id]["source_tag"], "axidraw_real")
+
+            # KIỂM ĐỊNH BẮT BUỘC 5: File CSV ghi nhận đúng 3 rows với các vận tốc tương ứng và speed_pendown_mm_s rỗng
+            with open(tmp_csv_path, "r", encoding="utf-8") as f:
+                reader = csv.DictReader(f)
+                rows = list(reader)
+
+            self.assertEqual(len(rows), 3, "CSV must contain exactly 3 rows for the 3 speed bands")
+            for idx, (row, b_id, b_speed, b_pct) in enumerate(zip(rows, expected_bands, ["20.0", "40.0", "60.0"], ["8", "16", "24"])):
+                self.assertIn(b_id, row["request_id"])
+                self.assertEqual(row["hardware_status"], "done")
+                self.assertEqual(row["actual_hardware_measured"], "True")
+                self.assertEqual(row["requested_speed_mm_s"], b_speed)
+                self.assertEqual(row["driver_speed_pct"], b_pct)
+                self.assertEqual(row["physical_speed_status"], "UNVERIFIED")
+                # Do tốc độ vật lý chưa hiệu chuẩn, speed_pendown_mm_s không được ghi nhận bừa bãi
+                self.assertEqual(row["speed_pendown_mm_s"], "")
+
+        finally:
+            if os.path.exists(tmp_csv_path):
+                os.remove(tmp_csv_path)
+
+    def test_rq3_benchmark_job_longer_than_6s_completes_with_dynamic_deadline(self):
+        """
+        TV4 Blocker 2: Dynamic Timeout.
+        Trước đây runner hardcode 120 x 0.05s = 6.0s khiến các job thực tế >6s bị timeout giả tạo.
+        Test này xác minh với dynamic deadline, runner chờ vượt mốc 120 polling iterations
+        (mô phỏng 130 iterations hoàn tất) mà không bị timeout giả tạo.
+        """
+        class StubPollingAdapter(HardwareAdapterInterface):
+            def __init__(self):
+                self.poll_count = 0
+                self._connected = True
+
+            def load_profile(self, profile_path=None):
+                pass
+
+            def connect(self, port=None):
+                return True
+
+            def disconnect(self):
+                self._connected = False
+
+            @property
+            def is_connected(self):
+                return True
+
+            @property
+            def is_simulation(self):
+                return True
+
+            @property
+            def pause_supported(self):
+                return True
+
+            def set_speed(self, speed_pendown_mm_s=None, speed_penup_mm_s=None,
+                          driver_speed_pct=None, driver_speed_penup_pct=None, requested_speed_mm_s=None):
+                pass
+
+            async def start_job(self, request_id, svg_content_or_path, paper_size="a4"):
+                self.poll_count = 0
+                return {"request_id": request_id, "status": "printing"}
+
+            def get_status(self, request_id, simulate_error=None):
+                self.poll_count += 1
+                # Vượt mốc 120 iterations cũ: đến iteration 125 mới hoàn tất
+                if self.poll_count < 125:
+                    return {
+                        "request_id": request_id,
+                        "status": "printing",
+                        "total_draw_time_sec": 12.0,  # dynamic deadline >= 35s
+                        "actual_draw_time_sec": None,
+                        "is_simulated": True,
+                        "actual_hardware_measured": False,
+                        "source_tag": "simulator",
+                    }
+                return {
+                    "request_id": request_id,
+                    "status": "done",
+                    "total_draw_time_sec": 12.0,
+                    "actual_draw_time_sec": 6.8,
+                    "is_simulated": True,
+                    "actual_hardware_measured": False,
+                    "source_tag": "simulator",
+                }
+
+            async def pause_job(self, request_id):
+                return {"status": "paused"}
+
+            async def resume_job(self, request_id):
+                return {"status": "printing"}
+
+            async def cancel_job(self, request_id):
+                return {"status": "cancelled"}
+
+        adapter = StubPollingAdapter()
+
+        # Coroutine hoàn thành ngay lập tức để test chạy tức thì (< 0.05s) mà vẫn trải qua 125 vòng lặp
+        async def fast_sleep(_sec):
+            pass
+
+        import unittest.mock as mock
+        with mock.patch("asyncio.sleep", side_effect=fast_sleep):
+            res = asyncio.run(run_rq3_calibration_benchmark(
+                mode="simulator",
+                adapter=adapter,
+                band_id="rapid_pen_lift_20mms",
+                timeout_cap_sec=60.0
+            ))
+
+        self.assertEqual(res.get("status"), "done", f"Job taking >120 iterations must succeed with dynamic deadline! Got {res}")
+        self.assertGreaterEqual(adapter.poll_count, 125)
+
+    def test_rq3_benchmark_timeout_cancels_physical_job_safely(self):
+        """
+        TV4 Blocker 2: Timeout Active Cancellation.
+        Khi job bị timeout, runner bắt buộc gọi cancel_job() trên adapter
+        để motor máy vẽ thật không tiếp tục chạy ngầm trong background.
+        """
+        class HangingPhysicalAdapter(HardwareAdapterInterface):
+            def __init__(self):
+                self.cancel_called = False
+                self.cancelled_request_id = None
+
+            def load_profile(self, profile_path=None):
+                pass
+
+            def connect(self, port=None):
+                return True
+
+            def disconnect(self):
+                pass
+
+            @property
+            def is_connected(self):
+                return True
+
+            @property
+            def is_simulation(self):
+                return False
+
+            @property
+            def pause_supported(self):
+                return False
+
+            def set_speed(self, speed_pendown_mm_s=None, speed_penup_mm_s=None,
+                          driver_speed_pct=None, driver_speed_penup_pct=None, requested_speed_mm_s=None):
+                pass
+
+            async def start_job(self, request_id, svg_content_or_path, paper_size="a4"):
+                return {"request_id": request_id, "status": "printing"}
+
+            def get_status(self, request_id, simulate_error=None):
+                # Luôn luôn kẹt ở printing để gây timeout
+                return {
+                    "request_id": request_id,
+                    "status": "printing",
+                    "total_draw_time_sec": 1.0,
+                    "actual_draw_time_sec": None,
+                    "is_simulated": False,
+                    "actual_hardware_measured": False,
+                    "source_tag": "axidraw_real",
+                }
+
+            async def pause_job(self, request_id):
+                return {"status": "error"}
+
+            async def resume_job(self, request_id):
+                return {"status": "error"}
+
+            async def cancel_job(self, request_id):
+                self.cancel_called = True
+                self.cancelled_request_id = request_id
+                return {
+                    "request_id": request_id,
+                    "status": "cancelled",
+                    "driver_stopped": True,
+                    "driver_stop_confirmed": True,
+                }
+
+        adapter = HangingPhysicalAdapter()
+        # Đặt timeout_cap_sec = 0.1s để gây timeout ngay lập tức
+        res = asyncio.run(run_rq3_calibration_benchmark(
+            mode="physical",
+            adapter=adapter,
+            band_id="rapid_pen_lift_20mms",
+            timeout_cap_sec=0.1
+        ))
+
+        self.assertEqual(res.get("status"), "timeout")
+        self.assertTrue(res.get("timeout"))
+        self.assertTrue(adapter.cancel_called, "Runner MUST actively call cancel_job() when timeout occurs!")
+        self.assertIsNotNone(adapter.cancelled_request_id)
+        self.assertTrue(res.get("driver_stopped"))
+        self.assertTrue(res.get("driver_stop_confirmed"))
+        self.assertIn("cancel_result", res)
+        self.assertTrue(res["cancel_result"].get("driver_stopped"))
+
+    def test_rq3_benchmark_timeout_when_cancellation_fails_due_to_driver_error(self):
+        """
+        TV4 Blocker: Khi timeout xảy ra nhưng driver báo lỗi lúc dừng:
+        Runner KHÔNG được báo 'timeout' thành công như bình thường, mà phải trả về
+        status='timeout_cancellation_failed', driver_stopped=False,
+        và đính kèm cancel_result chứa mã lỗi driver chi tiết.
+        """
+        class FailingCancelAdapter(HardwareAdapterInterface):
+            def __init__(self):
+                self.cancel_called = False
+
+            def load_profile(self, profile_path=None): pass
+            def connect(self, port=None): return True
+            def disconnect(self): pass
+            @property
+            def is_connected(self): return True
+            @property
+            def is_simulation(self): return False
+            @property
+            def pause_supported(self): return False
+            def set_speed(self, **kwargs): pass
+            async def start_job(self, request_id, svg_content_or_path, paper_size="a4"):
+                return {"request_id": request_id, "status": "printing"}
+            def get_status(self, request_id, simulate_error=None):
+                return {"request_id": request_id, "status": "printing", "total_draw_time_sec": 1.0}
+            async def pause_job(self, request_id): return {"status": "error"}
+            async def resume_job(self, request_id): return {"status": "error"}
+
+            async def cancel_job(self, request_id):
+                self.cancel_called = True
+                return {
+                    "request_id": request_id,
+                    "status": "error",
+                    "driver_stopped": False,
+                    "driver_stop_confirmed": False,
+                    "error": {
+                        "code": "DRIVER_STOP_FAILED",
+                        "message": "Lỗi khi dừng driver phần cứng: USB connection reset",
+                    },
+                }
+
+        adapter = FailingCancelAdapter()
+        res = asyncio.run(run_rq3_calibration_benchmark(
+            mode="physical",
+            adapter=adapter,
+            band_id="rapid_pen_lift_20mms",
+            timeout_cap_sec=0.1
+        ))
+
+        self.assertEqual(res.get("status"), "timeout_cancellation_failed")
+        self.assertTrue(res.get("timeout"))
+        self.assertTrue(adapter.cancel_called)
+        self.assertFalse(res.get("driver_stopped"))
+        self.assertFalse(res.get("driver_stop_confirmed"))
+        self.assertIn("KHÔNG THỂ XÁC NHẬN driver đã dừng", res.get("error", ""))
+        self.assertIn("cancel_result", res)
+        self.assertEqual(res["cancel_result"]["error"]["code"], "DRIVER_STOP_FAILED")
+
+    def test_rq3_benchmark_timeout_when_cancellation_fails_due_to_no_stop_api(self):
+        """
+        TV4 Blocker: Khi timeout xảy ra nhưng adapter/driver không có API dừng:
+        Runner phải trả về status='timeout_cancellation_failed', driver_stopped=False,
+        và báo rõ mã lỗi HARDWARE_CANCEL_UNSUPPORTED.
+        """
+        class NoStopApiAdapter(HardwareAdapterInterface):
+            def __init__(self):
+                self.cancel_called = False
+
+            def load_profile(self, profile_path=None): pass
+            def connect(self, port=None): return True
+            def disconnect(self): pass
+            @property
+            def is_connected(self): return True
+            @property
+            def is_simulation(self): return False
+            @property
+            def pause_supported(self): return False
+            def set_speed(self, **kwargs): pass
+            async def start_job(self, request_id, svg_content_or_path, paper_size="a4"):
+                return {"request_id": request_id, "status": "printing"}
+            def get_status(self, request_id, simulate_error=None):
+                return {"request_id": request_id, "status": "printing", "total_draw_time_sec": 1.0}
+            async def pause_job(self, request_id): return {"status": "error"}
+            async def resume_job(self, request_id): return {"status": "error"}
+
+            async def cancel_job(self, request_id):
+                self.cancel_called = True
+                return {
+                    "request_id": request_id,
+                    "status": "error",
+                    "driver_stopped": False,
+                    "driver_stop_confirmed": False,
+                    "error": {
+                        "code": "HARDWARE_CANCEL_UNSUPPORTED",
+                        "message": "Driver pyaxidraw không hỗ trợ API dừng phần mềm trong Plot context. Vui lòng nhấn nút Dừng/Pause vật lý trên máy vẽ để ngắt chuyển động an toàn.",
+                    },
+                }
+
+        adapter = NoStopApiAdapter()
+        res = asyncio.run(run_rq3_calibration_benchmark(
+            mode="physical",
+            adapter=adapter,
+            band_id="rapid_pen_lift_20mms",
+            timeout_cap_sec=0.1
+        ))
+
+        self.assertEqual(res.get("status"), "timeout_cancellation_failed")
+        self.assertTrue(res.get("timeout"))
+        self.assertTrue(adapter.cancel_called)
+        self.assertFalse(res.get("driver_stopped"))
+        self.assertFalse(res.get("driver_stop_confirmed"))
+        self.assertIn("cancel_result", res)
+        self.assertEqual(res["cancel_result"]["error"]["code"], "HARDWARE_CANCEL_UNSUPPORTED")
+
+    def test_rq3_benchmark_timeout_when_driver_only_has_disconnect_fails_cancellation(self):
+        """
+        TV4 Blocker: Khi timeout xảy ra và adapter bọc driver chỉ có disconnect() (Interactive context):
+        AxiDrawAdapter.cancel_job() trả về status='error', driver_stopped=False.
+        Runner RQ3 benchmark KHÔNG được báo 'timeout' thành công giả tạo,
+        mà phải trả về status='timeout_cancellation_failed', driver_stopped=False,
+        và đính kèm cảnh báo người vận hành nhấn nút dừng vật lý.
+        """
+        class DisconnectOnlyDriver:
+            def __init__(self):
+                self.options = type("opts", (), {"speed_pendown": 25})()
+                self.disconnected = False
+            def disconnect(self):
+                self.disconnected = True
+            def plot_setup(self, path): pass
+            def plot_run(self): time.sleep(0.5)
+
+        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp_csv:
+            tmp_csv_path = tmp_csv.name
+
+        try:
+            adapter = AxiDrawAdapter(use_fake_driver=False, metrics_csv_path=tmp_csv_path)
+            driver = DisconnectOnlyDriver()
+            adapter._ad = driver
+            adapter._connected = True
+
+            res = asyncio.run(run_rq3_calibration_benchmark(
+                mode="physical",
+                adapter=adapter,
+                band_id="rapid_pen_lift_20mms",
+                timeout_cap_sec=0.1
+            ))
+
+            self.assertEqual(res.get("status"), "timeout_cancellation_failed")
+            self.assertTrue(res.get("timeout"))
+            self.assertFalse(res.get("driver_stopped"))
+            self.assertFalse(res.get("driver_stop_confirmed"))
+            self.assertTrue(driver.disconnected)
+            self.assertIn("cancel_result", res)
+            self.assertEqual(res["cancel_result"]["error"]["code"], "HARDWARE_CANCEL_UNSUPPORTED")
+            self.assertIn("vật lý", res["cancel_result"]["error"]["message"].lower())
+        finally:
+            if os.path.exists(tmp_csv_path):
+                os.remove(tmp_csv_path)
+
+    def test_rq3_benchmark_timeout_when_cancel_job_raises_exception(self):
+        """
+        TV4 Blocker: Khi timeout xảy ra và adapter.cancel_job ném Exception:
+        Runner tuyệt đối không nuốt lỗi mà phải bắt và trả về status='timeout_cancellation_failed',
+        driver_stopped=False.
+        """
+        class CrashingCancelAdapter(HardwareAdapterInterface):
+            def __init__(self):
+                self.cancel_called = False
+
+            def load_profile(self, profile_path=None): pass
+            def connect(self, port=None): return True
+            def disconnect(self): pass
+            @property
+            def is_connected(self): return True
+            @property
+            def is_simulation(self): return False
+            @property
+            def pause_supported(self): return False
+            def set_speed(self, **kwargs): pass
+            async def start_job(self, request_id, svg_content_or_path, paper_size="a4"):
+                return {"request_id": request_id, "status": "printing"}
+            def get_status(self, request_id, simulate_error=None):
+                return {"request_id": request_id, "status": "printing", "total_draw_time_sec": 1.0}
+            async def pause_job(self, request_id): return {"status": "error"}
+            async def resume_job(self, request_id): return {"status": "error"}
+
+            async def cancel_job(self, request_id):
+                self.cancel_called = True
+                raise RuntimeError("Driver completely unreachable via USB")
+
+        adapter = CrashingCancelAdapter()
+        res = asyncio.run(run_rq3_calibration_benchmark(
+            mode="physical",
+            adapter=adapter,
+            band_id="rapid_pen_lift_20mms",
+            timeout_cap_sec=0.1
+        ))
+
+        self.assertEqual(res.get("status"), "timeout_cancellation_failed")
+        self.assertTrue(res.get("timeout"))
+        self.assertTrue(adapter.cancel_called)
+        self.assertFalse(res.get("driver_stopped"))
+        self.assertFalse(res.get("driver_stop_confirmed"))
+        self.assertIn("Driver completely unreachable via USB", res.get("error", ""))
+
 
 
 # ---------------------------------------------------------------------------
@@ -1023,6 +1821,216 @@ class TestTV4IntegrationContracts(unittest.IsolatedAsyncioTestCase):
             self.assertGreaterEqual(len(rows), 1)
             self.assertEqual(rows[-1]["hardware_status"], "error")
             self.assertEqual(rows[-1]["actual_hardware_measured"], "False")
+
+    def test_specimen_fixture_block_b_exact_angles(self):
+        """
+        TV2-HW-R03:
+        Kiểm tra độ chính xác hình học của Khối B trong rq3_clearance_calibration_specimen.svg:
+        - Các góc bẻ hướng (heading change) theta_turn in {60.0, 90.0, 120.0, 150.0} deg.
+        - Chiều dài mỗi đoạn L = 20.0 mm.
+        - Góc trong (interior angle) = 180 - theta_turn in {120.0, 90.0, 60.0, 30.0} deg.
+        """
+        import xml.etree.ElementTree as ET
+        import math
+
+        specimen_path = os.path.join(_repo_root, "tests", "fixtures", "rq3_clearance_calibration_specimen.svg")
+        self.assertTrue(os.path.isfile(specimen_path))
+        tree = ET.parse(specimen_path)
+        root = tree.getroot()
+
+        turns = {}
+        for elem in root.iter():
+            elem_id = elem.attrib.get("id", "")
+            if elem_id.startswith("turn_"):
+                d = elem.attrib.get("d", "")
+                parts = d.split()
+                pts = []
+                idx = 0
+                while idx < len(parts):
+                    cmd = parts[idx]
+                    if cmd in ("M", "L"):
+                        pts.append((float(parts[idx + 1]), float(parts[idx + 2])))
+                        idx += 3
+                    else:
+                        idx += 1
+                turns[elem_id] = pts
+
+        self.assertIn("turn_60deg", turns)
+        self.assertIn("turn_90deg", turns)
+        self.assertIn("turn_120deg", turns)
+        self.assertIn("turn_150deg", turns)
+
+        expected_angles = {
+            "turn_60deg": 60.0,
+            "turn_90deg": 90.0,
+            "turn_120deg": 120.0,
+            "turn_150deg": 150.0,
+        }
+
+        for turn_id, expected_theta in expected_angles.items():
+            pts = turns[turn_id]
+            self.assertEqual(len(pts), 3, f"{turn_id} must have 3 points (P0, P1, P2)")
+            p0, p1, p2 = pts
+            v1 = (p1[0] - p0[0], p1[1] - p0[1])
+            v2 = (p2[0] - p1[0], p2[1] - p1[1])
+            len1 = math.hypot(v1[0], v1[1])
+            len2 = math.hypot(v2[0], v2[1])
+            self.assertAlmostEqual(len1, 20.0, delta=0.01, msg=f"{turn_id} segment 1 length must be 20mm")
+            self.assertAlmostEqual(len2, 20.0, delta=0.01, msg=f"{turn_id} segment 2 length must be 20mm")
+
+            dot = v1[0] * v2[0] + v1[1] * v2[1]
+            cos_heading = dot / (len1 * len2)
+            heading_deg = math.degrees(math.acos(max(-1.0, min(1.0, cos_heading))))
+            self.assertAlmostEqual(
+                heading_deg,
+                expected_theta,
+                delta=0.05,
+                msg=f"{turn_id} heading change angle must be {expected_theta} deg",
+            )
+            interior_deg = 180.0 - heading_deg
+            self.assertAlmostEqual(
+                interior_deg,
+                180.0 - expected_theta,
+                delta=0.05,
+                msg=f"{turn_id} interior angle must be {180.0 - expected_theta} deg",
+            )
+
+    def test_specimen_fixture_block_c_speed_bands_and_cycles(self):
+        """
+        TV2-HW-R04:
+        Kiểm tra Khối C trong rq3_clearance_calibration_specimen.svg:
+        - Gồm 3 dải vận tốc: 20 mm/s, 40 mm/s, 60 mm/s.
+        - Mỗi dải có chu kỳ 2.0mm vẽ / 2.0mm nhấc bút (20 nhịp lift/draw).
+        """
+        import xml.etree.ElementTree as ET
+
+        specimen_path = os.path.join(_repo_root, "tests", "fixtures", "rq3_clearance_calibration_specimen.svg")
+        tree = ET.parse(specimen_path)
+        root = tree.getroot()
+
+        bands = ["rapid_pen_lift_20mms", "rapid_pen_lift_40mms", "rapid_pen_lift_60mms"]
+        for band_id in bands:
+            path_elem = None
+            for elem in root.iter():
+                if elem.attrib.get("id") == band_id:
+                    path_elem = elem
+                    break
+            self.assertIsNotNone(path_elem, f"Missing speed band {band_id} in Block C")
+            d = path_elem.attrib.get("d", "")
+            tokens = d.split()
+            draw_segments = []
+            penup_segments = []
+            idx = 0
+            prev_end = None
+            while idx < len(tokens):
+                cmd = tokens[idx]
+                if cmd == "M":
+                    x1 = float(tokens[idx + 1])
+                    y1 = float(tokens[idx + 2])
+                    idx += 3
+                    if idx < len(tokens) and tokens[idx] == "L":
+                        x2 = float(tokens[idx + 1])
+                        y2 = float(tokens[idx + 2])
+                        draw_len = abs(x2 - x1)
+                        draw_segments.append(draw_len)
+                        if prev_end is not None:
+                            penup_len = abs(x1 - prev_end)
+                            penup_segments.append(penup_len)
+                        prev_end = x2
+                        idx += 3
+                else:
+                    idx += 1
+
+            self.assertEqual(len(draw_segments), 20, f"{band_id} must have 20 draw segments")
+            self.assertEqual(len(penup_segments), 19, f"{band_id} must have 19 penup intervals")
+            for seg in draw_segments:
+                self.assertAlmostEqual(seg, 2.0, delta=0.001, msg=f"{band_id} draw segment must be 2.0mm")
+            for seg in penup_segments:
+                self.assertAlmostEqual(seg, 2.0, delta=0.001, msg=f"{band_id} penup segment must be 2.0mm")
+
+    def test_calculate_svg_draw_breakdown_contract(self):
+        """
+        TV2-HW-R01, TV2-HW-R02 & TV2-HW-R05:
+        Hàm calculate_svg_draw_breakdown trả về cấu trúc breakdown đầy đủ,
+        định danh rõ ràng mô hình constant_speed_baseline,
+        các cờ accel_model_applied=False, corner_model_applied=False,
+        và các khoảng cách draw_distance_mm, penup_distance_mm, pen_lift_count.
+        """
+        breakdown = calculate_svg_draw_breakdown(self.fixture)
+        self.assertIsInstance(breakdown, dict)
+        self.assertIn("total_time_sec", breakdown)
+        self.assertIn("total_time_sec_float", breakdown)
+        self.assertIn("draw_distance_mm", breakdown)
+        self.assertIn("penup_distance_mm", breakdown)
+        self.assertIn("pen_lift_count", breakdown)
+        self.assertIn("model_type", breakdown)
+        self.assertIn("accel_model_applied", breakdown)
+        self.assertIn("corner_model_applied", breakdown)
+
+        self.assertEqual(breakdown["model_type"], "constant_speed_baseline")
+        self.assertFalse(breakdown["accel_model_applied"])
+        self.assertFalse(breakdown["corner_model_applied"])
+        self.assertGreater(breakdown["draw_distance_mm"], 0.0)
+        self.assertGreater(breakdown["pen_lift_count"], 0)
+
+    async def test_completed_physical_job_provenance_immutability_on_disconnect(self):
+        """
+        TV2-HW-R06:
+        Khi physical job đã hoàn thành thành công (status='done', actual_hardware_measured=True),
+        nếu adapter bị disconnect sau đó:
+        - get_status(req_id) vẫn bảo toàn nguyên vẹn provenance gốc:
+          status='done', actual_hardware_measured=True, source_tag='axidraw_real', is_simulated=False.
+        - Không bị reset hoặc suy diễn sai theo trạng thái disconnected hiện tại của adapter.
+        - Kiểm tra các trường mở rộng trong CSV: profile_version, speed_pendown_mm_s, model_type.
+        """
+        adapter = AxiDrawAdapter(use_fake_driver=False, metrics_csv_path=self.csv_path)
+        adapter._ad = MockRealAxiDrawDriver()
+        adapter._connected = True
+
+        req_id = f"test-provenance-immut-{int(time.time() * 1000)}"
+        start_res = await adapter.start_job(req_id, self.fixture)
+        self.assertEqual(start_res["status"], "printing")
+
+        for _ in range(50):
+            await asyncio.sleep(0.05)
+            st = adapter.get_status(req_id)
+            if st["status"] == "done":
+                break
+
+        st_done = adapter.get_status(req_id)
+        self.assertEqual(st_done["status"], "done")
+        self.assertTrue(st_done["actual_hardware_measured"])
+        self.assertFalse(st_done["is_simulated"])
+        self.assertEqual(st_done["source_tag"], "axidraw_real")
+        self.assertEqual(st_done["model_type"], "constant_speed_baseline")
+        self.assertFalse(st_done["accel_model_applied"])
+        self.assertFalse(st_done["corner_model_applied"])
+        self.assertGreater(st_done["draw_distance_mm"], 0.0)
+
+        # Ngắt kết nối adapter sau khi job đã hoàn tất
+        adapter.disconnect()
+        self.assertFalse(adapter.is_connected)
+
+        # Trạng thái job đã hoàn thành KHÔNG bị biến thành error hay mất provenance
+        st_after_disc = adapter.get_status(req_id)
+        self.assertEqual(st_after_disc["status"], "done")
+        self.assertTrue(
+            st_after_disc["actual_hardware_measured"],
+            "Provenance actual_hardware_measured must remain True after disconnect!",
+        )
+        self.assertFalse(st_after_disc["is_simulated"])
+        self.assertEqual(st_after_disc["source_tag"], "axidraw_real")
+
+        # Kiểm tra hàng CSV ghi nhận đầy đủ telemetry mở rộng
+        rows = self._get_csv_rows_for_request(req_id)
+        self.assertGreaterEqual(len(rows), 1)
+        last_row = rows[-1]
+        self.assertEqual(last_row["hardware_status"], "done")
+        self.assertEqual(last_row["actual_hardware_measured"], "True")
+        self.assertEqual(last_row["model_type"], "constant_speed_baseline")
+        self.assertEqual(last_row["accel_model_applied"], "False")
+        self.assertEqual(last_row["corner_model_applied"], "False")
+        self.assertEqual(last_row["source_tag"], "axidraw_real")
 
 
 if __name__ == "__main__":

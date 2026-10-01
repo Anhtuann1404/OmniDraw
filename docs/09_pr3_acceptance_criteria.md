@@ -1,4 +1,6 @@
 # OmniDraw — Tiêu Chí Nghiệm Thu Trước PR3 (Pre-PR3 Acceptance Contract)
+
+**Trạng thái hiện hành — 01/10/2026:** PR3 software exit tại `c1b4696` đã được TV2 ký `TV2_HUMAN_SIGN_OFF: APPROVED` và `PR3_EXIT_SIGN_OFF: APPROVED` trong commit `f6470dd`; TV4 xác nhận tích hợp. Bộ test độc lập: 278 passed, 1 warning. E1 chỉ `PASS_SOFTWARE_DEV`. Phạm vi hard collision giới hạn bridge với base/dấu của hai state kề nhau; nét gạch `đ/Đ` thêm sau DAG không thuộc bảo đảm này. HOLDOUT, H1.1/PR5 và calibration vật lý vẫn mở. Hướng nghiên cứu mới đang thảo luận, chưa thay đổi contract/ownership. Xem [phiếu ký TV2](tv2_pr3_exit_rq_scope_confirmation.md) và [Docs 17 §14](17_pr3_implementation_readiness.md).
 *(Hợp đồng Nghiệm thu Kỹ thuật cho CA-VHC Diacritic-Aware Trellis DAG)*
 
 > **Phạm vi:** Contract này chỉ nghiệm thu CA-VHC RQ1–RQ3/PR3. Hai hướng mở rộng RQ4 học thói quen viết và RQ5 pilot font thiết kế có gate riêng tại [Docs 22](22_nckh_extended_scope.md); không dùng PASS PR3 để suy ra hai hướng đó đã được triển khai.
