@@ -7,16 +7,18 @@ Offline use only: memory guarding uses process-wide tracemalloc.
 """
 
 from dataclasses import dataclass
+from fractions import Fraction
 from heapq import heappop, heappush
 from math import dist, fsum, isfinite
 from time import monotonic
 import tracemalloc
 
+from .cost_arithmetic import COST_POLICY, rounded_cost, weighted_cost
 from .geometry import compile_geometry
 from .schedule_checker import ScheduleReplay, check_schedule_cost
 from .schemas import Budget, ResearchCase, Schedule, ScheduleAction, StrokeRef, Theta
 
-TIE_POLICY = "tv4-dev-float-lex-actions-v1"
+TIE_POLICY = "tv4-dev-dyadic-lex-actions-v2"
 
 
 @dataclass(frozen=True)
@@ -41,6 +43,8 @@ class JointRun:
     scope: str = "full_candidate_set"
     candidate_set_sha256: str = ""
     configuration_candidate_ids: tuple[str, ...] | None = None
+    objective_exact: Fraction | None = None
+    cost_policy_id: str = COST_POLICY
 
 
 class BudgetExceeded(Exception):
@@ -184,14 +188,13 @@ def _solve(case, theta, budget, *, safe_forget, configuration):
             nonlocal incumbent, incumbent_cost, incumbent_tie
             if state.i == n and state.t == 0 and not state.P:
                 cost, tie = best[state][:2]
-                cost += theta.rho * dist(endpoint(state.e), case.boundary.p_end_mm)
-                if not isfinite(cost):
-                    raise ValueError("Non-finite END cost")
+                cost += weighted_cost(0.0, dist(endpoint(state.e), case.boundary.p_end_mm), 0, theta)
+                rounded_cost(cost)
                 if incumbent_cost is None or (cost, tie) < (incumbent_cost, incumbent_tie):
                     incumbent, incumbent_cost, incumbent_tie = state, cost, tie
 
         start = State()
-        best[start] = (0.0, (), None, None)
+        best[start] = (Fraction(0), (), None, None)
         queue = [(0, 0, 0, 0, start)]
         serial = 0
         processed = set()
@@ -216,12 +219,10 @@ def _solve(case, theta, budget, *, safe_forget, configuration):
                     for transition in choices:
                         guard()
                         transitions += 1
-                        delta = lengths[key]
-                        if transition == "LIFT":
-                            delta += theta.rho * dist(endpoint(state.e), startpoint) + theta.lambda_mm
+                        up = dist(endpoint(state.e), startpoint) if transition == "LIFT" else 0.0
+                        delta = weighted_cost(lengths[key], up, int(transition == "LIFT"), theta)
                         value = cost + delta
-                        if not isfinite(value):
-                            raise ValueError("Non-finite DP cost")
+                        rounded_cost(value)
                         action = (key, orientation, transition)
                         path_tie = tie + (action,)
                         other = successor(state, key, kind, orientation)
@@ -256,6 +257,8 @@ def _solve(case, theta, budget, *, safe_forget, configuration):
     try:
         schedule = reconstruct(incumbent) if incumbent is not None else None
         replay = check_schedule_cost(case, schedule, theta) if schedule is not None else None
+        if replay is not None and replay.objective_exact != incumbent_cost:
+            raise ValueError("DP/replay dyadic cost mismatch")
         # Retain a verified incumbent on late replay overrun, but never claim an
         # in-budget optimum. The cooperative guard includes replay allocations.
         try:
@@ -275,4 +278,5 @@ def _solve(case, theta, budget, *, safe_forget, configuration):
                     "safe-forget" if safe_forget else "no-forget",
                     scope="fixed_configuration" if configuration is not None else "full_candidate_set",
                     candidate_set_sha256=case.candidate_set_sha256,
-                    configuration_candidate_ids=configuration)
+                    configuration_candidate_ids=configuration,
+                    objective_exact=incumbent_cost)

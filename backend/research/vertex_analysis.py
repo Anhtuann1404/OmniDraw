@@ -2,6 +2,7 @@
 
 from time import monotonic
 
+from .cost_arithmetic import COST_POLICY, rounded_cost
 from .geometry import check_selected_geometry
 from .joint_dp import solve_joint
 from .schedule_checker import check_schedule_cost
@@ -30,7 +31,7 @@ def analyze_fixed_schedule(case: ResearchCase, schedule: Schedule, domain: Domai
         theta = Theta(rho=rho, lambda_mm=lam)
         fixed = check_schedule_cost(case, schedule, theta)
         remaining_ms = int(budget.wall_time_ms - (monotonic() - started) * 1000)
-        optimum = None
+        optimum = regret = None
         if remaining_ms <= 0:
             outcome = "TIMEOUT"
         elif remaining_states <= 0:
@@ -42,11 +43,12 @@ def analyze_fixed_schedule(case: ResearchCase, schedule: Schedule, domain: Domai
             outcome = run.outcome
             if run.search_complete and run.replay is not None:
                 optimum = run.replay.J_mm
+                regret = rounded_cost(fixed.objective_exact - run.objective_exact)
         vertices.append({"theta": theta.model_dump(mode="json"), "J_pi_mm": fixed.J_mm,
                          "outcome": outcome, "dev_optimum_J_mm": optimum,
-                         "dev_regret_mm": None if optimum is None else fixed.J_mm - optimum})
+                         "dev_regret_mm": regret})
     regrets = [v["dev_regret_mm"] for v in vertices]
-    return {"usage": "DEV_ONLY", "certificate_status": "NOT_CERTIFIED",
+    return {"usage": "DEV_ONLY", "cost_policy_id": COST_POLICY, "certificate_status": "NOT_CERTIFIED",
             "candidate_set_sha256": case.candidate_set_sha256,
             "schedule_sha256": canonical_hash(schedule.model_dump(mode="json")),
             "domain": domain.model_dump(mode="json"), "vertices": vertices,

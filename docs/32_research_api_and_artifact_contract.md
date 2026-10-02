@@ -134,3 +134,7 @@ DEV JSON chứa SolveResult cùng config và trace; config_sha256 là hash confi
 ### Artifact witness phương pháp (02/10/2026)
 
 `tests/research/fixtures/method_gap_example.json` là manifest synthetic hash thật, hướng dẫn và phạm vi ở [Docs 36](support/36_joint_method_and_dp_argument.md). CLI hiện hành xuất packet/trace/SVG DEV cho witness, giữ independent NOT_RUN; không adapter/ranker/certificate mới hoặc mở HOLDOUT. Thay k trong test làm đổi candidate-set hash theo schema, không trộn kết quả khác hash thành gap chính thức.
+
+### Provenance arithmetic của DEV (02/10/2026)
+
+[Audit numeric](reviews/tv4_numeric_audit_20261002.md): CLI config đã hash ghi cost_policy_id, tie v2; packet ngoài SolveResult ghi objective_exact_ratio, bounds round ra ngoài cho primitive arithmetic. Coefficients/J binary64 hiển thị có rounding nên không dùng equality hiển thị làm tie. SVG và vertex diagnostics ghi cost policy; regret trừ internal objective rồi round. Chưa thay HTTP schema/register adapters/freeze; khi tích hợp TV2/TV3 cần review cùng arithmetic/policy trong provenance, không ghép khác policy thành gap hoặc certificate.

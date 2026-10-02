@@ -8,12 +8,12 @@ import argparse
 from dataclasses import asdict
 import hashlib
 import json
-from math import isclose
 from pathlib import Path
 import platform
 import subprocess
 import sys
 
+from .cost_arithmetic import cost_interval
 from .joint_dp import solve_joint
 from .render_dev import render_dev_svg
 from .schemas import Budget, Metrics, Provenance, SolveResult, Theta, VERSION, canonical_hash
@@ -44,10 +44,11 @@ def result_packet(case, theta, budget, run, snapshot, seed):
     if run.scope != "full_candidate_set" or run.candidate_set_sha256 != case.candidate_set_sha256:
         raise ValueError("DEV joint result packet requires a full-candidate-set run for this case")
     config = {"theta": theta.model_dump(mode="json"), "budget": budget.model_dump(mode="json"),
-              "mode": run.mode, "seed": seed, "tie_policy_id": run.tie_policy_id}
+              "mode": run.mode, "seed": seed, "tie_policy_id": run.tie_policy_id,
+              "cost_policy_id": run.cost_policy_id}
     coefficients = ({key: getattr(run.replay, key) for key in ("L_down_mm", "L_up_mm", "N_cycle", "J_mm")}
                     if run.replay else {})
-    j = coefficients.get("J_mm")
+    lo, hi = cost_interval(run.objective_exact) if run.objective_exact is not None else (None, None)
     result = SolveResult(
         run_id=f"dev-{case.case_id}-{run.mode}", case_id=case.case_id, method="joint_dp",
         candidate_set_sha256=case.candidate_set_sha256, contract_version=VERSION,
@@ -56,17 +57,18 @@ def result_packet(case, theta, budget, run, snapshot, seed):
         metrics=Metrics(**coefficients, total_wall_time_ms=run.diagnostics["wall_time_ms"],
                         peak_states=run.diagnostics["peak_states"],
                         peak_memory_mb=run.diagnostics["tracked_peak_memory_mb"]),
-        bounds={"lower_bound_J_mm": j if run.search_complete else None, "upper_bound_J_mm": j},
+        bounds={"lower_bound_J_mm": lo if run.search_complete else None, "upper_bound_J_mm": hi},
         provenance=Provenance(git_commit=snapshot[0], dirty_patch_sha256=snapshot[1],
                               manifest_sha256=case.manifest_sha256,
                               input_sha256=canonical_hash(case.model_dump(mode="json")),
                               config_sha256=canonical_hash(config), seed=seed,
-                              runtime_versions={"python": platform.python_version(), "tv4-dev-dp": "1"},
+                              runtime_versions={"python": platform.python_version(), "tv4-dev-dp": "2"},
                               timing_source="dev"),
         validation={"status": "NOT_RUN"}, error=None)
     return {"result": result.model_dump(mode="json"), "config": config,
             "trace": [asdict(step) for step in run.replay.trace] if run.replay else [],
-            "diagnostics": run.diagnostics}
+            "diagnostics": run.diagnostics,
+            "objective_exact_ratio": (str(run.objective_exact) if run.objective_exact is not None else None)}
 
 
 def main(argv=None):
@@ -106,8 +108,8 @@ def main(argv=None):
         elif a.outcome != b.outcome or bool(a.replay) != bool(b.replay):
             comparison = "FAIL"
         else:
-            # This diagnostic tolerance does not set research epsilon_eq or freeze policy.
-            comparison = "PASS" if not a.replay or isclose(a.replay.J_mm, b.replay.J_mm, rel_tol=1e-12, abs_tol=1e-9) else "FAIL"
+            # Compare internal values before display rounding; no research tolerance is set.
+            comparison = "PASS" if a.objective_exact == b.objective_exact else "FAIL"
     packet = {"schema_version": VERSION, "usage": "DEV_ONLY", "independent_validation": "NOT_RUN",
               "quality_gate": "PENDING", "owner_review": "PENDING", "compare_modes": comparison,
               "runs": [result_packet(case, theta, budget, run, snapshot, args.seed) for run in runs]}

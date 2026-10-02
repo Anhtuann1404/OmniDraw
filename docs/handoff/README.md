@@ -90,3 +90,5 @@ Sau nền code `510f4e1` và docs `1991fca`, nhánh chia sẻ bổ sung `solve_f
 Trước buổi đối chiếu đầu tiên, dùng [bảng PENDING và mẫu bàn giao](pending_decisions.md). Phân công TV1–TV4 giữ nguyên theo xác nhận trưởng nhóm; mỗi TV gửi log riêng, TV4 tổng hợp. Phân công không thay lời xác nhận nhận việc hoặc sign-off của owner.
 
 Bản phương pháp TV4 để review: [Docs 36](../support/36_joint_method_and_dp_argument.md), gồm state/recurrence/forget có giả thiết và witness synthetic tái lập. TV2 review cost/reference/điều kiện bằng nhau; TV3 đọc lập luận rồi oracle độc lập từ input thô; TV1 review giới hạn quality. Không dùng code checker làm oracle.
+
+TV2/TV3 đọc [numeric audit](../reviews/tv4_numeric_audit_20261002.md) khi đồng bộ shared HEAD: DEV cost/tie/replay có version mới, không ghép output trước/sau bằng candidate hash/theta đơn thuần. TV3 vẫn triển khai kiểm độc lập từ raw input, không import helper TV4.

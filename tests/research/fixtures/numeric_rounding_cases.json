@@ -1,0 +1,243 @@
+{
+  "schema_version": "joint-artifact-v1-draft",
+  "manifest_sha256": "1d48799bbd045d8c285bc728bdbbb237fbb1058efca3f9ad9423c4056659ea90",
+  "cases": [
+    {
+      "schema_version": "joint-artifact-v1-draft",
+      "case_id": "tv4-numeric-two-owner",
+      "dataset_version": "tv4-numeric-rounding-v1",
+      "manifest_sha256": "1d48799bbd045d8c285bc728bdbbb237fbb1058efca3f9ad9423c4056659ea90",
+      "split": "synthetic",
+      "original_text": "aa",
+      "normalized_text": "aa",
+      "normalization": "NFD",
+      "candidates": [
+        {
+          "owner_index": 0,
+          "grapheme": "a",
+          "variants": [
+            {
+              "candidate_id": "v0",
+              "source_hash": "e09475b4b54abf9c0b768e63c6c6a069776c9ee882da76c028de413b1767dc2c",
+              "strokes": [
+                {
+                  "stroke_id": "b",
+                  "role": "body",
+                  "owner_index": 0,
+                  "reversible": false,
+                  "polyline_mm": [
+                    [
+                      0.0,
+                      0.0
+                    ],
+                    [
+                      0.3,
+                      0.33541019662496846
+                    ],
+                    [
+                      0.6,
+                      0.0
+                    ]
+                  ],
+                  "mark_type": null
+                }
+              ],
+              "body_order": [
+                "b"
+              ],
+              "mark_precedence": []
+            },
+            {
+              "candidate_id": "v1",
+              "source_hash": "450f9d7a9032b9597d8b978a11058ce89f585d689e76c6e3b46c6aad32eddd7f",
+              "strokes": [
+                {
+                  "stroke_id": "b",
+                  "role": "body",
+                  "owner_index": 0,
+                  "reversible": false,
+                  "polyline_mm": [
+                    [
+                      0.0,
+                      0.0
+                    ],
+                    [
+                      0.6,
+                      0.0
+                    ]
+                  ],
+                  "mark_type": null
+                }
+              ],
+              "body_order": [
+                "b"
+              ],
+              "mark_precedence": []
+            }
+          ]
+        },
+        {
+          "owner_index": 1,
+          "grapheme": "a",
+          "variants": [
+            {
+              "candidate_id": "v0",
+              "source_hash": "1cea2ab8eb212e334003d7214dcae399d882c12938b63d208caab53f92fb417a",
+              "strokes": [
+                {
+                  "stroke_id": "b",
+                  "role": "body",
+                  "owner_index": 1,
+                  "reversible": false,
+                  "polyline_mm": [
+                    [
+                      1.0,
+                      0.0
+                    ],
+                    [
+                      1.9,
+                      0.0
+                    ]
+                  ],
+                  "mark_type": null
+                }
+              ],
+              "body_order": [
+                "b"
+              ],
+              "mark_precedence": []
+            }
+          ]
+        }
+      ],
+      "contacts": [],
+      "separation_pairs": [],
+      "delay_policy": {},
+      "geometry_policy": {
+        "c_min_mm": 0.2,
+        "flatten_policy_id": "tv4-dev-polyline-v1",
+        "contact_policy_id": "tv4-dev-exact-endpoint-v1",
+        "numeric_policy_id": "tv4-dev-float-v1",
+        "separation_policy_id": "tv4-dev-all-pairs-v1",
+        "allow_zero_length": false
+      },
+      "boundary": {
+        "p0_mm": [
+          0.0,
+          0.0
+        ],
+        "p_end_mm": [
+          1.9,
+          0.0
+        ],
+        "initial_pen": "UP",
+        "final_pen": "UP",
+        "convention_id": "tv4-dev-maximal-down-runs-v1"
+      },
+      "reference_geometry": null,
+      "candidate_set_sha256": "213ed65492234b5b26e307f0d00b1024e93cf64418ffb72842bd19a9366b7e83"
+    },
+    {
+      "schema_version": "joint-artifact-v1-draft",
+      "case_id": "tv4-numeric-single-owner",
+      "dataset_version": "tv4-numeric-rounding-v1",
+      "manifest_sha256": "1d48799bbd045d8c285bc728bdbbb237fbb1058efca3f9ad9423c4056659ea90",
+      "split": "synthetic",
+      "original_text": "a",
+      "normalized_text": "a",
+      "normalization": "NFD",
+      "candidates": [
+        {
+          "owner_index": 0,
+          "grapheme": "a",
+          "variants": [
+            {
+              "candidate_id": "v0",
+              "source_hash": "e09475b4b54abf9c0b768e63c6c6a069776c9ee882da76c028de413b1767dc2c",
+              "strokes": [
+                {
+                  "stroke_id": "b",
+                  "role": "body",
+                  "owner_index": 0,
+                  "reversible": false,
+                  "polyline_mm": [
+                    [
+                      0.0,
+                      0.0
+                    ],
+                    [
+                      0.3,
+                      0.33541019662496846
+                    ],
+                    [
+                      0.6,
+                      0.0
+                    ]
+                  ],
+                  "mark_type": null
+                }
+              ],
+              "body_order": [
+                "b"
+              ],
+              "mark_precedence": []
+            },
+            {
+              "candidate_id": "v1",
+              "source_hash": "450f9d7a9032b9597d8b978a11058ce89f585d689e76c6e3b46c6aad32eddd7f",
+              "strokes": [
+                {
+                  "stroke_id": "b",
+                  "role": "body",
+                  "owner_index": 0,
+                  "reversible": false,
+                  "polyline_mm": [
+                    [
+                      0.0,
+                      0.0
+                    ],
+                    [
+                      0.6,
+                      0.0
+                    ]
+                  ],
+                  "mark_type": null
+                }
+              ],
+              "body_order": [
+                "b"
+              ],
+              "mark_precedence": []
+            }
+          ]
+        }
+      ],
+      "contacts": [],
+      "separation_pairs": [],
+      "delay_policy": {},
+      "geometry_policy": {
+        "c_min_mm": 0.2,
+        "flatten_policy_id": "tv4-dev-polyline-v1",
+        "contact_policy_id": "tv4-dev-exact-endpoint-v1",
+        "numeric_policy_id": "tv4-dev-float-v1",
+        "separation_policy_id": "tv4-dev-all-pairs-v1",
+        "allow_zero_length": false
+      },
+      "boundary": {
+        "p0_mm": [
+          0.0,
+          0.0
+        ],
+        "p_end_mm": [
+          0.6,
+          0.0
+        ],
+        "initial_pen": "UP",
+        "final_pen": "UP",
+        "convention_id": "tv4-dev-maximal-down-runs-v1"
+      },
+      "reference_geometry": null,
+      "candidate_set_sha256": "d45e72171d913d056d2b3712ef9b834cfbd02b8d0b3afdbe639ed6a19e5e4011"
+    }
+  ]
+}

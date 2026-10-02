@@ -86,3 +86,5 @@ Severity gồm `CRITICAL`, `MAJOR`, `MINOR`. ID finding cố định theo dạng
 7. Chỉ khi ba phiếu `CLOSED`, không còn finding bắt buộc mở và TV4 hoàn tất disposition thì mới xem xét `RQ FREEZE: APPROVED`.
 
 Review tài liệu không đồng nghĩa PR2/PR3, corpus freeze, formal experiment hoặc hardware calibration đã hoàn thành.
+
+Review để owner đối chiếu: [TV4 numeric audit 02/10/2026](tv4_numeric_audit_20261002.md), counterexample/DEV fix có version, chưa human sign-off hoặc oracle độc lập.

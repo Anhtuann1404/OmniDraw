@@ -33,7 +33,7 @@ def render_dev_svg(case, schedule, theta):
         "usage": "DEV_ONLY", "candidate_set_sha256": case.candidate_set_sha256,
         "schedule_sha256": canonical_hash(schedule.model_dump(mode="json")),
         "independent_validation": "NOT_RUN", "quality_gate": "PENDING",
-        "J_mm": replay.J_mm, "N_cycle": replay.N_cycle}, allow_nan=False)
+        "J_mm": replay.J_mm, "N_cycle": replay.N_cycle, "cost_policy_id": replay.cost_policy_id}, allow_nan=False)
     group = ET.SubElement(root, "g", fill="none", stroke="black", **{"stroke-width": "0.1"})
     for order, (action, points) in enumerate(paths):
         commands = [f"{'M' if j == 0 else 'L'} {x} {y}" for j, (x, y) in enumerate(points)]

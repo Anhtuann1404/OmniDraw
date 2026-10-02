@@ -6,12 +6,14 @@ Nothing here registers an API adapter or upgrades independent validation.
 """
 
 from dataclasses import dataclass
+from fractions import Fraction
 from math import dist, fsum, isfinite
 
+from .cost_arithmetic import COST_POLICY, rounded_cost, weighted_cost
 from .schemas import ResearchCase, Schedule, Theta, check_schedule_structure
 
 CHECKER_ID = "tv4-schedule-cost-replay"
-CHECKER_VERSION = "dev-v2"
+CHECKER_VERSION = "dev-v3"
 EXACT_CONTACT_POLICY = "tv4-dev-exact-endpoint-v1"
 
 StrokeKey = tuple[int, str, str]
@@ -45,6 +47,8 @@ class ScheduleReplay:
     checker_version: str = CHECKER_VERSION
     geometric_validation: str = "NOT_RUN"
     independent_validation: str = "NOT_RUN"
+    cost_policy_id: str = COST_POLICY
+    objective_exact: Fraction | None = None
 
 
 def check_schedule_cost(case: ResearchCase, schedule: Schedule, theta: Theta) -> ScheduleReplay:
@@ -119,7 +123,7 @@ def check_schedule_cost(case: ResearchCase, schedule: Schedule, theta: Theta) ->
             up, cycles = 0.0, 0
         else:
             up, cycles = dist(endpoint, start), 1
-        delta = down + theta.rho * up + theta.lambda_mm * cycles
+        delta = rounded_cost(weighted_cost(down, up, cycles, theta))
         if not all(isfinite(v) for v in (down, up, delta)):
             raise ValueError("Non-finite replay cost")
         endpoint, previous = end, key
@@ -132,11 +136,13 @@ def check_schedule_cost(case: ResearchCase, schedule: Schedule, theta: Theta) ->
         raise ValueError("END requires every BODY and MARK to be complete")
     end_up = dist(endpoint, case.boundary.p_end_mm)
     trace.append(ReplayStep("END", None, None, None, i, t, tuple(assignments), (),
-                            case.boundary.p_end_mm, 0.0, end_up, 0, theta.rho * end_up))
+                            case.boundary.p_end_mm, 0.0, end_up, 0, rounded_cost(weighted_cost(0.0, end_up, 0, theta))))
     down = fsum(step.delta_down_mm for step in trace)
     up = fsum(step.delta_up_mm for step in trace)
     cycles = sum(step.delta_cycles for step in trace)
-    objective = down + theta.rho * up + theta.lambda_mm * cycles
+    exact = sum((weighted_cost(step.delta_down_mm, step.delta_up_mm, step.delta_cycles, theta)
+                 for step in trace), Fraction(0))
+    objective = rounded_cost(exact)
     if not all(isfinite(v) for v in (down, up, objective)):
         raise ValueError("Non-finite replay cost")
-    return ScheduleReplay(down, up, cycles, objective, tuple(trace))
+    return ScheduleReplay(down, up, cycles, objective, tuple(trace), objective_exact=exact)

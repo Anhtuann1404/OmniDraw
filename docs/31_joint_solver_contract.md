@@ -162,3 +162,7 @@ TV4 cung cấp `solve_fixed_configuration(case, candidate_ids, theta, budget, sa
 ### Bản lập luận và witness để review (02/10/2026)
 
 [Supporting Docs 36](support/36_joint_method_and_dp_argument.md) trình bày giả thiết, state sufficiency, soundness/completeness/DAG và projection safe-forget tương ứng code. Mệnh đề dùng số học chính xác; không tự chứng nhận primitive/cost/tie float hoặc đóng cận dự kiến §5.5. Witness synthetic hai owners/ba nét cho thấy H_ref immediate-mark có thể xếp khác F(g;theta), cùng ca k=0 bằng nhau; fixture/tests do TV4, không oracle TV3/baseline TV2 hoặc quality TV1. Contract draft, numeric/quality/review/freeze vẫn PENDING.
+
+### Checkpoint số học DEV (02/10/2026)
+
+[Audit TV4](reviews/tv4_numeric_audit_20261002.md) có counterexample prefix rounding chọn sai; core/replay hiện accumulate/compare Fraction chính xác trên primitive binary64 dưới cost_policy_id riêng, tie v2 và replay dev-v3. J hiển thị round cuối không quyết định tie; không trộn cost policies. Geometry/flatten vẫn float, c_min/contact không đổi; tolerance/epsilon/numerical freeze và oracle độc lập PENDING. Không đổi công thức J hoặc chứng minh error bound thật bằng sửa accumulator.
