@@ -1,3 +1,7 @@
+<!-- scope-migration-20261002 -->
+> **Phạm vi ngày 02/10/2026:** Tài liệu hardware hỗ trợ. Nội dung thiết kế/đo/review bên dưới giữ đúng phạm vi và ngày của nó; không đồng nghĩa đã mua máy, đã hiệu chuẩn hoặc đã nghiệm thu hướng nghiên cứu mới. Nghiên cứu dùng máy vẽ phẳng hai trục khi sẵn sàng, ghi cơ cấu/bộ điều khiển/bút/giấy theo run. Concept A4 một bút là phương án tham khảo hiện tại, không yêu cầu AxiDraw/CoreXY hay nhiều màu.
+> Kế hoạch hiện hành: [Docs 30](../30_research_development_plan.md); đặc tả [Docs 31](../31_joint_solver_contract.md) và [Docs 32](../32_research_api_and_artifact_contract.md). Thông báo GVHD đồng ý hướng không thay sign-off kỹ thuật hoặc duyệt tham số.
+
 # Carriage & Z-Lifter Specification
 
 **Subsystem:** Z-Carriage, Gravity-Floating Pen Axis & Cam Lifter
@@ -5,6 +9,8 @@
 **Status:** Q3 Z-CARRIAGE / CAM LIFTER: FINAL DESIGN FREEZE — CAD VERIFIED | PHYSICAL VALIDATION PENDING
 **Baseline Date:** 2026-09-22
 **CAD Source of Truth:** `cad/build_q3c_cad_assembly.py` / `cad/export/*.step`
+
+> **Architecture notice (2026-09-27):** This single-servo/single-tool Q3 design remains a frozen historical STEP reference, but the intended Q4D machine carries four independently lifted pens on the carriage. Its mechanism cannot be reused as the Q4D head without a new four-servo fit and motion audit; see [08_four_servo_head_rebaseline.md](08_four_servo_head_rebaseline.md).
 
 ---
 
@@ -205,12 +211,31 @@ Exhaustively audited across 241 angular steps ($\le 0.5^\circ$ increments) from 
 - Cam vs Follower Bearing: Pure tangent contact (penetration volume $\le 0.0016\text{ mm}^3$, within numerical CAD tolerance).
 - **Collision Verdict:** CAD VERIFIED — ZERO FORBIDDEN POSITIVE-VOLUME OVERLAPS.
 
-### 3.6 Coupled Shear + Normal Tool Release Motion
-Tool release from the carriage receiver into the dock bay is executed as a coordinated 2-axis CoreXY/Z motion:
-- **Machine Displacements:** $\Delta Z = +1.500\text{ mm}$, $\Delta Y = -1.000\text{ mm}$.
-- **Tool-Relative Motion:** $\Delta T_Y = -1.500\text{ mm}$ (axial shear along V-groove), $\Delta T_Z = -1.000\text{ mm}$ (normal separation).
-- **Separation Mechanism:** **COUPLED SHEAR + NORMAL SEPARATION**.
-- **Theoretical Separation Clearance:** $+0.066\text{ mm}$ minimum clearance under assumed prototype tolerances.
+### 3.6 Staged Decoupled Tool Release Motion Sequence (Supersedes Simultaneous Vector)
+
+> [!NOTE]
+> **FROZEN AMENDMENT (`HW-DEC-Q3-AMEND-001`):**
+> Geometry of the Tool Sleeve and Receiver Plate remains 100% frozen and immutable (SHA-256 verified).
+> The previously specified simultaneous vector ($\Delta Y = -1.000\text{ mm}, \Delta Z = +1.500\text{ mm}$) produced a $1.316\text{ mm}^3$ collision in B-Rep simulation because the Key Pin engages $1.457\text{ mm}$ along $Y$ into the sleeve notch while the notch ceiling clearance is only $0.300\text{ mm}$.
+> Motion is amended to an authorized **staged decoupled sequence**:
+
+1. **Phase A — Horizontal Disengagement (Carriage Retreat):**
+   - Displacements: $\Delta Y = -2.500\text{ mm}$, $\Delta Z = 0.000\text{ mm}$ (fixed at seating height $Z_{DOCK\_MATE} = +6.500\text{ mm}$).
+   - Kinematic clearance: $1.457\text{ mm}$ key pin geometric travel $+ 1.043\text{ mm}$ engineering safety margin.
+   - B-Rep collision volume: $\mathbf{0.000000\text{ mm}^3}$ (verified across all 4 bays at $\le 0.25\text{ mm}$ steps).
+   - Tool retention: The stationary Dock U-fork shoulders and lateral slot walls passively constrain the tool sleeve along $X$, $+Y$, and $Z$, preventing it from following the carriage.
+
+2. **Phase B — Vertical Release (Lifter Elevation):**
+   - Displacements: $\Delta Z = +1.500\text{ mm}$ to $Z_{DOCK\_RELEASE} = +8.000\text{ mm}$, $Y$ fixed at $\Delta Y = -2.500\text{ mm}$.
+   - Clearance to tool notch ceiling: $\mathbf{\ge 1.800\text{ mm}}$ (completely clear).
+   - B-Rep collision volume: $\mathbf{0.000000\text{ mm}^3}$ (verified across all 4 bays at $\le 0.25\text{ mm}$ steps).
+
+3. **Phase C — Safe Departure:**
+   - Displacements: Carriage retreats along $-Y$ into the active plotting envelope ($Y \le 330.0\text{ mm}$).
+
+4. **Autonomous Reverse Pickup:**
+   - Trajectory: Exact kinematic reverse ($\text{Approach at } Z = +8.000\text{ mm} \to \text{Descend } \Delta Z = -1.500\text{ mm} \to \text{Advance } \Delta Y = +2.500\text{ mm} \to \text{Kinematic Seat & Magnetic Lock}$).
+   - Minimum clearance to adjacent parked tools in neighboring bays: $\mathbf{2.374\text{ mm} \ge 1.500\text{ mm}}$ (PASS across all 4 bays).
 
 ### 3.7 Parametric Moving Mass Estimates (Sensitivity Baseline)
 Values are parametric mass estimates only (not physically measured):

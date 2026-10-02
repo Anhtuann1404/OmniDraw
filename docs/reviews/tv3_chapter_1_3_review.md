@@ -1,3 +1,7 @@
+<!-- scope-migration-20261002 -->
+> **Phạm vi ngày 02/10/2026:** Phiếu review/checkpoint lịch sử. Giữ verdict và phạm vi commit gốc; không tự ký lại cho DP/top-m/oracle hoặc nâng thành sign-off nghiên cứu mới.
+> Kế hoạch hiện hành: [Docs 30](../30_research_development_plan.md); đặc tả [Docs 31](../31_joint_solver_contract.md) và [Docs 32](../32_research_api_and_artifact_contract.md). Thông báo GVHD đồng ý hướng không thay sign-off kỹ thuật hoặc duyệt tham số.
+
 # Phiếu Cross-review TV3 — Hardware & Physical Validation
 
 ```text

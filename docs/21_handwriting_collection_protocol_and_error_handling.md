@@ -1,3 +1,7 @@
+<!-- scope-migration-20261002 -->
+> **Phạm vi ngày 02/10/2026:** Báo cáo/contract/bằng chứng lịch sử. Giữ nguyên số liệu, sign-off và phạm vi bên dưới; không dùng corpus cũ hoặc preflight để nghiệm thu hướng mới. ID RQ/PR trong phần cũ là hệ ký hiệu lịch sử.
+> Kế hoạch hiện hành: [Docs 30](30_research_development_plan.md); đặc tả [Docs 31](31_joint_solver_contract.md) và [Docs 32](32_research_api_and_artifact_contract.md). Thông báo GVHD đồng ý hướng không thay sign-off kỹ thuật hoặc duyệt tham số.
+
 # Quy trình Vận hành Thu thập Mẫu Chữ viết tay và Chính sách Xử lý Lỗi (Collection Protocol & Error Handling Policy)
 
 **Mã tài liệu:** `DOC-POL-21-COLLECTION-PROTOCOL`  

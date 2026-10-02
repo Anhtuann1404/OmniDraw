@@ -1,0 +1,226 @@
+[
+  {
+    "path": "01_tech-stack.md",
+    "archive_sha256": "87534d384870fe526d629b54c30aea4047f631cd1a241962fa08b797344e58c5"
+  },
+  {
+    "path": "02_roadmap.md",
+    "archive_sha256": "98a91b2f5293a9b9c07260d559d3e534b396825f46fbe6be4c08597da70585c4"
+  },
+  {
+    "path": "03_current-task.md",
+    "archive_sha256": "d0ce30f835aeac44ebe41e377a0f8f40cc769aef324a8efd1f76e3748033245d"
+  },
+  {
+    "path": "04_progress-log.md",
+    "archive_sha256": "c8886d2585678002f71f10fdee649e0248eb657ef56795b47ddd2eff282e0f1a"
+  },
+  {
+    "path": "05_ca_vhc_research_spec.md",
+    "archive_sha256": "63e492953797bd6920334c4dd25c8b20b9cdb5347a6a31d51032e5f88eee4824"
+  },
+  {
+    "path": "06_audit_trellis_dag_report.md",
+    "archive_sha256": "162eeb1d1528b2ddd1855707ca07dc43ab351a6f1947727181da0ddecca93bd6"
+  },
+  {
+    "path": "07_diacritic_aware_state_design.md",
+    "archive_sha256": "5dfcf2c86d606a7bdb0bda1960e61b6a8bc9fcaaea5e0795d7372b7915e434e0"
+  },
+  {
+    "path": "08_handwriting_dataset_spec.md",
+    "archive_sha256": "bdd00d27307f6efc98b1b1f21f2d06c09576a0b599c8e732c260f87f1c4c53ad"
+  },
+  {
+    "path": "09_pr3_acceptance_criteria.md",
+    "archive_sha256": "088eb2125bf7dbc247ab0520067717992b7b3d05fc1e533489baf0c491a3b75e"
+  },
+  {
+    "path": "10_nckh_research_plan.md",
+    "archive_sha256": "7b87bc3829a255f43b36cddd671351e97f972d94a28f12b72096d6b6290c6e1e"
+  },
+  {
+    "path": "11_literature_review_protocol.md",
+    "archive_sha256": "4bc225038b44749c4666602b0c1cb02714f1317e404117dd7caa842c1259a7ac"
+  },
+  {
+    "path": "12_literature_evidence_matrix.md",
+    "archive_sha256": "ac045f1274b90008bad75e55be662beee917b8b67a585534764da71e5ce623a6"
+  },
+  {
+    "path": "13_chapter_2_literature_review.md",
+    "archive_sha256": "f05bed5eaa52d3ef79ab6a6f5ce7d60af7284c78989bb88be58c8790eabc942d"
+  },
+  {
+    "path": "14_chapter_1_introduction.md",
+    "archive_sha256": "1363ee34c21c2f9aa82e6f0f852f1cb681babb44e58edab5e0dc6889e0f13da9"
+  },
+  {
+    "path": "15_chapter_3_methodology.md",
+    "archive_sha256": "1d6abb3c03ef1095569b1c9beef6653f7eb6b2f6023685db802ac6adf520e589"
+  },
+  {
+    "path": "16_rq_code_metric_test_traceability.md",
+    "archive_sha256": "5685df45149723d3160432702f04e74e11d363b146f52c10a59d219ea637577f"
+  },
+  {
+    "path": "17_pr3_implementation_readiness.md",
+    "archive_sha256": "e74c535483325d3066148a88f52a7991d1f1bf7c81d61c29224f38628ad502fc"
+  },
+  {
+    "path": "18_pr3_e4_shared_transition_contract_draft.md",
+    "archive_sha256": "bf4cbbfa9b2577edaa52de853735f97aa7c9728edeb0ebf90ee7ec8c8a339a86"
+  },
+  {
+    "path": "19_benchmark_corpus_freeze_report.md",
+    "archive_sha256": "502719d7b5bfc4a9fefa0b599e8ab224bd06050050b109e99f7be9d535aed37e"
+  },
+  {
+    "path": "20_p01_p04_coverage_analysis_report.md",
+    "archive_sha256": "6361373f7c2a841ac0dca3a409b468efddca4e37547b117299648e5fb6f7f764"
+  },
+  {
+    "path": "21_handwriting_collection_protocol_and_error_handling.md",
+    "archive_sha256": "c984584ee610338fa6c850479f831f65928cd8a02f81bef7129b55f48d80efcd"
+  },
+  {
+    "path": "22_nckh_extended_scope.md",
+    "archive_sha256": "ab1f48553761dde3c40224a628dc0778f7f1d3fc016e5ccde3be0b29a42488cf"
+  },
+  {
+    "path": "23_rq4_writer_habit_study_protocol.md",
+    "archive_sha256": "782fde2b73fbb4701a4df96bfa35cec370427ead5048122e1e0ac2337569ee42"
+  },
+  {
+    "path": "24_rq5_vietnamese_design_font_pilot.md",
+    "archive_sha256": "7d60dbf1c7d440ba5185fa33675f2db3344f4d6ddbd42e332a3daddeb895c5d3"
+  },
+  {
+    "path": "25_joint_parametric_preflight_review.md",
+    "archive_sha256": "c54649f62b605b3a93d116b9ef4622d63457e165a65b60e4c7e1ca43e7cb3f5f"
+  },
+  {
+    "path": "26_teacher_discussion_and_8_month_plan.md",
+    "archive_sha256": "f00b2fb211aff55f9824e953e9c916099598f3ddaac8188cbae813e382b21a23"
+  },
+  {
+    "path": "27_supervisor_feedback_disposition.md",
+    "archive_sha256": "6ce17c4ad304d532c72df448a3797170d1071d4fe5de87bbf9bc440acfb6182f"
+  },
+  {
+    "path": "28_teacher_submission_note.md",
+    "archive_sha256": "196335cab613dc8ee4bff263aeb95f1f1d46321542a3d419ff288416180d33d6"
+  },
+  {
+    "path": "29_research_proposal_consolidated.md",
+    "archive_sha256": "35b0b89b1c8765dcfa944acd88a729ced7acae983a9d83c61c63ff3967feb677"
+  },
+  {
+    "path": "OmniDraw_API_Spec-4.md",
+    "archive_sha256": "6168419d70491f2fbaa7c6a51ba5a91ac014e3ea11795eb39d7d1a4923adf390"
+  },
+  {
+    "path": "README.md",
+    "archive_sha256": "17f70c236f42238b323020204f949efc3703f4188976651b40fdfd9a5273ab9a"
+  },
+  {
+    "path": "collection_sheets/P01/collection_sheet_p01_notes.md",
+    "archive_sha256": "a4518dd0531d54f165ec16a895ae1ad0ead048f0df2fecf3d67dbfec7abc0b29"
+  },
+  {
+    "path": "collection_sheets/P02/collection_sheet_p02_notes.md",
+    "archive_sha256": "eae80eef57e3043ea5c24d2c01eaa911f218585b2e152abc759138989e8daed8"
+  },
+  {
+    "path": "collection_sheets/P03/collection_sheet_p03_notes.md",
+    "archive_sha256": "1a8190dfd807a09aba3372e35b34568c774f77a008e710f423cbfc3e498ac495"
+  },
+  {
+    "path": "collection_sheets/P04/collection_sheet_p04_notes.md",
+    "archive_sha256": "62a7f118e5dd0a5790ffaf2922eda76a6e4d10c568cf82a900ad5cc8639c087e"
+  },
+  {
+    "path": "collection_sheets/README.md",
+    "archive_sha256": "6d32fc94255d1fd7212468fc469f248f41b5906e1183a10faf4ffb7733195890"
+  },
+  {
+    "path": "hardware/00_hardware_index.md",
+    "archive_sha256": "4c964ed3034f2102f3653cee8631c313228a9ca5461b75fbe5757c18c8909b83"
+  },
+  {
+    "path": "hardware/01_hardware_architecture.md",
+    "archive_sha256": "ffc2eebbe25f142f2b7295593cdfb3ec3db2fa5f74a41978773acbb840870e63"
+  },
+  {
+    "path": "hardware/02_tool_changer_spec.md",
+    "archive_sha256": "7b0201b03125e1c96110e040da8b59a40f852c88ff3ec75b367020c9c5a32283"
+  },
+  {
+    "path": "hardware/03_carriage_and_lifter_spec.md",
+    "archive_sha256": "720721e8d36bb17ea4125d57f74dbda6bb3017e6a1bd2ff034a01fbec55dce45"
+  },
+  {
+    "path": "hardware/04_corexy_frame_spec.md",
+    "archive_sha256": "ae8caa941d857c46f2cc94b11d21317f146d05df8e707d15767038da867b0d1c"
+  },
+  {
+    "path": "hardware/05_electronics_spec.md",
+    "archive_sha256": "f0ef5597bf052272ed1dc3b30fb4d905b130954094b9ab189e05791fe9565dfd"
+  },
+  {
+    "path": "hardware/06_validation_plan.md",
+    "archive_sha256": "a8512a8befd180af6e650078387604dcfd5c176b26401431dfb29b75aec76fc1"
+  },
+  {
+    "path": "hardware/07_physical_calibration_protocol.md",
+    "archive_sha256": "890b38c7f7023b397b3b2e11280b1a5edc8b0c4c170f75eac7469c7f9db1b26f"
+  },
+  {
+    "path": "hardware/08_four_servo_head_rebaseline.md",
+    "archive_sha256": "16e5ed1fed5e35370812d06225e979959c5b7538a4eb0c9428db41a4b9378641"
+  },
+  {
+    "path": "hardware/09_modular_pen_adapter_study.md",
+    "archive_sha256": "11c3afbd35fac259618c8b6fdeb22dfba56810adbb539005dec80c0f8b2ce916"
+  },
+  {
+    "path": "hardware/10_a4_single_pen_budget_rebaseline.md",
+    "archive_sha256": "1ae079cb589cdd285340359eb691f923d7512fb4dec2d9de05a1ed1f8bf28f96"
+  },
+  {
+    "path": "hardware/calibration-checklist.md",
+    "archive_sha256": "95f072232a78cc9e1670bf3b61e924ab5e7857d6ad1874694a3dacd0e1489143"
+  },
+  {
+    "path": "hardware/hardware_decision_log.md",
+    "archive_sha256": "e85167ba8fe700aebc05454d8962c8b91ffd54830f4d4c99a64dcaab0c471db8"
+  },
+  {
+    "path": "hardware/measurement-protocol.md",
+    "archive_sha256": "089c4bb8877d491f2a4013fdf890af7dfea446d856adcc6a10c7e74a2e31db0e"
+  },
+  {
+    "path": "hardware/review-20260921.md",
+    "archive_sha256": "672d4b3b8bdc8f5269bab274568b430ec99793f6d3a938d509df5f33a41e166a"
+  },
+  {
+    "path": "reviews/README.md",
+    "archive_sha256": "76d8ce7226347008749b58079a3fb15d152c0469247d1536c91c480ba81fedd0"
+  },
+  {
+    "path": "reviews/review_disposition.md",
+    "archive_sha256": "5c890b7c2d15a83089200474e59b20bc399d03fe7d4005e7d4ba1c6df1039c12"
+  },
+  {
+    "path": "reviews/tv1_chapter_1_3_review.md",
+    "archive_sha256": "fb3499bdc5b4b4462c0efac3a9068bc39c8d0fbfe29b936d78c477fcf4041c60"
+  },
+  {
+    "path": "reviews/tv2_chapter_1_3_review.md",
+    "archive_sha256": "18eb8a2b982612df39033b1f3f67b11577db8d946ae69f86650f94eb3ae50d29"
+  },
+  {
+    "path": "reviews/tv3_chapter_1_3_review.md",
+    "archive_sha256": "f0d6d5369be5ba4152d541e1f09a447d61dff49075afba43367d44f94b38551e"
+  }
+]

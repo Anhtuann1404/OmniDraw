@@ -1,8 +1,16 @@
+<!-- scope-migration-20261002 -->
+> **Phạm vi ngày 02/10/2026:** Tài liệu hardware hỗ trợ. Nội dung thiết kế/đo/review bên dưới giữ đúng phạm vi và ngày của nó; không đồng nghĩa đã mua máy, đã hiệu chuẩn hoặc đã nghiệm thu hướng nghiên cứu mới. Nghiên cứu dùng máy vẽ phẳng hai trục khi sẵn sàng, ghi cơ cấu/bộ điều khiển/bút/giấy theo run. Concept A4 một bút là phương án tham khảo hiện tại, không yêu cầu AxiDraw/CoreXY hay nhiều màu.
+> Kế hoạch hiện hành: [Docs 30](../30_research_development_plan.md); đặc tả [Docs 31](../31_joint_solver_contract.md) và [Docs 32](../32_research_api_and_artifact_contract.md). Thông báo GVHD đồng ý hướng không thay sign-off kỹ thuật hoặc duyệt tham số.
+
 # Tool Changer Specification
 
 **Subsystem:** OmniDraw Quad-Pen Tool Changer  
 **Interface Revision:** V1.1  
 **Status:** FROZEN DESIGN BASELINE  
+
+> **Architecture notice (2026-09-27):** This frozen single-tool magnetic changer documents the historical dock branch. The user's current Q4D target is a moving four-pen/four-servo head with no rear pickup/drop-off; see [08_four_servo_head_rebaseline.md](08_four_servo_head_rebaseline.md). Frozen geometry is preserved for traceability, not incorporated by assumption into Q4D.
+
+> **Q4C.3 procurement/retention clarification (2026-09-26):** The Ø8 × 2 mm magnet and pocket **geometry** remains frozen, but references to N52 below describe a proposed grade, not a procured or force-validated grade; [HW-DEC-005](hardware_decision_log.md#hw-dec-005-tool--receiver-magnet-specifications--pocket-depth) controls. The team's latest system-test input selects **no auxiliary dock magnet**; the auxiliary-magnet passages below are historical and must not be used as current CAD/BOM evidence. This does not change frozen Q2 geometry. The frozen Q2 fork has a mechanical −Y stop; the Q4C.3 four-bay copy now reproduces it after correcting an over-cut entrance. Geometric capture does not prove insertion, separation force or repeated pickup; a physical test and an explicit Q2 clarification/decision remain pending. See [HW-DEC-Q4-004](hardware_decision_log.md#hw-dec-q4-004-q4c3-corrective-cad-and-release-gate).
 
 ---
 
@@ -15,16 +23,16 @@ The Quad-Pen Tool Changer is the central mechanical subsystem of OmniDraw Plotte
 ## 2. Subsystem Architecture
 
 The tool changer consists of three primary physical components:
-1. **Pen Slider / Tool Sleeve V1.1:** Standardized sleeve holding the pen body, featuring 3 radial V-grooves, 3 embedded N52 magnets, dual side wings, and a mechanical orientation notch.
-2. **Carriage Receiver Plate V1:** Fixed kinematic interface plate bolted to the Z-Carriage via a 4x M3 grid, carrying 3 hardened steel balls $\phi 6.000\text{ mm}$, 3 matching N52 magnets, and a monolithic Poka-Yoke key.
+1. **Pen Slider / Tool Sleeve V1.1:** Standardized sleeve holding the pen body, featuring 3 radial V-grooves, 3 embedded NdFeB-class magnet pockets (grade TBD; N52 candidate), dual side wings, and a mechanical orientation notch.
+2. **Carriage Receiver Plate V1:** Fixed kinematic interface plate bolted to the Z-Carriage via a 4x M3 grid, carrying 3 hardened steel balls $\phi 6.000\text{ mm}$, 3 matching magnet pockets (grade TBD), and a monolithic Poka-Yoke key.
 3. **Stationary Quad Dock:** 4-slot passive docking bay featuring U-fork retention shoulders, mechanical Z-stops, and auxiliary rear seating magnets.
 
 ```
        [Carriage Receiver Plate V1]
                   |
-     (3 × Steel Balls Ø6 mm + 3 × Magnets N52)
+     (3 × Steel Balls Ø6 mm + 3 × Magnet Pockets)
                   |  <-- 6-DOF Maxwell Kinematic Coupling
-     (3 × V-Grooves 90° + 3 × Magnets N52)
+     (3 × V-Grooves 90° + 3 × Magnet Pockets)
                   |
        [Pen Slider / Tool Sleeve V1.1]
                   |
@@ -82,7 +90,7 @@ The plate-normal coordinate $R_Y$ is defined independently along the thickness a
   - Remaining side edge web at $V2/V3$: $11.000 - (6.000 + 3.444) = 1.556\text{ mm}$ (passes current prototype design target, exceeds $1.500\text{ mm}$ minimum).
 
 ### 4.3 Tool Magnets
-- **Quantity & Spec:** 3 × Neodymium N52 $\phi 8.000 \times 2.000\text{ mm}$.
+- **Quantity & Geometry:** 3 × NdFeB-class discs $\phi 8.000 \times 2.000\text{ mm}$; grade TBD (N52 candidate).
 - **Pocket Dimensions:** $\phi 8.200\text{ mm} \times$ depth $2.200\text{ mm}$ (recessed $0.200\text{ mm}$ below Datum A).
 - **Pattern Centers on Datum A ($Z = 4.200\text{ mm}$):**
   - `TOOL_MAGNET_M1_PATTERN`: $(X = 0.000, Y = -2.000)\text{ mm}$ (North pole facing outward).
@@ -139,7 +147,7 @@ The plate-normal coordinate $R_Y$ is defined independently along the thickness a
 - **Nominal Ball Protrusion:** $3.000\text{ mm}$ hemisphere protruding past RECEIVER_DATUM_A ($R_Y \in [0.000, +3.000]\text{ mm}$).
 
 ### 6.3 Receiver Magnets
-- **Quantity & Spec:** 3 × Neodymium N52 $\phi 8.000 \times 2.000\text{ mm}$.
+- **Quantity & Geometry:** 3 × NdFeB-class discs $\phi 8.000 \times 2.000\text{ mm}$; grade TBD (N52 candidate).
 - **Pocket Dimensions:** $\phi 8.200\text{ mm} \times$ depth $2.200\text{ mm}$ (recessed $0.200\text{ mm}$ below Datum A).
 - **Pattern Centers on Datum A ($R_Y = 0.000\text{ mm}$):**
   - `RECEIVER_MAGNET_M1_PATTERN`: $(R_X = 0.000, R_Z = +2.000)\text{ mm}$ (South pole facing outward).
@@ -233,7 +241,7 @@ The plate-normal coordinate $R_Y$ is defined independently along the thickness a
 
 ## 13. Validation Requirements
 
-1. **Bench Force Test:** Measure magnetic preload force vs air gap curve for 3 pairs N52 $\phi 8 \times 2\text{ mm}$ magnets.
+1. **Bench Force Test:** Measure magnetic preload force vs air gap curve for 3 pairs of selected $\phi 8 \times 2\text{ mm}$ magnets (N52 is a candidate, not a validated grade).
 2. **Coupling Repeatability Test:** Measure multi-cycle 6-DOF repositioning repeatability using dial test indicators.
 3. **Drop Separation Shear Test:** Measure peak motor force required for shear/peel tool release.
 4. **Full Swept-Volume Validation:** `PENDING Q3` 3D trajectory simulation.
@@ -249,7 +257,7 @@ The plate-normal coordinate $R_Y$ is defined independently along the thickness a
 | Pen Bore Diameter | $\phi 12.500\text{ mm}$ | `MEASURED / FROZEN` | Q1 STL Audit |
 | Tool V-Groove Profile | $90^\circ$ V, $W=4.8, D=2.4, L=5.0\text{ mm}$, Chamfer $0.2\times 45^\circ$ | `FROZEN (V1.1)` | HW-DEC-009 |
 | V-Groove Centers | $V1(0, 15, 4.2), V2(-6, -12, 4.2), V3(6, -12, 4.2)\text{ mm}$ | `FROZEN` | HW-DEC-008 |
-| Tool Magnets Spec | 3 × N52 $\phi 8.0 \times 2.0\text{ mm}$, recessed $0.2\text{ mm}$ | `FROZEN` | HW-DEC-005 |
+| Tool Magnet Geometry | 3 × $\phi 8.0 \times 2.0\text{ mm}$, recessed $0.2\text{ mm}$; grade TBD | `GEOMETRY FROZEN / GRADE CANDIDATE` | HW-DEC-005 |
 | Tool Magnet Physical 3D | $M1(0, -2, 5.4), M2(-5, 6, 5.4), M3(5, 6, 5.4)\text{ mm}$ | `DERIVED` | Q2B.8 |
 | Tool Side Wings Span | $28.000\text{ mm}$ (protrusion $3.000\text{ mm}$/side) | `FROZEN` | HW-DEC-007 |
 | Quad Dock Pitch | $32.000\text{ mm}$ | `FROZEN` | HW-DEC-006 |
@@ -262,7 +270,7 @@ The plate-normal coordinate $R_Y$ is defined independently along the thickness a
 | Ball Center Datum | Hard conical shoulder contact at $R_Y = -2.121\text{ mm} \implies R_Y = 0$ | `FROZEN` | Q2B.8 |
 | Ball Protrusion | $3.000\text{ mm}$ past RECEIVER_DATUM_A | `DERIVED` | Q2B.8 |
 | Nominal Face-to-Face Gap | $1.843\text{ mm}$ (Nominally clear) | `DERIVED` | Q2B.6 |
-| Receiver Magnets Spec | 3 × N52 $\phi 8.0 \times 2.0\text{ mm}$, recessed $0.2\text{ mm}$ | `FROZEN` | Q2B.6 |
+| Receiver Magnet Geometry | 3 × $\phi 8.0 \times 2.0\text{ mm}$, recessed $0.2\text{ mm}$; grade TBD | `GEOMETRY FROZEN / GRADE CANDIDATE` | HW-DEC-005 |
 | Receiver Magnet Physical 3D | $M1(0, -1.2, 2), M2(-5, -1.2, -6), M3(5, -1.2, -6)\text{ mm}$ | `DERIVED` | Q2B.8 |
 | Magnetic Pole Gap | $2.243\text{ mm}$ | `DERIVED` | Q2B.6 |
 | Magnetic Preload Target | $18.0 - 22.0\text{ N}$ | `TARGET / TO BE VALIDATED` | Q2B.6 |

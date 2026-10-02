@@ -1,0 +1,192 @@
+{
+  "seed": 20260930,
+  "scope": "exploratory DEV fragments and synthetic geometry; not formal benchmark",
+  "source_commit": "c1b4696bbc426dfe76e0453557575ec03ea5d651",
+  "python": "3.14.6",
+  "c_min_mm": 0.2,
+  "box": [
+    0.2,
+    1.0,
+    0.5,
+    6.0
+  ],
+  "grid": [
+    [
+      0.2,
+      0.5
+    ],
+    [
+      0.2,
+      1.0
+    ],
+    [
+      0.2,
+      2.0
+    ],
+    [
+      0.2,
+      4.0
+    ],
+    [
+      0.2,
+      6.0
+    ],
+    [
+      0.4,
+      0.5
+    ],
+    [
+      0.4,
+      1.0
+    ],
+    [
+      0.4,
+      2.0
+    ],
+    [
+      0.4,
+      4.0
+    ],
+    [
+      0.4,
+      6.0
+    ],
+    [
+      0.6,
+      0.5
+    ],
+    [
+      0.6,
+      1.0
+    ],
+    [
+      0.6,
+      2.0
+    ],
+    [
+      0.6,
+      4.0
+    ],
+    [
+      0.6,
+      6.0
+    ],
+    [
+      0.8,
+      0.5
+    ],
+    [
+      0.8,
+      1.0
+    ],
+    [
+      0.8,
+      2.0
+    ],
+    [
+      0.8,
+      4.0
+    ],
+    [
+      0.8,
+      6.0
+    ],
+    [
+      1.0,
+      0.5
+    ],
+    [
+      1.0,
+      1.0
+    ],
+    [
+      1.0,
+      2.0
+    ],
+    [
+      1.0,
+      4.0
+    ],
+    [
+      1.0,
+      6.0
+    ]
+  ],
+  "cases": 56,
+  "feasible_cases": 52,
+  "infeasible_cases": 4,
+  "dp_checks": 1400,
+  "dp_mismatches": 0,
+  "dp_max_abs_error": 1.4210854715202004e-14,
+  "cases_with_decision_switch": 35,
+  "real_cases_with_decision_switch": 6,
+  "real_cases": 16,
+  "cases_with_joint_advantage": 25,
+  "real_cases_with_joint_advantage": 0,
+  "max_vertex_dense_error": 0.0,
+  "abstract_checks": {
+    "checks": 12,
+    "failures": 0,
+    "labels": [
+      "ties",
+      "no_common_optimum",
+      "incomplete_candidate_set",
+      "parameter_dependent_feasibility",
+      "model_error_2delta",
+      "unsupported_minimax_compromise",
+      "clearance_below_floor",
+      "clearance_at_floor",
+      "crossing_segments",
+      "remote_interaction",
+      "deadline_k0_k1",
+      "bridge_terminal_vs_overlap"
+    ],
+    "unsupported_minimax_example": {
+      "plans": [
+        [
+          10.0,
+          10.0,
+          1
+        ],
+        [
+          15.0,
+          0.0,
+          1
+        ],
+        [
+          13.5,
+          4.0,
+          1
+        ]
+      ],
+      "box": [
+        0.2,
+        1.0,
+        0.5,
+        2.0
+      ],
+      "regrets": [
+        5.0,
+        3.0,
+        2.5
+      ]
+    }
+  },
+  "elapsed_seconds": 3.9308249603491277,
+  "input_hashes": {
+    "scripts/research_parametric_preflight.py": "1f9c297db1695085fe7200c96564a7293851843e0f12b37f4d081f1e28156a81",
+    "backend/handwriting/engine.py": "f1633300dc8e9e6dc616a294a688069f1aa433d015a4ef3f16654ed5bcd6333e",
+    "backend/handwriting/font_packs/legacy.py": "219abc655439e5c5c2bd7b7b698d8d7d6ba6d5927cd9a953b1bd3a12a1d88328",
+    "backend/handwriting/font_packs/omni_casual.py": "57262606b4cc2caa5e272b9f251301af55cd3797c0bb8c5ffa80e13b4a6011c5",
+    "backend/handwriting/font_packs/geometry.py": "f7b0cef946b5bb86e5aec0ab8e8103c02c7ee8d4614d819457382cb7f02ca666"
+  },
+  "limitations": [
+    "strict mark/body clearance excludes attached structural strokes",
+    "fixed internal body stroke order and direction; only adjacent-body bridges",
+    "no legibility validation of candidate variants or shifted accents",
+    "parameters assumed; no physical calibration or calibration sample-efficiency claim",
+    "independent recurrence and scoring share geometry/feasibility primitives",
+    "floating point tolerance 1e-8, no interval arithmetic certificate",
+    "source tree may differ from HEAD; hashes are authoritative for listed inputs"
+  ]
+}

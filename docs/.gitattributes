@@ -1,0 +1,6 @@
+# Markdown may use trailing spaces for explicit line breaks.
+*.md whitespace=-blank-at-eol
+# Snapshots preserve original bytes and their recorded SHA-256 values.
+history/** -whitespace
+# Existing CSV evidence uses CRLF line endings; preserve its source bytes.
+evidence/**/*.csv whitespace=cr-at-eol

@@ -1,68 +1,41 @@
-# OmniDraw Documentation Hub
+# Tài liệu OmniDraw — hướng nghiên cứu hiện hành
 
-File này là điểm vào chính của toàn bộ tài liệu OmniDraw. Chọn nhóm theo mục đích thay vì tìm theo số thứ tự file.
+**Cập nhật 02/10/2026:** TV4 thông báo GVHD đã đồng ý hướng nghiên cứu. Đây là thông tin phê duyệt hướng; không thay duyệt tham số, gate triển khai hoặc sign-off các thành viên.
 
-## Bắt đầu nhanh
+## Đọc trước khi triển khai
 
-| Khi cần biết | Mở tài liệu |
-| :--- | :--- |
-| Nhóm đang làm gì | [`03_current-task.md`](03_current-task.md) |
-| Các mốc phát triển | [`02_roadmap.md`](02_roadmap.md) |
-| Kiến trúc phần mềm hiện tại | [`01_tech-stack.md`](01_tech-stack.md) |
-| API và data contract | [`OmniDraw_API_Spec-4.md`](OmniDraw_API_Spec-4.md) |
-| Câu hỏi nghiên cứu và kế hoạch thực nghiệm | [`10_nckh_research_plan.md`](10_nckh_research_plan.md) |
-| Cross-review Chương 1–3 | [`reviews/README.md`](reviews/README.md) |
-| Thiết kế phần cứng | [`hardware/00_hardware_index.md`](hardware/00_hardware_index.md) |
+| Tài liệu | Vai trò |
+|---|---|
+| [29 — Đề cương](29_research_proposal_consolidated.md) | Bản đối chiếu nội dung Google Docs đã tinh chỉnh, cấu trúc Mẫu 2 |
+| [30 — Kế hoạch kỹ thuật](30_research_development_plan.md) | Ownership, slice, một bảng 8 tháng và phương án cắt phạm vi |
+| [31 — Contract solver](31_joint_solver_contract.md) | Ứng viên/lịch khả thi, clearance, J, state, top-m, oracle và regret |
+| [32 — API/artifact nghiên cứu](32_research_api_and_artifact_contract.md) | Schema draft và interface offline dự kiến; chưa là endpoint đã triển khai |
+| [API sản phẩm](OmniDraw_API_Spec-4.md) | Contract kế thừa, đối chiếu route local, capability và kế hoạch tích hợp |
+| [03 — Công việc hiện tại](03_current-task.md) | Việc cần làm của TV1–TV4 và quyết định chưa khóa |
+| [33 — Chỉ mục migration](33_document_migration_index.md) | Trạng thái từng tài liệu, archive và phạm vi kiểm tra |
 
-## Quản lý dự án
+## Trọng tâm và phân công
 
-- [`02_roadmap.md`](02_roadmap.md): lộ trình, milestone và dependency.
-- [`03_current-task.md`](03_current-task.md): backlog và trạng thái sprint hiện tại.
-- [`04_progress-log.md`](04_progress-log.md): nhật ký tiến độ theo ngày.
+Nghiên cứu mô hình đồng tối ưu hình học thân/dấu và lịch nét chữ tiếng Việt trong tập ứng viên hữu hạn; so staged top-m/beam, phân tích có lợi/bằng nhau, độ nhạy rho/lambda và chứng nhận regret trong phạm vi đã khóa. Áp dụng và phân tích có kiểm soát các kết quả chuẩn; không khẳng định phát minh DP mới.
 
-## Phần mềm và contract
+- TV4: mô hình, DP, trace/SVG và tích hợp.
+- TV2: tài liệu, cost, baseline, runner và phân tích.
+- TV1: dữ liệu/split/custody và đồng chủ trì font.
+- TV3: oracle/primitive độc lập, thiết bị và số đo.
 
-- [`01_tech-stack.md`](01_tech-stack.md): kiến trúc hệ thống và trạng thái triển khai.
-- [`OmniDraw_API_Spec-4.md`](OmniDraw_API_Spec-4.md): API/data contract công khai.
+Một thí điểm font có điều kiện. Writer Profile, Pareto và cắt tỉa mở rộng ngoài cam kết. Art Mode/thư tay là chức năng sản phẩm vẫn được giữ. Thiết bị nghiên cứu là máy vẽ phẳng hai trục khi sẵn sàng; không chốt dòng máy/cơ cấu qua tên đề tài.
 
-## Nghiên cứu CA-VHC
+## Các nhóm tài liệu
 
-- [`05_ca_vhc_research_spec.md`](05_ca_vhc_research_spec.md): RQ, giả thuyết, baseline và metric contract.
-- [`06_audit_trellis_dag_report.md`](06_audit_trellis_dag_report.md): audit Trellis DAG hiện hành.
-- [`07_diacritic_aware_state_design.md`](07_diacritic_aware_state_design.md): thiết kế `CompositionState` và diacritic-aware DAG.
-- [`09_pr3_acceptance_criteria.md`](09_pr3_acceptance_criteria.md): Entry/Exit Gate PR3.
-- [`16_rq_code_metric_test_traceability.md`](16_rq_code_metric_test_traceability.md): truy vết RQ–code–metric–test và evidence ledger.
-- [`17_pr3_implementation_readiness.md`](17_pr3_implementation_readiness.md): dependency PR2, bản đồ symbol, các lát cắt triển khai, test map và Definition of Ready cho PR3.
-- [`18_pr3_e4_shared_transition_contract_draft.md`](18_pr3_e4_shared_transition_contract_draft.md): dự thảo giao diện chuyển tiếp TV2–TV4 để đóng Entry Gate E4; chưa được ký duyệt.
+- [01 — Công nghệ](01_tech-stack.md), [02 — Roadmap](02_roadmap.md), [05 — Spec nghiên cứu](05_ca_vhc_research_spec.md), [07 — State](07_diacritic_aware_state_design.md), [10 — Kế hoạch nghiên cứu](10_nckh_research_plan.md), [16 — Traceability](16_rq_code_metric_test_traceability.md).
+- [08 — Dữ liệu](08_handwriting_dataset_spec.md), [11 — Protocol tài liệu](11_literature_review_protocol.md), [12 — Evidence matrix](12_literature_evidence_matrix.md), [13–15 — Chương nghiên cứu](13_chapter_2_literature_review.md).
+- [22 — Phạm vi mở rộng](22_nckh_extended_scope.md), [23 — Writer Profile backlog](23_rq4_writer_habit_study_protocol.md), [24 — Fontpilot](24_rq5_vietnamese_design_font_pilot.md).
+- [Hardware](hardware/00_hardware_index.md), [Reviews](reviews/README.md), [Collection sheets](collection_sheets/README.md): giữ thiết kế/phiếu lịch sử theo nhãn phạm vi từng file.
+- [04 — Nhật ký](04_progress-log.md), báo cáo 06/17–21/25/28 và `evidence/`: kết quả/checkpoint lịch sử, không tự nâng verdict cho hướng mới.
+- [26 — Bản trao đổi](26_teacher_discussion_and_8_month_plan.md), [27 — Quyết định và provenance](27_supervisor_feedback_disposition.md): phân biệt quyết định nhóm/phản biện mô phỏng với thông báo đồng ý hướng thật.
 
-## Dữ liệu chữ viết tay
+## Quy tắc nguồn và tái lập
 
-- [`08_handwriting_dataset_spec.md`](08_handwriting_dataset_spec.md): đặc tả corpus, Writer Profile và quản trị dữ liệu.
-- [`19_benchmark_corpus_freeze_report.md`](19_benchmark_corpus_freeze_report.md): báo cáo rà soát độ phủ và đóng băng Benchmark Corpus CA-VHC v1.0.
-- [`collection_sheets/README.md`](collection_sheets/README.md): bộ phiếu P01–P04 và hướng dẫn sinh artifact.
+ID N-RQ1–4 hiện hành tương ứng MT1–4 của đề cương; ID RQ/PR cũ trong bằng chứng giữ nghĩa lịch sử. Tài liệu archived không là kế hoạch hiện hành. [Bản lưu trước sửa](history/20261002/ARCHIVE_NOTES.md) giữ cả thay đổi local đã có trước migration, kèm manifest SHA-256; không chỉ là bản từ HEAD.
 
-## Tổng quan tài liệu và báo cáo
-
-- [`10_nckh_research_plan.md`](10_nckh_research_plan.md): Research Freeze Pack và khung Chương 3–4.
-- [`11_literature_review_protocol.md`](11_literature_review_protocol.md): protocol tìm kiếm và chọn nguồn.
-- [`12_literature_evidence_matrix.md`](12_literature_evidence_matrix.md): evidence matrix.
-- [`14_chapter_1_introduction.md`](14_chapter_1_introduction.md): Chương 1 — Mở đầu.
-- [`13_chapter_2_literature_review.md`](13_chapter_2_literature_review.md): Chương 2 — Tổng quan.
-- [`15_chapter_3_methodology.md`](15_chapter_3_methodology.md): Chương 3 — Phương pháp.
-- [`reviews/README.md`](reviews/README.md): quy trình và phiếu cross-review.
-
-## Phần cứng
-
-Toàn bộ kiến trúc, cụm cơ khí, điện tử và validation plan nằm tại [`hardware/`](hardware/00_hardware_index.md).
-
-## Quy tắc nguồn sự thật
-
-1. Trạng thái công việc hiện tại lấy từ `03_current-task.md`.
-2. Public API lấy từ `OmniDraw_API_Spec-4.md`; tài liệu nghiên cứu không tự động thay đổi API.
-3. RQ, giả thuyết và ngưỡng nghiên cứu lấy từ `05_ca_vhc_research_spec.md` và `10_nckh_research_plan.md` sau khi qua freeze gate.
-4. Code và automated tests là nguồn kiểm chứng trạng thái triển khai; thiết kế được duyệt không đồng nghĩa implementation đã hoàn thành.
-5. Kết quả máy thật chỉ hợp lệ khi có log/calibration của TV3; timing mô phỏng không phải `actual_draw_time_sec` vật lý.
-
-## Kế hoạch tái cấu trúc
-
-Tài liệu đang được chuẩn bị chuyển sang các nhóm `project/`, `software/`, `research/`, `data/` và `hardware/`. Việc di chuyển được thực hiện trên worktree riêng để không làm thay đổi đường dẫn trong vòng cross-review hiện hành.
+Không đưa nội dung Holdout mới vào repo công khai; 20 từ cũ chỉ bổ sung. Tất cả parameter/ranking/tie/budget phải khóa trước mở. Không dùng mô phỏng làm số đo máy hoặc API draft làm implemented. Các PDF/SVG phiếu thu thập, dữ liệu CSV/JSON và script tạo phiếu cũ giữ nguyên; chúng không được tái phát hành thành kết quả mới trong lần cập nhật docs này.

@@ -1,7 +1,7 @@
 # OmniDraw — Tài liệu chuẩn giao tiếp giữa các mảng (API/Data Contract)
 
-**Phiên bản:** v1.4 (bổ sung contract cho chế độ thư tay nét đơn `input_type="handwriting"`, làm rõ cấu trúc `svg_metrics` nghiên cứu và chuẩn hóa bảng mã lỗi; kế thừa v1.3 — mục 5d lấy SVG thật; kế thừa v1.2 — điều khiển máy vẽ và lịch sử; kế thừa v1.1 — log CSV nghiên cứu)
-**Người giữ tài liệu (owner):** TV4 — Project Lead & Handwriting / CA-VHC Composition Lead
+**Phiên bản tài liệu:** v1.5-docs (02/10/2026); contract sản phẩm kế thừa v1.4; giao diện nghiên cứu mới ở trạng thái draft/planned. Lịch sử v1.4: (bổ sung contract cho chế độ thư tay nét đơn `input_type="handwriting"`, làm rõ cấu trúc `svg_metrics` nghiên cứu và chuẩn hóa bảng mã lỗi; kế thừa v1.3 — mục 5d lấy SVG thật; kế thừa v1.2 — điều khiển máy vẽ và lịch sử; kế thừa v1.1 — log CSV nghiên cứu)
+**Người giữ tài liệu (owner):** TV4 — mô hình/DP/tích hợp; TV2 — baseline/runner/result; TV1 — dataset/candidate/license; TV3 — oracle độc lập/HAL/thiết bị
 **Mục đích:** Đây là "hợp đồng" bắt buộc giữa 4 mảng (AI, Xử lý ảnh/Thuật toán, Phần cứng, Giao diện). Mọi thay đổi định dạng phải được cập nhật vào file này TRƯỚC khi code, không tự ý đổi format một mình.
 
 > Quy tắc chung: mỗi module chỉ cần quan tâm **input mình nhận** và **output mình phải trả**, không cần biết logic bên trong của module khác.
@@ -9,6 +9,21 @@
 ---
 
 
+
+## Trạng thái API và thứ tự áp dụng — 02/10/2026
+
+Tài liệu này giữ contract sản phẩm và bổ sung kế hoạch tích hợp mới; phiên bản tài liệu không có nghĩa backend đã triển khai tất cả mục. [Docs 31](31_joint_solver_contract.md) định nghĩa bài toán; [Docs 32](32_research_api_and_artifact_contract.md) định nghĩa API/artifact nghiên cứu dự kiến. Các đoạn RQ/PR cũ bên dưới là ký hiệu lịch sử; N-RQ1–4 hiện hành ở Docs 05. Thông báo GVHD đồng ý hướng không thay nghiệm thu endpoint/parameters.
+
+| Nhóm | Mã local đã thấy route | Phạm vi |
+|---|---|---|
+| Product AI/SVG | POST `/api/ai/generate`; GET `/api/print/svg/{request_id}`, `/api/thumbnail/{request_id}` | Request text/image/handwriting và SVG; không nhận solver schema mới |
+| Print | POST `/api/print/start`, `/pause`, `/resume`, `/cancel`; GET `/api/print/status/{request_id}` | HAL và capability driver; cần recheck metadata lỗi pause/resume |
+| Product support | POST `/api/auth/login`, `/api/log/experiment`; GET `/api/history`, `/api/camera/inspect-paper`; DELETE `/api/history/{request_id}` | Route hiện hữu; không tự là study runner hoặc Holdout custody |
+| Research | validate_case/solve_case/run_manifest/certify_schedule/font_pilot | PLANNED/offline trước; `/api/research/solve` và `/certify` chưa có route local |
+
+**Phân biệt log:** logger sản phẩm có 15 cột (bao gồm model_used); runner legacy có 19 cột; schema CSV hardware là contract riêng. Kết quả joint/top-m/beam dùng manifest + JSONL có version, không thêm cột vào file CSV đã tồn tại. N_cycle mới không mặc nhiên bằng pen_lift_count legacy vì quy ước đầu/cuối phải tính thống nhất.
+
+**Migration:** module nghiên cứu → independent validation → SVG adapter → product preview/print sau gate. Không mutate geometry/style sau solve. Không khởi động vẽ máy hoặc đọc Holdout qua request solve tự do. T_hiệu chuẩn/vận tốc của simulator không thành số đo thật. Giữ Art Mode và thư tay/layout ở lớp sản phẩm; không lẫn acceptance nghiên cứu.
 
 ## 0. Sơ đồ luồng dữ liệu tổng quát
 
@@ -26,7 +41,7 @@
                                             │
                                    (4) file SVG chuẩn
                                             ▼
-                                    [Máy AxiDraw vẽ] ◀── (5b) start/pause/cancel
+                                    [Máy vẽ phẳng hai trục] ◀── (5b) start/pause/cancel
                                             │
                               (5) trạng thái/tiến độ (JSON)
                                             ▼
@@ -55,7 +70,7 @@
                                                               (4b) file SVG centerline + svg_metrics
                                                                            │
                                                                            ▼
-                                                              [Giao diện Preview / Máy AxiDraw vẽ]
+                                                              [Giao diện Preview / Máy vẽ phẳng hai trục]
 ```
 
 > **Lưu ý:** Chế độ viết thư tay (`handwriting`) hoạt động trực tiếp trong Handwriting Engine của backend, kết xuất trực tiếp ra SVG centerline và không bắt buộc cũng như không gọi mô hình AI sinh ảnh bitmap.
@@ -300,12 +315,12 @@ Output bắt buộc = **file SVG** theo quy ước sau:
 
 - Đơn vị luôn là **mm**, khớp với `target_paper_size_mm` đã gửi ở mục 2.
 - `fill="none"` bắt buộc — máy chỉ vẽ đường viền (stroke), không tô đặc.
-- Không dùng `<text>`, `<image>`, `<use>` — chỉ `<path>`, `<line>`, `<polyline>` (các phần tử máy AxiDraw đọc trực tiếp được).
+- Không dùng `<text>`, `<image>`, `<use>` — chỉ `<path>`, `<line>`, `<polyline>` (adapter phải kiểm tra subset SVG mà driver của thiết bị thực tế hỗ trợ).
 - Đặt tên file: `output_{request_id}.svg`
 
-Lý do chọn SVG (không phải G-code/JSON tự chế): tận dụng được thư viện Python có sẵn của AxiDraw để đọc file và điều khiển máy trực tiếp, không cần viết layer chuyển đổi riêng.
+SVG là artifact hình học cho preview và bàn giao HAL. Driver do TV3 chọn theo thiết bị: có thể dùng thư viện SVG của dòng máy phù hợp hoặc cần chuyển đổi sang protocol bộ điều khiển. Không giả định mọi máy đọc SVG trực tiếp hoặc không cần layer chuyển đổi.
 
-> **Phục vụ đo đạc khoa học (RQ1, RQ2):** module thuật toán phải tự tính và đính kèm các chỉ số hình học ngay khi xuất SVG — xem trường `svg_metrics` ở mục 6 — thay vì để giao diện/máy vẽ tự suy ra sau.
+> **Metric sản phẩm và checkpoint nghiên cứu cũ:** module thuật toán phải tự tính và đính kèm các chỉ số hình học ngay khi xuất SVG — xem trường `svg_metrics` ở mục 6 — thay vì để giao diện/máy vẽ tự suy ra sau.
 
 ---
 
@@ -395,7 +410,13 @@ Gọi khi bấm "Tạm dừng" ở màn Đang vẽ.
 { "request_id": "uuid-v4", "status": "paused" }
 ```
 
-> **Giả định cần Phần cứng xác nhận lại:** mục này giả định máy AxiDraw hỗ trợ tạm dừng giữa chừng (dừng động cơ tạm thời, giữ nguyên vị trí bút, tiếp tục vẽ từ đúng chỗ dừng). Nếu máy/thư viện điều khiển thực tế **không** hỗ trợ tạm dừng an toàn (ví dụ dừng giữa chừng làm lệch toạ độ), báo lại để xoá hẳn endpoint này và bỏ nút "Tạm dừng" khỏi giao diện — không cố giữ một tính năng không làm được.
+**Capability contract:** `pause_supported` do driver xác định, không suy từ dòng máy hoặc nút trên UI. Với job đang printing và pause không hỗ trợ, trả HTTP 400 bảo lưu `error.code="HARDWARE_PAUSE_UNSUPPORTED"`, `pause_supported=false` và `status="printing"`; không đổi job thành error/paused. Resume cũng bảo lưu đầy đủ metadata driver trả. Khi driver hỗ trợ, pause trả paused và resume trả printing. UI dùng capability để hiển thị thao tác; endpoint không bị xóa chỉ vì một driver chưa hỗ trợ.
+
+**Khoảng lệch local cần xử lý:** `backend/main.py` ở checkout được rà soát đưa lỗi pause/resume qua `custom_error(code,message,status_code)`, chỉ giữ code/message và đổi payload status thành error. Vì vậy contract bảo lưu metadata chưa được xác nhận trên checkout này; cần TV3/TV4 recheck nhánh/commit tích hợp và HTTP test. Đây là ghi nhận mã local, không hủy verdict của commit hardware khác.
+
+### Tiếp tục sau tạm dừng
+
+**Endpoint hiện hữu:** `POST /api/print/resume`, body `{ "request_id": "uuid-v4" }`. Success trả status printing cùng capability; state sai/unsupported/not-found theo error/status driver, giữ metadata. HTTP contract mới cần kiểm đúng commit trước UI nghiệm thu.
 
 
 
@@ -480,9 +501,9 @@ Phục vụ màn Thư viện (màn 5).
 
 ## 6. Ghi log CSV phục vụ nghiên cứu khoa học (mới — v1.1, chuẩn hóa v1.4)
 
-**Bối cảnh:** theo nhận xét của giảng viên hướng dẫn, đề tài phải sinh ra được số liệu so sánh được cho bài báo khoa học (RQ1–RQ3), không chỉ chạy demo. Mục này định nghĩa cơ chế ghi log tự động để số liệu **tích luỹ tự nhiên trong quá trình phát triển**, không phải "chạy bù" cuối kỳ.
+**Bối cảnh:** nhóm duy trì telemetry sản phẩm và log lỗi để truy vết. Log này không tự thành dữ liệu đánh giá chính thức của hướng mới. Kết quả nghiên cứu phải chạy manifest đã khóa và ghi artifact theo Docs 32, không gom log thao tác tự do rồi gọi Holdout.
 
-**Trách nhiệm:** TV4 (Project Lead & Handwriting / CA-VHC Composition Lead) xây dựng cơ chế ghi log ở tầng giao diện/backend (nơi tổng hợp đủ dữ liệu từ mọi module qua `request_id`). TV1 (AI Data & Writer Profile Lead), TV2 (Stroke Optimization & Path Planning Lead), và TV3 (Hardware, Calibration & Physical Validation Lead) đảm bảo module của mình trả đủ các trường được yêu cầu ở mục 2-5 (đặc biệt là `experiment`, `svg_metrics`, `actual_draw_time_sec`).
+**Trách nhiệm:** TV4 (Project Lead & Handwriting / CA-VHC Composition Lead) xây dựng cơ chế ghi log ở tầng giao diện/backend (nơi tổng hợp đủ dữ liệu từ mọi module qua `request_id`). TV1 (Data/Candidate/Font), TV2 (Baseline/Runner/Analysis), và TV3 (Independent Oracle/Hardware) đảm bảo module của mình trả đủ các trường được yêu cầu ở mục 2-5 (đặc biệt là `experiment`, `svg_metrics`, `actual_draw_time_sec`).
 
 **Thời điểm ghi:** ngay khi một `request_id` đạt trạng thái `status = "done"` hoặc `status = "error"` (ghi cả trường hợp lỗi — dữ liệu lỗi cũng có giá trị thống kê).
 
@@ -491,19 +512,19 @@ Phục vụ màn Thư viện (màn 5).
 ### Phân định nhóm chỉ số (Metrics) nghiên cứu
 
 #### Nhóm 1: Metrics hình học & tính toán (Geometric & Computational Metrics)
-- `svg_metrics.total_path_length_mm`: Tổng chiều dài nét vẽ tiếp xúc mặt giấy ($mm$) — chỉ số chính RQ1.
-- `svg_metrics.pen_lift_distance_mm`: Tổng quãng đường đầu bút di chuyển trên không khi nhấc bút ($mm$) — chỉ số chính RQ2.
-- `svg_metrics.pen_lift_count`: Số lần nhấc đầu bút di chuyển giữa các stroke rời rạc — chỉ số chính RQ2.
-- `svg_metrics.optimize_time_ms`: Thời gian tính toán thuật toán tối ưu thứ tự nét ($ms$) — chỉ số chính RQ2. *(Lưu ý: Đối với chế độ handwriting, do duy trì thứ tự nét tự nhiên theo từng từ nên `optimize_time_ms = 0.0`).*
-- `svg_metrics.skew_angle_deg`: Góc nắn bù nghiêng giấy đã áp dụng (độ) — chỉ số RQ3.
-- `ai_processing_time_ms`: Tổng thời gian xử lý thực tế trên backend của request ($ms$, trích xuất từ `meta.processing_time_ms`) — phục vụ chỉ số thời gian tính toán ở RQ1/RQ3.
+- `svg_metrics.total_path_length_mm`: Tổng chiều dài nét vẽ tiếp xúc mặt giấy ($mm$) — metric hình học sản phẩm; không tự là chỉ số chính N-RQ1.
+- `svg_metrics.pen_lift_distance_mm`: Tổng quãng đường đầu bút di chuyển trên không khi nhấc bút ($mm$) — metric sản phẩm, báo bổ sung trong nghiên cứu.
+- `svg_metrics.pen_lift_count`: Số lần nhấc đầu bút di chuyển giữa các stroke rời rạc — metric sản phẩm, báo bổ sung trong nghiên cứu.
+- `svg_metrics.optimize_time_ms`: Thời gian tính toán thuật toán tối ưu thứ tự nét ($ms$) — metric sản phẩm, báo bổ sung trong nghiên cứu. *(Handwriting có thể chạy tối ưu; ghi giá trị thực sự do engine trả, không mặc định 0.0 chỉ vì giữ thứ tự thân chữ).*
+- `svg_metrics.skew_angle_deg`: Góc nắn bù nghiêng giấy đã áp dụng (độ) — telemetry nắn giấy, không phải N-RQ3 độ nhạy.
+- `ai_processing_time_ms`: Tổng thời gian xử lý thực tế trên backend của request ($ms$, trích xuất từ `meta.processing_time_ms`) — thời gian xử lý request sản phẩm; tách khỏi thời gian solver/ước tính chuyển động nghiên cứu.
 
 #### Nhóm 2: Metrics phần cứng (Hardware Execution Metrics)
 - `actual_draw_time_sec`: Thời gian vẽ thực tế đo được trên máy vẽ vật lý ($s$).
 - **Lưu ý trung thực khoa học:** Chỉ được ghi nhận là thời gian vẽ thực tế khi có máy vẽ vật lý kết nối và nguồn đo thời gian thực từ phần cứng. Hiện tại khi chưa cắm máy vẽ thật, giá trị này trong backend print là thời gian mô phỏng phần mềm (`mock_grbl` / ước tính thời gian chạy theo tốc độ ngòi $40\text{ mm/s}$); tuyệt đối không đánh đồng thời gian mô phỏng với thời gian thi công thực tế trên máy thật.
 
-#### Dự kiến cho thực nghiệm CA-VHC (Non-binding / Chưa triển khai trong contract hiện tại)
-Các chỉ số dưới đây đang trong giai đoạn thiết kế thực nghiệm, không bắt buộc trong contract API hiện hành:
+#### Chỉ số khám phá lịch sử (ngoài contract nghiên cứu hiện hành)
+Các chỉ số dưới đây là backlog cũ, không là cam kết kỳ này. Chỉ số chính hiện tại là J tại theta0, gap_m, coverage, independent violations, infeasible rate, regret bounds và chi phí bộ giải theo Docs 32:
 - Tỷ lệ va chạm dấu tiếng Việt (Diacritic collision rate).
 - Tỷ lệ nhận dạng ký tự/từ đọc đúng (Character/Word Recognition Rate).
 - Độ dài pen-up trung bình trên mỗi ký tự.
@@ -517,9 +538,10 @@ Các chỉ số dưới đây đang trong giai đoạn thiết kế thực nghi�
 | `request_id` | string | mục 2 / 2b | Khóa chính, dùng để đối chiếu lỗi |
 | `timestamp` | ISO 8601 | giao diện | Thời điểm ghi log |
 | `dataset_item_id` | string / null | mục 2 / 2b (`experiment.dataset_item_id`) | null nếu không phải request thí nghiệm chính thức |
-| `method_tag` | string / null | mục 2 / 2b (`experiment.method_tag`) | Dùng để nhóm theo baseline khi phân tích (RQ1, RQ2, RQ3) |
+| `method_tag` | string / null | mục 2 / 2b (`experiment.method_tag`) | Tag sản phẩm/legacy; không thay method IDs nghiên cứu mới |
 | `input_type` | string | mục 2 / 2b | `"image"`, `"text"`, hoặc `"handwriting"` |
 | `style` | string | mục 2 / 2b | Phong cách vẽ hoặc phong cách chữ đã chọn |
+| `model_used` | string / null | payload logger / meta model | Cột hiện hữu trong `backend/csv_logger.py`; không bỏ khỏi header |
 | `ai_processing_time_ms` | number | mục 3 / 3b (`meta.processing_time_ms`) | Thời gian xử lý backend thực tế (ms) |
 | `svg_metrics.total_path_length_mm` | number | thuật toán / engine | Tổng chiều dài nét (mm) |
 | `svg_metrics.pen_lift_distance_mm` | number | thuật toán / engine | Quãng đường nhấc bút (mm) |
@@ -532,9 +554,9 @@ Các chỉ số dưới đây đang trong giai đoạn thiết kế thực nghi�
 **Ví dụ 1 dòng log (CSV):**
 
 ```
-request_id,timestamp,dataset_item_id,method_tag,input_type,style,ai_processing_time_ms,svg_metrics.total_path_length_mm,svg_metrics.pen_lift_distance_mm,svg_metrics.pen_lift_count,svg_metrics.optimize_time_ms,actual_draw_time_sec,final_status,error_code
-a1b2c3d4,2026-08-26T10:15:32Z,img_014,pipeline_v1,image,sketch,3200,1840.5,320.2,18,145,712,done,
-hw5e6f7g,2026-09-17T08:20:15Z,letter_001,cavhc_current,handwriting,hand_hocsinh,14.5,150.2,73.0,22,0.0,35,done,
+request_id,timestamp,dataset_item_id,method_tag,input_type,style,model_used,ai_processing_time_ms,svg_metrics.total_path_length_mm,svg_metrics.pen_lift_distance_mm,svg_metrics.pen_lift_count,svg_metrics.optimize_time_ms,actual_draw_time_sec,final_status,error_code
+a1b2c3d4,2026-08-26T10:15:32Z,img_014,pipeline_v1,image,sketch,dall-e-3,3200,1840.5,320.2,18,145,712,done,
+hw5e6f7g,2026-09-17T08:20:15Z,letter_001,cavhc_current,handwriting,hand_hocsinh,legacy-handwriting,14.5,150.2,73.0,22,0.0,35,done,
 ```
 
 ---
@@ -614,10 +636,10 @@ Mỗi lỗi trả về đều theo cùng cấu trúc `{ "code": "...", "message"
 > - Các trường, cấu trúc và tên gọi dưới đây **KHÔNG có hiệu lực contract binding** cho phiên bản v1.4 hiện tại.
 > - Client và backend **không** được đưa các trường này vào validation bắt buộc của API v1.4.
 > - Tên trường, kiểu dữ liệu và cấu trúc có thể thay đổi khi nhóm tiến hành triển khai thực tế.
-> - **Ranh giới dữ liệu nghiên cứu:** Writer Profile Dataset và CA-VHC Dataset là các thành phần phục vụ nghiên cứu khoa học, trích xuất đặc trưng và hiệu chuẩn ngoại tuyến (offline processing) được đặc tả riêng tại [`08_handwriting_dataset_spec.md`](08_handwriting_dataset_spec.md); hoàn toàn không làm thay đổi hay ảnh hưởng đến contract của endpoint `POST /api/ai/generate` hiện tại.
+> - **Ranh giới dữ liệu nghiên cứu:** Writer Profile Dataset là backlog ngoài cam kết; CA-VHC Dataset cũ là dữ liệu hỗ trợ, không tự là Holdout mới. ResearchCase/candidate manifest mới là lớp offline riêng được đặc tả riêng tại [`08_handwriting_dataset_spec.md`](08_handwriting_dataset_spec.md); hoàn toàn không làm thay đổi hay ảnh hưởng đến contract của endpoint `POST /api/ai/generate` hiện tại.
 > - **Hiện trạng xử lý văn bản dài:** Backend hiện tại xử lý trên 1 trang duy nhất và từ chối văn bản vượt quá giới hạn khổ giấy bằng mã lỗi `TEXT_OVERFLOW`.
 
-### A. Cá nhân hóa nét chữ & Hồ sơ người viết (Writer Profile / Personalization)
+### A. Cá nhân hóa nét chữ & Hồ sơ người viết — BACKLOG ngoài cam kết kỳ này
 - **Mục đích:** Hỗ trợ tạo chữ viết tay nét đơn mang đặc trưng phong cách của người viết cụ thể dựa trên tập mẫu trích xuất đặc trưng (few-shot personalization).
 - **Request mở rộng dự kiến (`options` trong `POST /api/ai/generate`):**
 ```json
@@ -709,7 +731,15 @@ Mọi thay đổi định dạng dữ liệu phải được cập nhật vào f
 
 | Ngày | Người sửa | Nội dung thay đổi |
 | :--- | :--- | :--- |
-| *26/8* | Tuấn | v1.1 — bổ sung mục 6 (log CSV cho bài báo khoa học), thêm trường `experiment` (mục 2), `svg_metrics` (mục 4), `actual_draw_time_sec` (mục 5) theo nhận xét giảng viên hướng dẫn |
+| *26/8* | Tuấn | v1.1 — bổ sung mục 6 (log CSV cho bài báo khoa học), thêm trường `experiment` (mục 2), `svg_metrics` (mục 4), `actual_draw_time_sec` (mục 5) theo quyết định thiết kế log của nhóm |
 | *28/8* | Tminh | v1.2 — bổ sung mục 5b (`POST /api/print/start`, `/pause`, `/cancel`) và mục 5c (`GET /api/history`), thêm `"cancelled"` vào enum `status` ở mục 5, thêm checklist xác nhận khả năng tạm dừng của phần cứng ở mục 9. Ba nội dung ở mục 5c (nguồn gốc `title`, quan hệ với log CSV, định dạng `time_ago`) vẫn cần chốt khi có người phụ trách backend/database chính thức |
 | *29/8* | Tuấn | v1.3 — bổ sung mục 5d (`GET /api/print/svg/{request_id}`) để giao diện lấy nội dung SVG thật, phục vụ canvas hiển thị hiệu ứng "vẽ dần theo %" từ màn Xác nhận trở đi; thêm checklist yêu cầu Thuật toán lưu lại file SVG đọc được qua endpoint này |
 | *17/9* | Tuấn | v1.4 — bổ sung contract cho chế độ thư tay nét đơn (mục 2b: `input_type="handwriting"`, mục 3b: response thư tay), phân định rõ ràng metrics hình học tính toán và thời gian phần cứng thực tế, chuẩn hóa bảng mã lỗi đầy đủ từ backend, bổ sung checklist handwriting và phụ lục định hướng mở rộng non-binding (Writer Profile, Layout, Multi-page, Telemetry) |
+
+## 10. Contract nghiên cứu mới và gate triển khai
+
+Nguồn định nghĩa duy nhất là Docs 32: ResearchCase, SolveRequest/SolveResult, CertificateResult, outcome/scope/complete flags/bounds, provenance/access rules. Interface ban đầu offline, chưa hứa public font upload hoặc job HTTP. TV4 API/solver, TV2 baseline/runner/result, TV1 dữ liệu/license, TV3 oracle/hardware review trước code/freeze.
+
+Đầu ra OPTIMAL chỉ trong scope được chứng minh; TIMEOUT/RESOURCE_LIMIT có thể có incumbent nhưng không thành optimal; beam là upper bound, không thay exact optimum cho regret. Prefix không đầy đủ không gọi top-m toàn cục. Chứng nhận giới hạn trong finite feasible set/theta box đã khóa; không là thời gian máy thật. JSON không NaN/Infinity.
+
+Ngày 02/10/2026 chỉ cập nhật docs; không thay code/CSV/hardware ownership hoặc nghiệm thu endpoint mới. Archive bản trước sửa tại history/20261002; test/reference source còn thiếu có task tại Docs 03.

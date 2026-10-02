@@ -1,8 +1,14 @@
+<!-- scope-migration-20261002 -->
+> **Phạm vi ngày 02/10/2026:** Tài liệu hardware hỗ trợ. Nội dung thiết kế/đo/review bên dưới giữ đúng phạm vi và ngày của nó; không đồng nghĩa đã mua máy, đã hiệu chuẩn hoặc đã nghiệm thu hướng nghiên cứu mới. Nghiên cứu dùng máy vẽ phẳng hai trục khi sẵn sàng, ghi cơ cấu/bộ điều khiển/bút/giấy theo run. Concept A4 một bút là phương án tham khảo hiện tại, không yêu cầu AxiDraw/CoreXY hay nhiều màu.
+> Kế hoạch hiện hành: [Docs 30](../30_research_development_plan.md); đặc tả [Docs 31](../31_joint_solver_contract.md) và [Docs 32](../32_research_api_and_artifact_contract.md). Thông báo GVHD đồng ý hướng không thay sign-off kỹ thuật hoặc duyệt tham số.
+
 # Electronics Specification
 
 **Subsystem:** Electronics, Control & Wiring  
 **Document Version:** V1.0  
 **Status:** SYSTEM CONCEPT / TBD  
+
+> **Architecture notice (2026-09-27):** The one-Z-servo wiring below describes the historical dock branch. The intended Q4D moving head needs four independently addressed servo channels and a power/interlock design; see [08_four_servo_head_rebaseline.md](08_four_servo_head_rebaseline.md). No four-servo electrical release is implied by this document.
 
 ---
 

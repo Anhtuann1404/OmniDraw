@@ -1,3 +1,7 @@
+<!-- scope-migration-20261002 -->
+> **Phạm vi ngày 02/10/2026:** Tài liệu thu thập hỗ trợ đã có. Writer Profile không còn cam kết kỳ này; không tuyển mẫu hoặc dùng các phiếu này làm Holdout mới chỉ vì cập nhật kế hoạch.
+> Kế hoạch hiện hành: [Docs 30](../30_research_development_plan.md); đặc tả [Docs 31](../31_joint_solver_contract.md) và [Docs 32](../32_research_api_and_artifact_contract.md). Thông báo GVHD đồng ý hướng không thay sign-off kỹ thuật hoặc duyệt tham số.
+
 # OmniDraw Handwriting Collection Sheet Pack v1
 
 Thư mục lưu trữ bộ biểu mẫu thu thập dữ liệu chữ viết tay tiếng Việt (**OmniDraw Handwriting Collection Sheet Pack v1**) phục vụ đề tài nghiên cứu **OmniDraw (NCKH 2026–2027)** và mô hình hóa **CA-VHC** (Context-Aware Vector Handwriting Core).

@@ -1,3 +1,7 @@
+<!-- scope-migration-20261002 -->
+> **Phạm vi ngày 02/10/2026:** Tài liệu thu thập hỗ trợ đã có. Writer Profile không còn cam kết kỳ này; không tuyển mẫu hoặc dùng các phiếu này làm Holdout mới chỉ vì cập nhật kế hoạch.
+> Kế hoạch hiện hành: [Docs 30](../../30_research_development_plan.md); đặc tả [Docs 31](../../31_joint_solver_contract.md) và [Docs 32](../../32_research_api_and_artifact_contract.md). Thông báo GVHD đồng ý hướng không thay sign-off kỹ thuật hoặc duyệt tham số.
+
 # OmniDraw — Technical Notes: Handwriting Collection Sheet P03 Demo v0.1
 
 **Tài liệu:** Báo cáo thông số kỹ thuật & Thiết kế hình học phiếu thu thập mẫu P03 (Demo Layout v0.1)  

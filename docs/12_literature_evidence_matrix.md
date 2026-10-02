@@ -1,8 +1,26 @@
+<!-- scope-migration-20261002 -->
+> **Phạm vi ngày 02/10/2026:** Tài liệu hỗ trợ được chuyển phạm vi. Phần hiện hành là kế hoạch/contract được dẫn dưới đây; các ID RQ, mốc thời gian và giả thuyết khác trong phần nội dung trước cập nhật chỉ áp dụng cho giai đoạn cũ.
+> Kế hoạch hiện hành: [Docs 30](30_research_development_plan.md); đặc tả [Docs 31](31_joint_solver_contract.md) và [Docs 32](32_research_api_and_artifact_contract.md). Thông báo GVHD đồng ý hướng không thay sign-off kỹ thuật hoặc duyệt tham số.
+
+## Ma trận cần hoàn tất cho lõi mới
+
+| Nguồn | Vai trò | Trạng thái nội dung | Việc cần làm |
+|---|---|---|---|
+| Balas (1999), *New classes of efficiently solvable generalized traveling salesman problems*, [DOI 10.1023/A:1018939709890](https://link.springer.com/article/10.1023/A:1018939709890) | Generalized choice/order DP gần lõi | Metadata có nguồn; đối chiếu toàn văn PENDING | Ghi trang, đúng giả thiết và giới hạn riêng từng thành phố |
+| Balas & Simonetti (2001), *Linear time dynamic-programming algorithms for new classes of restricted TSPs: a computational study*, [DOI 10.1287/ijoc.13.1.56.9748](https://pubsonline.informs.org/doi/10.1287/ijoc.13.1.56.9748) | Restricted-order DP | Đối chiếu toàn văn PENDING | Bảng trang và cận trạng thái; không tự gán novelty |
+| Chakraborty et al. (2010), STACS, pp. 167–178, [DOI 10.4230/LIPIcs.STACS.2010.2452](https://drops.dagstuhl.de/entities/document/10.4230/LIPIcs.STACS.2010.2452) | Parametric shortest paths, một tham số | Hướng liên quan; không thay chứng minh regret | Phân biệt phạm vi một/two parameters |
+
+Ma trận cũ bên dưới giữ lịch sử tra cứu. Mỗi kết luận dùng trong bản thảo mới cần evidence span/page đã đọc; metadata hoặc tóm tắt không đủ xác nhận giới hạn thuật toán.
+
+
+
 # OmniDraw — Literature Evidence Matrix
 
 **Phiên bản:** 0.2
 **Trạng thái:** `CITATION_CHAINING_R1 VERIFIED — TEAM REVIEW PENDING`
 **Protocol:** [`11_literature_review_protocol.md`](11_literature_review_protocol.md)
+
+> **Phạm vi 29/09/2026:** 16 nguồn ở đây là seed matrix cho CA-VHC RQ1–RQ3. Các nguồn liên quan phong cách hoặc font chỉ là bối cảnh; chưa đủ để chứng minh novelty/hiệu quả RQ4–RQ5. Cần bổ sung vòng sàng lọc riêng theo [Docs 22](22_nckh_extended_scope.md) và [protocol](11_literature_review_protocol.md).
 
 **Material Passport**
 
@@ -87,3 +105,17 @@ S16 cho thấy không còn hợp lệ nếu phát biểu chung rằng “chưa c
 - Đánh giá legibility/naturalness của chữ viết tay sinh tự động.
 - Nguồn peer-reviewed về contextual allograph cho Latin cursive hoặc type design có anchor/entry/exit; S16 mới là preprint và tập trung connectivity/spacing.
 - Nghiên cứu human factors để định nghĩa protocol đánh giá tự nhiên, dễ đọc và mức giống phong cách người viết.
+
+## 6. Seed sources sơ bộ cho RQ4/RQ5 (29/09/2026)
+
+Các nguồn dưới đây được xác minh **metadata/trang nguồn chính và nội dung tóm tắt liên quan**, chưa qua toàn văn, dual screening hoặc chấm chất lượng như S01–S16. Không cộng chúng vào mẫu 16 nguồn của kết luận P0 và chưa dùng để tuyên bố novelty RQ4/RQ5.
+
+| ID | Nguồn chính | Dùng để đặt câu hỏi | Giới hạn chuyển giao | Trạng thái |
+| :--- | :--- | :--- | :--- | :--- |
+| E01 | E. Aksan et al., [DeepWriting (CHI 2018)](https://ait.ethz.ch/deepwriting) — đã có ở S02 | Prior art về tách nội dung/phong cách digital ink; xác định baseline/tiêu chí style cho RQ4 | Không có phép đo OmniDraw/plotter hay dữ liệu tiếng Việt của nhóm | `EXISTING_SEED; RQ4_FULLTEXT_PENDING` |
+| E02 | V. Pippi, S. Cascianelli, R. Cucchiara, [Handwritten Text Generation from Visual Archetypes (CVPR 2023)](https://openaccess.thecvf.com/content/CVPR2023/papers/Pippi_Handwritten_Text_Generation_From_Visual_Archetypes_CVPR_2023_paper.pdf) | Few-shot style và văn bản mới/rare characters gợi ý phép thử unseen text/writer | Đầu ra ảnh/generative model; không áp kết quả cho vector plotter hoặc chữ Việt | `METADATA_AND_ABSTRACT_CHECKED; FULLTEXT_PENDING` |
+| E03 | Microsoft, [OpenType GPOS — Glyph Positioning Table](https://learn.microsoft.com/en-us/typography/opentype/spec/gpos) — đã có ở S05 | `MarkToBase`/`MarkToMark` cung cấp đối chứng anchor, có ví dụ dấu thanh trên dấu nguyên âm tiếng Việt | GPOS định vị glyph, không tạo centerline hay sửa font thiếu glyph | `OFFICIAL_SPEC; RQ5_SCOPE_CHECKED` |
+| E04 | Unicode Consortium, [UAX #15](https://www.unicode.org/reports/tr15/) — đã có ở S04 | Xác lập NFC/NFD và tổ hợp tương đương khi xây tập test RQ5 | Không quy định hình học dấu, độ đọc hoặc hành vi máy vẽ | `OFFICIAL_STANDARD; RQ5_SCOPE_CHECKED` |
+| E05 | W. Pan et al., [Few Shot Font Generation via Transferring Similarity Guided Global Style and Quantization Local Style (ICCV 2023)](https://openaccess.thecvf.com/content/ICCV2023/papers/Pan_Few_Shot_Font_Generation_Via_Transferring_Similarity_Guided_Global_Style_ICCV_2023_paper.pdf) | Prior art cho việc giữ phong cách khi tạo glyph từ ít mẫu; giới hạn claim novelty font của RQ5 | Nhiệm vụ font generation học sâu khác với pilot dựng dấu/centerline tiếng Việt | `METADATA_AND_ABSTRACT_CHECKED; FULLTEXT_PENDING` |
+
+Việc tiếp theo của vòng tìm kiếm: xác minh toàn văn và phương pháp đánh giá của E02/E05; tìm công trình trực tiếp về Vietnamese font completion/diacritic layout, outline-to-centerline và nghiên cứu người đọc; ghi truy vấn, số kết quả và lý do loại. Kết luận hiện tại chỉ là bản đồ prior art sơ bộ.

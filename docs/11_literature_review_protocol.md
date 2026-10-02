@@ -1,3 +1,15 @@
+<!-- scope-migration-20261002 -->
+> **Phạm vi ngày 02/10/2026:** Tài liệu hỗ trợ được chuyển phạm vi. Phần hiện hành là kế hoạch/contract được dẫn dưới đây; các ID RQ, mốc thời gian và giả thuyết khác trong phần nội dung trước cập nhật chỉ áp dụng cho giai đoạn cũ.
+> Kế hoạch hiện hành: [Docs 30](30_research_development_plan.md); đặc tả [Docs 31](31_joint_solver_contract.md) và [Docs 32](32_research_api_and_artifact_contract.md). Thông báo GVHD đồng ý hướng không thay sign-off kỹ thuật hoặc duyệt tham số.
+
+## Trọng tâm tra cứu hiện hành
+
+Ưu tiên đọc toàn văn Balas (1999) và Balas–Simonetti (2001), bảng đối chiếu có trang cho generalized choices, giới hạn thứ tự/cửa sổ riêng, state và complexity. Chưa kiểm toàn văn thì ghi PENDING; không nói các bài chỉ ghé nút cố định. STACS 2010 là hướng liên quan một tham số, không bao phủ chứng nhận hai tham số của nhóm.
+
+Tra cứu thêm glyph/dấu tiếng Việt, staged selection/top-m, constrained stroke scheduling, kiểm chứng hình học độc lập và thống kê tương đương. Ghi query/database/date/inclusion/exclusion/fulltext/read-status; không dùng chưa tìm thấy để khẳng định chưa ai làm. Cửa sổ dấu là search restriction, không bằng chứng thói quen. Metadata tài liệu không đồng nghĩa đã đọc nội dung. Không gán quyết định nhóm cho GVHD khi nguồn là phản biện mô phỏng.
+
+
+
 # OmniDraw — Giao thức Tổng quan Tài liệu Chương 2
 
 **Phiên bản:** 0.2
@@ -5,6 +17,10 @@
 **Cập nhật citation chaining vòng 1:** 2026-09-22
 **Loại tổng quan:** Structured scoping review
 **Trạng thái:** `CITATION CHAINING ROUND 1 COMPLETE — TEAM SCREENING PENDING`
+
+**Bổ sung 29/09/2026:** Vòng 1 dưới đây phục vụ RQ1–RQ3. RQ4/RQ5 ở [Docs 22](22_nckh_extended_scope.md) cần vòng tìm kiếm riêng về cá nhân hóa từ ít mẫu, đánh giá writer-disjoint, glyph completion/dấu tiếng Việt, outline-to-centerline và khả năng đọc/giữ phong cách. Ghi chuỗi truy vấn, ngày tìm, tiêu chí chọn/loại và nguồn đã kiểm chứng trước khi mở rộng claim của [Chương 2](13_chapter_2_literature_review.md); chưa coi ma trận hiện hành là tổng quan đầy đủ cho RQ4/RQ5.
+
+**Nhật ký tìm nguồn mở rộng ban đầu (29/09/2026):** tìm trên kho bài của tác giả/CVPR/arXiv và trang tiêu chuẩn Microsoft/Unicode với các nhóm truy vấn `few-shot writer-specific handwriting unseen text`, `DeepWriting digital ink style content`, `few-shot font generation local style`, `OpenType MarkToBase MarkToMark Vietnamese`, `Unicode normalization Vietnamese combining marks`. Giữ lại nguồn sơ bộ ở [ma trận §6](12_literature_evidence_matrix.md); mới kiểm metadata và phần giới thiệu/đặc tả liên quan, chưa hoàn tất dual screening, full-text extraction hay citation chaining RQ4/RQ5.
 
 **Material Passport**
 

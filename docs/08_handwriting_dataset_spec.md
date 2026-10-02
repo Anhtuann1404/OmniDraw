@@ -1,3 +1,15 @@
+<!-- scope-migration-20261002 -->
+> **Phạm vi ngày 02/10/2026:** Tài liệu hỗ trợ được chuyển phạm vi. Phần hiện hành là kế hoạch/contract được dẫn dưới đây; các ID RQ, mốc thời gian và giả thuyết khác trong phần nội dung trước cập nhật chỉ áp dụng cho giai đoạn cũ.
+> Kế hoạch hiện hành: [Docs 30](30_research_development_plan.md); đặc tả [Docs 31](31_joint_solver_contract.md) và [Docs 32](32_research_api_and_artifact_contract.md). Thông báo GVHD đồng ý hướng không thay sign-off kỹ thuật hoặc duyệt tham số.
+
+## Dữ liệu hiện hành cho nghiên cứu mới (02/10/2026)
+
+Schema TV1 cũ giữ tương thích; không tự đổi validator qua tài liệu này. ResearchCase/candidate manifest mới theo Docs 32 là lớp riêng, liên kết item IDs và hash nguồn. TV1 chuẩn bị dấu chồng, owner strokes, reversal/precedence/contact/default anchors/license. Style được áp trước khóa hình học.
+
+Lập Holdout mới trước tháng 4, cỡ mẫu chốt tháng 1; không tái dùng 20 từ đã có trong repo làm tập chính. Không đưa nội dung split mới vào repo công khai; ghi custody/access log, hash commit split trước mở. DEV không đọc Holdout để chọn ranking, parameters hoặc candidates. Nếu TV1 làm oracle dự phòng, TV2 nhận custody trước bàn giao. Thu mẫu người viết online là backlog, không bắt buộc để kết luận cơ chế cửa sổ.
+
+
+
 # OmniDraw — Đặc tả Kỹ thuật Dataset Chữ viết tay (Handwriting Dataset Specification)
 
 **Tài liệu mã số:** `DOC-SPEC-08-DATASET`  

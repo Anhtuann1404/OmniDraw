@@ -1,7 +1,11 @@
+<!-- scope-migration-20261002 -->
+> **Phạm vi ngày 02/10/2026:** Tài liệu hardware hỗ trợ. Nội dung thiết kế/đo/review bên dưới giữ đúng phạm vi và ngày của nó; không đồng nghĩa đã mua máy, đã hiệu chuẩn hoặc đã nghiệm thu hướng nghiên cứu mới. Nghiên cứu dùng máy vẽ phẳng hai trục khi sẵn sàng, ghi cơ cấu/bộ điều khiển/bút/giấy theo run. Concept A4 một bút là phương án tham khảo hiện tại, không yêu cầu AxiDraw/CoreXY hay nhiều màu.
+> Kế hoạch hiện hành: [Docs 30](../30_research_development_plan.md); đặc tả [Docs 31](../31_joint_solver_contract.md) và [Docs 32](../32_research_api_and_artifact_contract.md). Thông báo GVHD đồng ý hướng không thay sign-off kỹ thuật hoặc duyệt tham số.
+
 # Hardware Validation Plan
 
 **Subsystem:** System-Wide Hardware Verification  
-**Document Version:** V1.1  
+**Document Version:** V1.2 (Q4C.3 dock and cable-chain gates)
 **Status:** PROPOSED VALIDATION PLAN / TBD  
 
 ---
@@ -22,6 +26,9 @@ This document defines the experimental verification protocols, bench test setups
 | **TP-04** | Z-Lifter Compliance & Nib Pressure | Z-Lifter & Carriage | Nib force $50 - 100\text{ gf}$ ($\approx 0.49 - 0.98\text{ N}$) (`CONCEPT TARGET / TO BE VALIDATED IN Q3`) | PROPOSED TEST PROTOCOL |
 | **TP-05** | CoreXY Orthogonality & Dimensional Error | CoreXY Gantry & Chassis | Orthogonality Acceptance Criterion: TBD Q4 | PROPOSED TEST PROTOCOL |
 | **TP-06** | Poka-Yoke Reverse-Orientation Rejection | Receiver Key Pin / Tool Notch | Positive mechanical interception before ball engagement (Margin: $+0.170\text{ mm}$) | PROPOSED TEST PROTOCOL |
+| **TP-07** | Passive Dock Retention & Four-Bay Release/Pickup | Frozen Q2 dock / Q3 receiver / Q4 motion | Measure force margin and complete ≥100 cycles without dropped or jammed tools; numerical force threshold pending review | PHYSICAL TEST PENDING |
+| **TP-08** | Two-Stage Cable-Chain Fit & Full-Travel Sweep | Q4 left Y bracket / X carriage | Selected chain/end links fit and clear the full 450 × 375 mm travel with supplier bend radius respected | SUPPLIER DATA & PHYSICAL TEST PENDING |
+| **TP-09** | Q4C.3 Integrated CAD / Motor-Mount Regression | Q4 frame, motors, gantry, Q1–Q3 interfaces | Saved STEP topology and frozen hashes pass; motor/mount overlap = 0; sampled XY is clear, but the dock's rigid stop collides with coupled-tool +Y approach/−Y pickup. Chain details also remain open. | CAD DOCK-PATH FAIL / VIRTUAL RELEASE OPEN |
 
 ---
 
@@ -92,6 +99,23 @@ This document defines the experimental verification protocols, bench test setups
   - Derived worst-case early-intercept margin: $+0.170\text{ mm}$.
   - **Status:** `DERIVED / BENCH CONFIRMATION REQUIRED`
   - **Formal Reliability Acceptance Criterion:** `TBD`
+
+### 3.7 TP-07: Passive Dock Retention & Release/Pickup Test
+- **Objective:** Determine whether the frozen passive dock actually retains each tool when the receiver withdraws in Machine −Y. CAD clearance alone does not prove this force balance.
+- **Apparatus:** Printed dock, tool sleeves and receiver from the same revision; selected magnets; push-pull force gauge; four-bay motion fixture or assembled machine; video/force log.
+- **Procedure:** Measure receiver/tool separation force and parked-tool pullout force in the actual release direction for each bay. Record the full force–displacement curves, not only peak values. Run at least 100 release/pickup cycles across the four bays, including worst-case commanded acceleration, and log drops, jams, mis-seating and visible wear.
+- **Acceptance:** No dropped or jammed tool in the test run, and a documented dock-retention margin over the measured release disturbance with an agreed safety factor. **The numerical force threshold and safety factor must be approved before testing; neither 18–22 N coupling preload nor CAD interference may be substituted for them.** If this cannot be met, open a formal Q2 interface-change decision rather than silently adding a latch or magnet.
+
+### 3.8 TP-08: Cable-Chain Vendor Fit & Motion Test
+- **Objective:** Replace the straight CAD route corridors with a selected, articulated chain and verify that both stages can follow all commanded motion.
+- **Apparatus:** Purchased J10-class chain and connector-end datasheet, printed left-bracket/carriage mounting coupons, cable harness, assembled gantry.
+- **Procedure:** Measure connector hole pitch, end-link footprint, link pitch, minimum bend radius and real cable fill. Finish both mounting hole patterns only after matching that data. Model both moving loops and their swept envelopes; run X = 0–450 mm and Y = 0–375 mm including all corners, then repeat on hardware at low speed while watching snagging, pinch points, end-link rotation and load transfer into the frozen Q3 slider.
+- **Acceptance:** Full motion without snagging or interference; supplier bend radius and fill limits met; no cable load into the Q3 floating Z assembly. The former 300/340 mm cut lengths and R18 assumption are **not acceptance values**.
+
+### 3.9 TP-09: Q4C.3 Integrated CAD and Two-Level Release Gate
+- **Automated evidence:** Run `cad/q4c3_verification.py` on regenerated STEP. Check the 14 frozen Q1–Q3 hashes, monolithic printed parts, motor/deck and A-shaft/base clearances, MGN12H holes, 41 tensioner positions, sampled XY B-Rep states, staged tool trajectories, and sampled endstop contacts. Record test spacing and numerical tolerance; a finite grid is not a continuous collision proof.
+- **Virtual fabrication gate:** Requires zero forbidden overlap in the accepted model, a demonstrated dock insertion/retention/release path, selected and fitted cable-chain end links including the actual bend envelope, and reconciled part drawings. The current Q4C.3 model **fails this gate**: its Q4 fork now reproduces Q2's geometric −Y stop, but the rigid lip intersects the coupled tool during the specified +Y approach (24 mm³ at Y=363, bay 1). The reverse pickup path is likewise blocked; the connector can be 18 or 20 mm pitch and its final tab height is unresolved.
+- **Physical final-freeze gate:** On the assembled prototype, measure 18–22 N *axial coupling* pull-off force; demonstrate nib-position repeatability ≤0.05 mm over at least 100 automated tool-change cycles; demonstrate no dropped/mis-seated tool at commanded acceleration 3000 mm/s². Record measurements and method. These proposed targets are not results and do not replace TP-07's separate dock-retention force margin, which still needs a numeric threshold and safety factor approved before test.
 
 ---
 
