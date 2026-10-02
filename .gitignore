@@ -87,3 +87,9 @@ frontend/dist/
 .agents/
 graphify-out/
 .deepseek_usage.json
+
+# Single-case TV4 DEV diagnostics; not official research evidence.
+output/research_dev/
+# Local tool-generated workspaces; preserve contents without staging them.
+/.codex-build/
+/.codex-finalizer/

@@ -57,7 +57,7 @@ Gateway/schema/manifest đã có trong `backend/research/`, main đã include ro
 | S7 — Freeze và đánh giá | TV1 custody; TV2 runner; TV3 QA; TV4 tích hợp | Freeze manifest, Holdout mới, per-case results, gói tái lập | Qua S2–S6 trong phạm vi khóa; ghi timeout/infeasible/coverage |
 | S8 — Font và máy | TV1 + TV4 font; TV3 máy | Pilot chọn lọc, giấy phép, manual reference, physical logs | Sau gate lõi; có thể hoãn để bảo vệ báo cáo |
 
-Các ký hiệu S0–S8 là kế hoạch mới, không đổi tên PR1–PR5/E1/E4 cũ thành bằng chứng mới. Đóng PR3 cũ trên đúng commit là việc tích hợp nền, không thay gate S7.
+Các ký hiệu S0–S8 là kế hoạch mới, không đổi tên PR1–PR5/E1/E4 cũ thành bằng chứng mới. PR3 đã đóng theo xác nhận trưởng nhóm ngày 02/10/2026; không mở lại việc đã hoàn tất. PR đóng, code merge và nghiệm thu kết quả cần bằng chứng riêng theo commit/phạm vi; không thay gate S7. Chỉ kế thừa thành phần cũ sau kiểm tra tính phù hợp với contract mới.
 
 ## 5. Một tiến độ duy nhất: 8 tháng
 
@@ -84,6 +84,10 @@ Tháng tương đối từ ngày bắt đầu thực hiện được phê duyệ
 
 ## 7. Tài liệu, ownership và migration
 
-Ownership code TV2/HAL/cơ khí giữ nguyên; TV4 chỉ sửa gateway do mình sở hữu và tài liệu. Tài liệu đang dùng được đồng bộ; báo cáo, phiếu review, corpus cũ và bằng chứng giữ như lịch sử có nhãn. Bản nội dung trước khi thay được giữ trong `history/20261002/`; không xóa kết quả không thuận lợi hoặc nâng sign-off.
+Ownership code TV2/HAL/cơ khí giữ nguyên; TV4 sửa core nghiên cứu/gateway/tests do mình sở hữu và tài liệu, không viết thay baseline/runner TV2 hoặc oracle/hardware TV3. Tài liệu đang dùng được đồng bộ; báo cáo, phiếu review, corpus cũ và bằng chứng giữ như lịch sử có nhãn. Bản nội dung trước khi thay được giữ trong `history/20261002/`; không xóa kết quả không thuận lợi hoặc nâng sign-off.
 
 Đề cương Google Docs là nguồn hướng nghiên cứu; Docs 29 là bản đối chiếu local. Đổi contract phải sửa Docs 31/32, traceability và runner manifest trước code. API mới chỉ thành implemented khi có code, kiểm thử và review trên commit cụ thể.
+
+### Checkpoint DEV TV4 sau bàn giao
+
+No-forget/safe-forget, geometry polyline/graph tương tác, replay/trace và công cụ một ca DEV đã có ở `backend/research/`; xem [bản đồ mã](../README.md) và [research README](../backend/research/README.md). Có diagnostic bốn đỉnh giữ schedule cố định nhưng vẫn NOT_CERTIFIED. Mã cũ ở handwriting giữ vai trò sản phẩm/hồi quy; không đổi mục tiêu cũ thành J mới. Tests nghiên cứu ở `tests/research/`; script PR3 cũ ở `scripts/legacy/` với wrapper tương thích. Đây là tiến độ triển khai S1/S3/S6 DEV, không hoàn tất gate S0/S2–S7 hoặc nghiệm thu thuật toán. Baseline/runner TV2, oracle TV3, dữ liệu/quality TV1 và sign-off còn PENDING.

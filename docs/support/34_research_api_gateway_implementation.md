@@ -76,4 +76,4 @@ Schema/registry chỉ bảo đảm cấu trúc và liên kết input-output. Ch�
 
 ## 6. Kiểm thử
 
-`tests/test_research_api.py` dùng TestClient và adapter kiểm thử, không đóng vai bộ giải nghiên cứu/oracle độc lập. Kiểm invalid schema/hash/order/owner/NaN/options, payload/budget, Holdout/case-path, output/provenance, timeout, chứng nhận và main/OpenAPI integration. Chạy cùng `backend/test_handwriting_validation.py` để kiểm hồi quy API sản phẩm. Kết quả lần chạy được ghi trong progress log; không gọi các test này là sign-off nghiên cứu.
+`tests/research/test_api.py` dùng TestClient và adapter kiểm thử, không đóng vai bộ giải nghiên cứu/oracle độc lập. Kiểm invalid schema/hash/order/owner/NaN/options, payload/budget, Holdout/case-path, output/provenance, timeout, chứng nhận và main/OpenAPI integration. Chạy cùng `backend/test_handwriting_validation.py` để kiểm hồi quy API sản phẩm. Kết quả lần chạy được ghi trong progress log; không gọi các test này là sign-off nghiên cứu.

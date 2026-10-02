@@ -1,0 +1,9 @@
+# Ignore slides and presentation decks not related to core NCKH research
+docs/slides/
+*presentation*
+.agents/skills/presentation-design-prompts/
+.agents/skills/open-design-deck/
+# Generated tool workspaces and runtime artifacts are not source dependencies.
+.codex-build/
+.codex-finalizer/
+output/

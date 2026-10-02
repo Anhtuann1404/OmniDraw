@@ -9,17 +9,32 @@
 | Đề cương Google Docs và Docs 29 | Đã chỉnh và đồng bộ nội dung; không là nghiệm thu thuật toán |
 | API gateway `backend/research/` | Đã có schema/hash/manifest/routes và kiểm output adapter; mặc định solver/certifier chưa ready |
 | Kiểm thử gateway/hồi quy API | 42 + 34 = 76 PASS; adapter test không là bộ giải nghiên cứu |
-| DP joint, baseline top-m/beam, oracle và certifier | Chưa nghiệm thu hướng mới; đang ở đặc tả và bàn giao adapter |
+| DP joint | Có bản DEV no-forget/safe-forget, geometry/replay/trace; review và oracle độc lập PENDING |
+| Baseline top-m/beam, oracle và certifier | Chưa nghiệm thu hướng mới; thuộc bàn giao TV2/TV3; chưa có adapter mặc định |
 | Holdout mới và freeze | Chưa mở/chưa khóa theo kế hoạch mới; không đưa dữ liệu niêm phong lên repo |
 | Máy thật/font pilot | Có điều kiện; chưa tự tạo kết quả hoặc sign-off |
 
 Không suy ra trạng thái nhánh remote TV1–TV3 từ checkout TV4. E1/E4/PR3/hardware cũ giữ verdict đúng phạm vi và commit.
 
+**PR3 đã đóng theo xác nhận trưởng nhóm ngày 02/10/2026.** Không mở lại việc PR3 đã hoàn tất. Trạng thái PR đóng, code đã merge và kết quả nghiệm thu là ba thông tin riêng: checkout này không xác minh merge vào nhánh đích; sign-off chỉ áp dụng commit/phạm vi đã ký. Tên nhánh có `pr3` không đổi slice nghiên cứu mới thành việc của PR3 cũ.
+
+## Slice TV4 mới — DEV DP và tổ chức mã (02/10/2026)
+
+- Nền: nhánh `codex/tv4-pr3-slices`, HEAD `8dcfe663df61745b9b0cfe2d2dc5a1fd3c283b22`, sau `34810eb`; upstream local cùng hash, chưa fetch remote. PR3 đã đóng. Các thay đổi có sẵn của bridge/CAD/hardware, file bị xóa và prototype được giữ nguyên; không dùng `backup/pr3-implementation`.
+- Lõi mới `backend/research/`: geometry polyline/all-pairs/contact disk và graph tương tác; DP S=(i,t,A,P,e) no-forget/safe-forget, backpointer/tie DEV, guard wall-time/state/allocated-memory và incumbent khi incomplete; replay BODY/MARK/END và chi phí. Không import solver/cost/bridge sản phẩm hoặc hardware.
+- Policy DEV khai báo tường minh: floor .20 mm, all simultaneously selectable pairs, self-cross/backtracking reject, CONNECT exact endpoint với whitelist; ngoại lệ geometry chỉ trong disk radius hữu hạn. Unknown policy/overflow bị từ chối. Không tự chốt policy/numeric error/quality gate/parameter freeze. Chi tiết giới hạn và lệnh: [research README](../backend/research/README.md).
+- `dev_solve.py`: debug một ca DEV/synthetic, so hai mode, JSON SolveResult/config/hash/trace. `render_dev.py`: SVG giữ nguyên geometry/hướng/order và metadata independent NOT_RUN; không cấp quyền print. `vertex_analysis.py`: giữ schedule cố định, đối thủ full candidate set tại bốn đỉnh; mọi output vẫn NOT_CERTIFIED, incomplete không có maximum claim. Đây không là runner TV2 hoặc oracle TV3.
+- Tests và fixtures gom vào `tests/research/`; manifest riêng replay arithmetic và solver geometry có hash thật. Dữ liệu tự tạo ba chữ NFD, tối đa hai candidates/chữ/sáu nét và empty; không là font/dataset TV1 đã duyệt. Các số theta/k/contact radius/budget chỉ cho DEV.
+- Tổ chức: README root và từng vùng mã nêu ownership/current/legacy/PENDING; script tái lập PR3 chuyển `scripts/legacy/`, giữ wrapper đường dẫn cũ; update references nguồn đang dùng. Historical commands/evidence giữ phạm vi gốc, migration map ở [tests README](../tests/research/README.md). Ignore riêng tool workspaces và output DEV, giữ bytes công việc có sẵn.
+- Kiểm thử cuối: **313 PASS** (133 research, 34 handwriting validation, 146 hồi quy legacy), một warning AnyIO/TestClient; `git diff --check` sạch. Lệnh và giới hạn ghi trong progress-log. DEV CLI hai mode cùng J=19.914213562373096 mm; independent NOT_RUN. Hồi quy PASS không mở lại PR3. Thay đổi chưa commit/merge; API default solver/certifier vẫn chưa ready. Giá trị OPTIMAL/INFEASIBLE là search claim trong policy DEV, không là nghiệm thu độc lập.
+
+**Tiếp nối:** TV2 review cost/ranking và nhận baseline/runner; TV3 xác nhận nhận oracle và viết primitive/vét cạn độc lập trên fixtures; TV1 review dữ liệu/reference/quality/custody. TV4 xử lý bất đồng và chỉ tích hợp adapter/export/certifier sản phẩm sau gate độc lập. HOLDOUT vẫn chưa mở; contract freeze, epsilon_eq/theta0/domain/k/tolerance/quality/budgets/tie và sign-off PENDING. Không mở lại backlog PR3.
+
 ## Việc kế tiếp theo owner
 
 | Owner | Làm ngay | Bàn giao và gate |
 |---|---|---|
-| TV4 | Mã hóa S=(i,t,A,P,e), BODY/MARK/END, cost và forget theo Docs 31 §5 | Trace ca nhỏ; so no-forget/safe-forget rồi đối chiếu oracle độc lập; chưa tự ký solver |
+| TV4 | Bàn giao code/fixtures DEV DP no-forget/safe-forget và trace; phối hợp review policy | Đối chiếu oracle độc lập TV3, xử lý mismatch; chưa tự ký solver hoặc mở HOLDOUT |
 | TV2 — Trần Hồng Khải | Review cost/N_cycle, ranker decomposition/tie/prefix evidence; đọc Balas và RTSP/PCGTSP | Bảng nguồn có trang, baseline/runner cùng scope; protocol lambda và completion trên DEV |
 | TV1 — Nguyễn Hoàng Thắng | Glyph/reference/anchor/license, quality bounds trên DEV; fixtures dấu chồng; split/custody | Manifest/hash trước–sau lọc và lý do, access log, dữ liệu mới chưa dùng tinh chỉnh |
 | TV3 — Phùng Tấn Minh | Xác nhận nhận oracle, viết primitive/vét cạn độc lập từ đặc tả | Ca biên 0,19/0,20/0,21 mm, deadline/reverse/connect/đồng hạng/vô nghiệm; không chờ máy để làm oracle |

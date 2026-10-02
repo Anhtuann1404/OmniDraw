@@ -26,7 +26,7 @@ Docs 31/32 vẫn là **draft cần review trước freeze**, không tự thành 
 - Đề cương Google Docs đã chỉnh; Docs 29 đồng bộ bản nguồn.
 - Lớp API/schema/manifest/adapter gateway đã có; kiểm thử mục tiêu 42 gateway + 34 hồi quy handwriting = **76 PASS**. Đây là kiểm thử giao tiếp với adapter giả lập.
 - Mặc định chưa đăng ký joint/baseline/oracle/certifier. Capabilities chưa ready; không coi API đã có là thuật toán đã hoàn tất.
-- DP mới, oracle/primitive độc lập, top-m/beam và chứng nhận chưa được nghiệm thu. Preflight và sign-off E1/E4 cũ giữ phạm vi/commit gốc.
+- DP mới đã có bản DEV no-forget/safe-forget, geometry/replay/trace và diagnostic bốn đỉnh; chưa được nghiệm thu độc lập. Oracle/primitive độc lập, top-m/beam và chứng nhận còn PENDING. Preflight và sign-off E1/E4 cũ giữ phạm vi/commit gốc.
 - Holdout mới, ngưỡng/điểm vận hành/budgets và quality gate chưa khóa. Chưa có xác nhận vật lý từ việc tổ chức tài liệu này.
 
 ## 4. Mỗi bạn bắt đầu ở đâu?
@@ -57,3 +57,7 @@ Sửa mô hình → Docs 31; payload/complete flags → Docs 32; ownership/tiế
 Để xem nhánh chia sẻ: fetch `origin`, mở nhánh `origin/codex/tv4-pr3-slices` và bắt đầu ở `docs/README.md`; mỗi bạn tiếp tục code trên nhánh của mình. Không ghi đè working tree đang có việc. Commit/hash bàn giao trong Git là nguồn phiên bản, không dùng chỉ tên nhánh để nhận diện nội dung.
 
 Không đưa nội dung Holdout mới vào repo công khai. Khóa trước khi mở, báo riêng incomplete/timeout/infeasible; không dùng test adapter hoặc mô phỏng làm bằng chứng thuật toán/máy thật.
+
+## Bản đồ mã hiện hành
+
+[README repo](../README.md) phân biệt sản phẩm, nghiên cứu mới, hardware và công cụ legacy. [Research README](../backend/research/README.md) là hướng dẫn code/DEV, không thay Docs 31/32; [tests README](../tests/research/README.md) ghi scope và map đường dẫn đã chuyển; [scripts README](../scripts/README.md) phân loại prototype và script PR3 đã đóng. PR đóng, code merge và nghiệm thu được ghi riêng theo commit/phạm vi.

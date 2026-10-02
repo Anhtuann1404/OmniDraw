@@ -1,0 +1,324 @@
+{
+  "schema_version": "joint-artifact-v1-draft",
+  "manifest_sha256": "921b2a37f4266cf62f6b03b9f2715ad3191becf45ad826080344e4baf96cfd9c",
+  "cases": [
+    {
+      "schema_version": "joint-artifact-v1-draft",
+      "case_id": "tv4-solver-dev-stacked-3",
+      "dataset_version": "tv4-hand-authored-dev-v1",
+      "manifest_sha256": "921b2a37f4266cf62f6b03b9f2715ad3191becf45ad826080344e4baf96cfd9c",
+      "split": "dev",
+      "original_text": "ấbc",
+      "normalized_text": "ấbc",
+      "normalization": "NFD",
+      "candidates": [
+        {
+          "owner_index": 0,
+          "grapheme": "ấ",
+          "variants": [
+            {
+              "candidate_id": "a-dev",
+              "source_hash": "7cf4d39a942db63b08a56f087be8c5129b358d06d74ccda425edc986dfbbc49f",
+              "strokes": [
+                {
+                  "stroke_id": "b",
+                  "role": "body",
+                  "owner_index": 0,
+                  "reversible": true,
+                  "polyline_mm": [
+                    [
+                      0.0,
+                      0.0
+                    ],
+                    [
+                      1.0,
+                      0.0
+                    ]
+                  ],
+                  "mark_type": null
+                },
+                {
+                  "stroke_id": "shape",
+                  "role": "mark",
+                  "owner_index": 0,
+                  "reversible": true,
+                  "polyline_mm": [
+                    [
+                      0.0,
+                      1.0
+                    ],
+                    [
+                      1.0,
+                      1.0
+                    ]
+                  ],
+                  "mark_type": "dev-tone"
+                },
+                {
+                  "stroke_id": "tone",
+                  "role": "mark",
+                  "owner_index": 0,
+                  "reversible": true,
+                  "polyline_mm": [
+                    [
+                      0.0,
+                      2.0
+                    ],
+                    [
+                      1.0,
+                      2.0
+                    ]
+                  ],
+                  "mark_type": "dev-tone"
+                }
+              ],
+              "body_order": [
+                "b"
+              ],
+              "mark_precedence": [
+                [
+                  "shape",
+                  "tone"
+                ]
+              ]
+            },
+            {
+              "candidate_id": "a-dev-alt",
+              "source_hash": "7309f5f4f2f45009e13caba0576f60c5f302b4bfae7326cab171664e14e6e5ef",
+              "strokes": [
+                {
+                  "stroke_id": "b",
+                  "role": "body",
+                  "owner_index": 0,
+                  "reversible": true,
+                  "polyline_mm": [
+                    [
+                      0.0,
+                      0.0
+                    ],
+                    [
+                      1.0,
+                      0.0
+                    ]
+                  ],
+                  "mark_type": null
+                },
+                {
+                  "stroke_id": "shape",
+                  "role": "mark",
+                  "owner_index": 0,
+                  "reversible": true,
+                  "polyline_mm": [
+                    [
+                      0.0,
+                      3.0
+                    ],
+                    [
+                      1.0,
+                      3.0
+                    ]
+                  ],
+                  "mark_type": "dev-tone"
+                },
+                {
+                  "stroke_id": "tone",
+                  "role": "mark",
+                  "owner_index": 0,
+                  "reversible": true,
+                  "polyline_mm": [
+                    [
+                      0.0,
+                      4.0
+                    ],
+                    [
+                      1.0,
+                      4.0
+                    ]
+                  ],
+                  "mark_type": "dev-tone"
+                }
+              ],
+              "body_order": [
+                "b"
+              ],
+              "mark_precedence": [
+                [
+                  "shape",
+                  "tone"
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "owner_index": 1,
+          "grapheme": "b",
+          "variants": [
+            {
+              "candidate_id": "b-dev",
+              "source_hash": "3bb31fe0c5dadcab183a34c2cfeda1426562f66d55a7462a867e69ef5a73925a",
+              "strokes": [
+                {
+                  "stroke_id": "b1",
+                  "role": "body",
+                  "owner_index": 1,
+                  "reversible": true,
+                  "polyline_mm": [
+                    [
+                      3.0,
+                      0.0
+                    ],
+                    [
+                      4.0,
+                      0.0
+                    ]
+                  ],
+                  "mark_type": null
+                },
+                {
+                  "stroke_id": "b2",
+                  "role": "body",
+                  "owner_index": 1,
+                  "reversible": true,
+                  "polyline_mm": [
+                    [
+                      4.0,
+                      0.0
+                    ],
+                    [
+                      5.0,
+                      0.0
+                    ]
+                  ],
+                  "mark_type": null
+                }
+              ],
+              "body_order": [
+                "b1",
+                "b2"
+              ],
+              "mark_precedence": []
+            }
+          ]
+        },
+        {
+          "owner_index": 2,
+          "grapheme": "c",
+          "variants": [
+            {
+              "candidate_id": "c-dev",
+              "source_hash": "893ec9f36b2e5f3693aaa5438c0c053160c6c8709f3680b5aa1d915f289d4ea0",
+              "strokes": [
+                {
+                  "stroke_id": "b",
+                  "role": "body",
+                  "owner_index": 2,
+                  "reversible": true,
+                  "polyline_mm": [
+                    [
+                      6.0,
+                      0.0
+                    ],
+                    [
+                      7.0,
+                      0.0
+                    ]
+                  ],
+                  "mark_type": null
+                }
+              ],
+              "body_order": [
+                "b"
+              ],
+              "mark_precedence": []
+            }
+          ]
+        }
+      ],
+      "contacts": [
+        {
+          "first": {
+            "owner_index": 1,
+            "candidate_id": "b-dev",
+            "stroke_id": "b1"
+          },
+          "second": {
+            "owner_index": 1,
+            "candidate_id": "b-dev",
+            "stroke_id": "b2"
+          },
+          "location_mm": [
+            4.0,
+            0.0
+          ],
+          "radius_mm": 0.25,
+          "policy_id": "tv4-dev-exact-endpoint-v1"
+        }
+      ],
+      "separation_pairs": [],
+      "delay_policy": {
+        "dev-tone": 1
+      },
+      "geometry_policy": {
+        "c_min_mm": 0.2,
+        "flatten_policy_id": "tv4-dev-polyline-v1",
+        "contact_policy_id": "tv4-dev-exact-endpoint-v1",
+        "numeric_policy_id": "tv4-dev-float-v1",
+        "separation_policy_id": "tv4-dev-all-pairs-v1",
+        "allow_zero_length": false
+      },
+      "boundary": {
+        "p0_mm": [
+          -1.0,
+          0.0
+        ],
+        "p_end_mm": [
+          8.0,
+          0.0
+        ],
+        "initial_pen": "UP",
+        "final_pen": "UP",
+        "convention_id": "tv4-dev-maximal-down-runs-v1"
+      },
+      "reference_geometry": null,
+      "candidate_set_sha256": "f44ee116fe76805f7dc64535d41540c2d1b65375b76d27003a4df3e81bf8023f"
+    },
+    {
+      "schema_version": "joint-artifact-v1-draft",
+      "case_id": "tv4-solver-dev-empty",
+      "dataset_version": "tv4-hand-authored-dev-v1",
+      "manifest_sha256": "921b2a37f4266cf62f6b03b9f2715ad3191becf45ad826080344e4baf96cfd9c",
+      "split": "dev",
+      "original_text": "",
+      "normalized_text": "",
+      "normalization": "NFD",
+      "candidates": [],
+      "contacts": [],
+      "separation_pairs": [],
+      "delay_policy": {},
+      "geometry_policy": {
+        "c_min_mm": 0.2,
+        "flatten_policy_id": "tv4-dev-polyline-v1",
+        "contact_policy_id": "tv4-dev-exact-endpoint-v1",
+        "numeric_policy_id": "tv4-dev-float-v1",
+        "separation_policy_id": "tv4-dev-all-pairs-v1",
+        "allow_zero_length": false
+      },
+      "boundary": {
+        "p0_mm": [
+          0.0,
+          0.0
+        ],
+        "p_end_mm": [
+          3.0,
+          4.0
+        ],
+        "initial_pen": "UP",
+        "final_pen": "UP",
+        "convention_id": "tv4-dev-maximal-down-runs-v1"
+      },
+      "reference_geometry": null,
+      "candidate_set_sha256": "b11cdc02c158cb6e9515224f94d678178ec61543de2cdd1d7aa2f05df1815c1e"
+    }
+  ]
+}

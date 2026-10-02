@@ -55,7 +55,7 @@ TV2 đăng ký trên DEV cách quét, quy tắc phá hòa, coverage và cutoff �
 
 ## 5. Trạng thái, truy hồi và cận
 
-Đặc tả triển khai một mục tiêu, **DRAFT_REVIEW_REQUIRED**; chưa là DP đã nghiệm thu.
+Đặc tả triển khai một mục tiêu, **DRAFT_REVIEW_REQUIRED**; có bản DP DEV TV4, chưa là DP đã nghiệm thu. Bản DEV no-forget/safe-forget và policy hạn chế được mô tả trong [research README](../backend/research/README.md); không tự freeze policy vì code đã có.
 
 ### 5.1 Ngữ nghĩa trạng thái
 
@@ -146,3 +146,9 @@ Pi là tập phương án hoàn chỉnh hữu hạn: mỗi pi gồm lựa chọn
 `R_pi(theta)=J_pi(theta)-min_sigma J_sigma(theta)=max_sigma[J_pi(theta)-J_sigma(theta)]` lồi. Theta trong hình chữ nhật là tổ hợp lồi bốn đỉnh, nên maximum R_pi bằng maximum tại bốn đỉnh. Không suy ra minimax schedule thuộc bốn vertex winners. Exact optima cho exact modeled certificate; valid lower bounds cho conservative upper bound. Cả certificate và float tolerance phải khai báo phạm vi/sai số; heuristic không thay optimum.
 
 Gap_m=(J_m-J_joint)/J_m chỉ khi cả hai optimal feasible và J_m>0. J_m=0, timeout, incomplete, infeasible tách riêng. epsilon_eq có căn cứ và duyệt trước freeze, chưa có giá trị mặc định. Kết luận hữu ích vượt biên / tương đương thực dụng trong tập đã khóa với đủ coverage / chưa đủ bằng chứng. Không dùng p>0.05 để kết luận tương đương hoặc extrapolate toàn tiếng Việt.
+
+## Checkpoint triển khai DEV TV4
+
+`geometry.py` dựng mọi cặp nét đồng thời chọn được và kiểm trước gộp state; graph owner có cạnh nếu một cặp candidates không tương thích. `joint_dp.py` giữ toàn bộ A trước, mode safe-forget bỏ assignment khi thân xong/hết pending/hết cạnh tương lai và giữ endpoint descriptor e riêng. Replay độc lập với recurrence nhưng cùng tác giả TV4, không là oracle TV3. Tests có ca kiểm tay, tương tác xa, boundary .19/.20/.21, incomplete và seed cố định so hai mode. Lệnh/path ở [tests README](../tests/research/README.md).
+
+DEV geometry dùng polyline float, all-pairs và ngoại lệ contact disk hữu hạn; chưa có chứng nhận sai số số học hoặc quality gate. Policy này là phạm vi thử nghiệm có ID riêng, không thay điều kiện review/freeze và không coi kiểm no-forget/safe-forget là kiểm chứng độc lập. `vertex_analysis.py` xuất diagnostic bốn đỉnh cho schedule cố định; đối thủ full-set DEV và status luôn NOT_CERTIFIED.

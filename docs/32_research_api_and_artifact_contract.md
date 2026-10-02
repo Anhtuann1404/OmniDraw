@@ -2,7 +2,7 @@
 
 **Version:** `joint-artifact-v1-draft`, 02/10/2026. **Owner:** TV4 API/schema; TV2 runner/result; TV1 manifest; TV3 oracle/hardware.
 
-**Status:** IMPLEMENTED_GATEWAY / REVIEW_PENDING, 02/10/2026. Lớp API/schema/manifest/adapter đã có trong `backend/research/` và gắn vào `backend/main.py`. Có GET `/api/research/capabilities`, POST `/validate`, `/solve`, `/certify`. Chưa có adapter joint/baseline/oracle/certifier được đăng ký mặc định; solve/certify trả 503 cho case khả dụng khi thiếu implementation. Đây không là nghiệm thu thuật toán hay chứng nhận. Không gửi payload này vào `/api/ai/generate`. Hướng dẫn dùng và bàn giao: [Docs 34](support/34_research_api_gateway_implementation.md).
+**Status:** IMPLEMENTED_GATEWAY / DEV_DP_IMPLEMENTED / REVIEW_PENDING, 02/10/2026. Lớp API/schema/manifest/adapter đã có trong `backend/research/` và gắn vào `backend/main.py`. Có GET `/api/research/capabilities`, POST `/validate`, `/solve`, `/certify`. Chưa có adapter joint/baseline/oracle/certifier được đăng ký mặc định; solve/certify trả 503 cho case khả dụng khi thiếu implementation. Đây không là nghiệm thu thuật toán hay chứng nhận. Không gửi payload này vào `/api/ai/generate`. Hướng dẫn dùng và bàn giao: [Docs 34](support/34_research_api_gateway_implementation.md).
 
 ## 1. Kiến trúc và giao diện dự kiến
 
@@ -120,3 +120,9 @@ Manifest DEV/synthetic đăng ký phía server qua `OMNIDRAW_RESEARCH_MANIFEST`;
 API giới hạn 30s, 200k states, 100k configurations, 512MB; đây không là budget nghiệm thu nghiên cứu. Adapter phải thực thi budget nội bộ. Ghi cả ranking và solve timing, hash/scope/complete flags và checker identity; không đổi TIMEOUT thành OPTIMAL. Certificate giữ hash của phương án hoàn chỉnh, bốn đỉnh đúng miền và kiểm độc lập; không chứng nhận thời gian máy thật.
 
 Kiểm thử mục tiêu hiện có: 42 gateway + 34 handwriting regression = 76 PASS, adapter chỉ kiểm transport. Solver/baseline/oracle/certifier và review owner còn PENDING. Chi tiết lần chạy trong nhật ký tiến độ.
+
+## Checkpoint offline DEV sau gateway
+
+TV4 có `joint_dp.py` no-forget/safe-forget, `geometry.py`, replay/trace, single-case `dev_solve.py`, renderer SVG DEV và diagnostic `vertex_analysis.py`. Xem [research README](../backend/research/README.md) cho policy/budget/giới hạn và lệnh tái lập. Đây chưa là adapter được đăng ký vào API; capabilities mặc định không đổi, validate HTTP vẫn structural-only, solve/certify chưa ready.
+
+DEV JSON chứa SolveResult cùng config và trace; config_sha256 là hash config CLI thực, không phải SolveRequest HTTP nên không đưa packet này trực tiếp vào adapter. Provenance ghi source commit và dirty digest của diff tracked cùng hashes untracked không ignored. SVG metadata giữ candidate/schedule hashes, independent NOT_RUN và quality PENDING. Diagnostic bốn đỉnh luôn NOT_CERTIFIED dù các search DEV complete. Không tự nâng independent_violations/PASS hoặc mở freeze/HOLDOUT từ các artifact này. Tests gateway đã chuyển đến `tests/research/test_api.py`; map đường dẫn cũ ở [tests README](../tests/research/README.md).
