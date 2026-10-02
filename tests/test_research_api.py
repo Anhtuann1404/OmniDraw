@@ -257,3 +257,25 @@ def test_real_app_exposes_gateway_and_keeps_product_routes():
     assert "post" in schema["paths"]["/api/research/solve"]
     assert "post" in schema["paths"]["/api/ai/generate"]
     assert "post" in schema["paths"]["/api/print/start"]
+
+
+@pytest.mark.parametrize("outcome", ["OPTIMAL", "NO_FEASIBLE_IN_PREFIX"])
+@pytest.mark.parametrize("ranking_complete", [True, False])
+def test_exact_prefix_requires_certified_ranking_not_exhaustive_enumeration(outcome, ranking_complete):
+    def adapter(case, request):
+        result = empty_adapter(case, request)
+        result.update(scope="declared_prefix", outcome=outcome,
+                      enumeration_complete=False, ranking_complete=ranking_complete)
+        if outcome == "NO_FEASIBLE_IN_PREFIX":
+            result["schedule"] = None
+            result["metrics"] = {"total_wall_time_ms": 0.1}
+            result["bounds"] = {}
+        return result
+    client, _ = client_for(solvers={"staged_top_m": adapter})
+    request = solve_request("staged_top_m")
+    request["baseline"] = {"ranker": "H_geom", "m": 1, "rank_at_theta0_ref": "dev-theta0"}
+    response = client.post("/api/research/solve", json=request)
+    assert response.status_code == (200 if ranking_complete else 500)
+    if ranking_complete:
+        assert response.json()["enumeration_complete"] is False
+        assert response.json()["outcome"] == outcome

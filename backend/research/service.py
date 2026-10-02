@@ -111,7 +111,7 @@ class ResearchService:
                 if result.outcome == "INFEASIBLE":
                     raise ValueError("Prefix must use NO_FEASIBLE_IN_PREFIX")
                 if result.outcome in {"OPTIMAL", "NO_FEASIBLE_IN_PREFIX"} and not (
-                    result.enumeration_complete and result.ranking_complete
+                    result.ranking_complete
                 ):
                     raise ValueError("Prefix exactness requires complete ranking")
             if request.method == "beam" and result.outcome in {"OPTIMAL", "INFEASIBLE"}:
