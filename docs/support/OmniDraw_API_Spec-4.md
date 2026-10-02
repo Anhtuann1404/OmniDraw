@@ -1,3 +1,5 @@
+> **SUPPORTING_REFERENCE.** Nguồn quyết định: [kế hoạch](../30_research_development_plan.md), [contract solver](../31_joint_solver_contract.md), [API](../32_research_api_and_artifact_contract.md). Nội dung trùng hoặc khác phải đề xuất sửa nguồn chính; không tự ghi đè đặc tả.
+
 # OmniDraw — Tài liệu chuẩn giao tiếp giữa các mảng (API/Data Contract)
 
 **Phiên bản tài liệu:** v1.5-docs (02/10/2026); contract sản phẩm kế thừa v1.4; giao diện nghiên cứu mới ở trạng thái draft/planned. Lịch sử v1.4: (bổ sung contract cho chế độ thư tay nét đơn `input_type="handwriting"`, làm rõ cấu trúc `svg_metrics` nghiên cứu và chuẩn hóa bảng mã lỗi; kế thừa v1.3 — mục 5d lấy SVG thật; kế thừa v1.2 — điều khiển máy vẽ và lịch sử; kế thừa v1.1 — log CSV nghiên cứu)
@@ -12,7 +14,7 @@
 
 ## Trạng thái API và thứ tự áp dụng — 02/10/2026
 
-Tài liệu này giữ contract sản phẩm và bổ sung kế hoạch tích hợp mới; phiên bản tài liệu không có nghĩa backend đã triển khai tất cả mục. [Docs 31](31_joint_solver_contract.md) định nghĩa bài toán; [Docs 32](32_research_api_and_artifact_contract.md) định nghĩa API/artifact nghiên cứu dự kiến. Các đoạn RQ/PR cũ bên dưới là ký hiệu lịch sử; N-RQ1–4 hiện hành ở Docs 05. Thông báo GVHD đồng ý hướng không thay nghiệm thu endpoint/parameters.
+Tài liệu này giữ contract sản phẩm và bổ sung kế hoạch tích hợp mới; phiên bản tài liệu không có nghĩa backend đã triển khai tất cả mục. [Docs 31](../31_joint_solver_contract.md) định nghĩa bài toán; [Docs 32](../32_research_api_and_artifact_contract.md) định nghĩa API/artifact nghiên cứu dự kiến. Các đoạn RQ/PR cũ bên dưới là ký hiệu lịch sử; N-RQ1–4 hiện hành ở Docs 05. Thông báo GVHD đồng ý hướng không thay nghiệm thu endpoint/parameters.
 
 | Nhóm | Mã local đã thấy route | Phạm vi |
 |---|---|---|

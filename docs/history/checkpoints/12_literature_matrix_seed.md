@@ -1,26 +1,12 @@
-<!-- scope-migration-20261002 -->
-> **Phạm vi ngày 02/10/2026:** Tài liệu hỗ trợ được chuyển phạm vi. Phần hiện hành là kế hoạch/contract được dẫn dưới đây; các ID RQ, mốc thời gian và giả thuyết khác trong phần nội dung trước cập nhật chỉ áp dụng cho giai đoạn cũ.
-> Kế hoạch hiện hành: [Docs 30](30_research_development_plan.md); đặc tả [Docs 31](31_joint_solver_contract.md) và [Docs 32](32_research_api_and_artifact_contract.md). Thông báo GVHD đồng ý hướng không thay sign-off kỹ thuật hoặc duyệt tham số.
-
-## Ma trận cần hoàn tất cho lõi mới
-
-| Nguồn | Vai trò | Trạng thái nội dung | Việc cần làm |
-|---|---|---|---|
-| Balas (1999), *New classes of efficiently solvable generalized traveling salesman problems*, [DOI 10.1023/A:1018939709890](https://link.springer.com/article/10.1023/A:1018939709890) | Generalized choice/order DP gần lõi | Metadata có nguồn; đối chiếu toàn văn PENDING | Ghi trang, đúng giả thiết và giới hạn riêng từng thành phố |
-| Balas & Simonetti (2001), *Linear time dynamic-programming algorithms for new classes of restricted TSPs: a computational study*, [DOI 10.1287/ijoc.13.1.56.9748](https://pubsonline.informs.org/doi/10.1287/ijoc.13.1.56.9748) | Restricted-order DP | Đối chiếu toàn văn PENDING | Bảng trang và cận trạng thái; không tự gán novelty |
-| Chakraborty et al. (2010), STACS, pp. 167–178, [DOI 10.4230/LIPIcs.STACS.2010.2452](https://drops.dagstuhl.de/entities/document/10.4230/LIPIcs.STACS.2010.2452) | Parametric shortest paths, một tham số | Hướng liên quan; không thay chứng minh regret | Phân biệt phạm vi một/two parameters |
-
-Ma trận cũ bên dưới giữ lịch sử tra cứu. Mỗi kết luận dùng trong bản thảo mới cần evidence span/page đã đọc; metadata hoặc tóm tắt không đủ xác nhận giới hạn thuật toán.
-
-
+> **HISTORICAL_SEED.** Đây là protocol/ma trận giai đoạn trước, không chứng minh tính mới cho mô hình hiện hành. [Đọc trước](../../README.md).
 
 # OmniDraw — Literature Evidence Matrix
 
 **Phiên bản:** 0.2
 **Trạng thái:** `CITATION_CHAINING_R1 VERIFIED — TEAM REVIEW PENDING`
-**Protocol:** [`11_literature_review_protocol.md`](11_literature_review_protocol.md)
+**Protocol:** [`11_literature_review_protocol.md`](../../support/11_literature_review_protocol.md)
 
-> **Phạm vi 29/09/2026:** 16 nguồn ở đây là seed matrix cho CA-VHC RQ1–RQ3. Các nguồn liên quan phong cách hoặc font chỉ là bối cảnh; chưa đủ để chứng minh novelty/hiệu quả RQ4–RQ5. Cần bổ sung vòng sàng lọc riêng theo [Docs 22](22_nckh_extended_scope.md) và [protocol](11_literature_review_protocol.md).
+> **Phạm vi 29/09/2026:** 16 nguồn ở đây là seed matrix cho CA-VHC RQ1–RQ3. Các nguồn liên quan phong cách hoặc font chỉ là bối cảnh; chưa đủ để chứng minh novelty/hiệu quả RQ4–RQ5. Cần bổ sung vòng sàng lọc riêng theo [Docs 22](../../support/22_nckh_extended_scope.md) và [protocol](../../support/11_literature_review_protocol.md).
 
 **Material Passport**
 

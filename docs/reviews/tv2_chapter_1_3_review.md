@@ -19,10 +19,10 @@ HUMAN_VERDICT: PASS
 
 ## 1. Phạm vi bắt buộc
 
-- [`../10_nckh_research_plan.md`](../10_nckh_research_plan.md): RQ1/RQ3, B1/B2/B3 và metric chuyển động.
-- [`../14_chapter_1_introduction.md`](../14_chapter_1_introduction.md): mục 1.4.
-- [`../13_chapter_2_literature_review.md`](../13_chapter_2_literature_review.md): mục 2.4–2.6.
-- [`../15_chapter_3_methodology.md`](../15_chapter_3_methodology.md): mục 3.3–3.5 và 3.8.
+- [`../10_nckh_research_plan.md`](../support/10_nckh_research_plan.md): RQ1/RQ3, B1/B2/B3 và metric chuyển động.
+- [`../14_chapter_1_introduction.md`](../support/14_chapter_1_introduction.md): mục 1.4.
+- [`../13_chapter_2_literature_review.md`](../history/checkpoints/13_chapter_2_literature_review.md): mục 2.4–2.6.
+- [`../15_chapter_3_methodology.md`](../support/15_chapter_3_methodology.md): mục 3.3–3.5 và 3.8.
 
 ## 2. Tiêu chí phải xác nhận
 

@@ -1,3 +1,5 @@
+> **SUPPORTING_REFERENCE.** Nguồn quyết định: [kế hoạch](../30_research_development_plan.md), [contract solver](../31_joint_solver_contract.md), [API](../32_research_api_and_artifact_contract.md). Nội dung trùng hoặc khác phải đề xuất sửa nguồn chính; không tự ghi đè đặc tả.
+
 # API nghiên cứu — slice gateway đã triển khai
 
 **Ngày:** 02/10/2026. **Owner:** TV4. **Contract:** `joint-artifact-v1-draft`. **Trạng thái:** code lớp API có kiểm thử; review owner và các solver còn pending. Không tạo sign-off thuật toán/PR3 mới.
@@ -62,7 +64,7 @@ Hash recipe draft: JSON UTF-8, ensure_ascii=false, sort_keys=true, separators=("
 | TV1 | Manifest/glyph/anchors/license, qualified mark IDs và hash recipe; Holdout giữ riêng |
 | TV3 | independent_oracle và checker distance/intersection/cost/clearance; nhận dữ liệu thô, không dùng logic solver |
 
-SolveResult phải khớp run/case/method/candidate/manifest/seed và input/config hashes. Incumbent cần đủ motion coefficients khớp J, IDs/direction/coverage/boundary hợp cấu trúc. Exactness cần search_complete; staged exact cần enumeration/ranking complete và prefix scope. Beam trong gateway này chỉ FEASIBLE hoặc incomplete cho đến khi có cơ chế chứng nhận được review. Không tự đổi TIMEOUT thành OPTIMAL; validation NOT_RUN không thành PASS. PASS yêu cầu checker identity và independent_violations=0.
+SolveResult phải khớp run/case/method/candidate/manifest/seed và input/config hashes. Incumbent cần đủ motion coefficients khớp J, IDs/direction/coverage/boundary hợp cấu trúc. Exactness cần search_complete; staged exact cần ranking_complete (prefix đúng đã được chứng minh), search_complete và prefix scope; enumeration_complete chỉ cho biết đã duyệt hết G, không bắt buộc với k-best có chứng nhận. Beam trong gateway này chỉ FEASIBLE hoặc incomplete cho đến khi có cơ chế chứng nhận được review. Không tự đổi TIMEOUT thành OPTIMAL; validation NOT_RUN không thành PASS. PASS yêu cầu checker identity và independent_violations=0.
 
 Certificate phải khớp schedule hash và đúng bốn góc miền, cùng scope. EXACT_MODELED cần bốn đỉnh exact có optimum/lower-bound evidence; conservative cần lower bounds hợp lệ. Certificate có bound yêu cầu independent validation PASS; gateway kiểm tính nhất quán dữ liệu, không chứng minh adapter đã giải đúng optimum hoặc primitive độc lập. Phần đó là gate nghiệm thu solver/checker.
 

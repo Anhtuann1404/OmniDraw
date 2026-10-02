@@ -18,12 +18,12 @@ HUMAN_VERDICT: PASS
 
 ## 1. Phạm vi bắt buộc
 
-- [`../10_nckh_research_plan.md`](../10_nckh_research_plan.md), tập trung corpus, split, leakage và reproducibility.
-- [`../11_literature_review_protocol.md`](../11_literature_review_protocol.md).
-- [`../12_literature_evidence_matrix.md`](../12_literature_evidence_matrix.md).
-- [`../14_chapter_1_introduction.md`](../14_chapter_1_introduction.md): mục 1.5 và 1.9.
-- [`../13_chapter_2_literature_review.md`](../13_chapter_2_literature_review.md): mục 2.2–2.3.
-- [`../15_chapter_3_methodology.md`](../15_chapter_3_methodology.md): mục 3.1, 3.7 và 3.8.
+- [`../10_nckh_research_plan.md`](../support/10_nckh_research_plan.md), tập trung corpus, split, leakage và reproducibility.
+- [`../11_literature_review_protocol.md`](../support/11_literature_review_protocol.md).
+- [`../12_literature_evidence_matrix.md`](../support/12_literature_evidence_matrix.md).
+- [`../14_chapter_1_introduction.md`](../support/14_chapter_1_introduction.md): mục 1.5 và 1.9.
+- [`../13_chapter_2_literature_review.md`](../history/checkpoints/13_chapter_2_literature_review.md): mục 2.2–2.3.
+- [`../15_chapter_3_methodology.md`](../support/15_chapter_3_methodology.md): mục 3.1, 3.7 và 3.8.
 
 ## 2. Tiêu chí phải xác nhận
 
@@ -55,7 +55,7 @@ Hãy làm reviewer TV1. Đọc docs/reviews/README.md và phiếu này, sau đó
 AI reviewer TV1 đã fetch branch, đối chiếu diff giữa checkpoint đã ký PASS (`7ae43e6994506928cb6be8bd61e936b4f5e3857e`) và commit recheck cuối (`031d1983f07895306a0cf31b72300ad4d9e5ee50`) theo đúng phạm vi được giao:
 
 1. **`docs/10_nckh_research_plan.md`**:
-   - **Liên kết ngữ liệu**: Cập nhật link báo cáo corpus freeze chính thức sang [`docs/19_benchmark_corpus_freeze_report.md`](../19_benchmark_corpus_freeze_report.md) (mục 3.1, 4.4, 7.1) — đường dẫn chính xác và tồn tại.
+   - **Liên kết ngữ liệu**: Cập nhật link báo cáo corpus freeze chính thức sang [`docs/19_benchmark_corpus_freeze_report.md`](../history/checkpoints/19_benchmark_corpus_freeze_report.md) (mục 3.1, 4.4, 7.1) — đường dẫn chính xác và tồn tại.
    - **Công thức H1.2**: Định nghĩa rõ mức giảm số lần nhấc bút $\Delta N_{lift}$ dựa trên tổng tích lũy $\sum_{c \in \mathcal{C}} N_{lift}$ trên tập ghép cặp $\mathcal{C}$ của benchmark corpus (tránh hiện tượng lượng tử hóa khi dùng median từng từ đơn; quy định rõ mẫu số 0 là `NOT_APPLICABLE`).
    - **Trạng thái PR2 / E4**: Ghi nhận Entry Gate E3 (baseline adapters B1/B2/B3) đã hoàn thành (`IMPLEMENTED_AND_TESTED`), nhưng Entry Gate E4 (chữ ký interface chuyển tiếp) tiếp tục giữ `PENDING` chờ TV2+TV4 ký duyệt; không tuyên bố sớm trước khi có code/hợp đồng chính thức.
    - **Quản trị phân tách DEV/Holdout**: Bảo toàn kỷ luật $DEV \cap HOLDOUT = \emptyset$; runner bắt buộc có cờ `--allow-holdout` mới được phép chạy trên tập Holdout; ngăn ngừa tuyệt đối rò rỉ dữ liệu.

@@ -1,6 +1,8 @@
+> **HISTORICAL_RECORD — không là đặc tả hiện hành.** Đọc [hướng hiện tại](../../README.md), [contract](../../31_joint_solver_contract.md) và [công việc](../../03_current-task.md). Giữ kết luận đúng phạm vi/commit gốc.
+
 <!-- scope-migration-20261002 -->
 > **Phạm vi ngày 02/10/2026:** Tài liệu hỗ trợ được chuyển phạm vi. Phần hiện hành là kế hoạch/contract được dẫn dưới đây; các ID RQ, mốc thời gian và giả thuyết khác trong phần nội dung trước cập nhật chỉ áp dụng cho giai đoạn cũ.
-> Kế hoạch hiện hành: [Docs 30](30_research_development_plan.md); đặc tả [Docs 31](31_joint_solver_contract.md) và [Docs 32](32_research_api_and_artifact_contract.md). Thông báo GVHD đồng ý hướng không thay sign-off kỹ thuật hoặc duyệt tham số.
+> Kế hoạch hiện hành: [Docs 30](../../30_research_development_plan.md); đặc tả [Docs 31](../../31_joint_solver_contract.md) và [Docs 32](../../32_research_api_and_artifact_contract.md). Thông báo GVHD đồng ý hướng không thay sign-off kỹ thuật hoặc duyệt tham số.
 
 ## Gate bổ sung cho hướng mới
 
@@ -11,7 +13,7 @@ Checklist PR3 bên dưới là hợp đồng cũ. Muốn tích hợp lõi mới 
 # OmniDraw — Tiêu Chí Nghiệm Thu Trước PR3 (Pre-PR3 Acceptance Contract)
 *(Hợp đồng Nghiệm thu Kỹ thuật cho CA-VHC Diacritic-Aware Trellis DAG)*
 
-> **Phạm vi:** Contract này chỉ nghiệm thu CA-VHC RQ1–RQ3/PR3. Hai hướng mở rộng RQ4 học thói quen viết và RQ5 pilot font thiết kế có gate riêng tại [Docs 22](22_nckh_extended_scope.md); không dùng PASS PR3 để suy ra hai hướng đó đã được triển khai.
+> **Phạm vi:** Contract này chỉ nghiệm thu CA-VHC RQ1–RQ3/PR3. Hai hướng mở rộng RQ4 học thói quen viết và RQ5 pilot font thiết kế có gate riêng tại [Docs 22](../../support/22_nckh_extended_scope.md); không dùng PASS PR3 để suy ra hai hướng đó đã được triển khai.
 
 ```text
 ═══════════════════════════════════════════════════════════════════════════════════════════
@@ -187,8 +189,8 @@ Dùng để bảo đảm tính tương thích ngược và không làm suy thoá
 - **4 seeds chuẩn:** `42`, `100`, `2026`, `999999`.
 - **1 phong cách viết:** `"hand_hocsinh"`.
 - **Tổng số trường hợp:** $6 \times 2 \times 4 = 48$ bản ghi.
-- **Tập tin lưu trữ:** [`tests/fixtures/pr3_ascii_baseline_fingerprints.json`](../tests/fixtures/pr3_ascii_baseline_fingerprints.json).
-- **Mã kiểm thử tự động:** [`tests/test_pr3_acceptance_baseline.py`](../tests/test_pr3_acceptance_baseline.py).
+- **Tập tin lưu trữ:** [`tests/fixtures/pr3_ascii_baseline_fingerprints.json`](../../../tests/fixtures/pr3_ascii_baseline_fingerprints.json).
+- **Mã kiểm thử tự động:** [`tests/test_pr3_acceptance_baseline.py`](../../../tests/test_pr3_acceptance_baseline.py).
 
 ### 7.2. Tập Mẫu Nghiệm thu Dấu Tiếng Việt (Vietnamese Acceptance Specimen Set — 10 từ DEV)
 Dùng để đánh giá độ chính xác của cơ chế định vị dấu và triệt tiêu va chạm bridge sau khi PR3 hoàn tất.

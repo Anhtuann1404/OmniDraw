@@ -1,6 +1,8 @@
+> **HISTORICAL_RECORD — không là đặc tả hiện hành.** Đọc [hướng hiện tại](../../README.md), [contract](../../31_joint_solver_contract.md) và [công việc](../../03_current-task.md). Giữ kết luận đúng phạm vi/commit gốc.
+
 <!-- scope-migration-20261002 -->
 > **Phạm vi ngày 02/10/2026:** BACKLOG ngoài cam kết kỳ này. Phần protocol bên dưới là đề xuất trước đây, chưa là nhiệm vụ hiện hành. Chỉ thí điểm font được giữ có điều kiện; không suy diễn thói quen thứ tự nét từ ảnh quét.
-> Kế hoạch hiện hành: [Docs 30](30_research_development_plan.md); đặc tả [Docs 31](31_joint_solver_contract.md) và [Docs 32](32_research_api_and_artifact_contract.md). Thông báo GVHD đồng ý hướng không thay sign-off kỹ thuật hoặc duyệt tham số.
+> Kế hoạch hiện hành: [Docs 30](../../30_research_development_plan.md); đặc tả [Docs 31](../../31_joint_solver_contract.md) và [Docs 32](../../32_research_api_and_artifact_contract.md). Thông báo GVHD đồng ý hướng không thay sign-off kỹ thuật hoặc duyệt tham số.
 
 # RQ4 — Protocol nghiên cứu thói quen viết cá nhân
 
@@ -29,7 +31,7 @@ Nếu chỉ triển khai B1 thì kết quả phải gọi là **cá nhân hóa t
 
 ## 2. Dữ liệu và kiểm soát rò rỉ
 
-1. TV1 dùng protocol P01–P04, QC và mã ẩn danh trong [Docs 08](08_handwriting_dataset_spec.md) và [Docs 21](21_handwriting_collection_protocol_and_error_handling.md). Pilot 3–5 người viết chỉ kiểm tra khả thi của phiếu/scan/extractor; không đủ làm tập kết luận về tổng quát hóa.
+1. TV1 dùng protocol P01–P04, QC và mã ẩn danh trong [Docs 08](../../support/08_handwriting_dataset_spec.md) và [Docs 21](21_handwriting_collection_protocol_and_error_handling.md). Pilot 3–5 người viết chỉ kiểm tra khả thi của phiếu/scan/extractor; không đủ làm tập kết luận về tổng quát hóa.
 2. Trước thu mẫu, chốt quyền sử dụng, lưu trữ và rút mẫu theo phê duyệt của đơn vị. Không đưa ảnh thô, chữ ký hay thông tin nhận dạng lên Git hoặc dịch vụ ngoài.
 3. Đóng băng danh sách `writer_id`, phiên, form version, QC status, ảnh crop và prompt ID. Mỗi dòng profile phải truy về đúng ảnh nguồn, DPI, mã phiên, phiên bản extractor và thời điểm tạo.
 4. Kế hoạch 40 writer/28–6–6 trong Docs 08 là **mục tiêu dự kiến**, chưa phải số mẫu đạt. Sau pilot, tính lại cỡ mẫu/độ chính xác cần thiết từ biến thiên thực; khóa split writer-disjoint và tập văn bản kiểm tra trước đánh giá.

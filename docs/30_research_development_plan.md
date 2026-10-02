@@ -10,7 +10,7 @@ Ngày 02/10/2026, TV4 thông báo GVHD đã đồng ý hướng nghiên cứu. X
 - Một thí điểm có điều kiện: font thiết kế, TV1–TV4 đồng chủ trì. Không tự sửa mọi font, không khôi phục chữ cơ sở thiếu.
 - Kiểm chứng máy vẽ phẳng hai trục khi thiết bị sẵn sàng. Chưa chốt dòng máy/cơ cấu; phương án A4 tiết kiệm là concept, không phải cấu hình đã mua/hiệu chuẩn.
 - Writer Profile, Pareto, cắt tỉa mở rộng, hiệu chuẩn chủ động, nhiều màu và phân trang nâng cao ngoài cam kết kỳ này. Art Mode và thư tay giữ là chức năng sản phẩm; không lấy số liệu của chúng thay cho nghiên cứu chữ/dấu.
-- [Docs 31](31_joint_solver_contract.md) là đặc tả dùng chung DP–oracle–baseline; [Docs 32](32_research_api_and_artifact_contract.md) là giao diện nghiên cứu dự kiến. API sản phẩm hiện hữu vẫn tại [API Spec](OmniDraw_API_Spec-4.md).
+- [Docs 31](31_joint_solver_contract.md) là đặc tả dùng chung DP–oracle–baseline; [Docs 32](32_research_api_and_artifact_contract.md) là giao diện nghiên cứu dự kiến. API sản phẩm hiện hữu vẫn tại [API Spec](support/OmniDraw_API_Spec-4.md).
 
 ## 2. Ownership theo sản phẩm
 
@@ -25,7 +25,7 @@ TV3 cần xác nhận khả năng nhận oracle trong tuần đầu tháng 1. N�
 
 ## 3. Snapshot triển khai được kiểm tra
 
-Checkout ngày 02/10/2026: `codex/tv4-pr3-slices`, HEAD `c1b4696`, có thay đổi chưa commit. Không suy ra đây là trạng thái mới nhất của mọi nhánh remote.
+Checkout ngày 02/10/2026: `codex/tv4-pr3-slices`, HEAD nền `a7e8379`, có thay đổi chưa commit. Không suy ra đây là trạng thái mới nhất của mọi nhánh remote.
 
 | Thành phần | Bằng chứng hiện có | Việc của hướng mới |
 |---|---|---|
@@ -37,11 +37,11 @@ Checkout ngày 02/10/2026: `codex/tv4-pr3-slices`, HEAD `c1b4696`, có thay đ�
 | HTTP pause/resume ở `backend/main.py` | Nhánh lỗi đi qua `custom_error` | Recheck việc bảo lưu capability/status theo nhánh TV3; chưa tuyên bố checkpoint này đáp ứng toàn contract |
 | Solver joint, oracle độc lập, top-m, chứng nhận | Có preflight khám phá ở Docs 25 | Chưa nghiệm thu hướng mới; preflight dùng primitive chung không thay oracle độc lập |
 
-Không có số test mới hoặc verdict PASS được tạo bởi lần cập nhật tài liệu này.
+Snapshot ban đầu không là verdict của solver mới; các kiểm thử gateway được ghi riêng dưới đây.
 
 ### Cập nhật triển khai API sau snapshot docs
 
-Gateway/schema/manifest đã có trong `backend/research/`, main đã include router; chi tiết Docs 34. Đây là một phần S0/S1, chưa hoàn tất S2–S7. Default methods/certifier đều chưa ready; 38 tests gateway và 34 regression API handwriting PASS. Không dùng test adapter làm số liệu, solver hoặc sign-off owner.
+Gateway/schema/manifest đã có trong `backend/research/`, main đã include router; chi tiết Docs 34. Đây là một phần S0/S1, chưa hoàn tất S2–S7. Default methods/certifier đều chưa ready; 42 tests gateway và 34 regression API handwriting PASS (76 tổng; adapter test không là solver). Không dùng test adapter làm số liệu, solver hoặc sign-off owner.
 
 ## 4. Các slice để triển khai
 
@@ -50,10 +50,10 @@ Gateway/schema/manifest đã có trong `backend/research/`, main đã include ro
 | S0 — Khóa bài toán | TV4 + TV2 + TV1 + TV3 | Docs 31, candidate IDs, contact exceptions, timing/tie/budget manifest | Review từng người; chưa mở Holdout |
 | S1 — Dữ liệu vào và fixtures | TV1 + TV4 | Glyph/mark ownership, fixed world-mm geometry, independent test cases | Geometry sau style phải trùng geometry chấm; test reverse/connect/deadline |
 | S2 — Oracle độc lập | TV3 | Enumerator + independent distance/intersection/cost checker | Kiểm tay 0,19/0,20/0,21 mm, suy biến, đồng hạng, vô nghiệm |
-| S3 — DP một mục tiêu | TV4 | Frontier/pending/pen state, recurrence, backpointer | So khả thi và optimum với S2; không đòi cùng lịch khi tie khác |
-| S4 — Đối chứng và runner | TV2 | H_ref/H_geom, top-m đầy đủ, beam, logging | m=toàn bộ bằng joint; ranking incomplete không gọi top-m toàn cục |
+| S3 — DP một mục tiêu | TV4 | Frontier/pending/pen state, recurrence, backpointer | So no-forget/safe-forget trên ca nhỏ, rồi khả thi và optimum với S2; không đòi cùng lịch khi tie khác |
+| S4 — Đối chứng và runner | TV2 | H_ref/H_geom, prefix có chứng nhận, beam, logging | m=toàn bộ bằng joint; ranking incomplete không gọi top-m toàn cục |
 | S5 — Lập luận và cấu trúc | TV4 + TV2; TV1 dữ liệu | Ví dụ có lợi, điều kiện đủ bằng nhau, cận state, w/b | Glyph tham số hóa trước; không gọi công cụ chuẩn là thuật toán mới |
-| S6 — Độ nhạy và bốn đỉnh | TV4 + TV2 | Lưới rho/lambda, regret cho lịch cố định | Tập khả thi cố định; oracle exact hoặc lower bound hợp lệ; heuristic không thay optimum |
+| S6 — Độ nhạy và bốn đỉnh | TV4 + TV2 | Chẩn đoán N_cycle/switching, lưới rho/lambda, regret cho phương án hoàn chỉnh cố định | Tập khả thi cố định; oracle exact hoặc lower bound hợp lệ; heuristic không thay optimum |
 | S7 — Freeze và đánh giá | TV1 custody; TV2 runner; TV3 QA; TV4 tích hợp | Freeze manifest, Holdout mới, per-case results, gói tái lập | Qua S2–S6 trong phạm vi khóa; ghi timeout/infeasible/coverage |
 | S8 — Font và máy | TV1 + TV4 font; TV3 máy | Pilot chọn lọc, giấy phép, manual reference, physical logs | Sau gate lõi; có thể hoãn để bảo vệ báo cáo |
 
@@ -65,8 +65,8 @@ Tháng tương đối từ ngày bắt đầu thực hiện được phê duyệ
 
 | Tháng | Công việc | Owner | Gate |
 |---|---|---|---|
-| 1 | S0; xác nhận oracle; đọc hai bài Balas toàn văn; đề xuất epsilon_eq và cỡ mẫu; đăng ký ranking/tie/budget; chuẩn bị số đo hoặc nguồn tham số | TV4 đặc tả; TV2 tài liệu/biên; TV1 split; TV3 oracle/đo | Không giả nhận đã đọc toàn văn hoặc đã khóa biên |
-| 2 | S1–S4 trên DEV; oracle độc lập; tách Holdout mới; ví dụ tham số hóa; đo sơ bộ nếu có máy | TV4 DP; TV3 oracle; TV2 baseline/runner; TV1 dữ liệu | Không mở Holdout, không Pareto |
+| 1 | S0; xác nhận oracle; đọc hai bài Balas toàn văn; đề xuất epsilon_eq và cỡ mẫu; đăng ký ranking/tie, gate chất lượng, giới hạn exact/budget/completion; chuẩn bị số đo hoặc nguồn tham số | TV4 đặc tả; TV2 tài liệu/biên; TV1 split; TV3 oracle/đo | Không giả nhận đã đọc toàn văn hoặc đã khóa biên |
+| 2 | S1–S4 trên DEV; oracle độc lập, kiểm no-forget/safe-forget và lambda; tách Holdout mới; ví dụ tham số hóa; đo sơ bộ nếu có máy | TV4 DP; TV3 oracle; TV2 baseline/runner; TV1 dữ liệu | Không mở Holdout, không Pareto |
 | 3 | S5–S6 và đối chiếu; cuối tháng khóa code/data/candidates/tie/c_min/theta0/epsilon/budgets | Cả nhóm theo ownership | DP–oracle khớp trong tolerance; chưa đạt thì lùi mở dữ liệu |
 | 4 | Mở Holdout mới có hai người đối chiếu; chạy bản đã khóa, báo failure/coverage | TV1 custody; TV2 chạy; TV3 QA; TV4 nguyên nhân | Không điều chỉnh theo Holdout |
 | 5 | Phân tích lợi ích/bằng nhau/chưa đủ bằng chứng; thiết kế font có license/reference | TV2 kết quả; TV4 cơ chế; TV1+TV4 font | Chỉ pilot khi lõi đã tái lập |
@@ -84,6 +84,6 @@ Tháng tương đối từ ngày bắt đầu thực hiện được phê duyệ
 
 ## 7. Tài liệu, ownership và migration
 
-Chỉ đổi đặc tả/phân công trên docs trong lượt này; không sửa code TV2/HAL/cơ khí. Tài liệu đang dùng được đồng bộ; báo cáo, phiếu review, corpus cũ và bằng chứng giữ như lịch sử có nhãn. Bản nội dung trước khi thay được giữ trong `history/20261002/`; không xóa kết quả không thuận lợi hoặc nâng sign-off.
+Ownership code TV2/HAL/cơ khí giữ nguyên; TV4 chỉ sửa gateway do mình sở hữu và tài liệu. Tài liệu đang dùng được đồng bộ; báo cáo, phiếu review, corpus cũ và bằng chứng giữ như lịch sử có nhãn. Bản nội dung trước khi thay được giữ trong `history/20261002/`; không xóa kết quả không thuận lợi hoặc nâng sign-off.
 
-Đề cương Google Docs là nguồn hướng nghiên cứu; Docs 29 là bản đối chiếu local. Đổi contract phải sửa Docs 31/32, RQ traceability và runner manifest trước code. API mới chỉ thành implemented khi có code, kiểm thử và review trên commit cụ thể.
+Đề cương Google Docs là nguồn hướng nghiên cứu; Docs 29 là bản đối chiếu local. Đổi contract phải sửa Docs 31/32, traceability và runner manifest trước code. API mới chỉ thành implemented khi có code, kiểm thử và review trên commit cụ thể.

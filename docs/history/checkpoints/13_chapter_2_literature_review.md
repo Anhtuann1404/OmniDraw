@@ -1,6 +1,8 @@
+> **HISTORICAL_RECORD — không là đặc tả hiện hành.** Đọc [hướng hiện tại](../../README.md), [contract](../../31_joint_solver_contract.md) và [công việc](../../03_current-task.md). Giữ kết luận đúng phạm vi/commit gốc.
+
 <!-- scope-migration-20261002 -->
 > **Phạm vi ngày 02/10/2026:** Tài liệu hỗ trợ được chuyển phạm vi. Phần hiện hành là kế hoạch/contract được dẫn dưới đây; các ID RQ, mốc thời gian và giả thuyết khác trong phần nội dung trước cập nhật chỉ áp dụng cho giai đoạn cũ.
-> Kế hoạch hiện hành: [Docs 30](30_research_development_plan.md); đặc tả [Docs 31](31_joint_solver_contract.md) và [Docs 32](32_research_api_and_artifact_contract.md). Thông báo GVHD đồng ý hướng không thay sign-off kỹ thuật hoặc duyệt tham số.
+> Kế hoạch hiện hành: [Docs 30](../../30_research_development_plan.md); đặc tả [Docs 31](../../31_joint_solver_contract.md) và [Docs 32](../../32_research_api_and_artifact_contract.md). Thông báo GVHD đồng ý hướng không thay sign-off kỹ thuật hoặc duyệt tham số.
 
 ## Khung tổng quan có hiệu lực cho đề tài mới
 
@@ -27,7 +29,7 @@ Ba trục: (1) DP order/window và generalized choices của Balas/Balas–Simon
 
 OmniDraw hướng đến chuyển văn bản thành quỹ đạo chữ viết tay nét đơn có thể thi công bằng máy vẽ. Bài toán không chỉ là tạo hình dáng giống chữ viết tay. Một hệ hoàn chỉnh còn phải xác định chuỗi nét, vị trí và thứ tự dấu, quyết định khi nào nối hoặc nhấc bút, kiểm soát va chạm hình học và tạo đầu ra phù hợp với giới hạn chuyển động của thiết bị. Vì vậy, chương này tổng hợp bốn nền tảng: tổng hợp chữ viết tay trực tuyến, biểu diễn dấu tiếng Việt, tối ưu chuỗi trạng thái và lập kế hoạch quỹ đạo robot.
 
-Quy trình tìm và chọn nguồn được ghi tại [`11_literature_review_protocol.md`](11_literature_review_protocol.md); dữ liệu trích xuất từng nguồn nằm tại [`12_literature_evidence_matrix.md`](12_literature_evidence_matrix.md). Đây là tổng quan có cấu trúc ở giai đoạn đầu, chưa phải systematic review.
+Quy trình tìm và chọn nguồn được ghi tại [`11_literature_review_protocol.md`](../../support/11_literature_review_protocol.md); dữ liệu trích xuất từng nguồn nằm tại [`12_literature_evidence_matrix.md`](../../support/12_literature_evidence_matrix.md). Đây là tổng quan có cấu trúc ở giai đoạn đầu, chưa phải systematic review.
 
 ## 2.2. Chữ viết tay trực tuyến và biểu diễn chuỗi nét
 
@@ -94,7 +96,7 @@ Từ đó, CA-VHC được định vị là một phương pháp composition hì
 
 ## 2.9. Khoảng trống cần khảo sát cho RQ4 và RQ5
 
-Phạm vi đề tài mới bổ sung hai câu hỏi tại [Docs 22](22_nckh_extended_scope.md). Với **RQ4**, nguồn hiện có về sinh chữ viết tay theo phong cách [1], [16] giúp đặt bối cảnh, nhưng ma trận 16 nguồn chưa đủ để kết luận về học thói quen từ ít mẫu tiếng Việt, split theo người viết, khả năng giữ dấu đúng và độ giống phong cách khi xuất lên máy vẽ. Cần tìm nguồn chuyên biệt, kiểm tra phương pháp đối chứng và ghi bằng chứng vào [evidence matrix](12_literature_evidence_matrix.md) trước khi tuyên bố đóng góp mới.
+Phạm vi đề tài mới bổ sung hai câu hỏi tại [Docs 22](../../support/22_nckh_extended_scope.md). Với **RQ4**, nguồn hiện có về sinh chữ viết tay theo phong cách [1], [16] giúp đặt bối cảnh, nhưng ma trận 16 nguồn chưa đủ để kết luận về học thói quen từ ít mẫu tiếng Việt, split theo người viết, khả năng giữ dấu đúng và độ giống phong cách khi xuất lên máy vẽ. Cần tìm nguồn chuyên biệt, kiểm tra phương pháp đối chứng và ghi bằng chứng vào [evidence matrix](../../support/12_literature_evidence_matrix.md) trước khi tuyên bố đóng góp mới.
 
 Với **RQ5**, Unicode normalization [4] và OpenType [5] giải thích biểu diễn ký tự/dấu và cơ chế định vị glyph, nhưng không chứng minh một quy trình chuyển font outline thành centerline hoặc phục hồi tiếng Việt cho mọi font thiết kế. Cần khảo sát riêng các nghiên cứu về glyph completion, diacritic placement, centerline extraction và đánh giá mức giữ phong cách/độ đọc. Vì chưa hoàn tất vòng tìm nguồn này, khoảng trống RQ5 là **giả thuyết khảo sát**, không phải claim novelty.
 

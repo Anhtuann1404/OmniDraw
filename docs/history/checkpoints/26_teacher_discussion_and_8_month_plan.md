@@ -1,6 +1,8 @@
+> **HISTORICAL_RECORD — không là đặc tả hiện hành.** Đọc [hướng hiện tại](../../README.md), [contract](../../31_joint_solver_contract.md) và [công việc](../../03_current-task.md). Giữ kết luận đúng phạm vi/commit gốc.
+
 # Bản trao đổi về hướng nghiên cứu và kế hoạch đã thống nhất
 
-**Cập nhật: 02/10/2026.** Hướng nghiên cứu đã được GVHD đồng ý theo thông báo của TV4; đây là kế hoạch, không phải kết quả nghiệm thu. [Kế hoạch kỹ thuật](30_research_development_plan.md), [contract solver](31_joint_solver_contract.md), [API nghiên cứu](32_research_api_and_artifact_contract.md) là nguồn triển khai.
+**Cập nhật: 02/10/2026.** Hướng nghiên cứu đã được GVHD đồng ý theo thông báo của TV4; đây là kế hoạch, không phải kết quả nghiệm thu. [Kế hoạch kỹ thuật](../../30_research_development_plan.md), [contract solver](../../31_joint_solver_contract.md), [API nghiên cứu](../../32_research_api_and_artifact_contract.md) là nguồn triển khai.
 
 ## 1. Trọng tâm
 

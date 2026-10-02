@@ -1,6 +1,8 @@
+> **HISTORICAL_RECORD — không là đặc tả hiện hành.** Đọc [hướng hiện tại](../../README.md), [contract](../../31_joint_solver_contract.md) và [công việc](../../03_current-task.md). Giữ kết luận đúng phạm vi/commit gốc.
+
 <!-- scope-migration-20261002 -->
 > **Phạm vi ngày 02/10/2026:** Báo cáo/contract/bằng chứng lịch sử. Giữ nguyên số liệu, sign-off và phạm vi bên dưới; không dùng corpus cũ hoặc preflight để nghiệm thu hướng mới. ID RQ/PR trong phần cũ là hệ ký hiệu lịch sử.
-> Kế hoạch hiện hành: [Docs 30](30_research_development_plan.md); đặc tả [Docs 31](31_joint_solver_contract.md) và [Docs 32](32_research_api_and_artifact_contract.md). Thông báo GVHD đồng ý hướng không thay sign-off kỹ thuật hoặc duyệt tham số.
+> Kế hoạch hiện hành: [Docs 30](../../30_research_development_plan.md); đặc tả [Docs 31](../../31_joint_solver_contract.md) và [Docs 32](../../32_research_api_and_artifact_contract.md). Thông báo GVHD đồng ý hướng không thay sign-off kỹ thuật hoặc duyệt tham số.
 
 # OmniDraw — PR3 Implementation Readiness Pack
 
@@ -26,9 +28,9 @@ Cho phép TV4 bắt đầu PR3 ngay sau khi TV2 bàn giao PR2 mà không phải 
 
 Nguồn chuẩn vẫn là:
 
-- [`07_diacritic_aware_state_design.md`](07_diacritic_aware_state_design.md): kiến trúc `DiacriticCandidate` và `CompositionState`.
+- [`07_diacritic_aware_state_design.md`](../../support/07_diacritic_aware_state_design.md): kiến trúc `DiacriticCandidate` và `CompositionState`.
 - [`09_pr3_acceptance_criteria.md`](09_pr3_acceptance_criteria.md): Entry/Exit Gate.
-- [`16_rq_code_metric_test_traceability.md`](16_rq_code_metric_test_traceability.md): ánh xạ RQ–metric–test.
+- [`16_rq_code_metric_test_traceability.md`](../../support/16_rq_code_metric_test_traceability.md): ánh xạ RQ–metric–test.
 - [`18_pr3_e4_shared_transition_contract_draft.md`](18_pr3_e4_shared_transition_contract_draft.md): nguồn trạng thái hiện hành của E4; `PASS` trên phiên bản hai owner cùng ký `4677aad`.
 
 Nếu pack này mâu thuẫn với Docs 07 hoặc 09, Docs 07/09 có quyền ưu tiên và pack phải được sửa trước khi code.
@@ -302,7 +304,7 @@ Test nghiệm thu DEV trên 10 từ × 4 preset, font `cursive`, seed 42: NFD/ma
 
 ### 13.2. E1 sau thay đổi style
 
-Script [`generate_pr3_e1_dev_evidence.py`](../scripts/generate_pr3_e1_dev_evidence.py) tạo [`pr3_e1_dev_rows.csv`](evidence/pr3_e1_dev_rows.csv) gồm **480 dòng** (160 ca/method) và [`pr3_e1_dev_metadata.json`](evidence/pr3_e1_dev_metadata.json) chứa commit mã `072029b`, corpus/hash, font, seed, style, phiên bản Python/NumPy, lệnh chạy và hash CSV. Chỉ đọc `BENCHMARK_DEV_CORPUS_20`; không mở HOLDOUT. Chạy lại từ gốc repo bằng `backend/venv/bin/python3 scripts/generate_pr3_e1_dev_evidence.py`.
+Script [`generate_pr3_e1_dev_evidence.py`](../../../scripts/generate_pr3_e1_dev_evidence.py) tạo [`pr3_e1_dev_rows.csv`](../../evidence/pr3_e1_dev_rows.csv) gồm **480 dòng** (160 ca/method) và [`pr3_e1_dev_metadata.json`](../../evidence/pr3_e1_dev_metadata.json) chứa commit mã `072029b`, corpus/hash, font, seed, style, phiên bản Python/NumPy, lệnh chạy và hash CSV. Chỉ đọc `BENCHMARK_DEV_CORPUS_20`; không mở HOLDOUT. Chạy lại từ gốc repo bằng `backend/venv/bin/python3 scripts/generate_pr3_e1_dev_evidence.py`.
 
 | Method | `oly` (mm) | `omni_casual` (mm) | Tổng (mm) |
 | :--- | ---: | ---: | ---: |

@@ -1,35 +1,43 @@
-# Công việc hiện tại của nhóm
+# Công việc hiện tại — mô hình đồng tối ưu chữ/dấu
 
-**Cập nhật: 02/10/2026.** Hướng nghiên cứu đã được GVHD đồng ý theo thông báo của TV4; đây là kế hoạch, không phải kết quả nghiệm thu. [Kế hoạch kỹ thuật](30_research_development_plan.md), [contract solver](31_joint_solver_contract.md), [API nghiên cứu](32_research_api_and_artifact_contract.md) là nguồn triển khai.
+**Cập nhật 02/10/2026; nhánh chia sẻ `codex/tv4-pr3-slices`.** [Đọc trước](README.md). Nguồn chính: [kế hoạch](30_research_development_plan.md), [contract solver](31_joint_solver_contract.md), [API/artifacts](32_research_api_and_artifact_contract.md). Hướng đã được GVHD đồng ý theo TV4; chi tiết còn chờ review/freeze.
 
-## Slice API gateway — cập nhật sau commit docs a7735ea
+## Đã có và chưa có
 
-Đã có code `backend/research/` và routes capabilities/validate/solve/certify trong main. Validation cấu trúc/hash/manifest và kiểm output adapter đã có tests; mặc định chưa đăng ký solver/certifier, không bật Holdout public. Chưa nghiệm thu DP/baseline/oracle/chứng nhận. Xem Docs 34 để các owner gắn adapter; chuẩn bị manifest DEV, không dùng dữ liệu Holdout để test API.
+| Hạng mục | Trạng thái xác minh |
+|---|---|
+| Đề cương Google Docs và Docs 29 | Đã chỉnh và đồng bộ nội dung; không là nghiệm thu thuật toán |
+| API gateway `backend/research/` | Đã có schema/hash/manifest/routes và kiểm output adapter; mặc định solver/certifier chưa ready |
+| Kiểm thử gateway/hồi quy API | 42 + 34 = 76 PASS; adapter test không là bộ giải nghiên cứu |
+| DP joint, baseline top-m/beam, oracle và certifier | Chưa nghiệm thu hướng mới; đang ở đặc tả và bàn giao adapter |
+| Holdout mới và freeze | Chưa mở/chưa khóa theo kế hoạch mới; không đưa dữ liệu niêm phong lên repo |
+| Máy thật/font pilot | Có điều kiện; chưa tự tạo kết quả hoặc sign-off |
 
-Kiểm thử mục tiêu: 38 gateway tests + 34 API handwriting regression = 72 PASS. Các adapter trong tests chỉ kiểm transport, không là oracle độc lập hoặc kết quả nghiên cứu.
+Không suy ra trạng thái nhánh remote TV1–TV3 từ checkout TV4. E1/E4/PR3/hardware cũ giữ verdict đúng phạm vi và commit.
 
-## Trạng thái đã xác minh
+## Việc kế tiếp theo owner
 
-- Checkout: `codex/tv4-pr3-slices`, HEAD `c1b4696` tại lúc rà soát; có thay đổi local của nhóm. HEAD riêng không nhận diện toàn nội dung working tree.
-- Có code sản phẩm/PR3, runner DEV và preflight khám phá. Chưa có nghiệm thu DP joint/oracle độc lập/top-m theo contract mới.
-- GVHD đã đồng ý hướng đề tài theo thông báo của TV4. Các ngưỡng, số mẫu, chi tiết contract và hardware calibration chưa vì thế mà được ký.
-- Lượt này cập nhật tài liệu, không chạy lại suite hoặc tuyên bố số test PASS mới; không xác minh thêm nhánh remote của các thành viên.
-
-## Việc cần làm ngay
-
-| Owner | Việc kế tiếp | Bàn giao/gate |
+| Owner | Làm ngay | Bàn giao và gate |
 |---|---|---|
-| TV4 | Chốt candidate/state/action schema và mapping code → Docs 31; triển khai DP theo slice | Mỗi lát có trace, tests và review; không tự viết oracle đối chiếu |
-| TV2 — Trần Hồng Khải | Review cost/N_cycle, H_ref/H_geom, top-m resource handling; đọc toàn văn Balas; runner/phân tích | Bảng nguồn có trang, protocol ranking/tie/budget, provenance; không ký exit dựa preflight cũ |
-| TV1 — Nguyễn Hoàng Thắng | Candidate/anchor/license manifest; split mới và access log; fixtures dấu chồng; đồng chủ trì font | Corpus cũ là bổ sung; không đưa nội dung Holdout mới vào repo công khai |
-| TV3 — Phùng Tấn Minh | Xác nhận nhận oracle độc lập; primitive distance/intersection/cost; ca biên; chuẩn bị đo thiết bị | Không cần chờ máy để viết oracle; ghi driver/capabilities và số đo thật khi có máy |
+| TV4 | Mã hóa S=(i,t,A,P,e), BODY/MARK/END, cost và forget theo Docs 31 §5 | Trace ca nhỏ; so no-forget/safe-forget rồi đối chiếu oracle độc lập; chưa tự ký solver |
+| TV2 — Trần Hồng Khải | Review cost/N_cycle, ranker decomposition/tie/prefix evidence; đọc Balas và RTSP/PCGTSP | Bảng nguồn có trang, baseline/runner cùng scope; protocol lambda và completion trên DEV |
+| TV1 — Nguyễn Hoàng Thắng | Glyph/reference/anchor/license, quality bounds trên DEV; fixtures dấu chồng; split/custody | Manifest/hash trước–sau lọc và lý do, access log, dữ liệu mới chưa dùng tinh chỉnh |
+| TV3 — Phùng Tấn Minh | Xác nhận nhận oracle, viết primitive/vét cạn độc lập từ đặc tả | Ca biên 0,19/0,20/0,21 mm, deadline/reverse/connect/đồng hạng/vô nghiệm; không chờ máy để làm oracle |
 
-Nếu TV3 chưa nhận oracle, TV1 chỉ nhận sau khi TV2 nhận custody nhật ký/split và nhóm ghi bàn giao. Đây là phương án dự phòng, không phải đã có đồng ý của các owner.
+Bảng là việc cần làm, không xác nhận các bạn đã nhận/hoàn thành. Nếu TV3 không nhận oracle, TV1 chỉ tiếp nhận sau bàn giao custody/log cho TV2; cần ghi xác nhận. TV4 là tác giả DP, không tự viết oracle rồi gọi độc lập.
 
-## Những quyết định chưa khóa
+## Thứ tự ưu tiên và điểm khóa
 
-Số mẫu Holdout, epsilon_eq/căn cứ và duyệt, rho0/lambda0/miền quét, nguồn tham số, k từng dấu, dung sai hình học/contact, budget, tie policy, cấu hình máy và giấy phép font. Draft Docs 31/32 chứa quy ước đề xuất; cần review trước implementation/freeze. Ví dụ số trong API không phải giá trị nghiệm thu.
+1. Review contract/fixtures và xác nhận oracle; khóa cách hiểu trước viết bộ giải.
+2. State/actions/no-forget của TV4 song song dữ liệu TV1, oracle TV3 và review/ranker TV2.
+3. Safe-forget và DP–oracle khớp khả thi/value; lịch chỉ cần khớp nếu cùng phá hòa.
+4. Baseline/runner, chẩn đoán lambda, điều kiện bằng nhau/có lợi và chứng nhận trong scope.
+5. Freeze mã/ứng viên/tham số/budgets trước Holdout; font chỉ sau gate lõi.
 
-## Việc tạm hoãn
+Còn PENDING: cỡ mẫu Holdout, epsilon_eq/căn cứ và duyệt, theta0/miền/nguồn tham số, k từng dấu, dung sai/contact, quality bounds/reference, scope exact n/q/k/số nét/w, budget và tỷ lệ hoàn tất, cutoff lambda, tie. Không tự điền từ ví dụ minh họa.
 
-Writer Profile, Pareto, cắt tỉa nâng cao, hiệu chuẩn chủ động và nhiều màu. Art Mode/thư tay vẫn là phần sản phẩm; không làm trước gate lõi để thay kết quả nghiên cứu. Sign-off E1/E4/hardware cũ giữ đúng phạm vi và commit lịch sử.
+Pareto/cắt tỉa nâng cao, Writer Profile, hiệu chuẩn chủ động và nhiều màu ngoài cam kết. Art Mode/thư tay giữ phần sản phẩm. Nếu trượt gate cuối tháng 3 thì giảm khảo sát mở rộng, lùi Holdout/font; không bỏ kiểm chứng độc lập để kịp số liệu.
+
+## Handoff
+
+Mỗi owner gửi commit, contract/version đã dùng, lệnh tái lập, kết quả/giới hạn, gate còn mở và yêu cầu review. Cập nhật đúng nguồn chính; record bổ sung Docs 35 đã nhập Docs 31/30/32 và chuyển lịch sử, không cần đọc riêng để triển khai.

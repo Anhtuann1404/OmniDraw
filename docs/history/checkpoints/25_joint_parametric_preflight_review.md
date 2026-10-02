@@ -1,6 +1,8 @@
+> **HISTORICAL_RECORD — không là đặc tả hiện hành.** Đọc [hướng hiện tại](../../README.md), [contract](../../31_joint_solver_contract.md) và [công việc](../../03_current-task.md). Giữ kết luận đúng phạm vi/commit gốc.
+
 <!-- scope-migration-20261002 -->
 > **Phạm vi ngày 02/10/2026:** Báo cáo/contract/bằng chứng lịch sử. Giữ nguyên số liệu, sign-off và phạm vi bên dưới; không dùng corpus cũ hoặc preflight để nghiệm thu hướng mới. ID RQ/PR trong phần cũ là hệ ký hiệu lịch sử.
-> Kế hoạch hiện hành: [Docs 30](30_research_development_plan.md); đặc tả [Docs 31](31_joint_solver_contract.md) và [Docs 32](32_research_api_and_artifact_contract.md). Thông báo GVHD đồng ý hướng không thay sign-off kỹ thuật hoặc duyệt tham số.
+> Kế hoạch hiện hành: [Docs 30](../../30_research_development_plan.md); đặc tả [Docs 31](../../31_joint_solver_contract.md) và [Docs 32](../../32_research_api_and_artifact_contract.md). Thông báo GVHD đồng ý hướng không thay sign-off kỹ thuật hoặc duyệt tham số.
 
 # Kiểm tra trước đề cương: đồng tối ưu, chứng nhận dưới bất định và hiệu chuẩn theo quyết định
 
@@ -15,7 +17,7 @@
 - Người thực hiện: Codex trong phiên TV4; các vai trò phản biện được thực hiện trong cùng phiên, chưa có review độc lập của TV1/TV2 hoặc human sign-off.
 - Mục đích: quyết định phạm vi đăng ký nghiên cứu khi còn khoảng ba ngày trước hạn đề cương.
 - Không phải systematic review, kiểm chứng toàn bộ production, formal benchmark hoặc xác nhận thiết bị thật.
-- Nguồn chương trình local: `scripts/research_parametric_preflight.py`; script đang chưa được commit trên nhánh này và không nằm trong commit riêng phần docs. Các lệnh bên dưới ghi lại lần chạy local, chưa là hướng dẫn tái lập hoàn chỉnh từ checkout remote. Dữ liệu snapshot để review: [summary](evidence/research_preflight_20260930/summary.json), [kết quả từng ca](evidence/research_preflight_20260930/case_results.csv), [hình học và toàn bộ lịch khả thi](evidence/research_preflight_20260930/cases_and_plans.json).
+- Nguồn chương trình local: `scripts/research_parametric_preflight.py`; script đang chưa được commit trên nhánh này và không nằm trong commit riêng phần docs. Các lệnh bên dưới ghi lại lần chạy local, chưa là hướng dẫn tái lập hoàn chỉnh từ checkout remote. Dữ liệu snapshot để review: [summary](../../evidence/research_preflight_20260930/summary.json), [kết quả từng ca](../../evidence/research_preflight_20260930/case_results.csv), [hình học và toàn bộ lịch khả thi](../../evidence/research_preflight_20260930/cases_and_plans.json).
 
 ## 1. Kết luận để quyết định đề cương
 

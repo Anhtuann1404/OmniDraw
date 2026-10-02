@@ -4,7 +4,7 @@ Tài liệu quản trị cấu trúc thư mục dữ liệu chữ viết tay ti�
 - **CA-VHC (Context-Aware Vietnamese Handwriting Synthesis with Viterbi Diacritic Placement)**
 - **Writer Profile P2 (Personalized Handwriting Style Modeling)**
 
-Tuân thủ nghiêm ngặt theo đặc tả chuẩn: [`docs/08_handwriting_dataset_spec.md`](../docs/08_handwriting_dataset_spec.md).
+Tuân thủ nghiêm ngặt theo đặc tả chuẩn: [`docs/08_handwriting_dataset_spec.md`](../docs/support/08_handwriting_dataset_spec.md).
 
 ---
 
@@ -56,7 +56,7 @@ dataset/
 
 ## 3. Chính sách Bảo mật & Đạo đức Nghiên cứu (No-PII Policy)
 
-Theo quy định tại [`docs/21_handwriting_collection_protocol_and_error_handling.md`](../docs/21_handwriting_collection_protocol_and_error_handling.md):
+Theo quy định tại [`docs/21_handwriting_collection_protocol_and_error_handling.md`](../docs/history/checkpoints/21_handwriting_collection_protocol_and_error_handling.md):
 - **Ẩn danh hóa 100%:** Tuyệt đối không lưu trữ thông tin định danh cá nhân (PII: Họ tên, email, số điện thoại, CCCD) trong kho dữ liệu `dataset/`.
 - **Mã hóa người viết:** Mỗi người viết được định danh bằng mã duy nhất dạng `W{xxx}` (ví dụ: `W001`, `W002`).
 - Bảng ánh xạ danh tính người tham gia được lưu trữ ngoại tuyến tại kho lưu trữ độc lập cách ly mạng (air-gapped registry) do điều phối viên bảo mật phụ trách.

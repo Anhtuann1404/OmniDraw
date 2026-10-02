@@ -2,7 +2,7 @@
 
 **Version:** `joint-artifact-v1-draft`, 02/10/2026. **Owner:** TV4 API/schema; TV2 runner/result; TV1 manifest; TV3 oracle/hardware.
 
-**Status:** IMPLEMENTED_GATEWAY / REVIEW_PENDING, 02/10/2026. Lớp API/schema/manifest/adapter đã có trong `backend/research/` và gắn vào `backend/main.py`. Có GET `/api/research/capabilities`, POST `/validate`, `/solve`, `/certify`. Chưa có adapter joint/baseline/oracle/certifier được đăng ký mặc định; solve/certify trả 503 cho case khả dụng khi thiếu implementation. Đây không là nghiệm thu thuật toán hay chứng nhận. Không gửi payload này vào `/api/ai/generate`. Hướng dẫn dùng và bàn giao: [Docs 34](34_research_api_gateway_implementation.md).
+**Status:** IMPLEMENTED_GATEWAY / REVIEW_PENDING, 02/10/2026. Lớp API/schema/manifest/adapter đã có trong `backend/research/` và gắn vào `backend/main.py`. Có GET `/api/research/capabilities`, POST `/validate`, `/solve`, `/certify`. Chưa có adapter joint/baseline/oracle/certifier được đăng ký mặc định; solve/certify trả 503 cho case khả dụng khi thiếu implementation. Đây không là nghiệm thu thuật toán hay chứng nhận. Không gửi payload này vào `/api/ai/generate`. Hướng dẫn dùng và bàn giao: [Docs 34](support/34_research_api_gateway_implementation.md).
 
 ## 1. Kiến trúc và giao diện dự kiến
 
@@ -10,7 +10,7 @@
 
 | Interface nội bộ dự kiến | Input → output | Owner | HTTP nếu triển khai sau |
 |---|---|---|---|
-| validate_case | ResearchCase → errors/normalized_case | TV4 schema; TV1 IDs; TV3 independent checker | Không cần route riêng ban đầu |
+| validate_case | ResearchCase → structural status/errors | TV4 schema; TV1 IDs; TV3 independent checker | POST /api/research/validate (đã có gateway) |
 | solve_case | SolveRequest → SolveResult | TV4 joint; TV3 oracle; TV2 baselines | POST /api/research/solve |
 | run_manifest | locked manifest → per-case JSONL + summary | TV2 | CLI/offline ưu tiên; không cần UI mở Holdout |
 | certify_schedule | fixed schedule + domain → vertex evidence | TV4 + TV2 | POST /api/research/certify |
@@ -71,7 +71,7 @@ Số ở ví dụ chỉ minh họa format, không phải điểm vận hành/bud
 | run_id, case_id, method, candidate_set_sha256, contract_version | Định danh đủ để ghép kết quả |
 | outcome | OPTIMAL / FEASIBLE / INFEASIBLE / NO_FEASIBLE_IN_PREFIX / TIMEOUT / RESOURCE_LIMIT / INVALID_INPUT / INTERNAL_ERROR |
 | scope | full_candidate_set / declared_prefix / explored_subset |
-| enumeration_complete, ranking_complete, search_complete | Boolean riêng, không suy từ status success |
+| enumeration_complete, ranking_complete, search_complete | Đã duyệt hết G / đã chứng minh đúng prefix yêu cầu / đã giải exact trong scope; ba Boolean độc lập |
 | schedule | null hoặc chọn candidate IDs + ordered actions với stroke_id, orientation, CONNECT/LIFT; boundary actions xác định |
 | metrics | L_down_mm, L_up_mm, N_cycle, J_mm, T_hat_sec nếu có v_down; thời gian stage/total, peak states/memory, w/f/b, independent violations |
 | bounds | lower_bound_J_mm/upper_bound_J_mm nullable; provenance và scope từng bound |
@@ -108,3 +108,15 @@ Renderer adapter chỉ xuất geometry/schedule đã kiểm, không gọi apply_
 ## 8. Gate để API có hiệu lực
 
 TV4 schema/HTTP + TV2 runner + TV1 manifest + TV3 independent check review; có fixtures đủ valid/invalid/empty/reverse/connect/deadline/tie/infeasible/timeout; có commit triển khai và tests. Hiện gate lớp transport đã có kiểm thử; gate solver, oracle độc lập, geometric validation và freeze/official runs chưa hoàn tất. Frontend đọc capabilities, không gọi phương pháp chưa ready hoặc diễn giải STRUCTURALLY_VALID thành hình học khả thi/đã ký.
+
+## Vận hành gateway và bàn giao adapter
+
+Routes đã có: GET `/api/research/capabilities`, POST `/api/research/validate`, `/api/research/solve`, `/api/research/certify`. Mặc định solver/certifier chưa đăng ký; capabilities là nguồn readiness. Không dùng adapter kiểm thử như một bộ giải thực.
+
+Manifest DEV/synthetic đăng ký phía server qua `OMNIDRAW_RESEARCH_MANIFEST`; không có public case registration hoặc mở Holdout qua HTTP. `ResearchCase.prepare` hỗ trợ hash offline; HTTP không tự sửa hash. Guide hỗ trợ Docs 34 mô tả thao tác, không thay schema/code trong `backend/research/`.
+
+`enumeration_complete` chỉ duyệt hết G; `ranking_complete` chứng minh prefix yêu cầu theo ranker/tie; `search_complete` chứng minh inner solve trong scope. Prefix exact cần hai điều kiện cuối, không cần duyệt hết G nếu k-best có chứng nhận. Gateway kiểm tính nhất quán khai báo, không tự chứng minh ranking hoặc optimum. Adapter lưu evidence trong artifact offline để reviewer tái lập.
+
+API giới hạn 30s, 200k states, 100k configurations, 512MB; đây không là budget nghiệm thu nghiên cứu. Adapter phải thực thi budget nội bộ. Ghi cả ranking và solve timing, hash/scope/complete flags và checker identity; không đổi TIMEOUT thành OPTIMAL. Certificate giữ hash của phương án hoàn chỉnh, bốn đỉnh đúng miền và kiểm độc lập; không chứng nhận thời gian máy thật.
+
+Kiểm thử mục tiêu hiện có: 42 gateway + 34 handwriting regression = 76 PASS, adapter chỉ kiểm transport. Solver/baseline/oracle/certifier và review owner còn PENDING. Chi tiết lần chạy trong nhật ký tiến độ.

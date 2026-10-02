@@ -1,6 +1,8 @@
+> **HISTORICAL_RECORD — không là đặc tả hiện hành.** Đọc [hướng hiện tại](../../README.md), [contract](../../31_joint_solver_contract.md) và [công việc](../../03_current-task.md). Giữ kết luận đúng phạm vi/commit gốc.
+
 <!-- scope-migration-20261002 -->
 > **Phạm vi ngày 02/10/2026:** Báo cáo/contract/bằng chứng lịch sử. Giữ nguyên số liệu, sign-off và phạm vi bên dưới; không dùng corpus cũ hoặc preflight để nghiệm thu hướng mới. ID RQ/PR trong phần cũ là hệ ký hiệu lịch sử.
-> Kế hoạch hiện hành: [Docs 30](30_research_development_plan.md); đặc tả [Docs 31](31_joint_solver_contract.md) và [Docs 32](32_research_api_and_artifact_contract.md). Thông báo GVHD đồng ý hướng không thay sign-off kỹ thuật hoặc duyệt tham số.
+> Kế hoạch hiện hành: [Docs 30](../../30_research_development_plan.md); đặc tả [Docs 31](../../31_joint_solver_contract.md) và [Docs 32](../../32_research_api_and_artifact_contract.md). Thông báo GVHD đồng ý hướng không thay sign-off kỹ thuật hoặc duyệt tham số.
 
 # OmniDraw — Hợp đồng Giao diện Chuyển tiếp E4 cho PR3
 
@@ -21,7 +23,7 @@
 
 - PR2 B1/B2/B3 đã merge qua PR #32 (commit `bcc1a7a`) với `backend/handwriting/baselines.py`, runner method tags, `tests/test_ca_vhc_baselines.py`. Toàn bộ test suite tự động đạt **136/136 passed**.
 - `backend/handwriting/engine.py:eval_transition()` hiện nhận hai `GlyphVariant`, các điểm/tangent và nét chính ở world frame; trả `(total_cost, is_conn)`. Hàm cộng `weights[4] * w.cost_legibility` vào cả lựa chọn nối và nhấc bút. `optimize_word_dag()` cộng legibility của state đầu tại layer 0.
-- [`07_diacritic_aware_state_design.md`](07_diacritic_aware_state_design.md) khóa công thức $C_{state} = C_{internal\_collision} + C_{legibility} + C_{placement}$ và $J_{transition} = \min(J_{conn}, J_{lift})$, tuyệt đối không double-count. [`09_pr3_acceptance_criteria.md`](09_pr3_acceptance_criteria.md) là nguồn chuẩn Entry/Exit Gate.
+- [`07_diacritic_aware_state_design.md`](../../support/07_diacritic_aware_state_design.md) khóa công thức $C_{state} = C_{internal\_collision} + C_{legibility} + C_{placement}$ và $J_{transition} = \min(J_{conn}, J_{lift})$, tuyệt đối không double-count. [`09_pr3_acceptance_criteria.md`](09_pr3_acceptance_criteria.md) là nguồn chuẩn Entry/Exit Gate.
 - Phiếu cross-review Chương 1–3 của cả 3 thành viên (TV1, TV2, TV3) đều đã được ký `PASS` và đóng `CLOSED`.
 
 ---

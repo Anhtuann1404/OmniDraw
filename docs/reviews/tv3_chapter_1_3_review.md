@@ -17,10 +17,10 @@ HUMAN_VERDICT: PASS
 
 ## 1. Phạm vi bắt buộc
 
-- [`../10_nckh_research_plan.md`](../10_nckh_research_plan.md): RQ3, clearance và physical feasibility.
-- [`../14_chapter_1_introduction.md`](../14_chapter_1_introduction.md): mục 1.4.3, 1.8–1.9.
-- [`../13_chapter_2_literature_review.md`](../13_chapter_2_literature_review.md): mục 2.5–2.6.
-- [`../15_chapter_3_methodology.md`](../15_chapter_3_methodology.md): mục 3.1, 3.7–3.8.
+- [`../10_nckh_research_plan.md`](../support/10_nckh_research_plan.md): RQ3, clearance và physical feasibility.
+- [`../14_chapter_1_introduction.md`](../support/14_chapter_1_introduction.md): mục 1.4.3, 1.8–1.9.
+- [`../13_chapter_2_literature_review.md`](../history/checkpoints/13_chapter_2_literature_review.md): mục 2.5–2.6.
+- [`../15_chapter_3_methodology.md`](../support/15_chapter_3_methodology.md): mục 3.1, 3.7–3.8.
 
 ## 2. Tiêu chí phải xác nhận
 
@@ -51,7 +51,7 @@ Hãy làm reviewer TV3. Đọc docs/reviews/README.md và phiếu này, sau đó
 
 ### 4.1. Recheck TV3-R01–R02 trên commit `031d1983f07895306a0cf31b72300ad4d9e5ee50`
 
-AI TV3 đã đối chiếu diff giữa checkpoint đã duyệt `7ae43e6994506928cb6be8bd61e936b4f5e3857e` và commit cuối `031d1983f07895306a0cf31b72300ad4d9e5ee50` trên các file thuộc phạm vi TV3: [`docs/10_nckh_research_plan.md`](../10_nckh_research_plan.md) (RQ3, clearance, physical feasibility), [`docs/14_chapter_1_introduction.md`](../14_chapter_1_introduction.md) (§1.9), và [`docs/15_chapter_3_methodology.md`](../15_chapter_3_methodology.md) (§§3.1, 3.7, 3.8).
+AI TV3 đã đối chiếu diff giữa checkpoint đã duyệt `7ae43e6994506928cb6be8bd61e936b4f5e3857e` và commit cuối `031d1983f07895306a0cf31b72300ad4d9e5ee50` trên các file thuộc phạm vi TV3: [`docs/10_nckh_research_plan.md`](../support/10_nckh_research_plan.md) (RQ3, clearance, physical feasibility), [`docs/14_chapter_1_introduction.md`](../support/14_chapter_1_introduction.md) (§1.9), và [`docs/15_chapter_3_methodology.md`](../support/15_chapter_3_methodology.md) (§§3.1, 3.7, 3.8).
 
 | ID | Claim cần kiểm tra khi recheck | Kết quả AI recheck | Bằng chứng đối chiếu trên commit `031d1983f07895306a0cf31b72300ad4d9e5ee50` |
 | :--- | :--- | :--- | :--- |

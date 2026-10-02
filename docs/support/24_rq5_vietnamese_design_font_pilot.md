@@ -1,6 +1,8 @@
+> **SUPPORTING_REFERENCE.** Nguồn quyết định: [kế hoạch](../30_research_development_plan.md), [contract solver](../31_joint_solver_contract.md), [API](../32_research_api_and_artifact_contract.md). Nội dung trùng hoặc khác phải đề xuất sửa nguồn chính; không tự ghi đè đặc tả.
+
 # Thí điểm font thiết kế tiếng Việt — N-RQ4
 
-**Cập nhật: 02/10/2026.** Hướng nghiên cứu đã được GVHD đồng ý theo thông báo của TV4; đây là kế hoạch, không phải kết quả nghiệm thu. [Kế hoạch kỹ thuật](30_research_development_plan.md), [contract solver](31_joint_solver_contract.md), [API nghiên cứu](32_research_api_and_artifact_contract.md) là nguồn triển khai.
+**Cập nhật: 02/10/2026.** Hướng nghiên cứu đã được GVHD đồng ý theo thông báo của TV4; đây là kế hoạch, không phải kết quả nghiệm thu. [Kế hoạch kỹ thuật](../30_research_development_plan.md), [contract solver](../31_joint_solver_contract.md), [API nghiên cứu](../32_research_api_and_artifact_contract.md) là nguồn triển khai.
 
 Tên file giữ để tương thích link lịch sử RQ5; trong hướng mới thí điểm mang ID N-RQ4, không có hai thí điểm Writer Profile và font song song.
 

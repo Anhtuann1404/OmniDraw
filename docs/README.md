@@ -1,42 +1,59 @@
-# Tài liệu OmniDraw — hướng nghiên cứu hiện hành
+# OmniDraw — đọc trước khi tiếp tục công việc
 
-**Cập nhật 02/10/2026:** TV4 thông báo GVHD đã đồng ý hướng nghiên cứu. Đây là thông tin phê duyệt hướng; không thay duyệt tham số, gate triển khai hoặc sign-off các thành viên.
+**Hướng và trạng thái cập nhật ngày 02/10/2026.** Nhánh chia sẻ: `codex/tv4-pr3-slices`. Trang này là điểm vào duy nhất cho tài liệu nhóm; đọc phần của mình rồi mở nguồn chính tương ứng.
 
-## Đọc trước khi triển khai
+## 1. Đề tài hiện làm gì?
 
-| Tài liệu | Vai trò |
+Nghiên cứu cách chọn đồng thời hình học thân/dấu tiếng Việt và thứ tự thực hiện nét để giảm chi phí chuyển động của máy vẽ trong tập ứng viên hữu hạn. So sánh với chọn hình học trước rồi tối ưu lịch, đo gap theo số cấu hình m, tìm khi nào có lợi/bằng nhau, kiểm chứng độc lập và phân tích độ nhạy theo tham số chuyển động.
+
+Đóng góp dự kiến là **mô hình chữ/dấu và phân tích có kiểm soát**; DP và tính lồi được kế thừa, không tuyên bố phát minh thuật toán mới. Một thí điểm font có điều kiện, TV1–TV4 đồng chủ trì. Vật lý bổ sung khi có máy phẳng hai trục. Writer Profile/Pareto/cắt tỉa nâng cao ngoài cam kết; Art Mode và thư tay giữ là tính năng sản phẩm.
+
+## 2. Sáu tài liệu chính — đọc theo thứ tự
+
+| Tài liệu | Dùng để quyết định |
 |---|---|
-| [29 — Đề cương](29_research_proposal_consolidated.md) | Bản đối chiếu nội dung Google Docs đã tinh chỉnh, cấu trúc Mẫu 2 |
-| [30 — Kế hoạch kỹ thuật](30_research_development_plan.md) | Ownership, slice, một bảng 8 tháng và phương án cắt phạm vi |
-| [31 — Contract solver](31_joint_solver_contract.md) | Ứng viên/lịch khả thi, clearance, J, state, top-m, oracle và regret |
-| [32 — API/artifact nghiên cứu](32_research_api_and_artifact_contract.md) | Schema draft và interface offline dự kiến; chưa là endpoint đã triển khai |
-| [34 — Hướng dẫn API gateway](34_research_api_gateway_implementation.md) | Route đã có, cấu hình manifest và bàn giao adapter; solver còn pending |
-| [API sản phẩm](OmniDraw_API_Spec-4.md) | Contract kế thừa, đối chiếu route local, capability và kế hoạch tích hợp |
-| [03 — Công việc hiện tại](03_current-task.md) | Việc cần làm của TV1–TV4 và quyết định chưa khóa |
-| [33 — Chỉ mục migration](33_document_migration_index.md) | Trạng thái từng tài liệu, archive và phạm vi kiểm tra |
+| **README này** | Hiểu hướng, trạng thái, thứ tự đọc và ranh giới tài liệu |
+| [03 — Công việc hiện tại](03_current-task.md) | Việc kế tiếp theo owner, phụ thuộc và gate còn mở |
+| [29 — Đề cương](29_research_proposal_consolidated.md) | Bản đối chiếu đề cương Google Docs theo Mẫu 2 |
+| [30 — Kế hoạch kỹ thuật](30_research_development_plan.md) | Ownership, slices, tiến độ 8 tháng và cắt phạm vi |
+| [31 — Contract thuật toán](31_joint_solver_contract.md) | Candidate, lịch, hình học, cost, state/action/forget, top-m và regret |
+| [32 — API và artifacts](32_research_api_and_artifact_contract.md) | Payload/hash, scope, complete flags, errors và bàn giao adapter |
 
-## Trọng tâm và phân công
+Docs 31/32 vẫn là **draft cần review trước freeze**, không tự thành sign-off vì tài liệu đã cập nhật. Hướng đã được GVHD đồng ý theo thông báo của TV4; tham số và kết quả không vì vậy mà được duyệt.
 
-Nghiên cứu mô hình đồng tối ưu hình học thân/dấu và lịch nét chữ tiếng Việt trong tập ứng viên hữu hạn; so staged top-m/beam, phân tích có lợi/bằng nhau, độ nhạy rho/lambda và chứng nhận regret trong phạm vi đã khóa. Áp dụng và phân tích có kiểm soát các kết quả chuẩn; không khẳng định phát minh DP mới.
+## 3. Tiến độ thật hiện tại
 
-- TV4: mô hình, DP, trace/SVG và tích hợp.
-- TV2: tài liệu, cost, baseline, runner và phân tích.
-- TV1: dữ liệu/split/custody và đồng chủ trì font.
-- TV3: oracle/primitive độc lập, thiết bị và số đo.
+- Đề cương Google Docs đã chỉnh; Docs 29 đồng bộ bản nguồn.
+- Lớp API/schema/manifest/adapter gateway đã có; kiểm thử mục tiêu 42 gateway + 34 hồi quy handwriting = **76 PASS**. Đây là kiểm thử giao tiếp với adapter giả lập.
+- Mặc định chưa đăng ký joint/baseline/oracle/certifier. Capabilities chưa ready; không coi API đã có là thuật toán đã hoàn tất.
+- DP mới, oracle/primitive độc lập, top-m/beam và chứng nhận chưa được nghiệm thu. Preflight và sign-off E1/E4 cũ giữ phạm vi/commit gốc.
+- Holdout mới, ngưỡng/điểm vận hành/budgets và quality gate chưa khóa. Chưa có xác nhận vật lý từ việc tổ chức tài liệu này.
 
-Một thí điểm font có điều kiện. Writer Profile, Pareto và cắt tỉa mở rộng ngoài cam kết. Art Mode/thư tay là chức năng sản phẩm vẫn được giữ. Thiết bị nghiên cứu là máy vẽ phẳng hai trục khi sẵn sàng; không chốt dòng máy/cơ cấu qua tên đề tài.
+## 4. Mỗi bạn bắt đầu ở đâu?
 
-## Các nhóm tài liệu
+| Thành viên | Đọc thêm | Bàn giao tiếp theo |
+|---|---|---|
+| TV4 — chủ nhiệm | Docs 31 §5, Docs 32 | State/actions, bản no-forget/safe-forget, DP và trace; tích hợp sau kiểm oracle |
+| TV2 — Trần Hồng Khải | Docs 31 §4/6/8; [tài liệu nghiên cứu](support/README.md) | Đọc Balas/RTSP/PCGTSP, review cost/ranking, baseline/runner và protocol lambda |
+| TV1 — Nguyễn Hoàng Thắng | Docs 30/32; [dữ liệu và font](support/README.md) | Reference/bounds/license ứng viên, fixtures dấu chồng, split mới và custody/access log |
+| TV3 — Phùng Tấn Minh | Docs 31 §2/3/7; Docs 32 | Xác nhận nhận oracle; primitive và vét cạn độc lập, ca kiểm tay; đo thiết bị khi có |
 
-- [01 — Công nghệ](01_tech-stack.md), [02 — Roadmap](02_roadmap.md), [05 — Spec nghiên cứu](05_ca_vhc_research_spec.md), [07 — State](07_diacritic_aware_state_design.md), [10 — Kế hoạch nghiên cứu](10_nckh_research_plan.md), [16 — Traceability](16_rq_code_metric_test_traceability.md).
-- [08 — Dữ liệu](08_handwriting_dataset_spec.md), [11 — Protocol tài liệu](11_literature_review_protocol.md), [12 — Evidence matrix](12_literature_evidence_matrix.md), [13–15 — Chương nghiên cứu](13_chapter_2_literature_review.md).
-- [22 — Phạm vi mở rộng](22_nckh_extended_scope.md), [23 — Writer Profile backlog](23_rq4_writer_habit_study_protocol.md), [24 — Fontpilot](24_rq5_vietnamese_design_font_pilot.md).
-- [Hardware](hardware/00_hardware_index.md), [Reviews](reviews/README.md), [Collection sheets](collection_sheets/README.md): giữ thiết kế/phiếu lịch sử theo nhãn phạm vi từng file.
-- [04 — Nhật ký](04_progress-log.md), báo cáo 06/17–21/25/28 và `evidence/`: kết quả/checkpoint lịch sử, không tự nâng verdict cho hướng mới.
-- [26 — Bản trao đổi](26_teacher_discussion_and_8_month_plan.md), [27 — Quyết định và provenance](27_supervisor_feedback_disposition.md): phân biệt quyết định nhóm/phản biện mô phỏng với thông báo đồng ý hướng thật.
+Các bàn giao là phân công đề xuất cần owner xác nhận, chưa phải lời xác nhận đã nhận việc. TV4 không sửa baseline TV2, oracle/driver TV3 hoặc hardware ngoài ownership.
 
-## Quy tắc nguồn và tái lập
+## 5. Tài liệu hỗ trợ và lịch sử
 
-ID N-RQ1–4 hiện hành tương ứng MT1–4 của đề cương; ID RQ/PR cũ trong bằng chứng giữ nghĩa lịch sử. Tài liệu archived không là kế hoạch hiện hành. [Bản lưu trước sửa](history/20261002/ARCHIVE_NOTES.md) giữ cả thay đổi local đã có trước migration, kèm manifest SHA-256; không chỉ là bản từ HEAD.
+- [support/](support/README.md): tech, dữ liệu, nghiên cứu, chương bản thảo, font và hướng dẫn gateway. Nguồn chính vẫn là Docs 29–32; tránh sửa một spec thứ hai ở đây.
+- [history/](history/README.md): checkpoint, đề cương/trao đổi trước và record Docs 35 đã hợp nhất. Chỉ dùng truy nguyên, không lấy verdict cũ ký cho hướng mới.
+- [Nhật ký](04_progress-log.md): diễn tiến; mục mới nhất ở đầu.
+- [Hardware](hardware/00_hardware_index.md): tài liệu thiết bị của TV3, giữ nguyên trong lần tổ chức này.
+- [Reviews](reviews/README.md), [phiếu thu thập](collection_sheets/README.md), `evidence/`: bằng chứng đúng ngày/phạm vi; không tự biến thành kết quả của mô hình mới.
 
-Không đưa nội dung Holdout mới vào repo công khai; 20 từ cũ chỉ bổ sung. Tất cả parameter/ranking/tie/budget phải khóa trước mở. Không dùng mô phỏng làm số đo máy hoặc API draft làm implemented. Các PDF/SVG phiếu thu thập, dữ liệu CSV/JSON và script tạo phiếu cũ giữ nguyên; chúng không được tái phát hành thành kết quả mới trong lần cập nhật docs này.
+Bốn file Docs 01/05/08/19 ở đường dẫn gốc chỉ là chuyển hướng tương thích cho code hoặc tài liệu cũ.
+
+## 6. Cách cập nhật để không lệch hướng
+
+Sửa mô hình → Docs 31; payload/complete flags → Docs 32; ownership/tiến độ → Docs 30; trạng thái và bàn giao → Docs 03; diễn tiến → nhật ký. Đề cương thay đổi phải đối chiếu Google Docs và Docs 29. Thay đổi có review, fixtures và evidence trong phạm vi owner; không tự ký thay người khác.
+
+Để xem nhánh chia sẻ: fetch `origin`, mở nhánh `origin/codex/tv4-pr3-slices` và bắt đầu ở `docs/README.md`; mỗi bạn tiếp tục code trên nhánh của mình. Không ghi đè working tree đang có việc. Commit/hash bàn giao trong Git là nguồn phiên bản, không dùng chỉ tên nhánh để nhận diện nội dung.
+
+Không đưa nội dung Holdout mới vào repo công khai. Khóa trước khi mở, báo riêng incomplete/timeout/infeasible; không dùng test adapter hoặc mô phỏng làm bằng chứng thuật toán/máy thật.
