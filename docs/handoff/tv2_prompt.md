@@ -11,7 +11,7 @@ Kiểm nhánh/HEAD/upstream/dirty/staged và worktrees; bảo toàn công việc
 git worktree add -b codex/tv2-research-baselines-20261002 ../OmniDraw-tv2-research origin/codex/tv4-pr3-slices
 Nếu nhánh/path tồn tại thì kiểm/reuse hoặc chọn tên mới. Không reset/stash checkout dirty một cách mặc định hoặc cherry-pick riêng code trên nền thiếu gateway/migration.
 
-Đọc: docs/README.md; docs/03_current-task.md; docs/30_research_development_plan.md; docs/31_joint_solver_contract.md; docs/32_research_api_and_artifact_contract.md; docs/handoff/README.md; backend/research/README.md; review S0 TV2 nêu trên. Docs 29/lịch sử chỉ khi cần nội dung cụ thể. Dùng graphify rồi kiểm source thật vì semantic graph có thể cũ.
+Đọc: docs/README.md; docs/03_current-task.md; docs/30_research_development_plan.md; docs/31_joint_solver_contract.md; docs/32_research_api_and_artifact_contract.md; docs/handoff/README.md; docs/handoff/pending_decisions.md; backend/research/README.md; review S0 TV2 nêu trên. Docs 29/lịch sử chỉ khi cần nội dung cụ thể. Dùng graphify rồi kiểm source thật vì semantic graph có thể cũ.
 
 Hướng nghiên cứu: đồng tối ưu geometry/lịch trong finite candidates; gap baseline phân tầng top-m và độ nhạy rho/lambda. TV4 có geometry/DP no-forget/safe-forget/replay/trace DEV, SVG diagnostic và bốn đỉnh NOT_CERTIFIED. 313 tests liên quan PASS không là nghiệm thu solver hoặc oracle. Default HTTP adapters chưa ready; HOLDOUT chưa mở; các policy/quality/parameters/budget/tie/freeze/sign-off còn PENDING.
 
@@ -27,4 +27,7 @@ Việc TV2:
 Conflict: merge codex/tv2-motion-handoff@efe3237 với code TV4 snapshot không có textual conflict. Điều đó không chứng minh semantic/API tương thích. Nhánh cũ còn docs Sprint/PR3 và review ở root; ưu tiên nhánh mới từ nguồn chia sẻ, không merge cả gói review cũ chỉ để mang S0 review vì bản đã có ở docs/reviews/. Nếu buộc merge, dùng checkout tích hợp sạch, inspect git diff --cc, giữ nguồn Docs 31/32 hiện hành và scope của review gốc; không blanket ours/theirs. Tests gateway đã chuyển tests/research/test_api.py; port chỉnh sửa sang path mới và tránh collect trùng. Recheck merge nếu remote tiến thêm, chạy tests/research + handwriting validation + tests baseline/runner liên quan.
 
 Bắt đầu bằng trạng thái Git/contract đã xác minh, xác nhận phạm vi review S0 đã có, rồi thực hiện slice baseline DEV đầu tiên. Không tự coi review nháp AI là human sign-off.
+Bàn giao theo mẫu trong docs/handoff/pending_decisions.md, ghi Q-ID, commit/evidence và gate còn mở. Phân công giữ nguyên: oracle TV3, custody TV1, baseline/runner TV2, DP/tích hợp TV4. Không tự ghi người khác đã nhận việc hoặc ký thay owner.
 ```
+
+Ghi bàn giao theo [mẫu và bảng PENDING](pending_decisions.md), nêu Q-ID liên quan và evidence/commit thực. Phân công TV1–TV4 giữ nguyên theo trưởng nhóm; không tự chuyển oracle/custody hoặc ký thay owner. Các trạng thái PENDING chỉ đóng khi có review/xác nhận trong phạm vi.

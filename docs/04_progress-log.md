@@ -1,3 +1,13 @@
+# 02/10/2026 — bảng quyết định PENDING và giữ phân công hiện tại
+
+Nền HEAD/upstream `bf68d0bb69d3efe2852a7d315a87d6778fb0b77f`, fetch origin không thấy nhánh chia sẻ tiến thêm. Trưởng nhóm yêu cầu lập bảng quyết định còn mở và giữ các TV như cũ. TV1 data/quality/split/custody, TV2 baseline/cost/runner, TV3 oracle/primitive/hardware, TV4 mô hình/DP/trace/tích hợp; phương án chuyển oracle/custody dự phòng chưa kích hoạt. Không coi chỉ định owner là lời xác nhận đã nhận việc.
+
+Đọc nguồn Docs README/03/30/31/32 và review S0 TV2 target 8dcfe66; Graphify query phục vụ tra quan hệ, graph trả cả prototype/legacy nên kiểm trực tiếp nguồn contract. Tạo `docs/handoff/pending_decisions.md`: 16 Q-ID PENDING, ưu tiên theo phụ thuộc, chủ trì/reviewer, evidence để chốt và nguồn; tách review quy tắc contract với lựa chọn giá trị tham số. Có checklist buổi đối chiếu đầu tiên và mẫu bàn giao đúng commit/hash/scope/completion/checker/limits. Không đặt số epsilon/theta/k/tolerance/budget/sample/cutoff, ngày mở HOLDOUT hoặc chữ ký thay owner.
+
+Đồng bộ index docs/handoff, current-task, kế hoạch ownership và prompt TV1–TV3 (mẫu nằm cả trong khối prompt sao chép). Bảng là công cụ điều phối, nguồn mô hình/artifacts vẫn Docs 31/32; verdict PR3/E4 và review nháp giữ commit/scope gốc. Giữ HOLDOUT đóng, default readiness/runtime nguyên trạng; không viết code thay owner hoặc gửi tin vào chat của họ.
+
+Kiểm tra links local các tài liệu slice PASS; 16 Q-ID duy nhất/theo thứ tự PASS; `git diff --check` sạch. Không chạy lại tests vì chỉ sửa docs; 332 PASS là bằng chứng runtime của slice bf68d0b trước, không là test mới/nghiệm thu độc lập. Stage riêng docs và publish commit mang entry này lên `origin/codex/tv4-pr3-slices`; không thay main/develop/nhánh owner. Bước tiếp theo: mỗi owner bàn giao log nhận việc/review/evidence; TV4 tổng hợp và xử lý counterexamples theo gate.
+
 # 02/10/2026 — TV4 inner solve cho geometry cố định
 
 Nền đã xác minh HEAD/upstream `1991fca97ca2f0c328dc4dc204207a48764919a4` trên `codex/tv4-pr3-slices`; fetch không thấy nhánh chia sẻ tiến thêm. PR3 giữ đóng, chưa suy code merge hoặc nghiệm thu. Bảo toàn dirty work; so snapshot hashes của công việc trước dọn dẹp, các file không thuộc TV4 còn nguyên bytes.

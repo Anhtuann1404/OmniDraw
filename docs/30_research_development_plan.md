@@ -91,3 +91,7 @@ Ownership code TV2/HAL/cơ khí giữ nguyên; TV4 sửa core nghiên cứu/gate
 ### Checkpoint DEV TV4 sau bàn giao
 
 No-forget/safe-forget, geometry polyline/graph tương tác, replay/trace và công cụ một ca DEV đã có ở `backend/research/`; xem [bản đồ mã](../README.md) và [research README](../backend/research/README.md). Có diagnostic bốn đỉnh giữ schedule cố định nhưng vẫn NOT_CERTIFIED. Mã cũ ở handwriting giữ vai trò sản phẩm/hồi quy; không đổi mục tiêu cũ thành J mới. Tests nghiên cứu ở `tests/research/`; script PR3 cũ ở `scripts/legacy/` với wrapper tương thích. Đây là tiến độ triển khai S1/S3/S6 DEV, không hoàn tất gate S0/S2–S7 hoặc nghiệm thu thuật toán. Baseline/runner TV2, oracle TV3, dữ liệu/quality TV1 và sign-off còn PENDING.
+
+### Điều phối quyết định còn mở (02/10/2026)
+
+Trưởng nhóm xác nhận giữ phân công TV1–TV4 như bảng §2: oracle TV3, custody TV1, baseline/runner TV2, DP/tích hợp TV4. Phương án chuyển oracle/custody dự phòng chưa được kích hoạt. [Bảng PENDING](handoff/pending_decisions.md) dẫn từng gate về nguồn này và Docs 31/32, kèm reviewer/evidence/mẫu bàn giao. Không tự chọn giá trị tham số, lịch mở HOLDOUT hoặc ký thay owner.

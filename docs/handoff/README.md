@@ -86,3 +86,5 @@ Các path TV1/TV2/TV3 là phân công tiếp theo, không có nghĩa module đã
 ## Slice tiếp nối: inner solve TV4 (02/10/2026)
 
 Sau nền code `510f4e1` và docs `1991fca`, nhánh chia sẻ bổ sung `solve_fixed_configuration` và test/sources/handoff đồng bộ. Fetch HEAD mới nhất; không dừng ở baseline code 510f4e1. TV2 dùng [interface offline](../../backend/research/README.md) và [prompt cập nhật](tv2_prompt.md) để triển khai top-m thuộc ownership TV2. Hash case giữ gốc; inner verdict không là prefix/global verdict. Snapshot conflict ở trên là lịch sử; phải recheck với hashes merge thực. Owner đã có nhánh nghiên cứu cần merge nhánh chia sẻ trong checkout sạch, review docs cùng sửa và giữ log riêng owner; không blanket ours/theirs.
+
+Trước buổi đối chiếu đầu tiên, dùng [bảng PENDING và mẫu bàn giao](pending_decisions.md). Phân công TV1–TV4 giữ nguyên theo xác nhận trưởng nhóm; mỗi TV gửi log riêng, TV4 tổng hợp. Phân công không thay lời xác nhận nhận việc hoặc sign-off của owner.

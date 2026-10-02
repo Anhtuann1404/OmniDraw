@@ -65,3 +65,5 @@ Không đưa nội dung Holdout mới vào repo công khai. Khóa trước khi m
 ## Bàn giao để các thành viên bắt đầu
 
 [Handoff README](handoff/README.md) ghi nhánh/commit code, snapshot remote, conflict đã mô phỏng và cách giải theo ownership. Prompt: [TV1 dữ liệu](handoff/tv1_prompt.md), [TV2 baseline/runner](handoff/tv2_prompt.md), [TV3 oracle](handoff/tv3_prompt.md). Fetch `origin/codex/tv4-pr3-slices` và mở nhánh nghiên cứu riêng từ nền đã cập nhật; không reset checkout có việc. [Review S0 TV2](reviews/tv2_joint_contract_s0_review_20261002.md) target `8dcfe66`, không là sign-off cho DP code `510f4e1`.
+
+Bảng điều phối: [quyết định/gate còn PENDING](handoff/pending_decisions.md), người phụ trách/reviewer và bằng chứng cần có để chốt. Bảng dẫn nguồn Docs 30–32, không thay contract hoặc tự ký nghiệm thu. Trưởng nhóm giữ phân công TV1–TV4 như cũ; oracle TV3, custody TV1.

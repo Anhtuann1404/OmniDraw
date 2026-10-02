@@ -68,3 +68,7 @@ Mỗi owner gửi commit, contract/version đã dùng, lệnh tái lập, kết 
 Nguồn bàn giao: `origin/codex/tv4-pr3-slices`; fetch để có cả commit code `510f4e1` và commit docs/prompt theo sau. [Handoff README](handoff/README.md) chứa snapshot remote/merge-tree và quy trình đồng bộ; [TV1](handoff/tv1_prompt.md), [TV2](handoff/tv2_prompt.md), [TV3](handoff/tv3_prompt.md) có prompt tự đủ ngữ cảnh. Các thành viên nên tạo nhánh/worktree nghiên cứu riêng từ nền này, giữ nguyên công việc cũ.
 
 TV2 đã có review S0 `REVIEWED_WITH_OPEN_GATES` tại `efe3237`, target `8dcfe66`; [bản nguyên bytes](reviews/tv2_joint_contract_s0_review_20261002.md) được tiếp nhận, chưa ký cho DP mới. Near-contact khác tọa độ vẫn PENDING trước freeze; DEV chỉ exact endpoint. Mô phỏng merge code TV4 với remote: TV1 11 conflicts, hardware 3, main 1, TV2/develop 0; không là merge thực hoặc nghiệm thu. Log riêng từng owner ở docs/handoff giảm việc cùng sửa current-task/progress-log tổng hợp.
+
+## Slice điều phối — bảng PENDING (02/10/2026)
+
+Đã rà Docs 30–32 và review S0 TV2, lập [bảng 16 quyết định/gate](handoff/pending_decisions.md) có ưu tiên, chủ trì/reviewer, evidence để chốt và mẫu bàn giao chung. Trưởng nhóm giữ các TV như cũ; oracle vẫn TV3, custody vẫn TV1. Toàn bộ hàng PENDING; không tự ghi nhận owner đã nhận việc, chọn tham số hoặc nâng review thành nghiệm thu. Bước ngay: TV3 log nhận oracle, các owner review contract/fixtures và bàn giao counterexamples; TV4 tổng hợp. Không đổi runtime, không mở HOLDOUT hoặc PR3.
