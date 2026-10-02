@@ -1,0 +1,173 @@
+{
+  "schema_version": "joint-artifact-v1-draft",
+  "manifest_sha256": "8b2b8d073b88ebe8ea9623d2cdf7bbdeaa19913e64876dea14fef270331681eb",
+  "cases": [
+    {
+      "schema_version": "joint-artifact-v1-draft",
+      "case_id": "tv4-method-geometry-schedule-gap",
+      "dataset_version": "tv4-synthetic-method-example-v1",
+      "manifest_sha256": "8b2b8d073b88ebe8ea9623d2cdf7bbdeaa19913e64876dea14fef270331681eb",
+      "split": "synthetic",
+      "original_text": "áb",
+      "normalized_text": "áb",
+      "normalization": "NFD",
+      "candidates": [
+        {
+          "owner_index": 0,
+          "grapheme": "á",
+          "variants": [
+            {
+              "candidate_id": "a-local",
+              "source_hash": "12390774608948e14d4ef3559b59b1d0b5e461183016b9726501163fa7a59962",
+              "strokes": [
+                {
+                  "stroke_id": "body",
+                  "role": "body",
+                  "owner_index": 0,
+                  "reversible": false,
+                  "polyline_mm": [
+                    [
+                      0.0,
+                      0.0
+                    ],
+                    [
+                      1.0,
+                      0.0
+                    ]
+                  ],
+                  "mark_type": null
+                },
+                {
+                  "stroke_id": "tone",
+                  "role": "mark",
+                  "owner_index": 0,
+                  "reversible": false,
+                  "polyline_mm": [
+                    [
+                      0.0,
+                      1.0
+                    ],
+                    [
+                      1.0,
+                      1.0
+                    ]
+                  ],
+                  "mark_type": "synthetic-tone"
+                }
+              ],
+              "body_order": [
+                "body"
+              ],
+              "mark_precedence": []
+            },
+            {
+              "candidate_id": "a-delayed",
+              "source_hash": "016fc71271a5d9dd0ff7485d062f2e09f202472637868dfbd9f203051a9e0228",
+              "strokes": [
+                {
+                  "stroke_id": "body",
+                  "role": "body",
+                  "owner_index": 0,
+                  "reversible": false,
+                  "polyline_mm": [
+                    [
+                      0.0,
+                      0.0
+                    ],
+                    [
+                      1.0,
+                      0.0
+                    ]
+                  ],
+                  "mark_type": null
+                },
+                {
+                  "stroke_id": "tone",
+                  "role": "mark",
+                  "owner_index": 0,
+                  "reversible": false,
+                  "polyline_mm": [
+                    [
+                      3.0,
+                      1.0
+                    ],
+                    [
+                      4.0,
+                      1.0
+                    ]
+                  ],
+                  "mark_type": "synthetic-tone"
+                }
+              ],
+              "body_order": [
+                "body"
+              ],
+              "mark_precedence": []
+            }
+          ]
+        },
+        {
+          "owner_index": 1,
+          "grapheme": "b",
+          "variants": [
+            {
+              "candidate_id": "b-fixed",
+              "source_hash": "9e5092d49003d7ff56880e1f806781769f49c77d69abc0aefa17d5383389affd",
+              "strokes": [
+                {
+                  "stroke_id": "body",
+                  "role": "body",
+                  "owner_index": 1,
+                  "reversible": false,
+                  "polyline_mm": [
+                    [
+                      2.0,
+                      0.0
+                    ],
+                    [
+                      3.0,
+                      0.0
+                    ]
+                  ],
+                  "mark_type": null
+                }
+              ],
+              "body_order": [
+                "body"
+              ],
+              "mark_precedence": []
+            }
+          ]
+        }
+      ],
+      "contacts": [],
+      "separation_pairs": [],
+      "delay_policy": {
+        "synthetic-tone": 1
+      },
+      "geometry_policy": {
+        "c_min_mm": 0.2,
+        "flatten_policy_id": "tv4-dev-polyline-v1",
+        "contact_policy_id": "tv4-dev-exact-endpoint-v1",
+        "numeric_policy_id": "tv4-dev-float-v1",
+        "separation_policy_id": "tv4-dev-all-pairs-v1",
+        "allow_zero_length": false
+      },
+      "boundary": {
+        "p0_mm": [
+          0.0,
+          0.0
+        ],
+        "p_end_mm": [
+          4.0,
+          1.0
+        ],
+        "initial_pen": "UP",
+        "final_pen": "UP",
+        "convention_id": "tv4-dev-maximal-down-runs-v1"
+      },
+      "reference_geometry": null,
+      "candidate_set_sha256": "04d6bd6b29a190d37bc59f2373e3566d34c1d2b8e32a7eae5ff21db93e37be14"
+    }
+  ]
+}

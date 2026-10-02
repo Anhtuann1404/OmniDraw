@@ -27,3 +27,7 @@ Split mới do TV1 custody; old20 bổ sung. Cuối tháng 3 khóa code/candidat
 ## 6. Font và vật lý có điều kiện
 
 TV1–TV4 font có base glyph và license phù hợp, anchors/default reference khóa, so gốc/chỉnh tay và kiểm độc lập. TV3 máy vẽ phẳng hai trục khi sẵn sàng, thông số và nguồn đo theo run. Không dùng tốc độ mô phỏng làm đo thật. Gói tái lập và báo cáo là bắt buộc; nguồn hạn chế giấy phép được tách quyền truy cập.
+
+## 7. Bản triển khai phần phương pháp để review
+
+[Mô hình, lập luận DP và witness geometry–lịch](36_joint_method_and_dp_argument.md) viết rõ input/phương án/J, giả thiết của state sufficiency, soundness/completeness/DAG và projection quên an toàn; đối chiếu code và giới hạn float/budget. Witness synthetic có tọa độ, bốn lịch tính tay và fixture/tests tái lập: reference ưu tiên A nhưng joint chọn B khi k=1; k=0 cho trường hợp bằng nhau. Chưa là glyph/quality TV1 đã duyệt hoặc baseline/oracle được nghiệm thu. Dùng phần này khi viết chương phương pháp, giữ DRAFT_REVIEW_REQUIRED và bổ sung review/counterexamples trước kết luận.

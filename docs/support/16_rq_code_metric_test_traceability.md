@@ -18,3 +18,13 @@ Các đường dẫn dưới đây là điểm nối trong mã hiện hữu ho�
 ## Gate chung
 
 S0 review contract → S1 candidate fixtures → S2/S3 oracle-DP match → S4 baseline/runner → S5/S6 analysis → S7 freeze/open → S8 pilot. Phiếu E1/E4/PR3 cũ chỉ chứng minh checkpoint lịch sử. Lần cập nhật tài liệu không tạo sign-off hay test PASS mới.
+
+## Checkpoint lập luận và witness TV4 — 02/10/2026
+
+| Phần | Nguồn và code/evidence hiện có | Gate còn mở |
+|---|---|---|
+| N-RQ2 / state đủ, recurrence, safe-forget | [Lập luận §2–6](36_joint_method_and_dp_argument.md); joint_dp.py/geometry.py/replay; tests no-forget/safe-forget | Giả thiết pairwise/graph đúng, numeric policy và oracle TV3; không tự chứng minh primitive float đúng |
+| N-RQ1 / geometry–lịch có thể khác reference ranking | [Witness §7–8](36_joint_method_and_dp_argument.md); fixtures/method_gap_example.json; test_method_example.py | TV2 review reference/cost, TV3 oracle, TV1 quality; synthetic không là kết quả corpus |
+| N-RQ1 / điều kiện bằng nhau | Prefix chứa minimizer F; trường hợp F=A+C và ranker xếp đúng A; witness đổi k=0 | Điều kiện đủ riêng, không mặc định H_ref/H_geom tách được |
+
+Phần phương pháp có bản để review, không chuyển các gate planned thành APPROVED; baseline/runner và certifier chính thức vẫn theo ownership/Docs 32.

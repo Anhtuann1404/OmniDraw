@@ -70,3 +70,5 @@ Gate vẫn PENDING / bước tiếp theo:
 Mỗi Q-ID có record khi có evidence, gồm trạng thái PENDING/PROPOSED/REVIEWED_WITH_OPEN_GATES/APPROVED, giá trị/phạm vi đề xuất, commit/artifact/lệnh, người review/xác nhận thực, ngày và phụ thuộc chưa đóng. APPROVED chỉ ghi khi có xác nhận trong scope; trạng thái workflow này không tự thay validation PASS hay certificate status của Docs 32. Chưa có record duyệt nào tại thời điểm tạo bảng.
 
 Nếu cùng sửa docs gây conflict: owner giữ log riêng; TV4 nhập kết quả tổng hợp, đối chiếu nguồn hiện hành và evidence từng bên, không dùng blanket ours/theirs. Giữ lịch sử verdict theo commit/scope. Cách đồng bộ nhánh trong [handoff README](README.md).
+
+Bằng chứng chuẩn bị TV4 mới: [Docs 36](../support/36_joint_method_and_dp_argument.md) và test_method_example.py/fixture synthetic liên quan Q02/Q04/Q05/Q06/Q10/Q11. Có bản lập luận và phép tính tay để review, chưa có xác nhận reviewer hay independent PASS; toàn bộ Q-ID vẫn PENDING.

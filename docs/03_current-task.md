@@ -72,3 +72,9 @@ TV2 đã có review S0 `REVIEWED_WITH_OPEN_GATES` tại `efe3237`, target `8dcfe
 ## Slice điều phối — bảng PENDING (02/10/2026)
 
 Đã rà Docs 30–32 và review S0 TV2, lập [bảng 16 quyết định/gate](handoff/pending_decisions.md) có ưu tiên, chủ trì/reviewer, evidence để chốt và mẫu bàn giao chung. Trưởng nhóm giữ các TV như cũ; oracle vẫn TV3, custody vẫn TV1. Toàn bộ hàng PENDING; không tự ghi nhận owner đã nhận việc, chọn tham số hoặc nâng review thành nghiệm thu. Bước ngay: TV3 log nhận oracle, các owner review contract/fixtures và bàn giao counterexamples; TV4 tổng hợp. Không đổi runtime, không mở HOLDOUT hoặc PR3.
+
+## Slice phương pháp TV4 — lập luận và witness (02/10/2026)
+
+[Bản phương pháp Docs 36](support/36_joint_method_and_dp_argument.md) đã giải thích input/phương án/J, state sufficiency, soundness/completeness/DAG và projection safe-forget với giả thiết rõ. Đối chiếu code và giới hạn float/precompute/budget/bookkeeping; không tự chứng nhận numerical exactness hoặc đóng cận §5.5. Witness synthetic hai owners/ba nét có hai geometry/bốn lịch tính tay, reference chọn A nhưng joint chọn B với k=1; đổi k=0 cho trường hợp bằng nhau. Fixture/hash/tests/lệnh dùng vùng nghiên cứu hiện hành, không code baseline/oracle mới hoặc font/quality TV1 đã duyệt.
+
+Nguồn liên quan Docs 30–32, chương phương pháp, traceability, README code/tests và prompt TV1–TV3 đã nối cùng bản review. Phân công giữ nguyên, Q02/Q04/Q05/Q06/Q10/Q11 vẫn PENDING. TV2 review cost/reference/lập luận, TV3 oracle độc lập trên input thô, TV1 quality/reference; TV4 xử lý counterexample. Kiểm thử 194 PASS (160 research + 34 handwriting), 1 warning có sẵn; CLI hai mode cùng J=10 và compare PASS. Test evidence/commit/push ghi progress-log; HOLDOUT/default adapters/PR3 giữ trạng thái hiện hành.

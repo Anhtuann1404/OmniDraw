@@ -1,3 +1,17 @@
+# 02/10/2026 — TV4 mô hình, lập luận DP/forget và witness tái lập
+
+Nền HEAD/upstream `f07a4a8`, solver `bf68d0b`; fetch origin không thấy nhánh chia sẻ tiến thêm. Trưởng nhóm yêu cầu làm toàn bộ bản giải thích mô hình, lập luận DP/điều kiện quên và ví dụ geometry–lịch; ownership TV1–TV4 giữ nguyên. Đọc README/03/30/31/32 rồi source joint_dp/geometry/replay, dùng Graphify query truy quan hệ và kiểm source thực; không dùng prototype/backup làm nền.
+
+Tạo `docs/support/36_joint_method_and_dp_argument.md`: input G/phương án hoàn chỉnh/J/F(g), giả thiết hữu hạn/immutable/pairwise/graph/cost/search complete, bất biến S=(i,t,A,P,e), bổ đề continuation/no-forget, soundness/completeness/DAG theo (i,t,-|P|), projection quên an toàn và endpoint độc lập, traceability đến code. Giải thích giới hạn float/numeric/rounding/tie, cooperative budgets và bookkeeping path_tie/backpointers; chưa đóng chứng minh cận thực thi Docs 31 §5.5. Đây là lập luận exact-arithmetic có giả thiết cần review, không tự chứng minh primitive hoặc code float đã đúng, không tuyên bố thuật toán nền hoàn toàn mới.
+
+Thêm manifest `tests/research/fixtures/method_gap_example.json` (synthetic tự tạo, hai owners/ba nét, hai geometry) và 8 tests `test_method_example.py`. Phép tính tay bốn lịch: H_ref immediate-mark chọn A; với k=1, fixed A optimum ≈11.121320 tại rho=.5/lambda=2, joint/fixed B chọn late có J=10. Đổi k=0 cấm late, A thắng và trường hợp bằng nhau; hash thay vì đổi delay policy. Tests ba theta minh họa và hai DP modes khớp các biểu thức, không module baseline TV2 hoặc oracle TV3. L_down/N_cycle bằng nhau nên witness không chứng minh switching lambda. Geometry không là glyph/font/reference/quality TV1 đã duyệt.
+
+Đồng bộ Docs 30/31/32/README/03, chương phương pháp/traceability/support index, research/tests README, handoff/pending table và prompts TV1–TV3. Nhóm có bản để review trong ownership cũ; Q02/Q04/Q05/Q06/Q10/Q11 vẫn PENDING. Không sửa core runtime, baseline/runner/oracle/hardware; không gửi tin vào chat khác, mở HOLDOUT, đăng ký adapter hoặc mở lại PR3.
+
+Kiểm thử: `PYTHONPATH=backend backend/venv/bin/python3 -m pytest tests/research backend/test_handwriting_validation.py -q` → **194 PASS** (160 research + 34 handwriting), 1 warning AnyIO/TestClient có sẵn, 2.36s. Full legacy 332 PASS thuộc slice bf68d0b trước, không chạy lại/không cộng thành số test đã chạy lần này. CLI lệnh Docs 36 tái lập hai modes OPTIMAL J=10, candidate a-delayed/b-fixed, compare PASS; outputs JSON/SVG ở output/research_dev/method-gap-v1.* được ignore, metadata DEV_ONLY/NOT_RUN và quality PENDING, không quyền print. Local doc links/diff-check sạch; snapshot file có sẵn không thuộc TV4 còn nguyên bytes.
+
+Stage riêng tài liệu/fixture/tests TV4 và publish commit mang entry này lên origin/codex/tv4-pr3-slices; không thay main/develop/nhánh owner hoặc sign-off. Tiếp theo: TV2 review cost/reference/điều kiện bằng nhau, TV3 oracle/primitive độc lập từ fixture thô, TV1 review quality/reference và ca thật; TV4 xử lý counterexamples và chỉ sửa contract khi có review thích hợp.
+
 # 02/10/2026 — bảng quyết định PENDING và giữ phân công hiện tại
 
 Nền HEAD/upstream `bf68d0bb69d3efe2852a7d315a87d6778fb0b77f`, fetch origin không thấy nhánh chia sẻ tiến thêm. Trưởng nhóm yêu cầu lập bảng quyết định còn mở và giữ các TV như cũ. TV1 data/quality/split/custody, TV2 baseline/cost/runner, TV3 oracle/primitive/hardware, TV4 mô hình/DP/trace/tích hợp; phương án chuyển oracle/custody dự phòng chưa kích hoạt. Không coi chỉ định owner là lời xác nhận đã nhận việc.

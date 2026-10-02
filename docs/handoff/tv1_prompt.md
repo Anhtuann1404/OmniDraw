@@ -27,6 +27,7 @@ Conflict: merge nhánh cũ feature/tv1-data-corpus với snapshot TV4 đã mô p
 
 Bắt đầu bằng tóm tắt tình trạng Git/contract đã xác minh rồi thực hiện slice TV1 đầu tiên. Các xác nhận nhận việc/sign-off cần ghi đúng bằng chứng, không giả định đã có.
 Bàn giao theo mẫu trong docs/handoff/pending_decisions.md, ghi Q-ID, commit/evidence và gate còn mở. Phân công giữ nguyên: oracle TV3, custody TV1, baseline/runner TV2, DP/tích hợp TV4. Không tự ghi người khác đã nhận việc hoặc ký thay owner.
+Review Docs 36 (docs/support/36_joint_method_and_dp_argument.md): witness áb là hình học synthetic, không glyph/reference/quality đã duyệt. Đề xuất ca thật và quality limits trong phần ownership của bạn; không chuyển ví dụ thành dataset/font được nghiệm thu.
 ```
 
 Ghi bàn giao theo [mẫu và bảng PENDING](pending_decisions.md), nêu Q-ID liên quan và evidence/commit thực. Phân công TV1–TV4 giữ nguyên theo trưởng nhóm; không tự chuyển oracle/custody hoặc ký thay owner. Các trạng thái PENDING chỉ đóng khi có review/xác nhận trong phạm vi.

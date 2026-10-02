@@ -28,6 +28,7 @@ Conflict: feature/hardware@f0df948 khi merge snapshot TV4 có conflict docs/03_c
 
 Bắt đầu bằng trạng thái Git/contract đã xác minh và xác nhận nhận oracle, rồi triển khai slice primitive kiểm tay đầu tiên. Không tự đổi AI-assisted finding thành human sign-off.
 Bàn giao theo mẫu trong docs/handoff/pending_decisions.md, ghi Q-ID, commit/evidence và gate còn mở. Phân công giữ nguyên: oracle TV3, custody TV1, baseline/runner TV2, DP/tích hợp TV4. Không tự ghi người khác đã nhận việc hoặc ký thay owner.
+Review Docs 36 (docs/support/36_joint_method_and_dp_argument.md): kiểm giả thiết state đủ, DAG và projection quên an toàn. Có thể lấy fixture method_gap_example.json làm input thô cho oracle tự viết; không import geometry/replay/DP TV4 để gọi độc lập. Ghi numeric/feasibility/value mismatch riêng.
 ```
 
 Ghi bàn giao theo [mẫu và bảng PENDING](pending_decisions.md), nêu Q-ID liên quan và evidence/commit thực. Phân công TV1–TV4 giữ nguyên theo trưởng nhóm; không tự chuyển oracle/custody hoặc ký thay owner. Các trạng thái PENDING chỉ đóng khi có review/xác nhận trong phạm vi.

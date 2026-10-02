@@ -95,3 +95,7 @@ No-forget/safe-forget, geometry polyline/graph tương tác, replay/trace và c�
 ### Điều phối quyết định còn mở (02/10/2026)
 
 Trưởng nhóm xác nhận giữ phân công TV1–TV4 như bảng §2: oracle TV3, custody TV1, baseline/runner TV2, DP/tích hợp TV4. Phương án chuyển oracle/custody dự phòng chưa được kích hoạt. [Bảng PENDING](handoff/pending_decisions.md) dẫn từng gate về nguồn này và Docs 31/32, kèm reviewer/evidence/mẫu bàn giao. Không tự chọn giá trị tham số, lịch mở HOLDOUT hoặc ký thay owner.
+
+### Chuẩn bị phương pháp S3/S5 của TV4 (02/10/2026)
+
+[Bản lập luận mô hình/DP/forget và witness](support/36_joint_method_and_dp_argument.md) đã có để TV2/TV3/TV1 review theo vai trò. Witness synthetic tự tạo, tính tay và tests chung lõi TV4; không hoàn tất S2/S4/S5 nghiệm thu hoặc quality gate. Lập luận exact arithmetic tách khỏi code float/numeric error; không thay oracle độc lập hoặc tự gọi DP là thuật toán nền mới.

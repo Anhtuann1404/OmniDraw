@@ -130,3 +130,7 @@ DEV JSON chứa SolveResult cùng config và trace; config_sha256 là hash confi
 ### Ranh giới inner result và transport (02/10/2026)
 
 `solve_fixed_configuration` trả `JointRun` offline, có scope `fixed_configuration`, candidate_set_sha256 gốc và tuple configuration_candidate_ids. Đây không là `SolveResult` HTTP: schema scope hiện hành giữ nguyên; không biến OPTIMAL của một geometry thành full_candidate_set/prefix optimum. CLI `result_packet` chỉ nhận run full-set cùng hash case. TV2 tổng hợp các inner run thành prefix/explored_subset sau kiểm ranking, coverage và aggregate budgets; TV4 chưa đăng ký adapter. INFEASIBLE inner không suy toàn G vô nghiệm; incomplete phải được giữ. Xem [interface](../backend/research/README.md); độc lập/freeze/HOLDOUT vẫn chưa mở.
+
+### Artifact witness phương pháp (02/10/2026)
+
+`tests/research/fixtures/method_gap_example.json` là manifest synthetic hash thật, hướng dẫn và phạm vi ở [Docs 36](support/36_joint_method_and_dp_argument.md). CLI hiện hành xuất packet/trace/SVG DEV cho witness, giữ independent NOT_RUN; không adapter/ranker/certificate mới hoặc mở HOLDOUT. Thay k trong test làm đổi candidate-set hash theo schema, không trộn kết quả khác hash thành gap chính thức.

@@ -158,3 +158,7 @@ Review S0 TV2 target `8dcfe66` đã tiếp nhận ở [phiếu review](reviews/t
 ### Checkpoint inner solve geometry cố định (02/10/2026)
 
 TV4 cung cấp `solve_fixed_configuration(case, candidate_ids, theta, budget, safe_forget=...)` trong [joint_dp.py](../backend/research/joint_dp.py) cho bài toán F(g,theta). Giữ case/tập ứng viên/hash gốc; chỉ giới hạn lựa chọn geometry tại BODY theo ID từng owner, không lọc/re-hash case. Dùng chung feasibility/recurrence/replay DEV với joint; kết quả OPTIMAL/INFEASIBLE chỉ trong `fixed_configuration`, timeout/resource limit không exact dù có incumbent. Tests consistency không là oracle độc lập. H_ref/H_geom/top-m và aggregate budgets/verdicts thuộc TV2, chưa triển khai trong checkpoint này. Chi tiết interface/giới hạn ở [research README](../backend/research/README.md); không thay contract draft hoặc gate PENDING.
+
+### Bản lập luận và witness để review (02/10/2026)
+
+[Supporting Docs 36](support/36_joint_method_and_dp_argument.md) trình bày giả thiết, state sufficiency, soundness/completeness/DAG và projection safe-forget tương ứng code. Mệnh đề dùng số học chính xác; không tự chứng nhận primitive/cost/tie float hoặc đóng cận dự kiến §5.5. Witness synthetic hai owners/ba nét cho thấy H_ref immediate-mark có thể xếp khác F(g;theta), cùng ca k=0 bằng nhau; fixture/tests do TV4, không oracle TV3/baseline TV2 hoặc quality TV1. Contract draft, numeric/quality/review/freeze vẫn PENDING.

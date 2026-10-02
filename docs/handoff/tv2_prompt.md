@@ -28,6 +28,7 @@ Conflict: merge codex/tv2-motion-handoff@efe3237 với code TV4 snapshot không 
 
 Bắt đầu bằng trạng thái Git/contract đã xác minh, xác nhận phạm vi review S0 đã có, rồi thực hiện slice baseline DEV đầu tiên. Không tự coi review nháp AI là human sign-off.
 Bàn giao theo mẫu trong docs/handoff/pending_decisions.md, ghi Q-ID, commit/evidence và gate còn mở. Phân công giữ nguyên: oracle TV3, custody TV1, baseline/runner TV2, DP/tích hợp TV4. Không tự ghi người khác đã nhận việc hoặc ký thay owner.
+Review Docs 36 (docs/support/36_joint_method_and_dp_argument.md): kiểm J/boundary, H_ref immediate-mark của witness, điều kiện bằng nhau và giả thiết state/recurrence. Witness do TV4 tính tay, chưa là module baseline TV2; bàn giao bất đồng bằng Q-ID/commit/counterexample.
 ```
 
 Ghi bàn giao theo [mẫu và bảng PENDING](pending_decisions.md), nêu Q-ID liên quan và evidence/commit thực. Phân công TV1–TV4 giữ nguyên theo trưởng nhóm; không tự chuyển oracle/custody hoặc ký thay owner. Các trạng thái PENDING chỉ đóng khi có review/xác nhận trong phạm vi.

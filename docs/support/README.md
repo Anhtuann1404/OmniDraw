@@ -26,3 +26,5 @@ Nguồn chính: [đọc trước](../README.md), [kế hoạch](../30_research_d
 - [24_rq5_vietnamese_design_font_pilot.md](24_rq5_vietnamese_design_font_pilot.md)
 - [34_research_api_gateway_implementation.md](34_research_api_gateway_implementation.md)
 - [OmniDraw_API_Spec-4.md](OmniDraw_API_Spec-4.md)
+
+- [36_joint_method_and_dp_argument.md](36_joint_method_and_dp_argument.md): giải thích mô hình, lập luận state/recurrence/forget có giả thiết và witness synthetic tính tay; DRAFT_REVIEW_REQUIRED, không oracle/sign-off.
