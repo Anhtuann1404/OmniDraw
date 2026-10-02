@@ -41,6 +41,8 @@ def git_snapshot():
 
 
 def result_packet(case, theta, budget, run, snapshot, seed):
+    if run.scope != "full_candidate_set" or run.candidate_set_sha256 != case.candidate_set_sha256:
+        raise ValueError("DEV joint result packet requires a full-candidate-set run for this case")
     config = {"theta": theta.model_dump(mode="json"), "budget": budget.model_dump(mode="json"),
               "mode": run.mode, "seed": seed, "tie_policy_id": run.tie_policy_id}
     coefficients = ({key: getattr(run.replay, key) for key in ("L_down_mm", "L_up_mm", "N_cycle", "J_mm")}

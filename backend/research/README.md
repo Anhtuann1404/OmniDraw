@@ -45,3 +45,16 @@ Số ở lệnh là ví dụ DEV, không chốt theta0/k/budget nghiên cứu. K
 ## Bàn giao còn mở
 
 TV2 triển khai staged_top_m/beam/runner và review mục tiêu; TV3 viết oracle bằng primitive độc lập, chỉ dùng schema/dữ liệu thô; TV1 cung cấp ứng viên/reference/quality/custody. Chưa tạo các module này. Sau đối chiếu độc lập, mới tích hợp adapter/renderer sản phẩm và certifier bốn đỉnh. Font pilot/máy thật/HOLDOUT vẫn theo gate Docs 30–32.
+
+## Inner solve cho geometry cố định — TV4 → TV2
+
+```python
+from backend.research.joint_dp import solve_fixed_configuration
+run = solve_fixed_configuration(case, candidate_ids, theta, budget, safe_forget=True)
+```
+
+`candidate_ids` là list/tuple chuỗi, đúng một ID cho mỗi owner theo thứ tự; empty case dùng `[]`. Sai độ dài, ID lạ/sai owner hoặc kiểu dữ liệu bị từ chối. Dùng `case` đầy đủ đã hash từ shared quality gate; không cắt variants rồi `ResearchCase.prepare` lại. Lõi chỉ giới hạn lựa chọn BODY, dùng cùng geometry, recurrence, replay và policies như joint, compile toàn bộ geometry gốc mỗi lần. Không cache/precompute chung ở slice này.
+
+`JointRun.scope="fixed_configuration"`, `candidate_set_sha256` giữ hash gốc, `configuration_candidate_ids` là tuple snapshot. OPTIMAL/INFEASIBLE chỉ nói về lịch của cấu hình này; INFEASIBLE không là toàn G hay NO_FEASIBLE_IN_PREFIX. TIMEOUT/RESOURCE_LIMIT giữ search_complete=False, có thể kèm incumbent đúng cấu hình. Không ranking/enumeration; independent_validation=NOT_RUN. Full-set `solve_joint` cũng trả scope/hash, configuration=None.
+
+TV2 sở hữu H_ref/H_geom, thứ tự cấu hình và aggregate prefix result/budget. Mỗi lời gọi inner gồm preprocessing/search/replay; outer phải trừ wall-time/states/memory và số cấu hình theo contract, không cấp lại toàn budget cho mỗi cấu hình rồi báo trong budget tổng. Đây là interface offline DEV, không transport SolveResult: `fixed_configuration` chưa là scope HTTP và `dev_solve.result_packet` từ chối gói inner/mismatched hash. Chưa đăng ký adapter; kiểm độc lập/freeze vẫn PENDING.

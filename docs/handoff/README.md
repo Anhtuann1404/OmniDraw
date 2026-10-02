@@ -82,3 +82,7 @@ Các path TV1/TV2/TV3 là phân công tiếp theo, không có nghĩa module đã
 ## Review TV2 đã tiếp nhận
 
 [Review S0 TV2](../reviews/tv2_joint_contract_s0_review_20261002.md) được chép nguyên bytes từ `efe323779e899d860442d60f138575687e297888:docs/tv2_joint_contract_s0_review_20261002.md`; SHA-256 `6dcc002ee541f8f9bdc110a509999e854061b837a623f73d382410b6bd09a2da`. Trạng thái `REVIEWED_WITH_OPEN_GATES`, bản nháp AI cần TV2 con người kiểm; target là `8dcfe66`, không ký cho code `510f4e1`. Bản DEV hiện dùng endpoint trùng chính xác; quy tắc near-contact cho freeze vẫn PENDING như review yêu cầu.
+
+## Slice tiếp nối: inner solve TV4 (02/10/2026)
+
+Sau nền code `510f4e1` và docs `1991fca`, nhánh chia sẻ bổ sung `solve_fixed_configuration` và test/sources/handoff đồng bộ. Fetch HEAD mới nhất; không dừng ở baseline code 510f4e1. TV2 dùng [interface offline](../../backend/research/README.md) và [prompt cập nhật](tv2_prompt.md) để triển khai top-m thuộc ownership TV2. Hash case giữ gốc; inner verdict không là prefix/global verdict. Snapshot conflict ở trên là lịch sử; phải recheck với hashes merge thực. Owner đã có nhánh nghiên cứu cần merge nhánh chia sẻ trong checkout sạch, review docs cùng sửa và giữ log riêng owner; không blanket ours/theirs.

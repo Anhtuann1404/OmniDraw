@@ -6,6 +6,7 @@
 | `test_schedule_checker.py` | Ca kiểm tay thứ tự/hướng/deadline/chi phí và arithmetic fixture |
 | `test_geometry.py` | Primitive TV4, floor .19/.20/.21, suy biến/self-cross/contact vùng hữu hạn |
 | `test_joint_dp.py` | Ca kiểm tay optimum/infeasible/budget; no-forget so safe-forget trên seed cố định |
+| `test_fixed_configuration.py` | Inner giữ lựa chọn/hash gốc; fixed infeasible khác full-set; budget/scope và min fixed so joint (TV4 consistency) |
 | `test_dev_tools.py` | JSON/hash/trace/SVG geometry, no-overwrite và ranh giới imports |
 | `test_vertex_analysis.py` | Schedule cố định, đối thủ full-set ở bốn đỉnh và incomplete không chứng nhận |
 

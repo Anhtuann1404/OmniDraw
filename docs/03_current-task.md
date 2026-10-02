@@ -30,6 +30,12 @@ Không suy ra trạng thái nhánh remote TV1–TV3 từ checkout TV4. E1/E4/PR3
 
 **Tiếp nối:** TV2 review cost/ranking và nhận baseline/runner; TV3 xác nhận nhận oracle và viết primitive/vét cạn độc lập trên fixtures; TV1 review dữ liệu/reference/quality/custody. TV4 xử lý bất đồng và chỉ tích hợp adapter/export/certifier sản phẩm sau gate độc lập. HOLDOUT vẫn chưa mở; contract freeze, epsilon_eq/theta0/domain/k/tolerance/quality/budgets/tie và sign-off PENDING. Không mở lại backlog PR3.
 
+## Slice TV4 tiếp nối — inner solve geometry cố định (02/10/2026)
+
+Từ HEAD `1991fca` đã fetch upstream và bảo toàn dirty work. `solve_fixed_configuration` dùng chung lõi DP no-forget/safe-forget, giới hạn đúng ID từng owner, giữ case/candidate hash gốc và scope fixed_configuration. Timeout/resource limit giữ incomplete và incumbent đúng cấu hình nếu có; INFEASIBLE không suy toàn G/prefix. CLI chặn xuất inner result thành full-set. Hướng dẫn TV2, Docs 31/32 và research/tests README đã cập nhật cùng code. Không sửa baseline/cost/runner/hardware, không đăng ký adapter hoặc mở HOLDOUT. Kiểm độc lập/freeze/sign-off PENDING.
+
+TV2 có thể bắt đầu baseline DEV bằng interface này, kiểm aggregate budget/ranking/coverage theo contract; TV3 tiếp tục oracle độc lập. TV4 tiếp theo đối chiếu bất đồng bằng counterexample từ TV2/TV3 rồi tích hợp sau gate. Kiểm thử **332 PASS** (152 research + 34 handwriting + 146 legacy), một warning có sẵn; diff-check sạch. Slice được publish lên nhánh chia sẻ; commit mang entry tương ứng trong progress-log, fetch HEAD mới nhất để tiếp nối. Không là merge vào nhánh đích hoặc nghiệm thu.
+
 ## Việc kế tiếp theo owner
 
 | Owner | Làm ngay | Bàn giao và gate |

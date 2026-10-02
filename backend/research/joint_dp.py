@@ -38,6 +38,9 @@ class JointRun:
     mode: str
     tie_policy_id: str = TIE_POLICY
     independent_validation: str = "NOT_RUN"
+    scope: str = "full_candidate_set"
+    candidate_set_sha256: str = ""
+    configuration_candidate_ids: tuple[str, ...] | None = None
 
 
 class BudgetExceeded(Exception):
@@ -53,6 +56,24 @@ def solve_joint(case: ResearchCase, theta: Theta, budget: Budget, *, safe_forget
     is not consumed. Budget interruption retains a completed incumbent, if found.
     OPTIMAL is a DEV float-model search claim, not independent acceptance.
     """
+    return _solve(case, theta, budget, safe_forget=safe_forget, configuration=None)
+
+
+def solve_fixed_configuration(case: ResearchCase, candidate_ids: list[str] | tuple[str, ...],
+                              theta: Theta, budget: Budget, *, safe_forget=False) -> JointRun:
+    """Minimize schedules for one configuration, keeping the original case/hash.
+
+    IDs must select exactly one variant per owner, in owner order. INFEASIBLE
+    and OPTIMAL refer only to this configuration. No ranking, prefix verdict or
+    independent validation is supplied. TV2 owns aggregate top-m budgets/status.
+    """
+    if not isinstance(candidate_ids, (list, tuple)) or any(type(cid) is not str for cid in candidate_ids):
+        raise ValueError("candidate_ids must be a list/tuple of candidate ID strings in owner order")
+    return _solve(case, theta, budget, safe_forget=safe_forget,
+                  configuration=tuple(candidate_ids))
+
+
+def _solve(case, theta, budget, *, safe_forget, configuration):
     started = monotonic()
     budget = Budget.model_validate(budget.model_dump(mode="json"))
     owned_tracer = not tracemalloc.is_tracing()
@@ -97,6 +118,12 @@ def solve_joint(case: ResearchCase, theta: Theta, budget: Budget, *, safe_forget
         theta = Theta.model_validate(theta.model_dump(mode="json"))
         if case.split not in {"dev", "synthetic"}:
             raise ValueError("DEV joint solver accepts only dev/synthetic cases; HOLDOUT remains closed")
+        if configuration is not None:
+            if len(configuration) != len(case.candidates):
+                raise ValueError("candidate_ids must select exactly one candidate per owner")
+            for row, cid in zip(case.candidates, configuration):
+                if cid not in {variant.candidate_id for variant in row.variants}:
+                    raise ValueError(f"Unknown candidate ID for owner {row.owner_index}: {cid}")
         index = compile_geometry(case, guard)
         pair_checks = index.pair_checks
         lengths = {}
@@ -120,7 +147,8 @@ def solve_joint(case: ResearchCase, theta: Theta, budget: Budget, *, safe_forget
         def available(state):
             if state.i < n and (state.t or not any(p[0] + delay(p) + 1 <= state.i for p in state.P)):
                 choices = ([(state.i, dict(state.A)[state.i])] if state.t else
-                           sorted((owner, cid) for owner, cid in index.variants if owner == state.i))
+                           ([(state.i, configuration[state.i])] if configuration is not None else
+                            sorted((owner, cid) for owner, cid in index.variants if owner == state.i)))
                 for owner, cid in choices:
                     guard()
                     if state.t or index.compatible(owner, cid, state.A):
@@ -244,4 +272,7 @@ def solve_joint(case: ResearchCase, theta: Theta, budget: Budget, *, safe_forget
                      "peak_frontier": peak_frontier, "tracked_peak_memory_mb": peak_memory / (1024 * 1024),
                      "enumeration_complete": False, "ranking_complete": False,
                      "configuration_enumeration": "NOT_PERFORMED"},
-                    "safe-forget" if safe_forget else "no-forget")
+                    "safe-forget" if safe_forget else "no-forget",
+                    scope="fixed_configuration" if configuration is not None else "full_candidate_set",
+                    candidate_set_sha256=case.candidate_set_sha256,
+                    configuration_candidate_ids=configuration)
