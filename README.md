@@ -25,3 +25,7 @@ PR3 đã đóng theo xác nhận trưởng nhóm. PR đóng, code đã merge và
 TV2 chủ trì baseline/cost review/runner; TV1 chủ trì ứng viên/split/custody; TV3 chủ trì oracle/primitive độc lập và hardware. Những phần này còn PENDING cho contract mới; không tạo module rỗng rồi gọi là đã hoàn tất.
 
 Lệnh kiểm hiện hành và lệnh DEV xem [backend/research/README.md](backend/research/README.md). Code nghiên cứu không import solver/bridge/cost sản phẩm. HOLDOUT, quality gate, numeric/contact policy freeze và sign-off không được tự nâng trạng thái từ test PASS.
+
+## Bắt đầu theo vai trò
+
+Code TV4 đã có commit `510f4e108d29d5597cb7e82ed3dd53d2ba5c806a`; docs/prompt bổ sung trên nhánh `codex/tv4-pr3-slices`. [Handoff](docs/handoff/README.md) có prompt TV1–TV3, cách tạo worktree/nhánh mới và danh sách conflict đã mô phỏng trên các nhánh cũ. Nhánh chia sẻ là nền phát triển, chưa là code merge vào main/develop hoặc nghiệm thu nghiên cứu.

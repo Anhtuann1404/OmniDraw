@@ -1,3 +1,13 @@
+# 02/10/2026 — commit TV4 và gói bàn giao remote TV1–TV3
+
+Tạo commit implementation `510f4e108d29d5597cb7e82ed3dd53d2ba5c806a` từ nền `8dcfe66`: core DP DEV, tests/migration/readmes/docs; stage tường minh, không đưa phần xóa AGENTS/run scripts, bridge, CAD/hardware/prototype/output có sẵn vào commit. Test evidence giữ 313 PASS trong entry trước; không có thay đổi runtime mới trong slice bàn giao. Đích push: `origin/codex/tv4-pr3-slices`, giữ nhánh owner/main/develop nguyên trạng. Code commit, remote publish, merge nhánh đích và nghiệm thu là các bước riêng.
+
+Fetch remote thấy TV2 motion handoff tiến tới `efe3237`, review S0 target `8dcfe66` REVIEWED_WITH_OPEN_GATES. Tiếp nhận nguyên bytes review vào `docs/reviews/`, giữ source SHA-256 `6dcc002ee541f8f9bdc110a509999e854061b837a623f73d382410b6bd09a2da`; không chép cả nhánh Docs Sprint/PR3 cũ vào nguồn mới. Near-contact rule trước freeze giữ PENDING, DEV exact endpoint không tự thành duyệt tolerance.
+
+Mô phỏng `git merge-tree --write-tree --name-only 510f4e1 <remote-ref>` không đụng working tree: TV1 `0cd03a9` có 11 conflict paths, TV3 hardware `f0df948` có 3 docs conflicts, main `b8aca0d` có 1 tech-stack conflict; TV2 `efe3237` và develop `ded5fbf` không có textual conflict. Nhánh hardware auto-merge main.py vẫn cần semantic/API tests khi tích hợp. Hash/danh sách/path và cách giải trong `docs/handoff/README.md`; recheck trên commit docs cuối trước push, không suy không-conflict thành nghiệm thu.
+
+Thêm prompt tự đủ ngữ cảnh cho TV1/TV2/TV3, khuyến nghị nhánh/worktree nghiên cứu riêng từ nguồn chia sẻ để bảo toàn công việc cũ, task ownership, log riêng owner và quy trình conflict theo docs redirect/history/evidence/dataset/hardware. Current-task/README/review index/Docs 31 cập nhật nguồn bàn giao. Không gửi tin nhắn thay trưởng nhóm hoặc tự tạo chat/nhánh làm việc cho owner. HOLDOUT mới chưa mở; oracle/baseline/quality/params/freeze/sign-off PENDING.
+
 # 02/10/2026 — TV4: DP DEV no-forget/safe-forget và dọn ranh giới mã
 
 Nền vẫn `codex/tv4-pr3-slices`, HEAD `8dcfe663df61745b9b0cfe2d2dc5a1fd3c283b22`; PR3 đã đóng, không mở lại backlog. Slice đang là code chưa commit/merge; review/sign-off nghiên cứu mới không được suy từ PR đóng hoặc test PASS. Giữ nguyên các thay đổi có sẵn của AGENTS/run scripts, bridge, CAD/hardware, prototype và output ngoài vùng TV4; đối chiếu hash dirty/untracked trước–sau, không chạy DeepSeek hoặc physical draw.

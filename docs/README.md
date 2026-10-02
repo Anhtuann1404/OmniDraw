@@ -61,3 +61,7 @@ Không đưa nội dung Holdout mới vào repo công khai. Khóa trước khi m
 ## Bản đồ mã hiện hành
 
 [README repo](../README.md) phân biệt sản phẩm, nghiên cứu mới, hardware và công cụ legacy. [Research README](../backend/research/README.md) là hướng dẫn code/DEV, không thay Docs 31/32; [tests README](../tests/research/README.md) ghi scope và map đường dẫn đã chuyển; [scripts README](../scripts/README.md) phân loại prototype và script PR3 đã đóng. PR đóng, code merge và nghiệm thu được ghi riêng theo commit/phạm vi.
+
+## Bàn giao để các thành viên bắt đầu
+
+[Handoff README](handoff/README.md) ghi nhánh/commit code, snapshot remote, conflict đã mô phỏng và cách giải theo ownership. Prompt: [TV1 dữ liệu](handoff/tv1_prompt.md), [TV2 baseline/runner](handoff/tv2_prompt.md), [TV3 oracle](handoff/tv3_prompt.md). Fetch `origin/codex/tv4-pr3-slices` và mở nhánh nghiên cứu riêng từ nền đã cập nhật; không reset checkout có việc. [Review S0 TV2](reviews/tv2_joint_contract_s0_review_20261002.md) target `8dcfe66`, không là sign-off cho DP code `510f4e1`.

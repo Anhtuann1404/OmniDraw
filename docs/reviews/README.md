@@ -1,3 +1,9 @@
+# Review nghiên cứu mới — điểm vào hiện hành
+
+[Review S0 TV2 ngày 02/10/2026](tv2_joint_contract_s0_review_20261002.md) được tiếp nhận nguyên bytes từ `origin/codex/tv2-motion-handoff@efe323779e899d860442d60f138575687e297888`; source path/hash ở [handoff README](../handoff/README.md). Target `8dcfe66`, trạng thái REVIEWED_WITH_OPEN_GATES, bản AI-assisted cần TV2 con người kiểm; không là sign-off DP mới `510f4e1`. Hướng/ownership/gate hiện hành ở Docs 30–32.
+
+Các phiếu/package Chương 1–3 dưới đây giữ phạm vi lịch sử, không dùng để bắt đầu lại PR3 hoặc ký nghiên cứu mới. Prompt nhận việc hiện hành ở [docs/handoff/](../handoff/README.md).
+
 <!-- scope-migration-20261002 -->
 > **Phạm vi ngày 02/10/2026:** Phiếu review/checkpoint lịch sử. Giữ verdict và phạm vi commit gốc; không tự ký lại cho DP/top-m/oracle hoặc nâng thành sign-off nghiên cứu mới.
 > Kế hoạch hiện hành: [Docs 30](../30_research_development_plan.md); đặc tả [Docs 31](../31_joint_solver_contract.md) và [Docs 32](../32_research_api_and_artifact_contract.md). Thông báo GVHD đồng ý hướng không thay sign-off kỹ thuật hoặc duyệt tham số.
