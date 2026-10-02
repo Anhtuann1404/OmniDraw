@@ -10,6 +10,7 @@
 | [30 — Kế hoạch kỹ thuật](30_research_development_plan.md) | Ownership, slice, một bảng 8 tháng và phương án cắt phạm vi |
 | [31 — Contract solver](31_joint_solver_contract.md) | Ứng viên/lịch khả thi, clearance, J, state, top-m, oracle và regret |
 | [32 — API/artifact nghiên cứu](32_research_api_and_artifact_contract.md) | Schema draft và interface offline dự kiến; chưa là endpoint đã triển khai |
+| [34 — Hướng dẫn API gateway](34_research_api_gateway_implementation.md) | Route đã có, cấu hình manifest và bàn giao adapter; solver còn pending |
 | [API sản phẩm](OmniDraw_API_Spec-4.md) | Contract kế thừa, đối chiếu route local, capability và kế hoạch tích hợp |
 | [03 — Công việc hiện tại](03_current-task.md) | Việc cần làm của TV1–TV4 và quyết định chưa khóa |
 | [33 — Chỉ mục migration](33_document_migration_index.md) | Trạng thái từng tài liệu, archive và phạm vi kiểm tra |

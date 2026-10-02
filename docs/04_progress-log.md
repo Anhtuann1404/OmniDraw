@@ -1,3 +1,9 @@
+# 02/10/2026 — triển khai slice API nghiên cứu
+
+TV4 thêm `backend/research/{schemas,service,router}.py` và include router trong main. Bốn routes capabilities/validate/solve/certify; strict types/hash/IDs/precedence/options, manifest phía server, Holdout public khóa, output/provenance/vertex guards. Default chưa có adapter solver/certifier, trả lỗi rõ khi chưa ready. API không thay HAL, baseline TV2 hoặc primitive oracle TV3. Docs 32/34 và navigation cập nhật trạng thái gateway.
+
+Kiểm thử: `PYTHONPATH=backend backend/venv/bin/python3 -m pytest tests/test_research_api.py backend/test_handwriting_validation.py -q` → 72 PASS (38 gateway, 34 product regression), một warning deprecation AnyIO/TestClient. Không chạy toàn bộ suite hoặc ký nghiệm thu thuật toán. Adapter test chỉ là dữ liệu kiểm transport. Mốc nguồn trước slice: a7735ea; hash commit slice được ghi trong Git.
+
 # Cập nhật ngày 02/10/2026 — đồng bộ hướng nghiên cứu
 
 TV4 thông báo GVHD đồng ý hướng đề tài. Cập nhật technical plan, ownership/slice/8 tháng, contract solver và API/artifacts draft; chuyển Writer Profile/Pareto sang backlog và giữ một fontpilot. Lập bản sao tài liệu trước migration; các bằng chứng, verdict và dữ liệu gốc giữ nguyên. Không sửa code, không chạy lại suite, không push hay tạo sign-off trong lượt này. Chi tiết coverage tại Docs 33.

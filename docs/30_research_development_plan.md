@@ -39,6 +39,10 @@ Checkout ngày 02/10/2026: `codex/tv4-pr3-slices`, HEAD `c1b4696`, có thay đ�
 
 Không có số test mới hoặc verdict PASS được tạo bởi lần cập nhật tài liệu này.
 
+### Cập nhật triển khai API sau snapshot docs
+
+Gateway/schema/manifest đã có trong `backend/research/`, main đã include router; chi tiết Docs 34. Đây là một phần S0/S1, chưa hoàn tất S2–S7. Default methods/certifier đều chưa ready; 38 tests gateway và 34 regression API handwriting PASS. Không dùng test adapter làm số liệu, solver hoặc sign-off owner.
+
 ## 4. Các slice để triển khai
 
 | Slice | Owner | Đầu ra | Gate và phụ thuộc |

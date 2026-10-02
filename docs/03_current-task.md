@@ -2,6 +2,12 @@
 
 **Cập nhật: 02/10/2026.** Hướng nghiên cứu đã được GVHD đồng ý theo thông báo của TV4; đây là kế hoạch, không phải kết quả nghiệm thu. [Kế hoạch kỹ thuật](30_research_development_plan.md), [contract solver](31_joint_solver_contract.md), [API nghiên cứu](32_research_api_and_artifact_contract.md) là nguồn triển khai.
 
+## Slice API gateway — cập nhật sau commit docs a7735ea
+
+Đã có code `backend/research/` và routes capabilities/validate/solve/certify trong main. Validation cấu trúc/hash/manifest và kiểm output adapter đã có tests; mặc định chưa đăng ký solver/certifier, không bật Holdout public. Chưa nghiệm thu DP/baseline/oracle/chứng nhận. Xem Docs 34 để các owner gắn adapter; chuẩn bị manifest DEV, không dùng dữ liệu Holdout để test API.
+
+Kiểm thử mục tiêu: 38 gateway tests + 34 API handwriting regression = 72 PASS. Các adapter trong tests chỉ kiểm transport, không là oracle độc lập hoặc kết quả nghiên cứu.
+
 ## Trạng thái đã xác minh
 
 - Checkout: `codex/tv4-pr3-slices`, HEAD `c1b4696` tại lúc rà soát; có thay đổi local của nhóm. HEAD riêng không nhận diện toàn nội dung working tree.

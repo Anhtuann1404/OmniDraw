@@ -127,6 +127,17 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# Research schema/adapter gateway is isolated from product SVG/print/log flows.
+if __package__:
+    from .research.router import create_router as create_research_router
+    from .research.service import service_from_environment
+else:
+    from research.router import create_router as create_research_router
+    from research.service import service_from_environment
+
+app.state.research_service = service_from_environment()
+app.include_router(create_research_router(app.state.research_service))
+
 
 app.add_middleware(
     CORSMiddleware,

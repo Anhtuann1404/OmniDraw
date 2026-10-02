@@ -91,3 +91,7 @@ Manifest archive giữ path và SHA-256 của 56 nội dung trước sửa. Tài
 - Đề cương: 217 đoạn nguồn và bốn bảng được đối chiếu; không thiếu văn bản sau chuẩn hóa khác biệt định dạng.
 - Ví dụ SolveRequest trong Docs 32 parse JSON hợp lệ.
 - `git diff --check` sạch; không chạy suite code hoặc tạo verdict PASS mới.
+
+## Cập nhật tiếp theo: slice API gateway
+
+Sau migration 60 Markdown, thêm [Docs 34](34_research_api_gateway_implementation.md); các docs API/task/plan/navigation được cập nhật status. Source mới là backend/research và include router trong main. 38 gateway + 34 handwriting regression PASS. Snapshot 56 file trước migration không đổi. Gateway code có, algorithm review/solver/oracle/certifier vẫn pending; chưa có kết quả nghiên cứu mới.

@@ -2,7 +2,7 @@
 
 **Version:** `joint-artifact-v1-draft`, 02/10/2026. **Owner:** TV4 API/schema; TV2 runner/result; TV1 manifest; TV3 oracle/hardware.
 
-**Status:** PLANNED, chưa có endpoint `/api/research/*` trong checkout được kiểm tra. Contract này mô tả payload/function/CLI trước; tên route HTTP dưới đây là phương án tích hợp sau gate, không phải API đang dùng được. Không gửi các trường này vào `/api/ai/generate` rồi coi backend hiện tại đã xử lý chúng.
+**Status:** IMPLEMENTED_GATEWAY / REVIEW_PENDING, 02/10/2026. Lớp API/schema/manifest/adapter đã có trong `backend/research/` và gắn vào `backend/main.py`. Có GET `/api/research/capabilities`, POST `/validate`, `/solve`, `/certify`. Chưa có adapter joint/baseline/oracle/certifier được đăng ký mặc định; solve/certify trả 503 cho case khả dụng khi thiếu implementation. Đây không là nghiệm thu thuật toán hay chứng nhận. Không gửi payload này vào `/api/ai/generate`. Hướng dẫn dùng và bàn giao: [Docs 34](34_research_api_gateway_implementation.md).
 
 ## 1. Kiến trúc và giao diện dự kiến
 
@@ -16,7 +16,7 @@
 | certify_schedule | fixed schedule + domain → vertex evidence | TV4 + TV2 | POST /api/research/certify |
 | font_pilot | licensed selected font → candidates/QC report | TV1 + TV4 | Offline trước; chưa có public TTF upload |
 
-MVP chạy đồng bộ/offline trong budget. Nếu chuyển job dài sang HTTP, phải đặc tả job_id, queued/running/completed/cancelled, polling/cancellation và artifact ACL riêng trước code; không dùng status printing của HAL cho solver job. API sản phẩm giữ sinh SVG/print/history như trước, không trigger physical draw từ solve/certify.
+MVP gateway gọi adapter đồng bộ qua threadpool FastAPI. API giới hạn kích thước request và từ chối budget vượt trần; adapter phải thực thi giới hạn thời gian/state/memory bên trong solver. Gateway chưa là worker có thể cưỡng bức dừng tiến trình. Nếu chuyển job dài sang HTTP, phải đặc tả job_id, queued/running/completed/cancelled, polling/cancellation và artifact ACL riêng trước code; không dùng status printing của HAL cho solver job. API sản phẩm giữ sinh SVG/print/history như trước, không trigger physical draw từ solve/certify.
 
 ## 2. ResearchCase — schema thiết kế
 
@@ -107,4 +107,4 @@ Renderer adapter chỉ xuất geometry/schedule đã kiểm, không gọi apply_
 
 ## 8. Gate để API có hiệu lực
 
-TV4 schema/HTTP + TV2 runner + TV1 manifest + TV3 independent check review; có fixtures đủ valid/invalid/empty/reverse/connect/deadline/tie/infeasible/timeout; có commit triển khai và tests. Trước gate đó mọi endpoint và payload ở đây là thiết kế, không xuất hiện như implemented trong frontend hoặc báo cáo.
+TV4 schema/HTTP + TV2 runner + TV1 manifest + TV3 independent check review; có fixtures đủ valid/invalid/empty/reverse/connect/deadline/tie/infeasible/timeout; có commit triển khai và tests. Hiện gate lớp transport đã có kiểm thử; gate solver, oracle độc lập, geometric validation và freeze/official runs chưa hoàn tất. Frontend đọc capabilities, không gọi phương pháp chưa ready hoặc diễn giải STRUCTURALLY_VALID thành hình học khả thi/đã ký.

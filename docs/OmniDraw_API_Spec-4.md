@@ -19,7 +19,7 @@ Tài liệu này giữ contract sản phẩm và bổ sung kế hoạch tích h�
 | Product AI/SVG | POST `/api/ai/generate`; GET `/api/print/svg/{request_id}`, `/api/thumbnail/{request_id}` | Request text/image/handwriting và SVG; không nhận solver schema mới |
 | Print | POST `/api/print/start`, `/pause`, `/resume`, `/cancel`; GET `/api/print/status/{request_id}` | HAL và capability driver; cần recheck metadata lỗi pause/resume |
 | Product support | POST `/api/auth/login`, `/api/log/experiment`; GET `/api/history`, `/api/camera/inspect-paper`; DELETE `/api/history/{request_id}` | Route hiện hữu; không tự là study runner hoặc Holdout custody |
-| Research | validate_case/solve_case/run_manifest/certify_schedule/font_pilot | PLANNED/offline trước; `/api/research/solve` và `/certify` chưa có route local |
+| Research | GET `/api/research/capabilities`; POST `/validate`, `/solve`, `/certify` | IMPLEMENTED_GATEWAY / REVIEW_PENDING; adapter chưa đăng ký mặc định; runner/font/official Holdout còn planned |
 
 **Phân biệt log:** logger sản phẩm có 15 cột (bao gồm model_used); runner legacy có 19 cột; schema CSV hardware là contract riêng. Kết quả joint/top-m/beam dùng manifest + JSONL có version, không thêm cột vào file CSV đã tồn tại. N_cycle mới không mặc nhiên bằng pen_lift_count legacy vì quy ước đầu/cuối phải tính thống nhất.
 
@@ -738,7 +738,7 @@ Mọi thay đổi định dạng dữ liệu phải được cập nhật vào f
 
 ## 10. Contract nghiên cứu mới và gate triển khai
 
-Nguồn định nghĩa duy nhất là Docs 32: ResearchCase, SolveRequest/SolveResult, CertificateResult, outcome/scope/complete flags/bounds, provenance/access rules. Interface ban đầu offline, chưa hứa public font upload hoặc job HTTP. TV4 API/solver, TV2 baseline/runner/result, TV1 dữ liệu/license, TV3 oracle/hardware review trước code/freeze.
+Nguồn định nghĩa duy nhất là Docs 32: ResearchCase, SolveRequest/SolveResult, CertificateResult, outcome/scope/complete flags/bounds, provenance/access rules. Gateway HTTP đã có; manifest phía server và adapter theo Docs 34. Chưa có public font upload, worker/job dài hoặc official Holdout qua HTTP. TV4 API/solver, TV2 baseline/runner/result, TV1 dữ liệu/license, TV3 oracle/hardware review trước code/freeze.
 
 Đầu ra OPTIMAL chỉ trong scope được chứng minh; TIMEOUT/RESOURCE_LIMIT có thể có incumbent nhưng không thành optimal; beam là upper bound, không thay exact optimum cho regret. Prefix không đầy đủ không gọi top-m toàn cục. Chứng nhận giới hạn trong finite feasible set/theta box đã khóa; không là thời gian máy thật. JSON không NaN/Infinity.
 
