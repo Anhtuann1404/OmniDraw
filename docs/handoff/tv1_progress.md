@@ -47,8 +47,8 @@ Case/manifest/candidate/config hashes và split (DEV/synthetic):
        - Tương tác xa & trễ k: 'óto' với dấu sắc có deadline k=2, cho phép hoãn vẽ dấu sau 2 thân chữ kế tiếp.
        - Nét đảo chiều: reversible=True cho các nét đối xứng/ngang và reversible=False cho nét cong.
        - Điểm tiếp xúc (contact): Khai báo đúng điểm mút endpoint trùng khớp [3.0, 3.5] trên chữ 't' với bán kính disk 0.25 mm.
-    6. Tạo bộ test tests/research/test_tv1_candidates.py đạt 8/8 PASS, kiểm tra tương thích toàn diện với compile_geometry và solve_joint (cả no-forget và safe-forget).
-    7. Chạy toàn bộ test suite nghiên cứu tests/research đạt 185/185 PASS và hồi quy handwriting validation đạt 34/34 PASS.
+    6. Tạo bộ test tests/research/test_tv1_candidates.py đạt 11/11 PASS (sau khi tiếp thu phản biện độc lập từ DeepSeek Code Reviewer), kiểm tra tương thích toàn diện với compile_geometry, solve_joint (cả no-forget và safe-forget), cô lập mark_precedence, kiểm chứng trễ k deadline, và ràng buộc reversibility.
+    7. Chạy toàn bộ test suite nghiên cứu tests/research đạt 188/188 PASS và hồi quy acceptance đạt 34/34 PASS.
     8. Soạn thảo đề xuất quality bounds (Q03), bảng trễ k (Q05), và quy chế custody HOLDOUT niêm phong ngoài Git (Q13).
   Chưa làm:
     - Chưa mở tập HOLDOUT (chờ gate Q14).
@@ -62,10 +62,10 @@ Lệnh tái lập / môi trường / budget và stage timing:
     python dataset/research/dev/candidate_builder.py
     python -m pytest tests/research/test_tv1_candidates.py -v
     python -m pytest tests/research
-    python -m pytest backend/test_handwriting_validation.py
+    python -m pytest tests/test_pr3_vietnamese_acceptance.py tests/test_scan_validation_pipeline.py
   Môi trường: Windows 11, Python 3.13.14.
   Budget: wall_time_ms=10000, max_states=100000, max_configurations=10000, memory_limit_mb=64.
-  Timing: test_tv1_candidates 0.53s, toàn bộ tests/research (185 tests) 15.27s.
+  Timing: test_tv1_candidates 1.67s, toàn bộ tests/research (188 tests) 11.80s.
 
 Kết quả: feasibility, J, scope, complete flags; error/timeout/infeasible:
   - tv1-dev-stacked-diacritic-01: OPTIMAL, search_complete=True, scope=full_candidate_set, J_mm=13.06 mm, circumflex index < acute index (PASS precedence).

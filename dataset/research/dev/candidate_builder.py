@@ -43,6 +43,7 @@ from backend.research.geometry import (
     SEPARATION_POLICY,
 )
 from backend.research.schedule_checker import EXACT_CONTACT_POLICY
+from backend.research.service import manifest_hash
 
 
 def create_standard_geometry_policy() -> GeometryPolicy:
@@ -159,7 +160,7 @@ def build_stacked_diacritic_case() -> ResearchCase:
 
     char_b = Character(
         owner_index=1,
-        grapheme="b",
+        grapheme=unicodedata.normalize("NFD", "b"),
         variants=[
             Variant(
                 candidate_id="b-std",
@@ -265,7 +266,7 @@ def build_mark_below_case() -> ResearchCase:
 
     char_c = Character(
         owner_index=1,
-        grapheme="c",
+        grapheme=unicodedata.normalize("NFD", "c"),
         variants=[
             Variant(
                 candidate_id="c-std",
@@ -381,7 +382,7 @@ def build_distant_interaction_case() -> ResearchCase:
 
     char_t = Character(
         owner_index=1,
-        grapheme="t",
+        grapheme=unicodedata.normalize("NFD", "t"),
         variants=[
             Variant(
                 candidate_id="t-std",
@@ -407,7 +408,7 @@ def build_distant_interaction_case() -> ResearchCase:
 
     char_o2 = Character(
         owner_index=2,
-        grapheme="o",
+        grapheme=unicodedata.normalize("NFD", "o"),
         variants=[
             Variant(
                 candidate_id="o2-std",
@@ -462,8 +463,6 @@ def build_all_tv1_dev_cases() -> List[ResearchCase]:
     ]
 
 
-from backend.research.service import manifest_hash
-
 
 def export_tv1_manifest(output_path: Path) -> str:
     """Build, serialize and write canonical TV1 research manifest."""
@@ -496,6 +495,7 @@ if __name__ == "__main__":
 
     h1 = export_tv1_manifest(dev_target)
     h2 = export_tv1_manifest(fixtures_target)
+    assert h1 == h2, f"Manifest hash mismatch between dev and fixtures: {h1} != {h2}"
     print(f"TV1 Manifest successfully exported to:")
     print(f" - {dev_target}")
     print(f" - {fixtures_target}")
