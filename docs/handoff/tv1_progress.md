@@ -82,13 +82,14 @@ Bất đồng/counterexample, kết luận hiện tại và giới hạn:
   - Lưu ý về Contact Policy: Quy định tv4-dev-exact-endpoint-v1 bắt buộc vị trí tiếp xúc phải là một endpoint của CẢ HAI nét. TV1 đã chuẩn hóa chữ 't' để nét thân và thanh ngang gặp nhau tại đúng điểm đầu mút [3.0, 3.5], loại bỏ lỗi vị trí nằm giữa đoạn thẳng.
 
 Đề xuất cần review / reviewer cần xác nhận:
+  - Chi tiết toàn văn xem tại: docs/handoff/tv1_proposals_q03_q05_q13.md
   - Đề xuất Q03 (Quality Bounds trên DEV):
     + Khoảng hở: c_min = 0.20 mm cứng.
     + Giới hạn dịch dấu: Delta_y_mark in [0.15, 0.45] * x_height.
-    + Giới hạn góc nghiêng: Delta_theta <= 5 độ.
+    + Giới hạn góc nghiêng: Delta_theta <= 5 độ (thanh), <= 15 độ (nghiêng).
     + Tỷ lệ khung chữ: Delta_AR <= 10%.
   - Đề xuất Q05 (Bảng k theo loại dấu):
-    + Dấu cấu tạo (mũ, móc): k = 0 mặc định (hoặc k = 1 nếu có ligatures).
+    + Dấu cấu tạo (mũ, móc, trăng): k = 0 mặc định (hoặc k = 1 nếu có ligatures).
     + Dấu thanh (sắc, huyền, hỏi, ngã, nặng): k in {0, 1, 2}.
     + Mark precedence: Dấu cấu tạo PHẢI đi trước dấu thanh khi đi cùng một chữ cái.
   - Đề xuất Q13 (Custody & HOLDOUT Protocol):
