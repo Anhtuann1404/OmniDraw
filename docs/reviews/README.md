@@ -90,3 +90,5 @@ Review tài liệu không đồng nghĩa PR2/PR3, corpus freeze, formal experime
 Review để owner đối chiếu: [TV4 numeric audit 02/10/2026](tv4_numeric_audit_20261002.md), counterexample/DEV fix có version, chưa human sign-off hoặc oracle độc lập.
 
 [TV4 review TV1 tại 1f583e9 — 03/10/2026](tv4_tv1_candidates_review_20261003.md): CHANGES_REQUESTED cho evidence/coverage; 11 TV1 và 188 research tests tái lập PASS, Q03/Q05/Q13 chưa đóng, chưa merge.
+
+Review tiếp tại c970a18: [phiếu TV4](tv4_tv1_candidates_rereview_c970a18_20261003.md), F1–F5 closed DEV; F6 partial/F7 evidence provenance còn mở. CHANGES_REQUESTED; Q03/Q05/Q13 và toàn bộ gate vẫn PENDING, chưa merge hoặc independent PASS.

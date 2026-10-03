@@ -1,3 +1,7 @@
+# 03/10/2026 — TV4 recheck TV1 c970a18
+
+Fetch lần đầu timeout, retry thành công; target c970a18 kế thừa cb38f64. Snapshot archive riêng, dirty work nguyên trạng. Builder tái sinh manifest4c62fa2e… khớp bytes; 4ca/8runs khớp float và exact ratios/graph. F1–F5 closed DEV, F6 partial (AR163.33%/45% vs bounds10%, chưa angle evidence), F7 metadata evidence ff23687 trỏ manifest cũ. 13TV1 PASS .10s; 224research+handwriting PASS2.64s (190+34), 1warning AnyIO; không replay79 acceptance. Phiếu/evidence cập nhật current-task/handoff/pending. Chỉ publish reviewdocs TV4, không merge TV1 hoặc sửa ownercode; gate/human sign-off PENDING, oracle NOT_RUN, HOLDOUT đóng, PR3 đóng. TV1 sửa F6/F7 rồi recheck.
+
 # 03/10/2026 — TV4 review TV1 candidates tại 1f583e9
 
 Fetch origin nhận nhánh codex/tv1-research-candidates-20261002; pin 1f583e9476d928c311be61ee6603ba832282fab7, merge-base 5b0f328. Diff sáu file đúng ownership data/fixtures/tests/proposals/log TV1. Graphify query tra schema/manifest rồi kiểm source Git trực tiếp vì graph checkout TV4 không chứa branch additions. Review snapshot bằng git archive vào /private/tmp/omnidraw-tv1-review-1f583e9, không merge/checkout/reset/stash hoặc sửa code TV1/dirty work.

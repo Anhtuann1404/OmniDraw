@@ -76,3 +76,5 @@ Bằng chứng chuẩn bị TV4 mới: [Docs 36](../support/36_joint_method_and_
 Chuẩn bị Q04/Q06/Q08/Q09/Q10/Q11: [numeric audit](../reviews/tv4_numeric_audit_20261002.md) có counterexample và DEV fix cost-policy/tie. Enclosure chỉ primitive arithmetic, không sai số geometry hoặc sign-off; các Q-ID vẫn PENDING.
 
 Review thực tại commit TV1 1f583e9 ngày 03/10/2026: [phiếu TV4](../reviews/tv4_tv1_candidates_review_20261003.md) và [evidence](../evidence/tv1_review_1f583e9_20261003.json). Q03/Q05/Q13 có đề xuất/fixtures, chưa đóng; CHANGES_REQUESTED cho J/provenance/coverage. Không coi review AI APPROVED là sign-off hoặc oracle độc lập.
+
+Review tiếp tại c970a18: [phiếu TV4](../reviews/tv4_tv1_candidates_rereview_c970a18_20261003.md), F1–F5 closed DEV; F6 partial/F7 evidence provenance còn mở. CHANGES_REQUESTED; Q03/Q05/Q13 và toàn bộ gate vẫn PENDING, chưa merge hoặc independent PASS.
