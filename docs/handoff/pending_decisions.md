@@ -74,3 +74,5 @@ Nếu cùng sửa docs gây conflict: owner giữ log riêng; TV4 nhập kết q
 Bằng chứng chuẩn bị TV4 mới: [Docs 36](../support/36_joint_method_and_dp_argument.md) và test_method_example.py/fixture synthetic liên quan Q02/Q04/Q05/Q06/Q10/Q11. Có bản lập luận và phép tính tay để review, chưa có xác nhận reviewer hay independent PASS; toàn bộ Q-ID vẫn PENDING.
 
 Chuẩn bị Q04/Q06/Q08/Q09/Q10/Q11: [numeric audit](../reviews/tv4_numeric_audit_20261002.md) có counterexample và DEV fix cost-policy/tie. Enclosure chỉ primitive arithmetic, không sai số geometry hoặc sign-off; các Q-ID vẫn PENDING.
+
+Review thực tại commit TV1 1f583e9 ngày 03/10/2026: [phiếu TV4](../reviews/tv4_tv1_candidates_review_20261003.md) và [evidence](../evidence/tv1_review_1f583e9_20261003.json). Q03/Q05/Q13 có đề xuất/fixtures, chưa đóng; CHANGES_REQUESTED cho J/provenance/coverage. Không coi review AI APPROVED là sign-off hoặc oracle độc lập.

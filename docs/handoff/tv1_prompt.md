@@ -28,6 +28,7 @@ Conflict: merge nhánh cũ feature/tv1-data-corpus với snapshot TV4 đã mô p
 Bắt đầu bằng tóm tắt tình trạng Git/contract đã xác minh rồi thực hiện slice TV1 đầu tiên. Các xác nhận nhận việc/sign-off cần ghi đúng bằng chứng, không giả định đã có.
 Bàn giao theo mẫu trong docs/handoff/pending_decisions.md, ghi Q-ID, commit/evidence và gate còn mở. Phân công giữ nguyên: oracle TV3, custody TV1, baseline/runner TV2, DP/tích hợp TV4. Không tự ghi người khác đã nhận việc hoặc ký thay owner.
 Review Docs 36 (docs/support/36_joint_method_and_dp_argument.md): witness áb là hình học synthetic, không glyph/reference/quality đã duyệt. Đề xuất ca thật và quality limits trong phần ownership của bạn; không chuyển ví dụ thành dataset/font được nghiệm thu.
+Review TV4 ngày 03/10/2026 cho commit 1f583e9 nằm ở docs/reviews/tv4_tv1_candidates_review_20261003.md, verdict CHANGES_REQUESTED cho evidence/coverage. Nếu tiếp tục bàn giao này, xử lý F1–F6 trên nhánh TV1 đang có, không tạo lại/bỏ công việc cũ; sửa J/provenance, reference, k=2 boundary, interaction/contact coverage và metric Q03, gửi commit mới/manifest/artifacts để TV4 review lại. Tests PASS không đóng Q03/Q05/Q13, không mở HOLDOUT.
 ```
 
 Ghi bàn giao theo [mẫu và bảng PENDING](pending_decisions.md), nêu Q-ID liên quan và evidence/commit thực. Phân công TV1–TV4 giữ nguyên theo trưởng nhóm; không tự chuyển oracle/custody hoặc ký thay owner. Các trạng thái PENDING chỉ đóng khi có review/xác nhận trong phạm vi.
