@@ -1,0 +1,202 @@
+{
+  "author": "TV1",
+  "head_commit": "ff236872dcc7bfb35763c5ac227fb39e672c05b0",
+  "base_commit": "5b0f32854a659a0b64c87c50718e8448cef39d21",
+  "usage": "TV1_DEV_CANDIDATES_EVIDENCE",
+  "python": "3.13.14",
+  "theta": {
+    "rho": 0.5,
+    "lambda_mm": 2.0
+  },
+  "budget": {
+    "wall_time_ms": 10000,
+    "max_states": 100000,
+    "max_configurations": 10000,
+    "memory_limit_mb": 64
+  },
+  "rows": [
+    {
+      "case_id": "tv1-dev-stacked-diacritic-01",
+      "manifest_sha256": "4c62fa2e7a4bdfd297e9d959062f450900bcd5a52ef1150cdbaecfec0b047993",
+      "candidate_set_sha256": "c82721ba2bc0b188ae8d88e45e4c9edc33f84ee8654144b3e9fddcb04f587e8f",
+      "future_neighbors": {
+        "0": [],
+        "1": []
+      },
+      "runs": [
+        {
+          "mode": "no-forget",
+          "outcome": "OPTIMAL",
+          "search_complete": true,
+          "candidate_ids": [
+            "a-std",
+            "b-std"
+          ],
+          "L_down_mm": 15.338315569973318,
+          "L_up_mm": 8.816578365470374,
+          "N_cycle": 4,
+          "J_mm": 27.746604752708503,
+          "objective_exact_ratio": "999676790600755641/36028797018963968",
+          "cost_policy_id": "tv4-dev-dyadic-primitive-cost-v1",
+          "independent_validation": "NOT_RUN"
+        },
+        {
+          "mode": "safe-forget",
+          "outcome": "OPTIMAL",
+          "search_complete": true,
+          "candidate_ids": [
+            "a-std",
+            "b-std"
+          ],
+          "L_down_mm": 15.338315569973318,
+          "L_up_mm": 8.816578365470374,
+          "N_cycle": 4,
+          "J_mm": 27.746604752708503,
+          "objective_exact_ratio": "999676790600755641/36028797018963968",
+          "cost_policy_id": "tv4-dev-dyadic-primitive-cost-v1",
+          "independent_validation": "NOT_RUN"
+        }
+      ]
+    },
+    {
+      "case_id": "tv1-dev-mark-below-02",
+      "manifest_sha256": "4c62fa2e7a4bdfd297e9d959062f450900bcd5a52ef1150cdbaecfec0b047993",
+      "candidate_set_sha256": "914921136540b63316992152eb8b7d3f83b040f92fc635f296b985a4bfb1b134",
+      "future_neighbors": {
+        "0": [],
+        "1": []
+      },
+      "runs": [
+        {
+          "mode": "no-forget",
+          "outcome": "OPTIMAL",
+          "search_complete": true,
+          "candidate_ids": [
+            "e-std",
+            "c-std"
+          ],
+          "L_down_mm": 12.23421246039155,
+          "L_up_mm": 12.84899559237939,
+          "N_cycle": 4,
+          "J_mm": 26.658710256581244,
+          "objective_exact_ratio": "240120315155434627/9007199254740992",
+          "cost_policy_id": "tv4-dev-dyadic-primitive-cost-v1",
+          "independent_validation": "NOT_RUN"
+        },
+        {
+          "mode": "safe-forget",
+          "outcome": "OPTIMAL",
+          "search_complete": true,
+          "candidate_ids": [
+            "e-std",
+            "c-std"
+          ],
+          "L_down_mm": 12.23421246039155,
+          "L_up_mm": 12.84899559237939,
+          "N_cycle": 4,
+          "J_mm": 26.658710256581244,
+          "objective_exact_ratio": "240120315155434627/9007199254740992",
+          "cost_policy_id": "tv4-dev-dyadic-primitive-cost-v1",
+          "independent_validation": "NOT_RUN"
+        }
+      ]
+    },
+    {
+      "case_id": "tv1-dev-distant-interaction-03",
+      "manifest_sha256": "4c62fa2e7a4bdfd297e9d959062f450900bcd5a52ef1150cdbaecfec0b047993",
+      "candidate_set_sha256": "fb4310c99665ffbcb2f11f7113993fed6d54b72a14295bde78051c2776a46495",
+      "future_neighbors": {
+        "0": [],
+        "1": [],
+        "2": []
+      },
+      "runs": [
+        {
+          "mode": "no-forget",
+          "outcome": "OPTIMAL",
+          "search_complete": true,
+          "candidate_ids": [
+            "o-std",
+            "t-std",
+            "o2-std"
+          ],
+          "L_down_mm": 16.337541126091548,
+          "L_up_mm": 15.269925772104335,
+          "N_cycle": 5,
+          "J_mm": 33.972504012143716,
+          "objective_exact_ratio": "305997112819866239/9007199254740992",
+          "cost_policy_id": "tv4-dev-dyadic-primitive-cost-v1",
+          "independent_validation": "NOT_RUN"
+        },
+        {
+          "mode": "safe-forget",
+          "outcome": "OPTIMAL",
+          "search_complete": true,
+          "candidate_ids": [
+            "o-std",
+            "t-std",
+            "o2-std"
+          ],
+          "L_down_mm": 16.337541126091548,
+          "L_up_mm": 15.269925772104335,
+          "N_cycle": 5,
+          "J_mm": 33.972504012143716,
+          "objective_exact_ratio": "305997112819866239/9007199254740992",
+          "cost_policy_id": "tv4-dev-dyadic-primitive-cost-v1",
+          "independent_validation": "NOT_RUN"
+        }
+      ]
+    },
+    {
+      "case_id": "tv1-dev-distant-interaction-04",
+      "manifest_sha256": "4c62fa2e7a4bdfd297e9d959062f450900bcd5a52ef1150cdbaecfec0b047993",
+      "candidate_set_sha256": "ab52b46eca6cb14c152a37d0e21a76399780f7503f984eb75a9d5a4574d8d9a4",
+      "future_neighbors": {
+        "0": [
+          2
+        ],
+        "1": [],
+        "2": [
+          0
+        ]
+      },
+      "runs": [
+        {
+          "mode": "no-forget",
+          "outcome": "OPTIMAL",
+          "search_complete": true,
+          "candidate_ids": [
+            "o-compact",
+            "t-std",
+            "o2-compact"
+          ],
+          "L_down_mm": 12.892953165265947,
+          "L_up_mm": 10.050778301982978,
+          "N_cycle": 4,
+          "J_mm": 25.918342316257434,
+          "objective_exact_ratio": "233451673595115887/9007199254740992",
+          "cost_policy_id": "tv4-dev-dyadic-primitive-cost-v1",
+          "independent_validation": "NOT_RUN"
+        },
+        {
+          "mode": "safe-forget",
+          "outcome": "OPTIMAL",
+          "search_complete": true,
+          "candidate_ids": [
+            "o-compact",
+            "t-std",
+            "o2-compact"
+          ],
+          "L_down_mm": 12.892953165265947,
+          "L_up_mm": 10.050778301982978,
+          "N_cycle": 4,
+          "J_mm": 25.918342316257434,
+          "objective_exact_ratio": "233451673595115887/9007199254740992",
+          "cost_policy_id": "tv4-dev-dyadic-primitive-cost-v1",
+          "independent_validation": "NOT_RUN"
+        }
+      ]
+    }
+  ],
+  "independent_oracle": "NOT_RUN"
+}

@@ -29,24 +29,79 @@ TV1 xác nhận:
 
 ---
 
-## 2. Đề xuất chuẩn hóa Q03 — Quality Bounds & Reference Geometry trên DEV
+## 2. Đề xuất chuẩn hóa Q03 — Quality Bounds & Reference Geometry trên DEV (PROPOSED / PENDING)
 
-Để đảm bảo tính nhất quán giữa bộ giải DP (TV4), bộ kiểm chứng độc lập (TV3) và các baseline phân tầng (TV2), TV1 đề xuất bộ tiêu chuẩn chất lượng hình học chung trên tập DEV:
+> [!IMPORTANT]
+> **Tình trạng Gate Q03: PROPOSED / PENDING.** Các giá trị tham số ($c_{\min}$, $r_{\text{contact}}$, $\Delta y$, $\Delta \theta$, $\Delta \text{AR}$) dưới đây là đề xuất kỹ thuật từ TV1 dựa trên đo đạc thực nghiệm các ứng viên DEV. Chúng **CHƯA PHẢI là ngưỡng đã freeze** và cần sự thẩm định, đối chiếu cùng TV2 (baseline runner) và TV3 (hardware oracle).
+> Khoảng hở đường tâm (centerline clearance) là đại diện hình học trong mô hình tối ưu, **không tự bảo đảm chống lem mực thực tế** nếu chưa qua nghiệm thu vật lý với đầu bút/mực của TV3.
 
-### 2.1. Ngưỡng khoảng hở tối thiểu ($c_{\text{min}}$)
+Để đảm bảo tính nhất quán giữa bộ giải DP (TV4), bộ kiểm chứng độc lập (TV3) và các baseline phân tầng (TV2), TV1 đề xuất bộ định nghĩa toán học và tiêu chuẩn chất lượng hình học chung trên tập DEV:
+
+### 2.1. Định nghĩa chuẩn chiều cao thân chữ ($x$-height, ký hiệu $h_x$)
+* **Định nghĩa:** Chiều cao thẳng đứng của phần thân chữ cái nguyên âm thường (không tính ascender/descender), đo từ baseline ($y_{\min}$) đến meanline ($y_{\max}$):
+  $$h_x = \max_{(x, y) \in \text{body}} y - \min_{(x, y) \in \text{body}} y$$
+* **Trong hệ tọa độ tham số DEV:** Baseline được chuẩn hóa tại $y = 0.0\,\text{mm}$. Với các glyph tiêu chuẩn ('a', 'o', 'e'), $h_x = 1.80\,\text{mm}$ hoặc $2.00\,\text{mm}$.
+
+### 2.2. Định nghĩa độ dịch dấu ($\Delta y_{\text{mark}}$) và xử lý phân biệt dấu trên / dấu dưới / dấu chồng
+Để tránh nhầm lẫn giữa tọa độ có dấu (signed coordinates) và khoảng cách hình học, $\Delta y_{\text{mark}}$ được định nghĩa là **khoảng hở thẳng đứng dương (positive vertical clearance)**:
+
+1. **Dấu trên (Marks Above — mũ `^`, sắc, huyền, hỏi, ngã):**
+   Khoảng hở từ đỉnh thân chữ cơ sở đến điểm thấp nhất của dấu:
+   $$\Delta y_{\text{mark, above}} = \min_{(x, y) \in \text{mark}} y - \max_{(x, y) \in \text{body}} y$$
+   * **Ngưỡng đề xuất:** $\Delta y_{\text{mark, above}} \in [0.15, 0.45] \times h_x$.
+   * Với $h_x = 1.80\,\text{mm}$, dải cho phép là $[0.27\,\text{mm}, 0.81\,\text{mm}]$. Giá trị cận dưới $0.27\,\text{mm} > c_{\min} = 0.20\,\text{mm}$ đảm bảo không vi phạm clearance tối thiểu.
+
+2. **Dấu dưới chân chữ (Marks Below — dấu nặng `.`):**
+   Khoảng hở từ điểm cao nhất của dấu dưới đến đáy baseline của thân chữ:
+   $$\Delta y_{\text{mark, below}} = \min_{(x, y) \in \text{body}} y - \max_{(x, y) \in \text{mark}} y$$
+   *(Do dấu nằm dưới baseline $y=0$, $y_{\max}(\text{mark}) < 0$, nên $\Delta y_{\text{mark, below}} = 0 - y_{\max}(\text{mark}) > 0$).*
+   * **Ngưỡng đề xuất:** $\Delta y_{\text{mark, below}} \in [0.15, 0.45] \times h_x = [0.27\,\text{mm}, 0.81\,\text{mm}]$.
+
+3. **Dấu chồng (Stacked Diacritics — ví dụ dấu thanh đặt trên dấu mũ `ấ, ề, ổ`):**
+   Khoảng hở từ điểm cao nhất của dấu cấu tạo (circumflex) đến điểm thấp nhất của dấu thanh (acute):
+   $$\Delta y_{\text{mark, stacked}} = \min_{(x, y) \in \text{tone}} y - \max_{(x, y) \in \text{circumflex}} y$$
+   * **Ngưỡng đề xuất:** $\Delta y_{\text{mark, stacked}} \in [0.15, 0.45] \times h_x$.
+
+4. **Phân biệt Clearance nội bộ DEV và Sai lệch Anchor tham chiếu ($\delta_{\text{anchor}}$):**
+   * Trên tập DEV hiện tại (synthetic polylines, chưa có font typography chuẩn), ta đo clearance hình học $\Delta y$ đối với thân chữ.
+   * Khi Font Pilot (Q16) được mở với font tham chiếu thực sự, sai lệch điểm mỏ neo sẽ được đo bằng khoảng cách Euclidean so với ground truth font anchor:
+     $$\delta_{\text{anchor}} = \|\mathbf{p}_{\text{mark}} - \mathbf{p}_{\text{ref}}\|_2 \le \epsilon_{\text{anchor}}$$
+     Khi đó với glyph tham chiếu gốc, $\delta_{\text{anchor}} = 0$.
+
+### 2.3. Định nghĩa độ lệch góc nghiêng ($\Delta \theta$) và biến thiên tỷ lệ khung bao ($\Delta \text{AR}$)
+* **Góc trục chính ($\theta$):** Góc của đường hồi quy tuyến tính (hoặc đoạn thẳng chính) của nét thân chính so với trục hoành:
+  $$\theta = \arctan2(\Delta y, \Delta x)$$
+  * Sai lệch so với góc danh định ($\theta_{\text{nominal}} = 90^\circ$ cho kiểu đứng, $75^\circ$ cho kiểu nghiêng $15^\circ$):
+    $$|\Delta \theta| = |\theta_{\text{candidate}} - \theta_{\text{nominal}}| \le 5^\circ \text{ (kiểu đứng)}, \quad |\Delta \theta| \le 15^\circ \text{ (kiểu nghiêng)}$$
+* **Tỷ lệ khung bao ($\text{Aspect Ratio} - \text{AR}$):** Cho hộp bao bounding box $[w, h]$, $\text{AR} = w / h$.
+  * Biến thiên tương đối so với biến thể chuẩn danh định $\text{AR}_0$:
+    $$|\Delta \text{AR}| = \frac{|\text{AR}_{\text{candidate}} - \text{AR}_0|}{\text{AR}_0} \le 10\%$$
+* **Topology:** Không chấp nhận tự cắt chéo (self-crossing) hoặc quay đầu ngược hướng (backtracking) trên cùng một nét vẽ đơn.
+
+### 2.4. Bảng đo đạc thực nghiệm các ứng viên DEV (Empirical Measurements)
+
+Dưới đây là số liệu đo đạc thực tế trên toàn bộ các ứng viên trong manifest DEV hiện hành (`tv1_dev_manifest.json`):
+
+| Ca & Ứng viên | Thân chữ $h_x$ | Chiều rộng $w$ | AR ($w/h_x$) | Loại dấu & Tên nét | Vị trí dấu | Đo đạc $\Delta y_{\text{mark}}$ | Tỷ lệ $\Delta y / h_x$ | Kết luận tiêu chuẩn |
+| :--- | :---: | :---: | :---: | :--- | :---: | :---: | :---: | :---: |
+| **01: a-std** | 2.00 mm | 1.50 mm | 0.75 | Mũ (`shape_circumflex`)<br>Sắc (`tone_acute`) | Trên thân<br>Chồng mũ | 0.40 mm<br>0.40 mm | 0.20<br>0.20 | ĐẠT ($[0.15, 0.45]$)<br>ĐẠT ($[0.15, 0.45]$) |
+| **01: a-alt** | 2.00 mm | 1.60 mm | 0.80 ($\Delta 6.7\%$) | Mũ (`shape_circumflex`)<br>Sắc (`tone_acute`) | Trên thân<br>Chồng mũ | 0.50 mm<br>0.40 mm | 0.25<br>0.20 | ĐẠT ($[0.15, 0.45]$)<br>ĐẠT ($[0.15, 0.45]$) |
+| **01: b-std** | 4.00 mm | 1.20 mm | 0.30 | *(Thân phụ có ascender)* | — | — | — | ĐẠT |
+| **02: e-std** | 1.80 mm | 1.50 mm | 0.83 | Mũ (`shape_circumflex`)<br>Nặng (`tone_dot_below`) | Trên thân<br>Dưới baseline | 0.60 mm<br>0.50 mm | 0.33<br>0.28 | ĐẠT ($[0.15, 0.45]$)<br>ĐẠT ($[0.15, 0.45]$) |
+| **02: c-std** | 1.80 mm | 1.40 mm | 0.78 | *(Thân phụ)* | — | — | — | ĐẠT |
+| **03: o-std** | 1.80 mm | 1.60 mm | 0.89 | Sắc (`tone_acute`) | Trên thân | 0.60 mm | 0.33 | ĐẠT ($[0.15, 0.45]$) |
+| **03: t-std** | 3.50 mm | 0.80 mm | 0.23 | *(Thân đa nét có tiếp xúc)* | — | Contact (3.0, 3.5) | — | $r = 0.25\,\text{mm}$ |
+| **03: o2-std** | 1.80 mm | 1.60 mm | 0.89 | *(Thân phụ)* | — | — | — | ĐẠT |
+| **04: o-compact** | 1.80 mm | 1.50 mm | 0.83 | Dấu trên (`mark`) | Trên thân | 0.60 mm | 0.33 | ĐẠT ($[0.15, 0.45]$) |
+| **04: o-swash** | 1.80 mm | 3.95 mm | 2.19 (flourish) | Dấu trên (`mark`) | Trên thân | 0.60 mm | 0.33 | ĐẠT ($[0.15, 0.45]$) |
+| **04: t-std** | 2.50 mm | 0.00 mm | 0.00 (stem) | *(Thân giữa)* | — | — | — | ĐẠT |
+| **04: o2-compact** | 1.80 mm | 1.00 mm | 0.56 | *(Thân phụ)* | — | — | — | ĐẠT |
+| **04: o2-flourish** | 1.80 mm | 1.45 mm | 0.81 (flourish) | *(Thân phụ)* | — | — | — | ĐẠT |
+
+### 2.5. Ngưỡng khoảng hở tối thiểu ($c_{\text{min}}$) và Ngoại lệ tiếp xúc (Contact)
 * **Quy định cứng:** $c_{\text{min}} = 0.20\,\text{mm}$ cho mọi cặp nét bắt buộc phải tách rời.
 * **Nguyên tắc:** Dưới $0.20\,\text{mm}$ là không khả thi (INFEASIBLE), không được dùng hàm phạt mềm (soft penalty) hay dung sai số học để làm giảm ngưỡng này.
-* **Ngoại lệ tiếp xúc (Contact):** Chỉ được miễn trừ trong phạm vi đĩa tiếp xúc hữu hạn có bán kính khai báo rõ ràng ($r \le 0.25\,\text{mm}$) tại đúng **điểm đầu mút (endpoint)** của cả hai nét.
-
-### 2.2. Giới hạn dịch dấu chuẩn hóa theo x-height
-Vị trí của dấu phải được chuẩn hóa theo chiều cao thân chữ ($x\text{-height}$):
-$$\Delta y_{\text{mark}} \in [0.15, 0.45] \times x\text{-height}$$
-* Đảm bảo dấu không bị dính sát vào thân chữ gây lem mực ($< 0.15 \times x\text{-height}$) và không bay quá xa làm mất tính liên kết thị giác ($> 0.45 \times x\text{-height}$).
-
-### 2.3. Dung sai góc nghiêng và tỷ lệ khung bao
-* **Góc nghiêng trục nét ($\theta$):** Độ lệch so với góc chuẩn của font/phong cách phải thỏa mãn $|\Delta \theta| \le 5^\circ$ (cho chữ in/nét đơn tiêu chuẩn) và $|\Delta \theta| \le 15^\circ$ (cho chữ viết nghiêng).
-* **Tỷ lệ khung bao ($\text{Aspect Ratio} - \text{AR}$):** Độ biến thiên tỷ lệ khung bao của từng glyph so với hình học tham chiếu: $|\Delta \text{AR}| \le 10\%$.
-* **Topology:** Không chấp nhận hiện tượng tự cắt chéo (self-crossing) hoặc quay đầu ngược hướng (backtracking) trên cùng một nét vẽ đơn.
+* **Ngoại lệ tiếp xúc (Contact):** Chỉ được miễn trừ trong phạm vi đĩa tiếp xúc hữu hạn có bán kính khai báo rõ ràng ($r \le 0.25\,\text{mm}$) tại đúng **điểm đầu mút (endpoint)** của cả hai nét. Điểm tiếp xúc phải được whitelist rõ ràng trong contract; nếu không có whitelist hoặc lệch endpoint, kết nối trực tiếp (CONNECT) bị coi là vi phạm và ném ngoại lệ.
 
 ---
 
@@ -99,6 +154,6 @@ Tập dữ liệu HOLDOUT chỉ được mở ra để chạy đánh giá khi th
 ## 5. Kết luận và Kiến nghị
 
 TV1 kính trình Trưởng nhóm (TV4) và các thành viên phản biện (TV2, TV3):
-1. **Ghi nhận ranh giới sử dụng của fixtures TV4** theo đúng đánh giá tại Mục 1.
-2. **Xem xét và thông qua bộ đề xuất Q03, Q05, Q13** làm căn cứ kỹ thuật để triển khai các bước tiếp theo của Slice S0/S1.
-3. **Phối hợp chuẩn bị:** TV1 đã hoàn thành bộ ứng viên mẫu và test suite kiểm chuẩn tại `dataset/research/dev/candidate_builder.py` và `tests/research/test_tv1_candidates.py` (**8/8 test PASS**), sẵn sàng cung cấp dữ liệu đầu vào cho bộ giải của TV4 và oracle của TV3.
+1. **Ghi nhận ranh giới sử dụng của fixtures TV4** theo đúng đánh giá tại Mục 1 (chỉ dùng nội bộ solver DEV, không phải font/dataset đã nghiệm thu).
+2. **Xem xét và thông qua bộ đề xuất Q03, Q05, Q13** làm căn cứ kỹ thuật để triển khai các bước tiếp theo của Slice S0/S1. Các tham số giữ trạng thái **PROPOSED / PENDING** chờ thẩm định chung.
+3. **Phối hợp chuẩn bị:** TV1 đã hoàn thành bộ ứng viên mẫu DEV (4 ca kiểm chứng), trích xuất bằng chứng số học khớp TV4 tại `docs/evidence/tv1_dev_cases_evidence.json`, và test suite kiểm chuẩn tại `tests/research/test_tv1_candidates.py` (**13/13 test PASS**), toàn bộ test suite nghiên cứu đạt **190/190 test PASS**, sẵn sàng cung cấp dữ liệu đầu vào cho bộ giải của TV4, baseline của TV2 và oracle của TV3.

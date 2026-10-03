@@ -1,12 +1,12 @@
 {
   "schema_version": "joint-artifact-v1-draft",
-  "manifest_sha256": "c69090b7ceb1f7c70e7859836f82860111a19aecd7ff0800fbb7be8f7d8bbb81",
+  "manifest_sha256": "4c62fa2e7a4bdfd297e9d959062f450900bcd5a52ef1150cdbaecfec0b047993",
   "cases": [
     {
       "schema_version": "joint-artifact-v1-draft",
       "case_id": "tv1-dev-stacked-diacritic-01",
       "dataset_version": "tv1-vietnamese-dev-v1",
-      "manifest_sha256": "c69090b7ceb1f7c70e7859836f82860111a19aecd7ff0800fbb7be8f7d8bbb81",
+      "manifest_sha256": "4c62fa2e7a4bdfd297e9d959062f450900bcd5a52ef1150cdbaecfec0b047993",
       "split": "dev",
       "original_text": "ấb",
       "normalized_text": "ấb",
@@ -18,7 +18,7 @@
           "variants": [
             {
               "candidate_id": "a-std",
-              "source_hash": "64204682c2591b0b1cdf80f5516a9fe0a4c12aefe04265920953c56cd8f2162e",
+              "source_hash": "66954790de32531eec3a1262400b388c5ad5695556ed68255e1e716d89fb3480",
               "strokes": [
                 {
                   "stroke_id": "a_body",
@@ -100,7 +100,7 @@
             },
             {
               "candidate_id": "a-alt",
-              "source_hash": "f3e82c57794b6714d9186c2d366c99d1c24844dd4c9d61d755ee94174d349503",
+              "source_hash": "12464b439e4e4b0f7ab1c3305853ec833a9afea9e5bd2eb0ea65c94835e385c4",
               "strokes": [
                 {
                   "stroke_id": "a_body",
@@ -188,7 +188,7 @@
           "variants": [
             {
               "candidate_id": "b-std",
-              "source_hash": "0db69328d65b3bd27a01b0c83e3d782e492ec352a44332445e78a526eb7b4490",
+              "source_hash": "6fbf34a30a8c59802546374e3884d994ae249c3e7b8707896b1c9f1e6d89506a",
               "strokes": [
                 {
                   "stroke_id": "b_stem",
@@ -255,17 +255,14 @@
         "final_pen": "UP",
         "convention_id": "tv1-origin-margin-v1"
       },
-      "reference_geometry": {
-        "source_hash": "6a3004b175383c760c3685d0b903db6aa16375096d16f12e37e9a03e5b04a807",
-        "mapping_policy_id": "tv1-dev-reference-anchor-v1"
-      },
-      "candidate_set_sha256": "770ef1b33065854ce2a5646c68900572216911a7106a51681a67122ed10aa405"
+      "reference_geometry": null,
+      "candidate_set_sha256": "c82721ba2bc0b188ae8d88e45e4c9edc33f84ee8654144b3e9fddcb04f587e8f"
     },
     {
       "schema_version": "joint-artifact-v1-draft",
       "case_id": "tv1-dev-mark-below-02",
       "dataset_version": "tv1-vietnamese-dev-v1",
-      "manifest_sha256": "c69090b7ceb1f7c70e7859836f82860111a19aecd7ff0800fbb7be8f7d8bbb81",
+      "manifest_sha256": "4c62fa2e7a4bdfd297e9d959062f450900bcd5a52ef1150cdbaecfec0b047993",
       "split": "dev",
       "original_text": "ệc",
       "normalized_text": "ệc",
@@ -277,7 +274,7 @@
           "variants": [
             {
               "candidate_id": "e-std",
-              "source_hash": "2e5d7a0833ef8922ac9e3913c08b3dc6b3eb582b084104b7d6cb48446479119c",
+              "source_hash": "11c5d7eb6baa7992f891b87be76de9f887b6f1c80e0d208dbe0d7121ad69b87c",
               "strokes": [
                 {
                   "stroke_id": "e_body",
@@ -373,7 +370,7 @@
           "variants": [
             {
               "candidate_id": "c-std",
-              "source_hash": "6b521ea0e1977c3527ec2047ab249b3e748cf2720a4a2bb1faa955e68dda905c",
+              "source_hash": "ebd9fca44e068bccb37b5c3c68904be458edf2c76ade91c1ad0f969f58047f3a",
               "strokes": [
                 {
                   "stroke_id": "c_body",
@@ -440,19 +437,16 @@
         "final_pen": "UP",
         "convention_id": "tv1-origin-margin-v1"
       },
-      "reference_geometry": {
-        "source_hash": "6a3004b175383c760c3685d0b903db6aa16375096d16f12e37e9a03e5b04a807",
-        "mapping_policy_id": "tv1-dev-reference-anchor-v1"
-      },
-      "candidate_set_sha256": "0cefecccfbd17216ae7df5f6cbaa5a0561f59050ab5fc2b6a78866d985689067"
+      "reference_geometry": null,
+      "candidate_set_sha256": "914921136540b63316992152eb8b7d3f83b040f92fc635f296b985a4bfb1b134"
     },
     {
       "schema_version": "joint-artifact-v1-draft",
       "case_id": "tv1-dev-distant-interaction-03",
       "dataset_version": "tv1-vietnamese-dev-v1",
-      "manifest_sha256": "c69090b7ceb1f7c70e7859836f82860111a19aecd7ff0800fbb7be8f7d8bbb81",
+      "manifest_sha256": "4c62fa2e7a4bdfd297e9d959062f450900bcd5a52ef1150cdbaecfec0b047993",
       "split": "dev",
-      "original_text": "óto",
+      "original_text": "óto",
       "normalized_text": "óto",
       "normalization": "NFD",
       "candidates": [
@@ -462,7 +456,7 @@
           "variants": [
             {
               "candidate_id": "o-std",
-              "source_hash": "dd3cf7328545b872168aef86c2639aafaf8d893e4b11464c2efdd3249286c357",
+              "source_hash": "faf06356ffbaffeb51f05ea0c54e17591401d0760664db6e1e737847545c822d",
               "strokes": [
                 {
                   "stroke_id": "o_body",
@@ -528,7 +522,7 @@
           "variants": [
             {
               "candidate_id": "t-std",
-              "source_hash": "10ef316ca102babccd10e796a693b54be567d72121ee1c8b092522d60d6d7c8e",
+              "source_hash": "e59dfe53ec75f090d79805ed39c709de2814c55d756f0e36daafc25189402102",
               "strokes": [
                 {
                   "stroke_id": "t_stem",
@@ -587,7 +581,7 @@
           "variants": [
             {
               "candidate_id": "o2-std",
-              "source_hash": "86868c45287a65d9b9c87bd94a32ba7ec2a7977b6c027c0931aac535aab53de6",
+              "source_hash": "2992e81c048764d213d8b3d0a04de6f79ed60a0c6a0e7bd227447c1e6dd68da2",
               "strokes": [
                 {
                   "stroke_id": "o_body",
@@ -676,11 +670,279 @@
         "final_pen": "UP",
         "convention_id": "tv1-origin-margin-v1"
       },
-      "reference_geometry": {
-        "source_hash": "6a3004b175383c760c3685d0b903db6aa16375096d16f12e37e9a03e5b04a807",
-        "mapping_policy_id": "tv1-dev-reference-anchor-v1"
+      "reference_geometry": null,
+      "candidate_set_sha256": "fb4310c99665ffbcb2f11f7113993fed6d54b72a14295bde78051c2776a46495"
+    },
+    {
+      "schema_version": "joint-artifact-v1-draft",
+      "case_id": "tv1-dev-distant-interaction-04",
+      "dataset_version": "tv1-vietnamese-dev-v1",
+      "manifest_sha256": "4c62fa2e7a4bdfd297e9d959062f450900bcd5a52ef1150cdbaecfec0b047993",
+      "split": "dev",
+      "original_text": "óto",
+      "normalized_text": "óto",
+      "normalization": "NFD",
+      "candidates": [
+        {
+          "owner_index": 0,
+          "grapheme": "ó",
+          "variants": [
+            {
+              "candidate_id": "o-compact",
+              "source_hash": "7fb3fc3ee9f7cd8a484ea6117b0e133afd2e65fe3bfb818e9d48a4df0c338e30",
+              "strokes": [
+                {
+                  "stroke_id": "body",
+                  "role": "body",
+                  "owner_index": 0,
+                  "reversible": false,
+                  "polyline_mm": [
+                    [
+                      0.2,
+                      1.8
+                    ],
+                    [
+                      0.0,
+                      1.0
+                    ],
+                    [
+                      0.2,
+                      0.0
+                    ],
+                    [
+                      1.5,
+                      0.0
+                    ],
+                    [
+                      1.5,
+                      1.8
+                    ]
+                  ],
+                  "mark_type": null
+                },
+                {
+                  "stroke_id": "mark",
+                  "role": "mark",
+                  "owner_index": 0,
+                  "reversible": true,
+                  "polyline_mm": [
+                    [
+                      0.5,
+                      2.4
+                    ],
+                    [
+                      1.1,
+                      3.0
+                    ]
+                  ],
+                  "mark_type": "tv1-acute-distant"
+                }
+              ],
+              "body_order": [
+                "body"
+              ],
+              "mark_precedence": []
+            },
+            {
+              "candidate_id": "o-swash",
+              "source_hash": "22d4ef93146b2ba21b905d0e5285a3b05fddc13a3b41e17ebf0bf1f570541674",
+              "strokes": [
+                {
+                  "stroke_id": "body",
+                  "role": "body",
+                  "owner_index": 0,
+                  "reversible": false,
+                  "polyline_mm": [
+                    [
+                      0.2,
+                      1.8
+                    ],
+                    [
+                      0.0,
+                      1.0
+                    ],
+                    [
+                      0.2,
+                      0.0
+                    ],
+                    [
+                      1.5,
+                      0.0
+                    ],
+                    [
+                      3.95,
+                      0.5
+                    ]
+                  ],
+                  "mark_type": null
+                },
+                {
+                  "stroke_id": "mark",
+                  "role": "mark",
+                  "owner_index": 0,
+                  "reversible": true,
+                  "polyline_mm": [
+                    [
+                      0.5,
+                      2.4
+                    ],
+                    [
+                      1.1,
+                      3.0
+                    ]
+                  ],
+                  "mark_type": "tv1-acute-distant"
+                }
+              ],
+              "body_order": [
+                "body"
+              ],
+              "mark_precedence": []
+            }
+          ]
+        },
+        {
+          "owner_index": 1,
+          "grapheme": "t",
+          "variants": [
+            {
+              "candidate_id": "t-std",
+              "source_hash": "c70dfe763a8a221d103f6007b4a046617c1f31a71085fda2d6c19be95467e93f",
+              "strokes": [
+                {
+                  "stroke_id": "body",
+                  "role": "body",
+                  "owner_index": 1,
+                  "reversible": false,
+                  "polyline_mm": [
+                    [
+                      2.5,
+                      3.5
+                    ],
+                    [
+                      2.5,
+                      1.0
+                    ]
+                  ],
+                  "mark_type": null
+                }
+              ],
+              "body_order": [
+                "body"
+              ],
+              "mark_precedence": []
+            }
+          ]
+        },
+        {
+          "owner_index": 2,
+          "grapheme": "o",
+          "variants": [
+            {
+              "candidate_id": "o2-compact",
+              "source_hash": "d6700eec6b8f4887fccee9bf624104f7d2eeb414e54b47e96f71c989ead7417e",
+              "strokes": [
+                {
+                  "stroke_id": "body",
+                  "role": "body",
+                  "owner_index": 2,
+                  "reversible": false,
+                  "polyline_mm": [
+                    [
+                      4.5,
+                      1.8
+                    ],
+                    [
+                      4.5,
+                      0.0
+                    ],
+                    [
+                      5.5,
+                      0.0
+                    ],
+                    [
+                      5.5,
+                      1.8
+                    ]
+                  ],
+                  "mark_type": null
+                }
+              ],
+              "body_order": [
+                "body"
+              ],
+              "mark_precedence": []
+            },
+            {
+              "candidate_id": "o2-flourish",
+              "source_hash": "f319e5d6ab8687cc42ed405d3a3dd63f966026469deca7da3cdb6b0f575c86c3",
+              "strokes": [
+                {
+                  "stroke_id": "body",
+                  "role": "body",
+                  "owner_index": 2,
+                  "reversible": false,
+                  "polyline_mm": [
+                    [
+                      4.05,
+                      0.5
+                    ],
+                    [
+                      4.5,
+                      1.8
+                    ],
+                    [
+                      4.5,
+                      0.0
+                    ],
+                    [
+                      5.5,
+                      0.0
+                    ],
+                    [
+                      5.5,
+                      1.8
+                    ]
+                  ],
+                  "mark_type": null
+                }
+              ],
+              "body_order": [
+                "body"
+              ],
+              "mark_precedence": []
+            }
+          ]
+        }
+      ],
+      "contacts": [],
+      "separation_pairs": [],
+      "delay_policy": {
+        "tv1-acute-distant": 2
       },
-      "candidate_set_sha256": "aeb0e79d202f4fcccadb2e7b5d37c46df34a6f8af0f9cc2d22df373a5d33e039"
+      "geometry_policy": {
+        "c_min_mm": 0.2,
+        "flatten_policy_id": "tv4-dev-polyline-v1",
+        "contact_policy_id": "tv4-dev-exact-endpoint-v1",
+        "numeric_policy_id": "tv4-dev-float-v1",
+        "separation_policy_id": "tv4-dev-all-pairs-v1",
+        "allow_zero_length": false
+      },
+      "boundary": {
+        "p0_mm": [
+          -1.0,
+          0.0
+        ],
+        "p_end_mm": [
+          8.0,
+          0.0
+        ],
+        "initial_pen": "UP",
+        "final_pen": "UP",
+        "convention_id": "tv1-origin-margin-v1"
+      },
+      "reference_geometry": null,
+      "candidate_set_sha256": "ab52b46eca6cb14c152a37d0e21a76399780f7503f984eb75a9d5a4574d8d9a4"
     }
   ]
 }
