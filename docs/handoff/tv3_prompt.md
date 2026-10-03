@@ -33,3 +33,7 @@ Review Docs 36 (docs/support/36_joint_method_and_dp_argument.md): kiểm giả t
 ```
 
 Ghi bàn giao theo [mẫu và bảng PENDING](pending_decisions.md), nêu Q-ID liên quan và evidence/commit thực. Phân công TV1–TV4 giữ nguyên theo trưởng nhóm; không tự chuyển oracle/custody hoặc ký thay owner. Các trạng thái PENDING chỉ đóng khi có review/xác nhận trong phạm vi.
+
+## Bước bàn giao cần bổ sung — 03/10/2026
+
+TV4 fetch/ls-remote thấy feature/hardware vẫn f0df948; không có docs/handoff/tv3_progress.md hoặc nhánh TV3 oracle được publish. Nếu đã viết log, kiểm git status/branch, commit riêng file ownership rồi push nhánh phù hợp; gửi tên nhánh + full commit hash + đường dẫn log để TV4 recheck. Không reset/stash công việc hardware. Q01 chỉ đóng khi xác minh log nhận oracle và phạm vi độc lập; không đồng nghĩa oracle PASS/nghiệm thu hoặc đóng các gate khác. Không cần làm lại hardware/PR3 đã xong.

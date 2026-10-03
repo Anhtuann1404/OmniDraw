@@ -90,3 +90,7 @@ Nguồn liên quan Docs 30–32, chương phương pháp, traceability, README c
 ## Review lại TV1 — c970a18 (03/10/2026)
 
 F1–F5 CLOSED trong phạm vi synthetic DEV; F6 PARTIALLY_RESOLVED (AR flourish vượt10%, thiếu angle measurement/quality scope). F7 mới: evidence head_commit ff23687 trỏ manifest cũ; số học tại c970a18 được TV4 tái lập khớp cả8runs. 13 TV1 PASS; 224 research+handwriting PASS (190+34), chưa chạy lại79 acceptance TV1 báo. Verdict CHANGES_REQUESTED cho claim/provenance; không merge/quality acceptance, Q01–Q16 PENDING và oracle NOT_RUN/HOLDOUT đóng. [Phiếu mới](reviews/tv4_tv1_candidates_rereview_c970a18_20261003.md).
+
+## TV3 Q01 — kiểm tra publish 03/10/2026
+
+Fetch origin và ls-remote xác minh feature/hardware vẫn f0df94878971f5335c3066e168aa67d749b0f713. Không có docs/handoff/tv3_progress.md trong cây commit đó; không thấy nhánh *tv3* trên remote. Chưa xác minh được log TV3 báo đã nhận oracle; Q01 chưa cập nhật CLOSED ở nguồn chia sẻ. Q01 chỉ là owner nhận việc/phạm vi độc lập, không là nghiệm thu oracle; oracle mới vẫn NOT_RUN. TV3 cần commit/push log đúng nhánh và bàn giao full hash/path; nếu log ở nhánh khác cung cấp branch/hash. Không sửa hoặc đánh giá lại hardware/PR3 cũ từ thông báo này.

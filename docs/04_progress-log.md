@@ -1,3 +1,7 @@
+# 03/10/2026 — TV4 kiểm log Q01 TV3 trên hardware
+
+Fetch origin và ls-remote xác minh feature/hardware vẫn f0df94878971f5335c3066e168aa67d749b0f713. Không có docs/handoff/tv3_progress.md trong cây commit đó; không thấy nhánh *tv3* trên remote. Chưa xác minh được log TV3 báo đã nhận oracle; Q01 chưa cập nhật CLOSED ở nguồn chia sẻ. Q01 chỉ là owner nhận việc/phạm vi độc lập, không là nghiệm thu oracle; oracle mới vẫn NOT_RUN. TV3 cần commit/push log đúng nhánh và bàn giao full hash/path; nếu log ở nhánh khác cung cấp branch/hash. Không sửa hoặc đánh giá lại hardware/PR3 cũ từ thông báo này.
+
 # 03/10/2026 — TV4 recheck TV1 c970a18
 
 Fetch lần đầu timeout, retry thành công; target c970a18 kế thừa cb38f64. Snapshot archive riêng, dirty work nguyên trạng. Builder tái sinh manifest4c62fa2e… khớp bytes; 4ca/8runs khớp float và exact ratios/graph. F1–F5 closed DEV, F6 partial (AR163.33%/45% vs bounds10%, chưa angle evidence), F7 metadata evidence ff23687 trỏ manifest cũ. 13TV1 PASS .10s; 224research+handwriting PASS2.64s (190+34), 1warning AnyIO; không replay79 acceptance. Phiếu/evidence cập nhật current-task/handoff/pending. Chỉ publish reviewdocs TV4, không merge TV1 hoặc sửa ownercode; gate/human sign-off PENDING, oracle NOT_RUN, HOLDOUT đóng, PR3 đóng. TV1 sửa F6/F7 rồi recheck.
