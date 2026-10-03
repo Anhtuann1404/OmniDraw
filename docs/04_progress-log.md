@@ -1,3 +1,7 @@
+# 03/10/2026 — Review oracle TV3 d84c241
+
+Đã fetch codex/tv3-research-oracle-20261002 tại d84c241, thấy log nhận oracle không chờ máy và code độc lập chỉ imports schema/stdlib/local. Q01 CLOSED_ACKNOWLEDGEMENT_ONLY (nhận việc), không oracle nghiệm thu/human sign-off. Implementation CHANGES_REQUESTED: exactcost mismatch multi-segment, budget/memory/pre-enumeration guard, split/policy/contact validation, provenance9659946 không chứa oracle, bounds float chưa outward. 209research PASS nhưng probes phát hiện bất đồng; chưa merge/defaultadapter/ground truth nghiệm thu. Q02/Q04/Q08/Q10 và các gate khác PENDING, HOLDOUT đóng. [Phiếu](reviews/tv4_tv3_oracle_review_d84c241_20261003.md). Kết quả thiếu publish TV3 ghi trước đã superseded bởi target mới fetch.
+
 # 03/10/2026 — TV4 kiểm log Q01 TV3 trên hardware
 
 Fetch origin và ls-remote xác minh feature/hardware vẫn f0df94878971f5335c3066e168aa67d749b0f713. Không có docs/handoff/tv3_progress.md trong cây commit đó; không thấy nhánh *tv3* trên remote. Chưa xác minh được log TV3 báo đã nhận oracle; Q01 chưa cập nhật CLOSED ở nguồn chia sẻ. Q01 chỉ là owner nhận việc/phạm vi độc lập, không là nghiệm thu oracle; oracle mới vẫn NOT_RUN. TV3 cần commit/push log đúng nhánh và bàn giao full hash/path; nếu log ở nhánh khác cung cấp branch/hash. Không sửa hoặc đánh giá lại hardware/PR3 cũ từ thông báo này.

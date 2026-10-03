@@ -21,7 +21,7 @@ Mọi hàng dưới đây hiện **PENDING**. “Chủ trì → reviewer” lấ
 
 | ID / ưu tiên | Việc cần chốt hoặc kiểm chứng | Chủ trì → reviewer / phối hợp | Bằng chứng cần có để đóng hàng | Nguồn |
 |---|---|---|---|---|
-| Q01 / làm ngay | TV3 xác nhận nhận oracle và phạm vi độc lập | TV3 → TV2; TV4 bàn giao schema/fixtures | Log nhận việc; kế hoạch primitive/enumerator tự viết từ đặc tả; ghi rõ không import checker/cache feasibility TV4. Không cần chờ máy | Docs 30 §2, S2; Docs 31 §3/7 |
+| Q01 / CLOSED_ACKNOWLEDGEMENT_ONLY | TV3 xác nhận nhận oracle và phạm vi độc lập | TV3 → TV2; TV4 bàn giao schema/fixtures | Log nhận việc; kế hoạch primitive/enumerator tự viết từ đặc tả; ghi rõ không import checker/cache feasibility TV4. Không cần chờ máy | Docs 30 §2, S2; Docs 31 §3/7 |
 | Q02 / làm ngay | Review draft contract về lịch và J | TV4 mô hình, TV2 chi phí → review chéo; TV3 oracle, TV1 dữ liệu | Review đúng commit/version về BODY/MARK/END, k/deadline, reverse, CONNECT/LIFT, boundary/N_cycle; ca kiểm tay và danh sách bất đồng đã giải. Đây là review quy tắc, không chọn lại công thức từ ví dụ | Docs 31 §1–5; Docs 32 §8 |
 | Q03 / trước so sánh | Reference/mapping và gate chất lượng chung | TV1 + TV4 → TV2 protocol; TV3 đối chiếu geometry | IDs/grapheme/owner, correspondence/anchor/x-height/license; bounds dịch dấu/slant/scale/topology/H_geom đề xuất trên DEV; manifest/hash trước–sau lọc và lý do, cùng cho mọi method | Docs 31 §3.1; Docs 32 §2 |
 | Q04 / trước so sánh | Contact/near-contact và flatten/numeric policy | TV4 đặc tả + TV3 primitive → TV2 hình học/chi phí; TV1 glyph | Policy version/hash; vùng ngoại lệ hữu hạn; ca degenerate/collinear/self-intersection và .19/.20/.21 mm; sai số flatten/contact/cost có căn cứ. Nếu khác endpoint phải chốt snap trước hash hoặc connector khai báo/đo/kiểm. Không hạ floor .20 mm bằng tolerance | Docs 31 §2/3; review S0 TV2 |
@@ -67,7 +67,7 @@ Gate vẫn PENDING / bước tiếp theo:
 
 ## Quy tắc cập nhật quyết định
 
-Mỗi Q-ID có record khi có evidence, gồm trạng thái PENDING/PROPOSED/REVIEWED_WITH_OPEN_GATES/APPROVED, giá trị/phạm vi đề xuất, commit/artifact/lệnh, người review/xác nhận thực, ngày và phụ thuộc chưa đóng. APPROVED chỉ ghi khi có xác nhận trong scope; trạng thái workflow này không tự thay validation PASS hay certificate status của Docs 32. Chưa có record duyệt nào tại thời điểm tạo bảng.
+Mỗi Q-ID có record khi có evidence, gồm trạng thái PENDING/PROPOSED/REVIEWED_WITH_OPEN_GATES/APPROVED, giá trị/phạm vi đề xuất, commit/artifact/lệnh, người review/xác nhận thực, ngày và phụ thuộc chưa đóng. APPROVED chỉ ghi khi có xác nhận trong scope; trạng thái workflow này không tự thay validation PASS hay certificate status của Docs 32. Tại thời điểm tạo bảng chưa có record; xem các cập nhật có provenance bên dưới.
 
 Nếu cùng sửa docs gây conflict: owner giữ log riêng; TV4 nhập kết quả tổng hợp, đối chiếu nguồn hiện hành và evidence từng bên, không dùng blanket ours/theirs. Giữ lịch sử verdict theo commit/scope. Cách đồng bộ nhánh trong [handoff README](README.md).
 
@@ -78,3 +78,7 @@ Chuẩn bị Q04/Q06/Q08/Q09/Q10/Q11: [numeric audit](../reviews/tv4_numeric_aud
 Review thực tại commit TV1 1f583e9 ngày 03/10/2026: [phiếu TV4](../reviews/tv4_tv1_candidates_review_20261003.md) và [evidence](../evidence/tv1_review_1f583e9_20261003.json). Q03/Q05/Q13 có đề xuất/fixtures, chưa đóng; CHANGES_REQUESTED cho J/provenance/coverage. Không coi review AI APPROVED là sign-off hoặc oracle độc lập.
 
 Review tiếp tại c970a18: [phiếu TV4](../reviews/tv4_tv1_candidates_rereview_c970a18_20261003.md), F1–F5 closed DEV; F6 partial/F7 evidence provenance còn mở. CHANGES_REQUESTED; Q03/Q05/Q13 và toàn bộ gate vẫn PENDING, chưa merge hoặc independent PASS.
+
+## Q01 — CLOSED_ACKNOWLEDGEMENT_ONLY, 03/10/2026
+
+Owner TV3 đã ghi nhận việc oracle không chờ máy trong docs/handoff/tv3_progress.md tại d84c24177a3afe69bbbf9add526614755d275091 (origin/codex/tv3-research-oracle-20261002). TV4 đã xác minh log/import boundaries; bước điều phối nhận việc hoàn tất. Không là human sign-off/oracle nghiệm thu: [review O1–O5](../reviews/tv4_tv3_oracle_review_d84c241_20261003.md) CHANGES_REQUESTED. Q02/Q04/Q08/Q10 và các gate khác PENDING. Không ghi TV2 đã ký thay người.
