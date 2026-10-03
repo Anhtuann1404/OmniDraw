@@ -37,10 +37,11 @@ TV1 xác nhận:
 
 Để đảm bảo tính nhất quán giữa bộ giải DP (TV4), bộ kiểm chứng độc lập (TV3) và các baseline phân tầng (TV2), TV1 đề xuất bộ định nghĩa toán học và tiêu chuẩn chất lượng hình học chung trên tập DEV:
 
-### 2.1. Định nghĩa chuẩn chiều cao thân chữ ($x$-height, ký hiệu $h_x$)
-* **Định nghĩa:** Chiều cao thẳng đứng của phần thân chữ cái nguyên âm thường (không tính ascender/descender), đo từ baseline ($y_{\min}$) đến meanline ($y_{\max}$):
+### 2.1. Phân định Chiều cao thân chữ: $x$-height ($h_x$) và Chiều cao hộp bao ($h_{\text{bbox}}$)
+* **Chiều cao thân chuẩn $x$-height ($h_x$):** Chiều cao thẳng đứng của phần thân chữ cái nguyên âm thường (không tính ascender/descender), đo từ baseline ($y_{\min}$) đến meanline ($y_{\max}$):
   $$h_x = \max_{(x, y) \in \text{body}} y - \min_{(x, y) \in \text{body}} y$$
-* **Trong hệ tọa độ tham số DEV:** Baseline được chuẩn hóa tại $y = 0.0\,\text{mm}$. Với các glyph tiêu chuẩn ('a', 'o', 'e'), $h_x = 1.80\,\text{mm}$ hoặc $2.00\,\text{mm}$.
+  * *Trong hệ tọa độ tham số DEV:* Baseline được chuẩn hóa tại $y = 0.0\,\text{mm}$. Với các glyph nguyên âm tiêu chuẩn ('a', 'o', 'e'), $h_x = 1.80\,\text{mm}$ hoặc $2.00\,\text{mm}$.
+* **Chiều cao hộp bao thân ($h_{\text{bbox}}$):** Áp dụng cho các chữ cái có phần vươn cao (ascender như 'b', 't'). Do tập DEV hiện là các đường nét tham số tự tạo (chưa có typography font reference chính thức để xác định chính xác đường gióng font baseline/meanline), toàn bộ chiều cao của các ký tự này được ghi nhận chính xác là **`body bbox height` ($h_{\text{bbox}}$)** thay vì $x$-height để tránh gây nhầm lẫn quy ước đo đạc.
 
 ### 2.2. Định nghĩa độ dịch dấu ($\Delta y_{\text{mark}}$) và xử lý phân biệt dấu trên / dấu dưới / dấu chồng
 Để tránh nhầm lẫn giữa tọa độ có dấu (signed coordinates) và khoảng cách hình học, $\Delta y_{\text{mark}}$ được định nghĩa là **khoảng hở thẳng đứng dương (positive vertical clearance)**:
@@ -68,35 +69,46 @@ TV1 xác nhận:
      $$\delta_{\text{anchor}} = \|\mathbf{p}_{\text{mark}} - \mathbf{p}_{\text{ref}}\|_2 \le \epsilon_{\text{anchor}}$$
      Khi đó với glyph tham chiếu gốc, $\delta_{\text{anchor}} = 0$.
 
-### 2.3. Định nghĩa độ lệch góc nghiêng ($\Delta \theta$) và biến thiên tỷ lệ khung bao ($\Delta \text{AR}$)
-* **Góc trục chính ($\theta$):** Góc của đường hồi quy tuyến tính (hoặc đoạn thẳng chính) của nét thân chính so với trục hoành:
-  $$\theta = \arctan2(\Delta y, \Delta x)$$
-  * Sai lệch so với góc danh định ($\theta_{\text{nominal}} = 90^\circ$ cho kiểu đứng, $75^\circ$ cho kiểu nghiêng $15^\circ$):
-    $$|\Delta \theta| = |\theta_{\text{candidate}} - \theta_{\text{nominal}}| \le 5^\circ \text{ (kiểu đứng)}, \quad |\Delta \theta| \le 15^\circ \text{ (kiểu nghiêng)}$$
+### 2.3. Định nghĩa góc nghiêng ($\Delta \theta$), tỷ lệ khung bao ($\Delta \text{AR}$) và giới hạn đánh giá
+* **Góc trục chính nét ($\theta$):**
+  * Định nghĩa lý thuyết: Góc của đường trục nét chính so với phương ngang $\theta = \arctan2(\Delta y, \Delta x)$.
+  * **Trạng thái trên DEV: `NOT_EVALUATED`**. Lý do: Việc xác định trục nét tự động đòi hỏi thuật toán trích xuất khung xương nét (skeletonization) hoặc hồi quy đa điểm được chuẩn hóa đối chiếu với phông chữ gốc. Do tập DEV hiện tại chưa có font tham chiếu được nghiệm thu (chờ Q16), TV1 **chưa đánh giá và chưa gán nhãn ĐẠT** cho tiêu chí góc nét $\Delta \theta$.
 * **Tỷ lệ khung bao ($\text{Aspect Ratio} - \text{AR}$):** Cho hộp bao bounding box $[w, h]$, $\text{AR} = w / h$.
-  * Biến thiên tương đối so với biến thể chuẩn danh định $\text{AR}_0$:
-    $$|\Delta \text{AR}| = \frac{|\text{AR}_{\text{candidate}} - \text{AR}_0|}{\text{AR}_0} \le 10\%$$
+  * Biến thiên tương đối so với biến thể chuẩn danh định $\text{AR}_0$ của cùng lớp ký tự:
+    $$|\Delta \text{AR}| = \frac{|\text{AR}_{\text{candidate}} - \text{AR}_0|}{\text{AR}_0}$$
+  * **Quy tắc lọc trước giải thuật (Pre-Solver Typography Filter) vs. Ngoại lệ kiểm thử DEV:**
+    * Nếu áp dụng nghiêm ngặt ngưỡng chất lượng đề xuất $|\Delta \text{AR}| \le 10\%$, các biến thể nét phóng khoáng / uốn lượn (swash, flourish) sẽ bị bộ lọc chất lượng loại bỏ ngay từ khâu tiền xử lý trước khi nạp vào tập ứng viên khóa $\mathcal{G}$.
+    * Trong tập DEV, các biến thể này được giữ lại dưới diện ngoại lệ rõ ràng: **`DEV_ONLY_INTERACTION_PROBE_EXEMPT`**. Mục đích duy nhất của chúng là kiểm thử khả năng duy trì frontier và tỉa nhánh va chạm ($c < c_{\min} = 0.20\,\text{mm}$) của solver DP TV4, không phải ứng viên đạt chuẩn chất lượng typography.
 * **Topology:** Không chấp nhận tự cắt chéo (self-crossing) hoặc quay đầu ngược hướng (backtracking) trên cùng một nét vẽ đơn.
 
 ### 2.4. Bảng đo đạc thực nghiệm các ứng viên DEV (Empirical Measurements)
 
-Dưới đây là số liệu đo đạc thực tế trên toàn bộ các ứng viên trong manifest DEV hiện hành (`tv1_dev_manifest.json`):
+Dưới đây là số liệu đo đạc thực tế trên toàn bộ 13 ứng viên trong manifest DEV hiện hành (`tv1_dev_manifest.json`), phân định rõ ràng kết quả từng tiêu chí đo:
 
-| Ca & Ứng viên | Thân chữ $h_x$ | Chiều rộng $w$ | AR ($w/h_x$) | Loại dấu & Tên nét | Vị trí dấu | Đo đạc $\Delta y_{\text{mark}}$ | Tỷ lệ $\Delta y / h_x$ | Kết luận tiêu chuẩn |
-| :--- | :---: | :---: | :---: | :--- | :---: | :---: | :---: | :---: |
-| **01: a-std** | 2.00 mm | 1.50 mm | 0.75 | Mũ (`shape_circumflex`)<br>Sắc (`tone_acute`) | Trên thân<br>Chồng mũ | 0.40 mm<br>0.40 mm | 0.20<br>0.20 | ĐẠT ($[0.15, 0.45]$)<br>ĐẠT ($[0.15, 0.45]$) |
-| **01: a-alt** | 2.00 mm | 1.60 mm | 0.80 ($\Delta 6.7\%$) | Mũ (`shape_circumflex`)<br>Sắc (`tone_acute`) | Trên thân<br>Chồng mũ | 0.50 mm<br>0.40 mm | 0.25<br>0.20 | ĐẠT ($[0.15, 0.45]$)<br>ĐẠT ($[0.15, 0.45]$) |
-| **01: b-std** | 4.00 mm | 1.20 mm | 0.30 | *(Thân phụ có ascender)* | — | — | — | ĐẠT |
-| **02: e-std** | 1.80 mm | 1.50 mm | 0.83 | Mũ (`shape_circumflex`)<br>Nặng (`tone_dot_below`) | Trên thân<br>Dưới baseline | 0.60 mm<br>0.50 mm | 0.33<br>0.28 | ĐẠT ($[0.15, 0.45]$)<br>ĐẠT ($[0.15, 0.45]$) |
-| **02: c-std** | 1.80 mm | 1.40 mm | 0.78 | *(Thân phụ)* | — | — | — | ĐẠT |
-| **03: o-std** | 1.80 mm | 1.60 mm | 0.89 | Sắc (`tone_acute`) | Trên thân | 0.60 mm | 0.33 | ĐẠT ($[0.15, 0.45]$) |
-| **03: t-std** | 3.50 mm | 0.80 mm | 0.23 | *(Thân đa nét có tiếp xúc)* | — | Contact (3.0, 3.5) | — | $r = 0.25\,\text{mm}$ |
-| **03: o2-std** | 1.80 mm | 1.60 mm | 0.89 | *(Thân phụ)* | — | — | — | ĐẠT |
-| **04: o-compact** | 1.80 mm | 1.50 mm | 0.83 | Dấu trên (`mark`) | Trên thân | 0.60 mm | 0.33 | ĐẠT ($[0.15, 0.45]$) |
-| **04: o-swash** | 1.80 mm | 3.95 mm | 2.19 (flourish) | Dấu trên (`mark`) | Trên thân | 0.60 mm | 0.33 | ĐẠT ($[0.15, 0.45]$) |
-| **04: t-std** | 2.50 mm | 0.00 mm | 0.00 (stem) | *(Thân giữa)* | — | — | — | ĐẠT |
-| **04: o2-compact** | 1.80 mm | 1.00 mm | 0.56 | *(Thân phụ)* | — | — | — | ĐẠT |
-| **04: o2-flourish** | 1.80 mm | 1.45 mm | 0.81 (flourish) | *(Thân phụ)* | — | — | — | ĐẠT |
+| Ca & Ứng viên | Phân loại & Chiều cao ($h_x$ hoặc $h_{\text{bbox}}$) | Chiều rộng $w$ | AR ($w/h$) & Biến thiên $\Delta\text{AR}$ | Đánh giá $\Delta\text{AR}$ ($\le 10\%$) | Dấu & Vị trí | $\Delta y_{\text{mark}}$ & Tỷ lệ $\Delta y / h$ | Đánh giá Clearance dọc | Góc $\Delta\theta$ | Chất lượng Q03 tổng thể |
+| :--- | :--- | :---: | :---: | :---: | :--- | :---: | :---: | :---: | :---: |
+| **01: a-std** | Nguyên âm: $h_x = 2.00\,\text{mm}$ | 1.50 mm | 0.750 (Baseline $\text{AR}_0$) | **ĐẠT** (Baseline) | Mũ: Trên thân<br>Sắc: Chồng mũ | 0.40 mm (0.20)<br>0.40 mm (0.20) | **ĐẠT** ($[0.15, 0.45]$)<br>**ĐẠT** ($[0.15, 0.45]$) | `NOT_EVAL` | `PENDING` |
+| **01: a-alt** | Nguyên âm: $h_x = 2.00\,\text{mm}$ | 1.60 mm | 0.800 ($\Delta\text{AR} = +6.67\%$) | **ĐẠT** ($\le 10\%$) | Mũ: Trên thân<br>Sắc: Chồng mũ | 0.50 mm (0.25)<br>0.40 mm (0.20) | **ĐẠT** ($[0.15, 0.45]$)<br>**ĐẠT** ($[0.15, 0.45]$) | `NOT_EVAL` | `PENDING` |
+| **01: b-std** | Ascender: $h_{\text{bbox}} = 4.00\,\text{mm}$ | 1.20 mm | 0.300 (Baseline ascender) | **ĐẠT** (Baseline) | *(Không mang dấu)* | — | — | `NOT_EVAL` | `PENDING` |
+| **02: e-std** | Nguyên âm: $h_x = 1.80\,\text{mm}$ | 1.50 mm | 0.833 (Baseline $\text{AR}_0$) | **ĐẠT** (Baseline) | Mũ: Trên thân<br>Nặng: Dưới base | 0.60 mm (0.33)<br>0.50 mm (0.28) | **ĐẠT** ($[0.15, 0.45]$)<br>**ĐẠT** ($[0.15, 0.45]$) | `NOT_EVAL` | `PENDING` |
+| **02: c-std** | Phụ âm: $h_x = 1.80\,\text{mm}$ | 1.40 mm | 0.778 (Baseline) | **ĐẠT** (Baseline) | *(Không mang dấu)* | — | — | `NOT_EVAL` | `PENDING` |
+| **03: o-std** | Nguyên âm: $h_x = 1.80\,\text{mm}$ | 1.60 mm | 0.889 (Baseline $\text{AR}_0$) | **ĐẠT** (Baseline) | Sắc: Trên thân | 0.60 mm (0.33) | **ĐẠT** ($[0.15, 0.45]$) | `NOT_EVAL` | `PENDING` |
+| **03: t-std** | Ascender: $h_{\text{bbox}} = 3.50\,\text{mm}$ | 0.80 mm | 0.229 (Baseline) | **ĐẠT** (Baseline) | Contact $(3.0, 3.5)$ | $r = 0.25\,\text{mm}$ | **ĐẠT** (Contact disk) | `NOT_EVAL` | `PENDING` |
+| **03: o2-std** | Nguyên âm: $h_x = 1.80\,\text{mm}$ | 1.60 mm | 0.889 (Baseline) | **ĐẠT** (Baseline) | *(Không mang dấu)* | — | — | `NOT_EVAL` | `PENDING` |
+| **04: o-compact** | Nguyên âm: $h_x = 1.80\,\text{mm}$ | 1.50 mm | 0.833 (Baseline $\text{AR}_0$) | **ĐẠT** (Baseline) | Dấu trên: Trên thân | 0.60 mm (0.33) | **ĐẠT** ($[0.15, 0.45]$) | `NOT_EVAL` | `PENDING` |
+| **04: o-swash** | Biến thể dài: $h_x = 1.80\,\text{mm}$ | 3.95 mm | 2.194 ($\Delta\text{AR} = +163.33\%$) | **VƯỢT NGƯỠNG** (Loại nếu lọc Q03) | Dấu trên: Trên thân | 0.60 mm (0.33) | **ĐẠT** ($[0.15, 0.45]$) | `NOT_EVAL` | `EXEMPT` (Probe tương tác) |
+| **04: t-std** | Thân thẳng: $h_{\text{bbox}} = 2.50\,\text{mm}$ | 0.00 mm | 0.000 (Baseline nét đơn) | **ĐẠT** (Baseline) | *(Không mang dấu)* | — | — | `NOT_EVAL` | `PENDING` |
+| **04: o2-compact** | Nguyên âm: $h_x = 1.80\,\text{mm}$ | 1.00 mm | 0.556 (Baseline $\text{AR}_0$) | **ĐẠT** (Baseline) | *(Không mang dấu)* | — | — | `NOT_EVAL` | `PENDING` |
+| **04: o2-flourish** | Biến thể vuốt: $h_x = 1.80\,\text{mm}$ | 1.45 mm | 0.806 ($\Delta\text{AR} = +45.00\%$) | **VƯỢT NGƯỠNG** (Loại nếu lọc Q03) | *(Không mang dấu)* | — | — | `NOT_EVAL` | `EXEMPT` (Probe tương tác) |
+
+*Ghi chú diễn giải bảng:*
+1. **Nhãn ĐẠT chỉ áp dụng cho tiêu chí đo đạc hình học cụ thể:** Cột "Đánh giá Clearance dọc" ghi nhận **ĐẠT** vì khoảng cách thực tế đo được thỏa mãn dải $\Delta y / h_x \in [0.15, 0.45]$.
+2. **Tiêu chí góc nét:** Toàn bộ ghi `NOT_EVAL` (NOT_EVALUATED) vì chưa có policy hồi quy và font chuẩn để đối chiếu.
+3. **Tiêu chí biến thiên tỷ lệ khung bao ($\Delta\text{AR}$):**
+   - Biến thể `o-swash` có $\text{AR} = 2.194$ so với `o-compact` ($\text{AR}_0 = 0.833$), biến thiên $+163.33\% \gg 10\%$.
+   - Biến thể `o2-flourish` có $\text{AR} = 0.806$ so với `o2-compact` ($\text{AR}_0 = 0.556$), biến thiên $+45.00\% \gg 10\%$.
+   - **Xác định rõ ràng:** Hai biến thể này **KHÔNG ĐẠT tiêu chuẩn chất lượng typography $\Delta\text{AR} \le 10\%$**. Nếu đưa vào pipeline hoàn chỉnh với Gate Q03 được kích hoạt trước khâu giải toán, chúng sẽ bị **bộ lọc chất lượng loại bỏ (pruned)** trước khi đóng tập $\mathcal{G}$. Trong phạm vi DEV, chúng được giữ lại dưới diện ngoại lệ **`DEV_ONLY_INTERACTION_PROBE_EXEMPT`** để phục vụ việc kiểm thử đồ thị tương tác xa và tỉa nhánh DP của TV4.
+4. **Chất lượng tổng thể Q03:** Duy trì trạng thái **`PENDING`** đối với toàn bộ các ca cho đến khi có font tham chiếu và nghiệm thu phần cứng. Không tự ý freeze hay nới lỏng ngưỡng $10\%$.
 
 ### 2.5. Ngưỡng khoảng hở tối thiểu ($c_{\text{min}}$) và Ngoại lệ tiếp xúc (Contact)
 * **Quy định cứng:** $c_{\text{min}} = 0.20\,\text{mm}$ cho mọi cặp nét bắt buộc phải tách rời.
