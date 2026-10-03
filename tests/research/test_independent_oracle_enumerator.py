@@ -16,8 +16,11 @@ import pytest
 from backend.research.schemas import (
     Budget,
     ResearchCase,
+    Schedule,
+    ScheduleAction,
     SolveRequest,
     SolveResult,
+    StrokeRef,
     Theta,
 )
 from backend.research.service import load_manifest
@@ -205,9 +208,12 @@ def test_oracle_adapter_contract():
     assert result.search_complete is True
     assert result.schedule is not None
     assert result.validation.status == "NOT_RUN"
-    assert result.bounds.lower_bound_J_mm == result.metrics.J_mm
-    assert result.bounds.upper_bound_J_mm == result.metrics.J_mm
+    assert result.bounds.lower_bound_J_mm is not None
+    assert result.bounds.upper_bound_J_mm is not None
+    assert result.bounds.lower_bound_J_mm <= result.metrics.J_mm <= result.bounds.upper_bound_J_mm
     assert result.provenance.git_commit is not None
+    assert len(result.provenance.git_commit) == 40
+    assert result.provenance.git_commit != "965994645228c2e646279f53e6b772c728e85c2d"
     assert result.provenance.timing_source == "dev"
 
 
@@ -263,3 +269,142 @@ def test_oracle_on_numeric_rounding_cases():
         # On two-owner case, v1 (length 0.6) has shorter down length than v0 (0.9)
         if case.case_id == "tv4-numeric-two-owners":
             assert run.schedule.candidate_ids[0] == "v1-shorter-dev"
+
+
+# ---------------------------------------------------------------------------
+# 9. Multi-Segment Polyline Exact Cost Agreement (Cost Policy Match)
+# ---------------------------------------------------------------------------
+
+def test_multi_segment_polyline_exact_objective():
+    """Verifies that multi-segment polylines produce exact Fraction objective
+    matching TV4 schedule checker under cost_policy tv4-dev-dyadic-primitive-cost-v1.
+    """
+    from backend.research.schedule_checker import check_schedule_cost
+
+    manifest = load_manifest(SOLVER_CASES)
+    case_data = manifest[0].model_dump(mode="json")
+    # Replace stroke "b" with a 4-segment probe polyline
+    probe_poly = [[0.0, 0.0], [0.3, 0.4], [0.8, 0.4], [1.2, 0.9], [2.0, 1.5]]
+    case_data["candidates"][0]["variants"][0]["strokes"][0]["polyline_mm"] = probe_poly
+    # Move other strokes safely away to avoid clearance conflicts
+    case_data["candidates"][0]["variants"][0]["strokes"][1]["polyline_mm"] = [[0.0, 3.0], [1.0, 3.0]]
+    case_data["candidates"][0]["variants"][0]["strokes"][2]["polyline_mm"] = [[0.0, 5.0], [1.0, 5.0]]
+
+    probe_case = ResearchCase.prepare(case_data)
+    theta = Theta(rho=1.5, lambda_mm=2.5)
+
+    run = solve_oracle(probe_case, theta)
+    assert run.outcome == "OPTIMAL"
+    assert run.schedule is not None
+
+    # Construct Schedule model for ScheduleReplay comparison
+    schedule_model = Schedule(
+        candidate_ids=list(run.schedule.candidate_ids),
+        actions=[
+            ScheduleAction(
+                stroke=StrokeRef(owner_index=a.owner_index, candidate_id=a.candidate_id, stroke_id=a.stroke_id),
+                orientation=a.orientation,
+                transition=a.transition,
+            )
+            for a in run.schedule.actions
+        ],
+        boundary_convention_id=probe_case.boundary.convention_id,
+    )
+
+    replay = check_schedule_cost(probe_case, schedule_model, theta)
+
+    # EXACT Fraction objective must match between independent oracle and TV4 checker
+    assert run.schedule.J_exact == replay.objective_exact
+    assert math.isclose(run.schedule.L_down_mm, replay.L_down_mm, rel_tol=1e-12)
+    assert math.isclose(run.schedule.L_up_mm, replay.L_up_mm, rel_tol=1e-12)
+    assert run.schedule.N_cycle == replay.N_cycle
+
+
+# ---------------------------------------------------------------------------
+# 10. Budget Guards: max_states=1 and Memory Limit Enforcement
+# ---------------------------------------------------------------------------
+
+def test_oracle_budget_max_states_interruption():
+    """Verify that max_states=1 terminates search with RESOURCE_LIMIT and search_complete=False."""
+    manifest = load_manifest(SOLVER_CASES)
+    stacked_case = next(c for c in manifest if c.case_id == "tv4-solver-dev-stacked-3")
+
+    theta = Theta(rho=1.0, lambda_mm=2.0)
+    budget = Budget(wall_time_ms=10000, max_states=1, max_configurations=10000, memory_limit_mb=512)
+
+    run = solve_oracle(stacked_case, theta, budget)
+    assert run.outcome == "RESOURCE_LIMIT"
+    assert run.search_complete is False
+    assert run.enumeration_complete is False
+
+    # Through adapter:
+    request = SolveRequest(
+        schema_version="joint-artifact-v1-draft",
+        run_id="test-budget-limit-001",
+        case_ref=stacked_case.case_id,
+        method="independent_oracle",
+        theta=theta,
+        budget=budget,
+        seed=42,
+    )
+    result = solve_oracle_adapter(stacked_case, request)
+    assert result.outcome == "RESOURCE_LIMIT"
+    assert result.search_complete is False
+    # When search is incomplete, lower bound must be None
+    assert result.bounds.lower_bound_J_mm is None
+
+
+def test_oracle_memory_tracking_active():
+    """Verify that tracemalloc tracks peak memory."""
+    manifest = load_manifest(SOLVER_CASES)
+    empty_case = next(c for c in manifest if c.case_id == "tv4-solver-dev-empty")
+
+    theta = Theta(rho=1.0, lambda_mm=2.0)
+    run = solve_oracle(empty_case, theta)
+    assert run.peak_memory_mb >= 0.0
+
+
+# ---------------------------------------------------------------------------
+# 11. Contract & Policy Rejection (HOLDOUT and Invalid Policies)
+# ---------------------------------------------------------------------------
+
+def test_oracle_rejects_holdout():
+    """Verify that oracle strictly rejects HOLDOUT split."""
+    manifest = load_manifest(SOLVER_CASES)
+    case_data = manifest[0].model_dump(mode="json")
+    case_data["split"] = "holdout"
+
+    holdout_case = ResearchCase.prepare(case_data)
+    theta = Theta(rho=1.0, lambda_mm=2.0)
+
+    with pytest.raises(ValueError, match="HOLDOUT remains closed"):
+        solve_oracle(holdout_case, theta)
+
+
+def test_oracle_rejects_unsupported_geometry_policies():
+    """Verify that oracle rejects unsupported geometry policies."""
+    manifest = load_manifest(SOLVER_CASES)
+
+    for field, invalid_val in [
+        ("flatten_policy_id", "unsupported-polyline-v99"),
+        ("numeric_policy_id", "unsupported-numeric-v99"),
+        ("separation_policy_id", "unsupported-separation-v99"),
+        ("contact_policy_id", "unsupported-contact-v99"),
+    ]:
+        case_data = manifest[0].model_dump(mode="json")
+        case_data["geometry_policy"][field] = invalid_val
+        case = ResearchCase.prepare(case_data)
+        with pytest.raises(ValueError, match="Unsupported"):
+            solve_oracle(case, Theta(rho=1.0, lambda_mm=2.0))
+
+
+def test_oracle_rejects_invalid_contact_location():
+    """Verify that contact location not matching stroke endpoints is rejected."""
+    manifest = load_manifest(SOLVER_CASES)
+    case_data = manifest[0].model_dump(mode="json")
+    # Set contact location to somewhere not matching stroke endpoints
+    case_data["contacts"][0]["location_mm"] = [99.0, 99.0]
+    case = ResearchCase.prepare(case_data)
+
+    with pytest.raises(ValueError, match="Contact location"):
+        solve_oracle(case, Theta(rho=1.0, lambda_mm=2.0))

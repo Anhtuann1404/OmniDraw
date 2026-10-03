@@ -6,14 +6,22 @@ No imports from backend.research.geometry, backend.research.schedule_checker,
 or backend.research.joint_dp.
 """
 
-from .adapter import independent_validate_case, solve_oracle_adapter
+from .adapter import (
+    cost_interval,
+    git_snapshot,
+    independent_validate_case,
+    solve_oracle_adapter,
+)
 from .enumerator import (
     ORACLE_COST_POLICY,
     ORACLE_TIE_POLICY,
+    OracleBudgetExceeded,
     OracleRun,
     OracleSchedule,
+    calculate_stroke_length,
     solve_oracle,
     validate_configuration_geometry,
+    validate_contract_and_policies,
 )
 from .primitives import (
     C_MIN_MM,
@@ -30,9 +38,13 @@ __all__ = [
     "C_MIN_MM",
     "ORACLE_COST_POLICY",
     "ORACLE_TIE_POLICY",
+    "OracleBudgetExceeded",
     "OracleRun",
     "OracleSchedule",
+    "calculate_stroke_length",
     "clip_segment_outside_disk",
+    "cost_interval",
+    "git_snapshot",
     "independent_validate_case",
     "point_distance",
     "point_to_segment_distance",
@@ -43,4 +55,5 @@ __all__ = [
     "solve_oracle",
     "solve_oracle_adapter",
     "validate_configuration_geometry",
+    "validate_contract_and_policies",
 ]

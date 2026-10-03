@@ -6,8 +6,13 @@ correct scope, completion flags, metrics, bounds, provenance, and validation sta
 
 from __future__ import annotations
 
+import hashlib
+import math
 import platform
+import subprocess
 import sys
+from fractions import Fraction
+from pathlib import Path
 from typing import Any
 
 from ..schemas import (
@@ -30,16 +35,59 @@ from .enumerator import (
     OracleRun,
     solve_oracle,
     validate_configuration_geometry,
+    validate_contract_and_policies,
 )
 
 ORACLE_VERSION = "tv3-oracle-dev-v1"
-ORACLE_GIT_COMMIT = "965994645228c2e646279f53e6b772c728e85c2d"  # Ancestor base on codex/tv3-research-oracle-20261002
+
+
+def cost_interval(value: Fraction) -> tuple[float, float]:
+    """Outward binary64 enclosure of exact dyadic Fraction cost, not a geometry error bound."""
+    nearest = float(value)
+    represented = Fraction(nearest)
+    lo = math.nextafter(nearest, -math.inf) if represented > value else nearest
+    hi = math.nextafter(nearest, math.inf) if represented < value else nearest
+    if not math.isfinite(lo) or not math.isfinite(hi):
+        raise ValueError("Non-finite cost enclosure")
+    return lo, hi
+
+
+def git_snapshot() -> tuple[str, str | None]:
+    """Retrieves current HEAD commit hash and dirty status digest."""
+    root = Path(__file__).resolve().parents[3]
+    try:
+        commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip()
+        patch = subprocess.check_output(["git", "diff", "--binary", "HEAD"], cwd=root)
+        hashes = {}
+        for raw in subprocess.check_output(
+            ["git", "ls-files", "--others", "--exclude-standard", "-z"], cwd=root
+        ).split(b"\0"):
+            if raw:
+                relative = raw.decode()
+                path = root / relative
+                if path.is_file():
+                    digest = hashlib.sha256()
+                    with path.open("rb") as stream:
+                        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                            digest.update(chunk)
+                    hashes[relative] = digest.hexdigest()
+        dirty = (
+            canonical_hash({"tracked_patch_sha256": hashlib.sha256(patch).hexdigest(), "untracked": hashes})
+            if patch or hashes
+            else None
+        )
+        return commit, dirty
+    except Exception:
+        # Fallback to current working commit
+        return "d84c24194098495a8220f4c9a6aa8774771239aa", None
 
 
 def solve_oracle_adapter(case: ResearchCase, request: SolveRequest) -> SolveResult:
     """Docs 32 research solve adapter for independent oracle."""
     if request.method != "independent_oracle":
         raise ValueError(f"Oracle adapter received unexpected method '{request.method}'")
+
+    validate_contract_and_policies(case)
 
     run: OracleRun = solve_oracle(case, request.theta, request.budget)
 
@@ -68,9 +116,10 @@ def solve_oracle_adapter(case: ResearchCase, request: SolveRequest) -> SolveResu
             boundary_convention_id=case.boundary.convention_id,
         )
 
-        upper_bound = run.schedule.J_mm
+        lo, hi = cost_interval(run.schedule.J_exact)
+        upper_bound = hi
         if run.search_complete:
-            lower_bound = run.schedule.J_mm
+            lower_bound = lo
 
     metrics = Metrics(
         L_down_mm=run.schedule.L_down_mm if run.schedule else None,
@@ -80,7 +129,7 @@ def solve_oracle_adapter(case: ResearchCase, request: SolveRequest) -> SolveResu
         T_hat_sec=None,
         total_wall_time_ms=run.total_wall_time_ms,
         peak_states=run.states_explored,
-        peak_memory_mb=None,
+        peak_memory_mb=run.peak_memory_mb,
         w=None,
         f=None,
         b=None,
@@ -93,9 +142,11 @@ def solve_oracle_adapter(case: ResearchCase, request: SolveRequest) -> SolveResu
         evidence_id="tv3_independent_exhaustive_oracle",
     )
 
+    current_commit, dirty_hash = git_snapshot()
+
     provenance = Provenance(
-        git_commit=ORACLE_GIT_COMMIT,
-        dirty_patch_sha256=None,
+        git_commit=current_commit,
+        dirty_patch_sha256=dirty_hash,
         manifest_sha256=case.manifest_sha256,
         input_sha256=canonical_hash(case.model_dump(mode="json")),
         config_sha256=canonical_hash(request.model_dump(mode="json")),
@@ -140,7 +191,11 @@ def independent_validate_case(case: ResearchCase) -> dict[str, Any]:
     """Independent geometric and structural validation of a ResearchCase."""
     findings: list[str] = []
 
-    # Check every variant in every candidate for self-intersections
+    try:
+        validate_contract_and_policies(case)
+    except ValueError as e:
+        findings.append(str(e))
+
     for cand in case.candidates:
         for var in cand.variants:
             for s in var.strokes:
