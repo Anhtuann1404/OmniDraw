@@ -3,7 +3,8 @@ Tests for TV1 Vietnamese Candidate Dataset and Fixtures (Docs 31/32).
 
 Verifies:
 1. Manifest integrity and byte/schema equality between DEV and fixtures.
-2. Strict ResearchCase schema: NFD grapheme normalization, stroke geometry, and canonical hashing.
+2. Strict ResearchCase schema: NFD grapheme normalization (with multi-codepoint decomposing characters),
+   stroke geometry, and canonical hashing.
 3. TV4 geometry compilation: c_min floor 0.20 mm, self-intersection, declared contacts.
 4. Feasibility and joint DP solve (exact frontier vs safe-forget) on realistic Vietnamese cases:
    - Stacked diacritics ('ấb': circumflex + acute precedence).
@@ -13,7 +14,7 @@ Verifies:
    - Body order enforcement ('t_stem' before 't_crossbar').
    - Mark precedence isolation (negative test: swapping mark order raises ValueError).
    - Delay k deadline enforcement (positive with k=2, negative with k=0).
-   - Stroke reversibility enforcement (negative test: reversing non-reversible stroke raises ValueError).
+   - Stroke reversibility enforcement (both negative for non-reversible and positive for reversible).
 """
 
 from pathlib import Path
@@ -42,7 +43,7 @@ THETA = Theta(rho=0.5, lambda_mm=2.0)
 
 
 def test_tv1_manifest_files_exist_and_match():
-    """Verify both manifest files exist and are schema/content identical."""
+    """Verify both manifest files exist, hashes match, and payloads are identical."""
     assert FIXTURE_PATH.is_file(), f"Fixture file not found: {FIXTURE_PATH}"
     assert DEV_DATASET_PATH.is_file(), f"Dev dataset file not found: {DEV_DATASET_PATH}"
 
@@ -53,6 +54,10 @@ def test_tv1_manifest_files_exist_and_match():
     assert len(cases_dev) == 3
 
     for c1, c2 in zip(cases_fixture, cases_dev):
+        assert c1.case_id == c2.case_id
+        assert c1.candidate_set_sha256 == c2.candidate_set_sha256
+        assert c1.manifest_sha256 == c2.manifest_sha256
+        assert len(c1.manifest_sha256) == 64
         assert c1.model_dump(mode="json") == c2.model_dump(mode="json"), (
             f"Case {c1.case_id} payload mismatch between fixture and dev manifest"
         )
@@ -75,6 +80,18 @@ def test_tv1_cases_schema_and_geometry_hash():
                 for stroke in var.strokes:
                     assert len(stroke.polyline_mm) >= 2
                     assert len(stroke.polyline_mm[0]) == 2
+
+        # Explicit verification that Vietnamese diacritic characters decompose into multi-codepoint NFD sequences
+        c0 = case.candidates[0]
+        if case.case_id == "tv1-dev-stacked-diacritic-01":
+            assert c0.grapheme == unicodedata.normalize("NFD", "ấ")
+            assert len(c0.grapheme) == 3, "NFD 'ấ' must consist of base 'a' + circumflex (U+0302) + acute (U+0301)"
+        elif case.case_id == "tv1-dev-mark-below-02":
+            assert c0.grapheme == unicodedata.normalize("NFD", "ệ")
+            assert len(c0.grapheme) == 3, "NFD 'ệ' must consist of base 'e' + circumflex (U+0302) + dot below (U+0323)"
+        elif case.case_id == "tv1-dev-distant-interaction-03":
+            assert c0.grapheme == unicodedata.normalize("NFD", "ó")
+            assert len(c0.grapheme) == 2, "NFD 'ó' must consist of base 'o' + acute (U+0301)"
 
         assert case.geometry_policy.c_min_mm == 0.20
         assert case.candidate_set_sha256 == case.geometry_hash()
@@ -247,7 +264,9 @@ def test_tv1_delay_k_deadline_enforcement():
 
     # 2. Under k=0, starting character 1 ('t_stem') with pending mark on char 0 must FAIL
     k0_data = case_k2.model_dump(mode="json")
+    assert "tv1-acute-distant" in k0_data["delay_policy"], "Key 'tv1-acute-distant' must exist in delay_policy"
     k0_data["delay_policy"]["tv1-acute-distant"] = 0
+    # ResearchCase.prepare recalculates canonical geometry_hash
     k0_case = ResearchCase.prepare(k0_data)
 
     with pytest.raises(ValueError, match="Pending MARK deadline forbids starting this BODY"):
@@ -266,7 +285,7 @@ def test_tv1_stroke_reversibility_enforcement():
     run = solve_joint(case, THETA, BUDGET, safe_forget=False)
     assert run.schedule is not None
 
-    # Case 1: 'a_body' is non-reversible (reversible=False)
+    # Negative test: 'a_body' is non-reversible (reversible=False)
     a_body_idx = next(i for i, a in enumerate(run.schedule.actions) if a.stroke.stroke_id == "a_body")
     invalid_actions = list(run.schedule.actions)
     bad_action = ScheduleAction(
@@ -284,3 +303,19 @@ def test_tv1_stroke_reversibility_enforcement():
 
     with pytest.raises(ValueError, match="Schedule reverses a non-reversible stroke"):
         check_schedule_structure(case, illegal_schedule)
+
+    # Positive test: 'shape_circumflex' is reversible (reversible=True)
+    circ_idx = next(i for i, a in enumerate(run.schedule.actions) if a.stroke.stroke_id == "shape_circumflex")
+    valid_reversed_actions = list(run.schedule.actions)
+    valid_reversed_actions[circ_idx] = ScheduleAction(
+        stroke=valid_reversed_actions[circ_idx].stroke,
+        orientation="reverse",  # legal for reversible stroke
+        transition=valid_reversed_actions[circ_idx].transition,
+    )
+    valid_schedule = Schedule(
+        candidate_ids=run.schedule.candidate_ids,
+        actions=valid_reversed_actions,
+        boundary_convention_id=run.schedule.boundary_convention_id,
+    )
+    # Must validate structure without error
+    check_schedule_structure(case, valid_schedule)
