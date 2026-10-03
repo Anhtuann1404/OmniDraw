@@ -82,3 +82,5 @@ Review tiếp tại c970a18: [phiếu TV4](../reviews/tv4_tv1_candidates_rerevie
 ## Q01 — CLOSED_ACKNOWLEDGEMENT_ONLY, 03/10/2026
 
 Owner TV3 đã ghi nhận việc oracle không chờ máy trong docs/handoff/tv3_progress.md tại d84c24177a3afe69bbbf9add526614755d275091 (origin/codex/tv3-research-oracle-20261002). TV4 đã xác minh log/import boundaries; bước điều phối nhận việc hoàn tất. Không là human sign-off/oracle nghiệm thu: [review O1–O5](../reviews/tv4_tv3_oracle_review_d84c241_20261003.md) CHANGES_REQUESTED. Q02/Q04/Q08/Q10 và các gate khác PENDING. Không ghi TV2 đã ký thay người.
+
+TV1 tại ce3f92d: [recheck cuối](../reviews/tv4_tv1_final_recheck_ce3f92d_20261003.md), F1–F7 CLOSED_DEV_HANDOFF. Q03/Q05/Q13/Q16 và chất lượng vẫn PENDING; Q01 chỉ nhận việcTV3 đã hoàn tất, không oracle nghiệmthu. Chưa mergeTV1.

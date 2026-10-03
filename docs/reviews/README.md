@@ -94,3 +94,5 @@ Review để owner đối chiếu: [TV4 numeric audit 02/10/2026](tv4_numeric_au
 Review tiếp tại c970a18: [phiếu TV4](tv4_tv1_candidates_rereview_c970a18_20261003.md), F1–F5 closed DEV; F6 partial/F7 evidence provenance còn mở. CHANGES_REQUESTED; Q03/Q05/Q13 và toàn bộ gate vẫn PENDING, chưa merge hoặc independent PASS.
 
 [TV4 review TV3 d84c241](tv4_tv3_oracle_review_d84c241_20261003.md): Q01 nhận việc hoàn tất, O1–O5 CHANGES_REQUESTED; oracle nghiệm thu PENDING.
+
+TV1 tại ce3f92d: [recheck cuối](tv4_tv1_final_recheck_ce3f92d_20261003.md), F1–F7 CLOSED_DEV_HANDOFF. Q03/Q05/Q13/Q16 và chất lượng vẫn PENDING; Q01 chỉ nhận việcTV3 đã hoàn tất, không oracle nghiệmthu. Chưa mergeTV1.

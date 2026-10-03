@@ -98,3 +98,7 @@ Fetch origin và ls-remote xác minh feature/hardware vẫn f0df94878971f5335c30
 ## TV3 oracle d84c241 — review thực 03/10/2026
 
 Đã fetch codex/tv3-research-oracle-20261002 tại d84c241, thấy log nhận oracle không chờ máy và code độc lập chỉ imports schema/stdlib/local. Q01 CLOSED_ACKNOWLEDGEMENT_ONLY (nhận việc), không oracle nghiệm thu/human sign-off. Implementation CHANGES_REQUESTED: exactcost mismatch multi-segment, budget/memory/pre-enumeration guard, split/policy/contact validation, provenance9659946 không chứa oracle, bounds float chưa outward. 209research PASS nhưng probes phát hiện bất đồng; chưa merge/defaultadapter/ground truth nghiệm thu. Q02/Q04/Q08/Q10 và các gate khác PENDING, HOLDOUT đóng. [Phiếu](reviews/tv4_tv3_oracle_review_d84c241_20261003.md). Kết quả thiếu publish TV3 ghi trước đã superseded bởi target mới fetch.
+
+## TV1 ce3f92d — bàn giao DEV đã recheck 03/10/2026
+
+F1–F7 CLOSED trong scope synthetic DEV; verdict REVIEWED_DEV_HANDOFF_WITH_OPEN_GATES. F6 nhận rõ ARvượt10%/ngoại lệ interaction-only/angleNOT_EVALUATED/overallQ03PENDING, F7 sourcec970a18 có đúngmanifest. Không thay backend/tests/datasetso c970a18; manifest4c62fa2e… bytes tái sinh và8runs exact khớp. 224tests PASS2.89s (190research+34handwriting). Chưa merge/qualityfont/solver nghiệmthu. Q01 chỉ nhận việcTV3 đãclosed, oracleO1–O5cònmở; cácgatekhácPENDING/HOLDOUTđóng. [Phiếu kết thúc findingsTV1](reviews/tv4_tv1_final_recheck_ce3f92d_20261003.md). PromptTV1 đã dọn taskF1–F7, giữ lịch sử review; ghi chú logownerQ01cũ khôngchặn.
