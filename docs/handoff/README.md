@@ -92,3 +92,5 @@ Trước buổi đối chiếu đầu tiên, dùng [bảng PENDING và mẫu bà
 Bản phương pháp TV4 để review: [Docs 36](../support/36_joint_method_and_dp_argument.md), gồm state/recurrence/forget có giả thiết và witness synthetic tái lập. TV2 review cost/reference/điều kiện bằng nhau; TV3 đọc lập luận rồi oracle độc lập từ input thô; TV1 review giới hạn quality. Không dùng code checker làm oracle.
 
 TV2/TV3 đọc [numeric audit](../reviews/tv4_numeric_audit_20261002.md) khi đồng bộ shared HEAD: DEV cost/tie/replay có version mới, không ghép output trước/sau bằng candidate hash/theta đơn thuần. TV3 vẫn triển khai kiểm độc lập từ raw input, không import helper TV4.
+
+Bàn giao TV1 đã được review tại 1f583e9: [findings và việc sửa](../reviews/tv4_tv1_candidates_review_20261003.md). Chưa merge; TV1 tiếp tục trên nhánh của mình, gửi commit mới cùng evidence, TV4 đối chiếu lại findings theo scope.

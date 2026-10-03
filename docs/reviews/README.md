@@ -88,3 +88,5 @@ Severity gồm `CRITICAL`, `MAJOR`, `MINOR`. ID finding cố định theo dạng
 Review tài liệu không đồng nghĩa PR2/PR3, corpus freeze, formal experiment hoặc hardware calibration đã hoàn thành.
 
 Review để owner đối chiếu: [TV4 numeric audit 02/10/2026](tv4_numeric_audit_20261002.md), counterexample/DEV fix có version, chưa human sign-off hoặc oracle độc lập.
+
+[TV4 review TV1 tại 1f583e9 — 03/10/2026](tv4_tv1_candidates_review_20261003.md): CHANGES_REQUESTED cho evidence/coverage; 11 TV1 và 188 research tests tái lập PASS, Q03/Q05/Q13 chưa đóng, chưa merge.
