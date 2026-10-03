@@ -1,0 +1,686 @@
+{
+  "schema_version": "joint-artifact-v1-draft",
+  "manifest_sha256": "c69090b7ceb1f7c70e7859836f82860111a19aecd7ff0800fbb7be8f7d8bbb81",
+  "cases": [
+    {
+      "schema_version": "joint-artifact-v1-draft",
+      "case_id": "tv1-dev-stacked-diacritic-01",
+      "dataset_version": "tv1-vietnamese-dev-v1",
+      "manifest_sha256": "c69090b7ceb1f7c70e7859836f82860111a19aecd7ff0800fbb7be8f7d8bbb81",
+      "split": "dev",
+      "original_text": "ấb",
+      "normalized_text": "ấb",
+      "normalization": "NFD",
+      "candidates": [
+        {
+          "owner_index": 0,
+          "grapheme": "ấ",
+          "variants": [
+            {
+              "candidate_id": "a-std",
+              "source_hash": "64204682c2591b0b1cdf80f5516a9fe0a4c12aefe04265920953c56cd8f2162e",
+              "strokes": [
+                {
+                  "stroke_id": "a_body",
+                  "role": "body",
+                  "owner_index": 0,
+                  "reversible": false,
+                  "polyline_mm": [
+                    [
+                      0.2,
+                      1.8
+                    ],
+                    [
+                      0.0,
+                      1.0
+                    ],
+                    [
+                      0.2,
+                      0.0
+                    ],
+                    [
+                      1.5,
+                      0.0
+                    ],
+                    [
+                      1.5,
+                      2.0
+                    ]
+                  ],
+                  "mark_type": null
+                },
+                {
+                  "stroke_id": "shape_circumflex",
+                  "role": "mark",
+                  "owner_index": 0,
+                  "reversible": true,
+                  "polyline_mm": [
+                    [
+                      0.3,
+                      2.4
+                    ],
+                    [
+                      0.75,
+                      2.9
+                    ],
+                    [
+                      1.2,
+                      2.4
+                    ]
+                  ],
+                  "mark_type": "tv1-circumflex"
+                },
+                {
+                  "stroke_id": "tone_acute",
+                  "role": "mark",
+                  "owner_index": 0,
+                  "reversible": true,
+                  "polyline_mm": [
+                    [
+                      0.5,
+                      3.3
+                    ],
+                    [
+                      1.1,
+                      3.9
+                    ]
+                  ],
+                  "mark_type": "tv1-acute"
+                }
+              ],
+              "body_order": [
+                "a_body"
+              ],
+              "mark_precedence": [
+                [
+                  "shape_circumflex",
+                  "tone_acute"
+                ]
+              ]
+            },
+            {
+              "candidate_id": "a-alt",
+              "source_hash": "f3e82c57794b6714d9186c2d366c99d1c24844dd4c9d61d755ee94174d349503",
+              "strokes": [
+                {
+                  "stroke_id": "a_body",
+                  "role": "body",
+                  "owner_index": 0,
+                  "reversible": false,
+                  "polyline_mm": [
+                    [
+                      0.2,
+                      1.8
+                    ],
+                    [
+                      0.0,
+                      1.0
+                    ],
+                    [
+                      0.2,
+                      0.0
+                    ],
+                    [
+                      1.6,
+                      0.0
+                    ],
+                    [
+                      1.6,
+                      2.0
+                    ]
+                  ],
+                  "mark_type": null
+                },
+                {
+                  "stroke_id": "shape_circumflex",
+                  "role": "mark",
+                  "owner_index": 0,
+                  "reversible": true,
+                  "polyline_mm": [
+                    [
+                      0.4,
+                      2.5
+                    ],
+                    [
+                      0.8,
+                      3.0
+                    ],
+                    [
+                      1.3,
+                      2.5
+                    ]
+                  ],
+                  "mark_type": "tv1-circumflex"
+                },
+                {
+                  "stroke_id": "tone_acute",
+                  "role": "mark",
+                  "owner_index": 0,
+                  "reversible": true,
+                  "polyline_mm": [
+                    [
+                      0.6,
+                      3.4
+                    ],
+                    [
+                      1.2,
+                      4.0
+                    ]
+                  ],
+                  "mark_type": "tv1-acute"
+                }
+              ],
+              "body_order": [
+                "a_body"
+              ],
+              "mark_precedence": [
+                [
+                  "shape_circumflex",
+                  "tone_acute"
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "owner_index": 1,
+          "grapheme": "b",
+          "variants": [
+            {
+              "candidate_id": "b-std",
+              "source_hash": "0db69328d65b3bd27a01b0c83e3d782e492ec352a44332445e78a526eb7b4490",
+              "strokes": [
+                {
+                  "stroke_id": "b_stem",
+                  "role": "body",
+                  "owner_index": 1,
+                  "reversible": false,
+                  "polyline_mm": [
+                    [
+                      3.0,
+                      4.0
+                    ],
+                    [
+                      3.0,
+                      0.0
+                    ],
+                    [
+                      4.2,
+                      0.0
+                    ],
+                    [
+                      4.2,
+                      1.8
+                    ],
+                    [
+                      3.2,
+                      1.8
+                    ]
+                  ],
+                  "mark_type": null
+                }
+              ],
+              "body_order": [
+                "b_stem"
+              ],
+              "mark_precedence": []
+            }
+          ]
+        }
+      ],
+      "contacts": [],
+      "separation_pairs": [],
+      "delay_policy": {
+        "tv1-circumflex": 0,
+        "tv1-acute": 1
+      },
+      "geometry_policy": {
+        "c_min_mm": 0.2,
+        "flatten_policy_id": "tv4-dev-polyline-v1",
+        "contact_policy_id": "tv4-dev-exact-endpoint-v1",
+        "numeric_policy_id": "tv4-dev-float-v1",
+        "separation_policy_id": "tv4-dev-all-pairs-v1",
+        "allow_zero_length": false
+      },
+      "boundary": {
+        "p0_mm": [
+          -1.0,
+          0.0
+        ],
+        "p_end_mm": [
+          6.0,
+          0.0
+        ],
+        "initial_pen": "UP",
+        "final_pen": "UP",
+        "convention_id": "tv1-origin-margin-v1"
+      },
+      "reference_geometry": {
+        "source_hash": "6a3004b175383c760c3685d0b903db6aa16375096d16f12e37e9a03e5b04a807",
+        "mapping_policy_id": "tv1-dev-reference-anchor-v1"
+      },
+      "candidate_set_sha256": "770ef1b33065854ce2a5646c68900572216911a7106a51681a67122ed10aa405"
+    },
+    {
+      "schema_version": "joint-artifact-v1-draft",
+      "case_id": "tv1-dev-mark-below-02",
+      "dataset_version": "tv1-vietnamese-dev-v1",
+      "manifest_sha256": "c69090b7ceb1f7c70e7859836f82860111a19aecd7ff0800fbb7be8f7d8bbb81",
+      "split": "dev",
+      "original_text": "ệc",
+      "normalized_text": "ệc",
+      "normalization": "NFD",
+      "candidates": [
+        {
+          "owner_index": 0,
+          "grapheme": "ệ",
+          "variants": [
+            {
+              "candidate_id": "e-std",
+              "source_hash": "2e5d7a0833ef8922ac9e3913c08b3dc6b3eb582b084104b7d6cb48446479119c",
+              "strokes": [
+                {
+                  "stroke_id": "e_body",
+                  "role": "body",
+                  "owner_index": 0,
+                  "reversible": false,
+                  "polyline_mm": [
+                    [
+                      0.2,
+                      1.0
+                    ],
+                    [
+                      1.5,
+                      1.0
+                    ],
+                    [
+                      1.5,
+                      1.8
+                    ],
+                    [
+                      0.2,
+                      1.8
+                    ],
+                    [
+                      0.0,
+                      1.0
+                    ],
+                    [
+                      0.2,
+                      0.0
+                    ],
+                    [
+                      1.5,
+                      0.0
+                    ]
+                  ],
+                  "mark_type": null
+                },
+                {
+                  "stroke_id": "shape_circumflex",
+                  "role": "mark",
+                  "owner_index": 0,
+                  "reversible": true,
+                  "polyline_mm": [
+                    [
+                      0.3,
+                      2.4
+                    ],
+                    [
+                      0.75,
+                      2.9
+                    ],
+                    [
+                      1.2,
+                      2.4
+                    ]
+                  ],
+                  "mark_type": "tv1-circumflex"
+                },
+                {
+                  "stroke_id": "tone_dot_below",
+                  "role": "mark",
+                  "owner_index": 0,
+                  "reversible": true,
+                  "polyline_mm": [
+                    [
+                      0.7,
+                      -0.5
+                    ],
+                    [
+                      0.8,
+                      -0.5
+                    ]
+                  ],
+                  "mark_type": "tv1-dot-below"
+                }
+              ],
+              "body_order": [
+                "e_body"
+              ],
+              "mark_precedence": [
+                [
+                  "shape_circumflex",
+                  "tone_dot_below"
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "owner_index": 1,
+          "grapheme": "c",
+          "variants": [
+            {
+              "candidate_id": "c-std",
+              "source_hash": "6b521ea0e1977c3527ec2047ab249b3e748cf2720a4a2bb1faa955e68dda905c",
+              "strokes": [
+                {
+                  "stroke_id": "c_body",
+                  "role": "body",
+                  "owner_index": 1,
+                  "reversible": false,
+                  "polyline_mm": [
+                    [
+                      4.0,
+                      1.8
+                    ],
+                    [
+                      2.8,
+                      1.8
+                    ],
+                    [
+                      2.6,
+                      1.0
+                    ],
+                    [
+                      2.8,
+                      0.0
+                    ],
+                    [
+                      4.0,
+                      0.0
+                    ]
+                  ],
+                  "mark_type": null
+                }
+              ],
+              "body_order": [
+                "c_body"
+              ],
+              "mark_precedence": []
+            }
+          ]
+        }
+      ],
+      "contacts": [],
+      "separation_pairs": [],
+      "delay_policy": {
+        "tv1-circumflex": 0,
+        "tv1-dot-below": 0
+      },
+      "geometry_policy": {
+        "c_min_mm": 0.2,
+        "flatten_policy_id": "tv4-dev-polyline-v1",
+        "contact_policy_id": "tv4-dev-exact-endpoint-v1",
+        "numeric_policy_id": "tv4-dev-float-v1",
+        "separation_policy_id": "tv4-dev-all-pairs-v1",
+        "allow_zero_length": false
+      },
+      "boundary": {
+        "p0_mm": [
+          -1.0,
+          0.0
+        ],
+        "p_end_mm": [
+          6.0,
+          0.0
+        ],
+        "initial_pen": "UP",
+        "final_pen": "UP",
+        "convention_id": "tv1-origin-margin-v1"
+      },
+      "reference_geometry": {
+        "source_hash": "6a3004b175383c760c3685d0b903db6aa16375096d16f12e37e9a03e5b04a807",
+        "mapping_policy_id": "tv1-dev-reference-anchor-v1"
+      },
+      "candidate_set_sha256": "0cefecccfbd17216ae7df5f6cbaa5a0561f59050ab5fc2b6a78866d985689067"
+    },
+    {
+      "schema_version": "joint-artifact-v1-draft",
+      "case_id": "tv1-dev-distant-interaction-03",
+      "dataset_version": "tv1-vietnamese-dev-v1",
+      "manifest_sha256": "c69090b7ceb1f7c70e7859836f82860111a19aecd7ff0800fbb7be8f7d8bbb81",
+      "split": "dev",
+      "original_text": "óto",
+      "normalized_text": "óto",
+      "normalization": "NFD",
+      "candidates": [
+        {
+          "owner_index": 0,
+          "grapheme": "ó",
+          "variants": [
+            {
+              "candidate_id": "o-std",
+              "source_hash": "dd3cf7328545b872168aef86c2639aafaf8d893e4b11464c2efdd3249286c357",
+              "strokes": [
+                {
+                  "stroke_id": "o_body",
+                  "role": "body",
+                  "owner_index": 0,
+                  "reversible": false,
+                  "polyline_mm": [
+                    [
+                      1.4,
+                      1.8
+                    ],
+                    [
+                      0.2,
+                      1.8
+                    ],
+                    [
+                      0.0,
+                      1.0
+                    ],
+                    [
+                      0.2,
+                      0.0
+                    ],
+                    [
+                      1.4,
+                      0.0
+                    ],
+                    [
+                      1.6,
+                      1.0
+                    ]
+                  ],
+                  "mark_type": null
+                },
+                {
+                  "stroke_id": "tone_acute",
+                  "role": "mark",
+                  "owner_index": 0,
+                  "reversible": true,
+                  "polyline_mm": [
+                    [
+                      0.5,
+                      2.4
+                    ],
+                    [
+                      1.1,
+                      3.0
+                    ]
+                  ],
+                  "mark_type": "tv1-acute-distant"
+                }
+              ],
+              "body_order": [
+                "o_body"
+              ],
+              "mark_precedence": []
+            }
+          ]
+        },
+        {
+          "owner_index": 1,
+          "grapheme": "t",
+          "variants": [
+            {
+              "candidate_id": "t-std",
+              "source_hash": "10ef316ca102babccd10e796a693b54be567d72121ee1c8b092522d60d6d7c8e",
+              "strokes": [
+                {
+                  "stroke_id": "t_stem",
+                  "role": "body",
+                  "owner_index": 1,
+                  "reversible": false,
+                  "polyline_mm": [
+                    [
+                      3.0,
+                      3.5
+                    ],
+                    [
+                      3.0,
+                      0.2
+                    ],
+                    [
+                      3.3,
+                      0.0
+                    ],
+                    [
+                      3.8,
+                      0.0
+                    ]
+                  ],
+                  "mark_type": null
+                },
+                {
+                  "stroke_id": "t_crossbar",
+                  "role": "body",
+                  "owner_index": 1,
+                  "reversible": true,
+                  "polyline_mm": [
+                    [
+                      3.0,
+                      3.5
+                    ],
+                    [
+                      3.8,
+                      3.5
+                    ]
+                  ],
+                  "mark_type": null
+                }
+              ],
+              "body_order": [
+                "t_stem",
+                "t_crossbar"
+              ],
+              "mark_precedence": []
+            }
+          ]
+        },
+        {
+          "owner_index": 2,
+          "grapheme": "o",
+          "variants": [
+            {
+              "candidate_id": "o2-std",
+              "source_hash": "86868c45287a65d9b9c87bd94a32ba7ec2a7977b6c027c0931aac535aab53de6",
+              "strokes": [
+                {
+                  "stroke_id": "o_body",
+                  "role": "body",
+                  "owner_index": 2,
+                  "reversible": false,
+                  "polyline_mm": [
+                    [
+                      5.4,
+                      1.8
+                    ],
+                    [
+                      4.2,
+                      1.8
+                    ],
+                    [
+                      4.0,
+                      1.0
+                    ],
+                    [
+                      4.2,
+                      0.0
+                    ],
+                    [
+                      5.4,
+                      0.0
+                    ],
+                    [
+                      5.6,
+                      1.0
+                    ]
+                  ],
+                  "mark_type": null
+                }
+              ],
+              "body_order": [
+                "o_body"
+              ],
+              "mark_precedence": []
+            }
+          ]
+        }
+      ],
+      "contacts": [
+        {
+          "first": {
+            "owner_index": 1,
+            "candidate_id": "t-std",
+            "stroke_id": "t_stem"
+          },
+          "second": {
+            "owner_index": 1,
+            "candidate_id": "t-std",
+            "stroke_id": "t_crossbar"
+          },
+          "location_mm": [
+            3.0,
+            3.5
+          ],
+          "radius_mm": 0.25,
+          "policy_id": "tv4-dev-exact-endpoint-v1"
+        }
+      ],
+      "separation_pairs": [],
+      "delay_policy": {
+        "tv1-acute-distant": 2
+      },
+      "geometry_policy": {
+        "c_min_mm": 0.2,
+        "flatten_policy_id": "tv4-dev-polyline-v1",
+        "contact_policy_id": "tv4-dev-exact-endpoint-v1",
+        "numeric_policy_id": "tv4-dev-float-v1",
+        "separation_policy_id": "tv4-dev-all-pairs-v1",
+        "allow_zero_length": false
+      },
+      "boundary": {
+        "p0_mm": [
+          -1.0,
+          0.0
+        ],
+        "p_end_mm": [
+          8.0,
+          0.0
+        ],
+        "initial_pen": "UP",
+        "final_pen": "UP",
+        "convention_id": "tv1-origin-margin-v1"
+      },
+      "reference_geometry": {
+        "source_hash": "6a3004b175383c760c3685d0b903db6aa16375096d16f12e37e9a03e5b04a807",
+        "mapping_policy_id": "tv1-dev-reference-anchor-v1"
+      },
+      "candidate_set_sha256": "aeb0e79d202f4fcccadb2e7b5d37c46df34a6f8af0f9cc2d22df373a5d33e039"
+    }
+  ]
+}
