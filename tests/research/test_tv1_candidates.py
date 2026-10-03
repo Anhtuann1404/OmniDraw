@@ -92,6 +92,8 @@ def test_tv1_cases_schema_and_geometry_hash():
         elif case.case_id == "tv1-dev-distant-interaction-03":
             assert c0.grapheme == unicodedata.normalize("NFD", "ó")
             assert len(c0.grapheme) == 2, "NFD 'ó' must consist of base 'o' + acute (U+0301)"
+        else:
+            pytest.fail(f"Unexpected case_id in TV1 manifest: {case.case_id}")
 
         assert case.geometry_policy.c_min_mm == 0.20
         assert case.candidate_set_sha256 == case.geometry_hash()
