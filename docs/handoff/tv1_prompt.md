@@ -32,3 +32,10 @@ Review TV4 ngày 03/10/2026 cho commit 1f583e9 nằm ở docs/reviews/tv4_tv1_ca
 ```
 
 Ghi bàn giao theo [mẫu và bảng PENDING](pending_decisions.md), nêu Q-ID liên quan và evidence/commit thực. Phân công TV1–TV4 giữ nguyên theo trưởng nhóm; không tự chuyển oracle/custody hoặc ký thay owner. Các trạng thái PENDING chỉ đóng khi có review/xác nhận trong phạm vi.
+
+## Follow-up TV1 sau review c970a18 — ưu tiên bản này so F1–F6 cũ
+
+```text
+TV4 đã review c970a18: F1–F5 CLOSED trong scope DEV, 13 TV1/190 research/34 handwriting PASS, manifest4c62fa2e… tái sinh đúng,8runs khớp exact ratios. Xem docs/reviews/tv4_tv1_candidates_rereview_c970a18_20261003.md.
+Chỉ sửa F6 và F7 còn mở: (1) AR o-swash so compact +163.33%, o2-flourish +45% vượt10%; giới hạn nhãn ĐẠT vào clearance đã đo, ghi angle/overall quality NOT_EVALUATED hoặc cung cấp policy/AR0/class exemptions/measurements. Phân biệt body bbox height và x-height cho ascenders. Không freeze hoặc nới threshold. (2) evidence head_commit ff23687 chứa manifest cũ3ca; chạy lại clean snapshot c970a18 và ghi source/input commit+lệnh+môi trường đúng, commit evidence ở follow-up sau đó; không yêu cầu self hash. Giữ Q01–Q16 PROPOSED/PENDING, reference_geometry null/DEV_ONLY, TV3 NOT_RUN/HOLDOUT đóng. Không sửa code TV2/TV3/TV4 hoặc docs tổng hợp; log owner riêng. Bảo toàn dirty work, fetch nhánh chia sẻ và merge có kiểm tra conflict, không blanket ours/theirs. Bàn giao commit mới và evidence cho TV4 recheck, không tự claim nghiệm thu.
+```

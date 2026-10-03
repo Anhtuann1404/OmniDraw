@@ -33,3 +33,7 @@ Review Docs 36 (docs/support/36_joint_method_and_dp_argument.md): kiểm giả t
 ```
 
 Ghi bàn giao theo [mẫu và bảng PENDING](pending_decisions.md), nêu Q-ID liên quan và evidence/commit thực. Phân công TV1–TV4 giữ nguyên theo trưởng nhóm; không tự chuyển oracle/custody hoặc ký thay owner. Các trạng thái PENDING chỉ đóng khi có review/xác nhận trong phạm vi.
+
+## Follow-up hiện hành — review d84c241
+
+Q01 nhận việc đã xác minh CLOSED_ACKNOWLEDGEMENT_ONLY; không cần làm lại bước xác nhận hoặc publish log thiếu trước đó. Implementation chưa nghiệm thu. Xem docs/reviews/tv4_tv3_oracle_review_d84c241_20261003.md, sửa O1–O5: đúng primitive cost policy (fsum/math.dist semantics tự triển khai), streaming/guard budget và memory/scope, reject HOLDOUT/unknownpolicy/invalidcontact, provenance source thật, outward bounds exact Fraction. Test exact ratios/tie, budget tiny, multisegment và case policy âm tính; không import helper TV4/TV2. Bàn giao source commit/evidence/lệnh/flags; giữ validation NOT_RUN và các gate khác PENDING/HOLDOUT đóng. Không dùng oracle hiện tại làm ground truth nghiệm thu hoặc sửa hardware/PR3. Log owner riêng; không cùng sửa tài liệu tổng hợp để tránh conflict.

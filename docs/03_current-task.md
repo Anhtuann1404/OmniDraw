@@ -86,3 +86,15 @@ Nguồn liên quan Docs 30–32, chương phương pháp, traceability, README c
 ## Review bàn giao TV1 — 03/10/2026
 
 Đã review nhánh codex/tv1-research-candidates-20261002 tại 1f583e9476d928c311be61ee6603ba832282fab7, nền 5b0f328. [Review đầy đủ](reviews/tv4_tv1_candidates_review_20261003.md) verdict CHANGES_REQUESTED cho bảng J/provenance và coverage; fixtures tương thích DEV, 11 TV1 + suite 188 research/34 handwriting = 222 PASS. J handoff không khớp, reference mới hash tên, k=2 chưa phân biệt k=1, graph ca “xa” rỗng, contact chưa tạo CONNECT; Q03 chưa định nghĩa/evidence metric. Q03/Q05/Q13 và oracle vẫn PENDING, không merge nhánh TV1 hoặc ký approval từ DeepSeek. TV1 sửa/bàn giao commit mới rồi TV4 review lại; HOLDOUT đóng, ownership giữ nguyên.
+
+## Review lại TV1 — c970a18 (03/10/2026)
+
+F1–F5 CLOSED trong phạm vi synthetic DEV; F6 PARTIALLY_RESOLVED (AR flourish vượt10%, thiếu angle measurement/quality scope). F7 mới: evidence head_commit ff23687 trỏ manifest cũ; số học tại c970a18 được TV4 tái lập khớp cả8runs. 13 TV1 PASS; 224 research+handwriting PASS (190+34), chưa chạy lại79 acceptance TV1 báo. Verdict CHANGES_REQUESTED cho claim/provenance; không merge/quality acceptance, Q01–Q16 PENDING và oracle NOT_RUN/HOLDOUT đóng. [Phiếu mới](reviews/tv4_tv1_candidates_rereview_c970a18_20261003.md).
+
+## TV3 Q01 — kiểm tra publish 03/10/2026
+
+Fetch origin và ls-remote xác minh feature/hardware vẫn f0df94878971f5335c3066e168aa67d749b0f713. Không có docs/handoff/tv3_progress.md trong cây commit đó; không thấy nhánh *tv3* trên remote. Chưa xác minh được log TV3 báo đã nhận oracle; Q01 chưa cập nhật CLOSED ở nguồn chia sẻ. Q01 chỉ là owner nhận việc/phạm vi độc lập, không là nghiệm thu oracle; oracle mới vẫn NOT_RUN. TV3 cần commit/push log đúng nhánh và bàn giao full hash/path; nếu log ở nhánh khác cung cấp branch/hash. Không sửa hoặc đánh giá lại hardware/PR3 cũ từ thông báo này.
+
+## TV3 oracle d84c241 — review thực 03/10/2026
+
+Đã fetch codex/tv3-research-oracle-20261002 tại d84c241, thấy log nhận oracle không chờ máy và code độc lập chỉ imports schema/stdlib/local. Q01 CLOSED_ACKNOWLEDGEMENT_ONLY (nhận việc), không oracle nghiệm thu/human sign-off. Implementation CHANGES_REQUESTED: exactcost mismatch multi-segment, budget/memory/pre-enumeration guard, split/policy/contact validation, provenance9659946 không chứa oracle, bounds float chưa outward. 209research PASS nhưng probes phát hiện bất đồng; chưa merge/defaultadapter/ground truth nghiệm thu. Q02/Q04/Q08/Q10 và các gate khác PENDING, HOLDOUT đóng. [Phiếu](reviews/tv4_tv3_oracle_review_d84c241_20261003.md). Kết quả thiếu publish TV3 ghi trước đã superseded bởi target mới fetch.

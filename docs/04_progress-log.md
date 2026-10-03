@@ -1,3 +1,15 @@
+# 03/10/2026 — Review oracle TV3 d84c241
+
+Đã fetch codex/tv3-research-oracle-20261002 tại d84c241, thấy log nhận oracle không chờ máy và code độc lập chỉ imports schema/stdlib/local. Q01 CLOSED_ACKNOWLEDGEMENT_ONLY (nhận việc), không oracle nghiệm thu/human sign-off. Implementation CHANGES_REQUESTED: exactcost mismatch multi-segment, budget/memory/pre-enumeration guard, split/policy/contact validation, provenance9659946 không chứa oracle, bounds float chưa outward. 209research PASS nhưng probes phát hiện bất đồng; chưa merge/defaultadapter/ground truth nghiệm thu. Q02/Q04/Q08/Q10 và các gate khác PENDING, HOLDOUT đóng. [Phiếu](reviews/tv4_tv3_oracle_review_d84c241_20261003.md). Kết quả thiếu publish TV3 ghi trước đã superseded bởi target mới fetch.
+
+# 03/10/2026 — TV4 kiểm log Q01 TV3 trên hardware
+
+Fetch origin và ls-remote xác minh feature/hardware vẫn f0df94878971f5335c3066e168aa67d749b0f713. Không có docs/handoff/tv3_progress.md trong cây commit đó; không thấy nhánh *tv3* trên remote. Chưa xác minh được log TV3 báo đã nhận oracle; Q01 chưa cập nhật CLOSED ở nguồn chia sẻ. Q01 chỉ là owner nhận việc/phạm vi độc lập, không là nghiệm thu oracle; oracle mới vẫn NOT_RUN. TV3 cần commit/push log đúng nhánh và bàn giao full hash/path; nếu log ở nhánh khác cung cấp branch/hash. Không sửa hoặc đánh giá lại hardware/PR3 cũ từ thông báo này.
+
+# 03/10/2026 — TV4 recheck TV1 c970a18
+
+Fetch lần đầu timeout, retry thành công; target c970a18 kế thừa cb38f64. Snapshot archive riêng, dirty work nguyên trạng. Builder tái sinh manifest4c62fa2e… khớp bytes; 4ca/8runs khớp float và exact ratios/graph. F1–F5 closed DEV, F6 partial (AR163.33%/45% vs bounds10%, chưa angle evidence), F7 metadata evidence ff23687 trỏ manifest cũ. 13TV1 PASS .10s; 224research+handwriting PASS2.64s (190+34), 1warning AnyIO; không replay79 acceptance. Phiếu/evidence cập nhật current-task/handoff/pending. Chỉ publish reviewdocs TV4, không merge TV1 hoặc sửa ownercode; gate/human sign-off PENDING, oracle NOT_RUN, HOLDOUT đóng, PR3 đóng. TV1 sửa F6/F7 rồi recheck.
+
 # 03/10/2026 — TV4 review TV1 candidates tại 1f583e9
 
 Fetch origin nhận nhánh codex/tv1-research-candidates-20261002; pin 1f583e9476d928c311be61ee6603ba832282fab7, merge-base 5b0f328. Diff sáu file đúng ownership data/fixtures/tests/proposals/log TV1. Graphify query tra schema/manifest rồi kiểm source Git trực tiếp vì graph checkout TV4 không chứa branch additions. Review snapshot bằng git archive vào /private/tmp/omnidraw-tv1-review-1f583e9, không merge/checkout/reset/stash hoặc sửa code TV1/dirty work.
